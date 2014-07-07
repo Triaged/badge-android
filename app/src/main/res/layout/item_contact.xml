@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="64dp">
+
+    <ImageButton
+        android:id="@+id/thumb_image"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/content_description_thumb"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/contact_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/main_text_black"
+        android:layout_toLeftOf="@id/thumb_image"
+        android:layout_marginTop="16dp"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/contact_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/sub_text_gray"
+        android:layout_toLeftOf="@id/thumb_image"
+        android:layout_below="@id/contact_name"
+        />
+
+</RelativeLayout>

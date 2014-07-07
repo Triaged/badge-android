@@ -4,5 +4,6 @@
     <string name="app_name">Badge</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="content_description_thumb">Contact Thumbnail Image</string>
 
 </resources>
