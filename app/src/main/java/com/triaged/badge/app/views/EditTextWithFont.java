@@ -9,6 +9,8 @@ import android.widget.EditText;
 import com.triaged.badge.app.R;
 
 /**
+ * Set a custom font as an xml attribute
+ *
  * Created by Will on 7/7/14.
  */
 public class EditTextWithFont extends EditText {

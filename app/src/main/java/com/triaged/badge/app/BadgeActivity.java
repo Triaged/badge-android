@@ -7,6 +7,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 /**
+ * All app activities should inherit from this super class, which implements global functionality.
+ *
  * Created by Will on 7/7/14.
  */
 public abstract class BadgeActivity extends ActionBarActivity {

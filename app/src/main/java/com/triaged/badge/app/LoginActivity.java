@@ -10,6 +10,8 @@ import android.widget.Toast;
 import com.triaged.badge.app.views.EditTextWithFont;
 
 /**
+ * Activity for authentication.
+ *
  * Created by Will on 7/7/14.
  */
 public class LoginActivity extends BadgeActivity {

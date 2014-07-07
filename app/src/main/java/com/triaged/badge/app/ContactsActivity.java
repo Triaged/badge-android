@@ -11,6 +11,11 @@ import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
 
+/**
+ *
+ * Primary activity for displaying a user's list of contacts and departments.
+ *
+ */
 
 public class ContactsActivity extends BadgeActivity {
 

@@ -15,7 +15,7 @@
         >
         <activity
             android:name="com.triaged.badge.app.ContactsActivity"
-            android:label="Contacts" >
+            android:label="@string/label_contacts_activity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -23,9 +23,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity"
-            android:label="Login"
+            android:label="@string/label_login_activity"
             >
-
         </activity>
     </application>
 
