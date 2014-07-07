@@ -1,6 +1,7 @@
 package com.triaged.badge.app;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -9,6 +10,11 @@ import android.view.MenuItem;
  * Created by Will on 7/7/14.
  */
 public abstract class BadgeActivity extends ActionBarActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

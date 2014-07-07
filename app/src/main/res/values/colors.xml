@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="main_orange">#F8AC00</color>
+    <color name="accent_turquoise">#00A798</color>
+    <color name="main_text_black">#222222</color>
+    <color name="sub_text_gray">#777777</color>
+    <color name="light_text_gray">#999999</color>
+    <color name="action_bar_icons">#D0D4DF</color>
+</resources>
