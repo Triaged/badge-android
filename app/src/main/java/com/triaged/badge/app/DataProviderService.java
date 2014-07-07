@@ -12,6 +12,8 @@ import android.util.Log;
 
 import com.triaged.badge.data.Contact;
 
+import org.json.JSONException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -31,7 +33,7 @@ public class DataProviderService extends Service {
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
 
     protected static final String TABLE_CONTACTS = "contacts";
-    protected static final String COLUMN_CONTACT_ID = "_id";
+    public static final String COLUMN_CONTACT_ID = "_id";
     public static final String COLUMN_CONTACT_LAST_NAME = "last_name";
     public static final String COLUMN_CONTACT_FIRST_NAME = "first_name";
     public static final String COLUMN_CONTACT_AVATAR_URL= "avatar_url";
@@ -46,6 +48,7 @@ public class DataProviderService extends Service {
     protected long lastSynced;
     protected SharedPreferences prefs;
     protected BadgeApiClient apiClient;
+    protected ArrayList<Contact> contactList;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -60,6 +63,7 @@ public class DataProviderService extends Service {
         sqlThread = Executors.newSingleThreadExecutor();
         databaseHelper = new CompanySQLiteHelper();
         apiClient = new BadgeApiClient();
+        contactList = new ArrayList( 250 );
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -87,8 +91,8 @@ public class DataProviderService extends Service {
     }
 
     protected void readContacts( SQLiteDatabase db ) {
+        contactList.clear();
         Cursor contacts = db.rawQuery( String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME ), EMPTY_STRING_ARRAY );
-        ArrayList<Contact> contactList = new ArrayList( contacts.getCount() );
         while( contacts.moveToNext() ) {
             Contact contact = new Contact();
             contact.fromCursor( contacts );
@@ -100,10 +104,19 @@ public class DataProviderService extends Service {
         lastSynced = System.currentTimeMillis();
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
+            db.beginTransaction();
+            db.execSQL( String.format( "DELETE FROM %s", TABLE_CONTACTS ) );
             apiClient.downloadCompany(db, lastSynced);
+            db.setTransactionSuccessful();
         }
         catch( IOException e ) {
             Log.e( LOG_TAG, "IO exception downloading company that should be handled more softly than this.", e );
+        }
+        catch( JSONException e ) {
+            Log.e( LOG_TAG, "JSON from server not formatted correctly. Either we shouldn't have expected JSON or this is an api bug.", e );
+        }
+        finally {
+            db.endTransaction();
         }
     }
 
