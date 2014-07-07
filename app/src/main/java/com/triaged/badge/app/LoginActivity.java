@@ -1,6 +1,7 @@
 package com.triaged.badge.app;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,7 +29,8 @@ public class LoginActivity extends BadgeActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                
+                String email = loginEmail.getText().toString();
+                String password = loginPassword.getText().toString();
             }
         });
     }
