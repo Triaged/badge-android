@@ -5,6 +5,7 @@ import android.text.Editable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.EditTextWithFont;
 
@@ -31,6 +32,7 @@ public class LoginActivity extends BadgeActivity {
             public void onClick(View v) {
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
+                Toast.makeText(LoginActivity.this, email, Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -11,5 +11,8 @@
 
     <!-- CONTACT LISTVIEW ELEMENT -->
     <string name="content_description_thumb">Contact Thumbnail Image</string>
+    <string name="login_email_hint">Your Work Email Address</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_button">Continue</string>
 
 </resources>
