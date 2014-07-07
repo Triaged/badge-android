@@ -6,4 +6,5 @@
     <color name="sub_text_gray">#777777</color>
     <color name="light_text_gray">#999999</color>
     <color name="action_bar_icons">#D0D4DF</color>
+    <color name="white">#FFFFFF</color>
 </resources>
