@@ -13,10 +13,12 @@
         <item name="android:windowTitleSize">0dp</item>
         <item name="android:navigationMode">tabMode</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
     </style>
 
-    <style name="ActionBarTabStyle.Example" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
+    <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
         <item name="android:background">@drawable/tab_bg</item>
+        <item name="android:textColor">@color/light_text_gray</item>
     </style>
 
 </resources>
