@@ -46,7 +46,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface regular = null;
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-    private ServiceConnection dataProviderServiceConnnection = null;
 
     protected BroadcastReceiver receiver;
 
@@ -122,45 +121,28 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 setupContacts();
             }
         };
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.CONTACTS_AVAILABLE_INTENT);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
         localBroadcastManager.registerReceiver(receiver, filter);
 
-        dataProviderServiceConnnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.d(TAG, "SERVICE CONNECTED YAAAAY");
-                dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
-                setupContacts();
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                Log.d(TAG, "SERVICE DISCONNECTED BOOOOOO");
-            }
-        };
-
-        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
-            unbindService(dataProviderServiceConnnection);
-        }
-
-    }
-
-    private void setupContacts() {
-        if (dataProviderServiceBinding.getContacts() != null) {
-            // SETUP CONTACTS
-            contacts = dataProviderServiceBinding.getContacts();
-            contactsAdapter.contacts = contacts;
-            contactsAdapter.notifyDataSetChanged();
-        }
+        BadgeApplication app = (BadgeApplication) getApplication();
+        dataProviderServiceBinding = app.dataProviderServiceBinding;
+        setupContacts();
     }
 
     @Override
-    protected void onDestroy() {
-        unbindService(dataProviderServiceConnnection);
+    protected void onStop() {
+        super.onStop();
         localBroadcastManager.unregisterReceiver(receiver);
-        super.onDestroy();
+
     }
 
     @Override
@@ -176,5 +158,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
         Log.d(TAG, "TAB RESELECTED");
+    }
+
+
+    private void setupContacts() {
+        if (dataProviderServiceBinding.getContacts() != null) {
+            // SETUP CONTACTS
+            contacts = dataProviderServiceBinding.getContacts();
+            contactsAdapter.contacts = contacts;
+            contactsAdapter.notifyDataSetChanged();
+        }
     }
 }

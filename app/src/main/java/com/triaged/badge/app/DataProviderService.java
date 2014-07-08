@@ -174,5 +174,22 @@ public class DataProviderService extends Service {
         public List<Contact> getContacts() {
             return contactList;
         }
+
+        public Contact getContact(int contactId) {
+            if (database !=null ) {
+                Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
+                try {
+                    if (cursor.moveToFirst()) {
+                        Contact contact = new Contact();
+                        contact.fromCursor(cursor);
+                        return contact;
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+            return null;
+        }
+
     }
 }
