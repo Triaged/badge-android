@@ -64,7 +64,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         newView.setTag(holder);
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
-        holder.titleTextView.setText(String.valueOf(c.id));
+        holder.titleTextView.setText(c.jobTitle);
         return newView;
     }
 
@@ -73,7 +73,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         ViewHolder holder = (ViewHolder) view.getTag();
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
-        holder.titleTextView.setText(String.valueOf(c.id));
+        holder.titleTextView.setText(c.jobTitle);
     }
 
     @Override

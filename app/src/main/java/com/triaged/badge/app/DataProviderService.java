@@ -42,11 +42,41 @@ public class DataProviderService extends Service {
     public static final String COLUMN_CONTACT_LAST_NAME = "last_name";
     public static final String COLUMN_CONTACT_FIRST_NAME = "first_name";
     public static final String COLUMN_CONTACT_AVATAR_URL= "avatar_url";
+
+    public static final String COLUMN_CONTACT_JOB_TITLE = "job_title";
+    public static final String COLUMN_CONTACT_EMAIL = "email";
+    public static final String COLUMN_CONTACT_START_DATE = "start_date";
+    public static final String COLUMN_CONTACT_BIRTH_DATE = "birth_date";
+    public static final String COLUMN_CONTACT_CELL_PHONE = "cell_phone";
+    public static final String COLUMN_CONTACT_OFFICE_PHONE = "office_phone";
+    public static final String COLUMN_CONTACT_MANAGER_ID = "manager_id";
+    public static final String COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID = "primary_office_location_id";
+    public static final String COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID = "current_office_location_id";
+    public static final String COLUMN_CONTACT_DEPARTMENT_ID = "department_id";
+    public static final String COLUMN_CONTACT_SHARING_OFFICE_LOCATION = "sharing_office_location";
+
     public static final String CONTACTS_AVAILABLE_INTENT = "com.triage.badge.CONTACTS_AVAILABLE";
 
     private static final String SQL_DATABASE_NAME = "badge.db";
     private static final int DATABASE_VERSION = 1;
-    private static final String CREATE_DATABASE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text);", TABLE_CONTACTS, COLUMN_CONTACT_ID, COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL );
+    private static final String CREATE_DATABASE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
+            TABLE_CONTACTS,
+            COLUMN_CONTACT_ID,
+            COLUMN_CONTACT_FIRST_NAME,
+            COLUMN_CONTACT_LAST_NAME,
+            COLUMN_CONTACT_AVATAR_URL,
+            COLUMN_CONTACT_JOB_TITLE,
+            COLUMN_CONTACT_EMAIL,
+            COLUMN_CONTACT_START_DATE,
+            COLUMN_CONTACT_BIRTH_DATE,
+            COLUMN_CONTACT_CELL_PHONE,
+            COLUMN_CONTACT_OFFICE_PHONE,
+            COLUMN_CONTACT_MANAGER_ID,
+            COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+            COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID,
+            COLUMN_CONTACT_DEPARTMENT_ID,
+            COLUMN_CONTACT_SHARING_OFFICE_LOCATION
+    );
     private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
 
     protected ExecutorService sqlThread;

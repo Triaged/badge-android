@@ -81,6 +81,44 @@ public class BadgeApiClient extends DefaultHttpClient {
                     if( newContact.has( "avatar_face_url") ) {
                         values.put( DataProviderService.COLUMN_CONTACT_AVATAR_URL, newContact.getString( "avatar_face_url" ) );
                     }
+                    if( newContact.has( "email" ) ) {
+                        values.put( DataProviderService.COLUMN_CONTACT_EMAIL, newContact.getString( "email" ) );
+                    }
+                    if( newContact.has( "manager_id" ) && !newContact.get("manager_id").equals("") ) {
+                        values.put( DataProviderService.COLUMN_CONTACT_MANAGER_ID, newContact.getInt( "manager_id" ) );
+                    }
+                    if( newContact.has( "primary_office_location_id" ) && !newContact.get("primary_office_location_id").equals("") ) {
+                        values.put( DataProviderService.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, newContact.getInt( "primary_office_location_id" ) );
+                    }
+                    if( newContact.has( "current_office_location_id" ) && !newContact.get("current_office_location_id").equals("") ) {
+                        values.put( DataProviderService.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, newContact.getInt( "current_office_location_id" ) );
+                    }
+                    if( newContact.has( "department_id" ) && !newContact.get("department_id").equals("") ) {
+                        values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID, newContact.getInt( "department_id" ) );
+                    }
+                    if( newContact.has( "sharing_office_location" ) && !newContact.getString("sharing_office_location").equals("null") ) {
+                        boolean isSharing = newContact.getBoolean( "sharing_office_location" );
+                        int sharingInt = isSharing ? 1 : 0;
+                        values.put( DataProviderService.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt );
+                    }
+                    if( newContact.has("employee_info") ) {
+                        JSONObject employeeInfo = newContact.getJSONObject("employee_info");
+                        if ( employeeInfo.has( "job_title" ) ) {
+                            values.put( DataProviderService.COLUMN_CONTACT_JOB_TITLE, employeeInfo.getString( "job_title" ) );
+                        }
+                        if ( employeeInfo.has( "start_date" ) ) {
+                            values.put( DataProviderService.COLUMN_CONTACT_START_DATE, employeeInfo.getString( "start_date" ) );
+                        }
+                        if ( employeeInfo.has( "birth_date" ) ) {
+                            values.put( DataProviderService.COLUMN_CONTACT_BIRTH_DATE, employeeInfo.getString( "birth_date" ) );
+                        }
+                        if ( employeeInfo.has( "cell_phone" ) ) {
+                            values.put( DataProviderService.COLUMN_CONTACT_CELL_PHONE, employeeInfo.getString( "cell_phone" ) );
+                        }
+                        if ( employeeInfo.has( "office_phone" ) ) {
+                            values.put( DataProviderService.COLUMN_CONTACT_OFFICE_PHONE, employeeInfo.getString( "office_phone" ) );
+                        }
+                    }
                     db.insert( DataProviderService.TABLE_CONTACTS, "", values );
                     values.clear();
                 }
