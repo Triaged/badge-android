@@ -6,9 +6,12 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.triaged.badge.data.Contact;
 
@@ -16,6 +19,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,10 +53,14 @@ public class DataProviderService extends Service {
     protected SharedPreferences prefs;
     protected BadgeApiClient apiClient;
     protected ArrayList<Contact> contactList;
+    protected Handler handler;
+
+    private LocalBinding localBinding;
+
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return localBinding;
     }
 
     @Override
@@ -64,6 +72,8 @@ public class DataProviderService extends Service {
         databaseHelper = new CompanySQLiteHelper();
         apiClient = new BadgeApiClient();
         contactList = new ArrayList( 250 );
+        handler = new Handler();
+        localBinding = new LocalBinding();
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -88,6 +98,15 @@ public class DataProviderService extends Service {
         databaseHelper.close();
         apiClient.shutdown();
         database = null;
+    }
+
+    protected void contactsLoaded() {
+        if( contactList.size() > 0 ) {
+            Toast.makeText(this, "Loaded " + contactList.size() + " contacts successfully from api, first contact " + contactList.get(0).toString(), Toast.LENGTH_LONG).show();
+        }
+        else {
+            Log.e( LOG_TAG, "----------------------------------------- No contacts loaded, sad panda" );
+        }
     }
 
     protected void readContacts( SQLiteDatabase db ) {
@@ -136,6 +155,12 @@ public class DataProviderService extends Service {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             database.execSQL( "DROP TABLE IF EXISTS" + TABLE_CONTACTS + ";" );
             onCreate( database );
+        }
+    }
+
+    public class LocalBinding extends Binder {
+        public List<Contact> getContacts() {
+            return contactList;
         }
     }
 }

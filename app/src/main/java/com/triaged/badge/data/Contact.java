@@ -31,4 +31,9 @@ public class Contact {
         this.lastName = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_LAST_NAME ) );
         this.avatarUrl = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_AVATAR_URL ) );
     }
+
+    @Override
+    public String toString() {
+        return String.format( "Name: %s %s, avatar: %s, id: %d", firstName, lastName, avatarUrl, id );
+    }
 }
