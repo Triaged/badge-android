@@ -17,7 +17,6 @@
         android:textColor="@color/main_text_black"
         android:gravity="center"
         android:layout_centerHorizontal="true"
-        android:text="Captain Crunch"
         />
 
 </RelativeLayout>

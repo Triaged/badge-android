@@ -14,6 +14,7 @@
 
     <!-- CONTACT LISTVIEW ELEMENT -->
     <string name="content_description_thumb">Contact Thumbnail Image</string>
+    <string name="content_description_message_contact">Message Contact</string>
 
     <!-- CONTACTS ACTIVITY -->
     <string name="contacts_tab_contacts">Contacts</string>

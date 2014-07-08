@@ -1,6 +1,11 @@
 package com.triaged.badge.app;
 
 import android.app.Application;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.util.Log;
 
 /**
  * Custom implementation of the Android Application class that sets up global services and
@@ -10,8 +15,35 @@ import android.app.Application;
  */
 public class BadgeApplication extends Application {
 
+    private static final String TAG = BadgeApplication.class.getName();
+    public DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    public ServiceConnection dataProviderServiceConnnection = null;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        dataProviderServiceConnnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                Log.d(TAG, "SERVICE CONNECTED YAAAAY");
+                dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                Log.d(TAG, "SERVICE DISCONNECTED BOOOOOO");
+            }
+        };
+
+        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
+            unbindService(dataProviderServiceConnnection);
+        }
+    }
+
+    @Override
+    public void onTerminate() {
+        unbindService(dataProviderServiceConnnection);
+        super.onTerminate();
     }
 }

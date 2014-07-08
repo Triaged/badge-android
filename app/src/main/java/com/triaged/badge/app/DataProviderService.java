@@ -178,8 +178,32 @@ public class DataProviderService extends Service {
          * @return a cursor to all contact rows
          */
         public Cursor getContactsCursor() {
-            if( database != null ) {
-                return database.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
+            if (database != null) {
+                return database.rawQuery(QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY);
+            }
+            return null;
+        }
+
+        /**
+         * Query the db to get a contact given an id
+         *
+         * TODO: Optimize this method to have a cache of contacts.
+         *
+         * @param contactId, an integer
+         * @return a Contact
+         */
+        public Contact getContact(int contactId) {
+            if (database !=null ) {
+                Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
+                try {
+                    if (cursor.moveToFirst()) {
+                        Contact contact = new Contact();
+                        contact.fromCursor(cursor);
+                        return contact;
+                    }
+                } finally {
+                    cursor.close();
+                }
             }
             return null;
         }
@@ -192,5 +216,7 @@ public class DataProviderService extends Service {
         public boolean isInitialized() {
             return initialized;
         }
+
+
     }
 }
