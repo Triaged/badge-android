@@ -12,6 +12,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
@@ -22,19 +23,12 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
  */
 public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAdapter {
 
-    private ArrayList<Contact> contacts = null;
+    public List<Contact> contacts = null;
     private LayoutInflater inflater;
 
-    public ContactsAdapter(Context context, ArrayList<Object> contacts) {
+    public ContactsAdapter(Context context, List<Contact> contacts) {
         inflater = LayoutInflater.from(context);
-        this.contacts = new ArrayList<Contact>();
-        String[] names = new String[]{"Barfolomew", "Captain Lone Starr", "Colonel Sandurz", "Dark Helmet", "Dot Matrix", "King Roland", "Pizza the Hutt", "President Skroob", "Prince Valium", "Princess Vespa", "Yogurt"};
-        for (String name : names) {
-            Contact c = new Contact();
-            c.name = name;
-            this.contacts.add(c);
-        }
-
+        this.contacts = contacts;
     }
 
     @Override
@@ -49,7 +43,7 @@ public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAda
             holder = (HeaderViewHolder) convertView.getTag();
         }
 
-        String headerText = "" + contacts.get(i).name.subSequence(0,1).charAt(0);
+        String headerText = "" + contacts.get(i).lastName.subSequence(0,1).charAt(0);
         holder.textView.setText(headerText);
 
         return convertView;
@@ -76,7 +70,7 @@ public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAda
 
     @Override
     public long getHeaderId(int i) {
-        return contacts.get(i).name.subSequence(0,1).charAt(0);
+        return contacts.get(i).lastName.subSequence(0,1).charAt(0);
     }
 
     @Override

@@ -2,9 +2,16 @@ package com.triaged.badge.app;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -16,6 +23,7 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
@@ -30,7 +38,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
-    private ArrayList<Object> contactsList = null;
 
     private Button contactsTabButton = null;
     private Button departmentsTabButton = null;
@@ -38,23 +45,29 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface medium = null;
     private Typeface regular = null;
 
+    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    private ServiceConnection dataProviderServiceConnnection = null;
+
+    protected BroadcastReceiver receiver;
+
+    protected List<Contact> contacts = null;
+
+    private LocalBroadcastManager localBroadcastManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         requestWindowFeature(Window.FEATURE_ACTION_BAR);
         ActionBar actionBar = getActionBar();
-
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.addTab(actionBar.newTab().setText("A").setTabListener(this));
-        actionBar.addTab(actionBar.newTab().setText("B").setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setText("B").setTabListener(this), true);
         actionBar.addTab(actionBar.newTab().setText("C").setTabListener(this));
 
         setContentView(R.layout.activity_contacts);
-
-        contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
-        contactsList = new ArrayList<Object>();
 
         contactsTabButton = (Button) findViewById(R.id.contacts_tab);
         departmentsTabButton = (Button) findViewById(R.id.departments_tab);
@@ -87,6 +100,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             }
         });
 
+        contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
+        contacts = new ArrayList<Contact>();
+
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -95,8 +111,55 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             }
 
         });
-        contactsAdapter = new ContactsAdapter(this, contactsList);
+        contactsAdapter = new ContactsAdapter(this, contacts);
         contactsListView.setAdapter(contactsAdapter);
+
+        receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "CONTACTS AVAILABLE YAAAAY");
+                setupContacts();
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DataProviderService.CONTACTS_AVAILABLE_INTENT);
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localBroadcastManager.registerReceiver(receiver, filter);
+
+        dataProviderServiceConnnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                Log.d(TAG, "SERVICE CONNECTED YAAAAY");
+                dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
+                setupContacts();
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                Log.d(TAG, "SERVICE DISCONNECTED BOOOOOO");
+            }
+        };
+
+        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
+            unbindService(dataProviderServiceConnnection);
+        }
+
+    }
+
+    private void setupContacts() {
+        if (dataProviderServiceBinding.getContacts() != null) {
+            // SETUP CONTACTS
+            contacts = dataProviderServiceBinding.getContacts();
+            contactsAdapter.contacts = contacts;
+            contactsAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        unbindService(dataProviderServiceConnnection);
+        localBroadcastManager.unregisterReceiver(receiver);
+        super.onDestroy();
     }
 
     @Override

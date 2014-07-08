@@ -10,6 +10,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -41,6 +42,7 @@ public class DataProviderService extends Service {
     public static final String COLUMN_CONTACT_LAST_NAME = "last_name";
     public static final String COLUMN_CONTACT_FIRST_NAME = "first_name";
     public static final String COLUMN_CONTACT_AVATAR_URL= "avatar_url";
+    public static final String CONTACTS_AVAILABLE_INTENT = "com.triage.badge.CONTACTS_AVAILABLE";
 
     private static final String SQL_DATABASE_NAME = "badge.db";
     private static final int DATABASE_VERSION = 1;
@@ -56,6 +58,8 @@ public class DataProviderService extends Service {
     protected Handler handler;
 
     private LocalBinding localBinding;
+
+    private LocalBroadcastManager localBroadcastManager;
 
 
     @Override
@@ -74,19 +78,26 @@ public class DataProviderService extends Service {
         contactList = new ArrayList( 250 );
         handler = new Handler();
         localBinding = new LocalBinding();
+
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
-                database = databaseHelper.getWritableDatabase();
-                // TODO for now just making sure this runs at most once per half hour.
-                // In the future it should ask for any records modified since last sync
-                // every time.
+                try {
+                    database = databaseHelper.getWritableDatabase();
+                    // TODO for now just making sure this runs at most once per half hour.
+                    // In the future it should ask for any records modified since last sync
+                    // every time.
 
-                if( lastSynced < System.currentTimeMillis() - 1800000 ) {
-                    syncCompany(database);
+                    if (lastSynced < System.currentTimeMillis() - 1800000) {
+                        syncCompany(database);
+                    }
+                    // Populate list of contacts.
+                    readContacts(database);
+                } catch (Throwable t) {
+                    Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
                 }
-                // Populate list of contacts.
-                readContacts(database);
             }
         }  );
     }
@@ -117,6 +128,7 @@ public class DataProviderService extends Service {
             contact.fromCursor( contacts );
             contactList.add( contact );
         }
+        localBroadcastManager.sendBroadcast(new Intent(CONTACTS_AVAILABLE_INTENT));
     }
 
     protected void syncCompany( SQLiteDatabase db ) {
@@ -147,14 +159,14 @@ public class DataProviderService extends Service {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            database.execSQL(CREATE_DATABASE_SQL);
+            db.execSQL(CREATE_DATABASE_SQL);
             syncCompany( db );
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            database.execSQL( "DROP TABLE IF EXISTS" + TABLE_CONTACTS + ";" );
-            onCreate( database );
+            db.execSQL( "DROP TABLE IF EXISTS" + TABLE_CONTACTS + ";" );
+            onCreate( db );
         }
     }
 

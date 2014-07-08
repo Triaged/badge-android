@@ -9,4 +9,9 @@ import android.app.Application;
  * Created by Will on 7/7/14.
  */
 public class BadgeApplication extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
 }

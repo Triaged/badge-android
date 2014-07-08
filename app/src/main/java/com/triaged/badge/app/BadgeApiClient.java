@@ -63,7 +63,8 @@ public class BadgeApiClient extends DefaultHttpClient {
             if (statusCode == HttpStatus.SC_OK) {
                 ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 256 * 1024 /* 256 k */ );
                 response.getEntity().writeTo( jsonBuffer );
-                JSONObject companyObj = new JSONObject( jsonBuffer.toString( "UTF-8" ) );
+                JSONArray companyArr = new JSONArray( jsonBuffer.toString( "UTF-8" ) );
+                JSONObject companyObj = companyArr.getJSONObject(0);
                 // Allow immediate GC
                 jsonBuffer = null;
                 ContentValues values = new ContentValues();
