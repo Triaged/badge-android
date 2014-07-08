@@ -57,6 +57,7 @@ public class DataProviderService extends Service {
     protected BadgeApiClient apiClient;
     protected ArrayList<Contact> contactList;
     protected Handler handler;
+    protected volatile boolean initialized;
 
     private LocalBinding localBinding;
 
@@ -94,6 +95,9 @@ public class DataProviderService extends Service {
                     if (lastSynced < System.currentTimeMillis() - 1800000) {
                         syncCompany(database);
                     }
+
+                    initialized = true;
+
                     // Populate list of contacts.
                     readContacts(database);
                 } catch (Throwable t) {
@@ -112,23 +116,14 @@ public class DataProviderService extends Service {
         database = null;
     }
 
-    protected void contactsLoaded() {
-        if( contactList.size() > 0 ) {
-            Toast.makeText(this, "Loaded " + contactList.size() + " contacts successfully from api, first contact " + contactList.get(0).toString(), Toast.LENGTH_LONG).show();
-        }
-        else {
-            Log.e( LOG_TAG, "----------------------------------------- No contacts loaded, sad panda" );
-        }
-    }
-
     protected void readContacts( SQLiteDatabase db ) {
         contactList.clear();
-        Cursor contacts = db.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
-        while( contacts.moveToNext() ) {
-            Contact contact = new Contact();
-            contact.fromCursor( contacts );
-            contactList.add( contact );
-        }
+//        Cursor contacts = db.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
+//        while( contacts.moveToNext() ) {
+//            Contact contact = new Contact();
+//            contact.fromCursor( contacts );
+//            contactList.add( contact );
+//        }
         localBroadcastManager.sendBroadcast(new Intent(CONTACTS_AVAILABLE_INTENT));
     }
 
@@ -187,6 +182,15 @@ public class DataProviderService extends Service {
                 return database.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
             }
             return null;
+        }
+
+        /**
+         * Reports whether the database is initialized and ready to return data.
+         *
+         * @return true if data is available
+         */
+        public boolean isInitialized() {
+            return initialized;
         }
     }
 }
