@@ -17,6 +17,7 @@
             android:name="com.triaged.badge.app.ContactsActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
+            android:theme="@style/Tabbed"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

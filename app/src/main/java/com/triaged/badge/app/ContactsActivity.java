@@ -1,11 +1,16 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.data.Contact;
@@ -20,8 +25,9 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  *
  */
 
-public class ContactsActivity extends BadgeActivity {
+public class ContactsActivity extends BadgeActivity implements ActionBar.TabListener {
 
+    private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
     private ArrayList<Object> contactsList = null;
@@ -35,6 +41,16 @@ public class ContactsActivity extends BadgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+        ActionBar actionBar = getActionBar();
+
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayUseLogoEnabled(false);
+        actionBar.addTab(actionBar.newTab().setText("A").setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setText("B").setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setText("C").setTabListener(this));
+
         setContentView(R.layout.activity_contacts);
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
@@ -83,4 +99,18 @@ public class ContactsActivity extends BadgeActivity {
         contactsListView.setAdapter(contactsAdapter);
     }
 
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.d(TAG, "TAB SELECTED");
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.d(TAG, "TAB UNSELECTED");
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.d(TAG, "TAB RESELECTED");
+    }
 }
