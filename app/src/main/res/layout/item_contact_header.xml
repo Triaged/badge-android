@@ -4,7 +4,6 @@
     android:layout_width="match_parent" android:layout_height="48dp"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:descendantFocusability="blocksDescendants"
-    android:background="@color/white"
     >
 
     <com.triaged.badge.app.views.TextViewWithFont

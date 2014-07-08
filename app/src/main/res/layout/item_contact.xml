@@ -6,7 +6,7 @@
     android:descendantFocusability="blocksDescendants"
     >
 
-    <ImageButton
+    <ImageView
         android:id="@+id/contact_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/main_text_black"
         android:layout_toRightOf="@id/contact_thumb"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:textSize="18sp"
         custom:font="Roboto-Regular.ttf"
         />
@@ -37,6 +37,25 @@
         android:layout_below="@id/contact_name"
         android:textSize="14sp"
         custom:font="Roboto-Regular.ttf"
+        />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="23dp"
+        android:background="@color/light_divider"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="48dp"
+        />
+    
+    <ImageView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginRight="8dp"
+        android:src="@drawable/ic_action_chat"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/content_description_message_contact"
         />
 
 </RelativeLayout>

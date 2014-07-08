@@ -6,12 +6,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.Contact;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
@@ -56,15 +56,16 @@ public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAda
         if (convertView == null) {
             holder = new ViewHolder();
             convertView = inflater.inflate(R.layout.item_contact, parent, false);
-            holder.textView = (TextView) convertView.findViewById(R.id.contact_name);
+            holder.nameTextView = (TextView) convertView.findViewById(R.id.contact_name);
+            holder.titleTextView = (TextView) convertView.findViewById(R.id.contact_title);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
         Contact c = contacts.get(position);
-        holder.textView.setText(c.name);
-
+        holder.nameTextView.setText(c.name);
+        holder.titleTextView.setText(String.valueOf(c.id));
         return convertView;
     }
 
@@ -93,7 +94,9 @@ public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAda
     }
 
     class ViewHolder {
-        TextView textView;
+        TextView nameTextView;
+        TextView titleTextView;
+        ImageView thumbImage;
     }
 
 }
