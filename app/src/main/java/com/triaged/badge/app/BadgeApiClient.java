@@ -96,26 +96,26 @@ public class BadgeApiClient extends DefaultHttpClient {
                     if( newContact.has( "department_id" ) && !newContact.get("department_id").equals("") ) {
                         values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID, newContact.getInt( "department_id" ) );
                     }
-                    if( newContact.has( "sharing_office_location" ) && !newContact.getString("sharing_office_location").equals("null") ) {
+                    if( newContact.has( "sharing_office_location" ) && !newContact.isNull("sharing_office_location") ) {
                         boolean isSharing = newContact.getBoolean( "sharing_office_location" );
                         int sharingInt = isSharing ? 1 : 0;
                         values.put( DataProviderService.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt );
                     }
                     if( newContact.has("employee_info") ) {
                         JSONObject employeeInfo = newContact.getJSONObject("employee_info");
-                        if ( employeeInfo.has( "job_title" ) ) {
+                        if ( employeeInfo.has( "job_title" ) && !employeeInfo.isNull("job_title") ) {
                             values.put( DataProviderService.COLUMN_CONTACT_JOB_TITLE, employeeInfo.getString( "job_title" ) );
                         }
-                        if ( employeeInfo.has( "start_date" ) ) {
+                        if ( employeeInfo.has( "start_date" ) && !employeeInfo.isNull("start_date") ) {
                             values.put( DataProviderService.COLUMN_CONTACT_START_DATE, employeeInfo.getString( "start_date" ) );
                         }
-                        if ( employeeInfo.has( "birth_date" ) ) {
+                        if ( employeeInfo.has( "birth_date" ) && !employeeInfo.isNull("birth_date") ) {
                             values.put( DataProviderService.COLUMN_CONTACT_BIRTH_DATE, employeeInfo.getString( "birth_date" ) );
                         }
-                        if ( employeeInfo.has( "cell_phone" ) ) {
+                        if ( employeeInfo.has( "cell_phone" ) && !employeeInfo.isNull("cell_phone") ) {
                             values.put( DataProviderService.COLUMN_CONTACT_CELL_PHONE, employeeInfo.getString( "cell_phone" ) );
                         }
-                        if ( employeeInfo.has( "office_phone" ) ) {
+                        if ( employeeInfo.has( "office_phone" ) && !employeeInfo.isNull("office_phone") ) {
                             values.put( DataProviderService.COLUMN_CONTACT_OFFICE_PHONE, employeeInfo.getString( "office_phone" ) );
                         }
                     }
