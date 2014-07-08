@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -50,9 +52,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     protected BroadcastReceiver receiver;
 
-    protected List<Contact> contacts = null;
-
     private LocalBroadcastManager localBroadcastManager;
+    private Cursor contactsCursor = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +102,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
-        contacts = new ArrayList<Contact>();
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -111,8 +111,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             }
 
         });
-        contactsAdapter = new ContactsAdapter(this, contacts);
-        contactsListView.setAdapter(contactsAdapter);
 
         receiver = new BroadcastReceiver() {
             @Override
@@ -149,14 +147,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private void setupContacts() {
         if (dataProviderServiceBinding.getContacts() != null) {
             // SETUP CONTACTS
-            contacts = dataProviderServiceBinding.getContacts();
-            contactsAdapter.contacts = contacts;
-            contactsAdapter.notifyDataSetChanged();
+            contactsCursor = dataProviderServiceBinding.getContactsCursor();
+            contactsAdapter = new ContactsAdapter(this, contactsCursor );
+            contactsListView.setAdapter(contactsAdapter);
         }
     }
 
     @Override
     protected void onDestroy() {
+        if( contactsCursor != null ) {
+            contactsCursor.close();
+        }
         unbindService(dataProviderServiceConnnection);
         localBroadcastManager.unregisterReceiver(receiver);
         super.onDestroy();

@@ -1,13 +1,17 @@
 package com.triaged.badge.app.views;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.CursorAdapter;
 import android.widget.TextView;
 
+import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.Contact;
 
@@ -21,18 +25,19 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
  *
  * Created by Will on 7/7/14.
  */
-public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAdapter {
+public class ContactsAdapter extends CursorAdapter implements StickyListHeadersAdapter {
 
-    public List<Contact> contacts = null;
+    LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
 
-    public ContactsAdapter(Context context, List<Contact> contacts) {
+    public ContactsAdapter(Context context, Cursor cursor ) {
+        super( context, cursor, false );
         inflater = LayoutInflater.from(context);
-        this.contacts = contacts;
+        contactCache = new LruCache<Integer, Contact>( 100 );
     }
 
     @Override
-    public View getHeaderView(int i, View convertView, ViewGroup parent) {
+    public View getHeaderView(int position, View convertView, ViewGroup parent) {
         HeaderViewHolder holder;
         if (convertView == null) {
             holder = new HeaderViewHolder();
@@ -43,50 +48,65 @@ public class ContactsAdapter extends BaseAdapter implements StickyListHeadersAda
             holder = (HeaderViewHolder) convertView.getTag();
         }
 
-        String headerText = "" + contacts.get(i).lastName.subSequence(0,1).charAt(0);
+        Contact c = getCachedContact( position );
+        String headerText = "" + c.lastName.subSequence(0,1).charAt(0);
         holder.textView.setText(headerText);
 
         return convertView;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        ViewHolder holder;
-        if (convertView == null) {
-            holder = new ViewHolder();
-            convertView = inflater.inflate(R.layout.item_contact, parent, false);
-            holder.textView = (TextView) convertView.findViewById(R.id.contact_name);
-            convertView.setTag(holder);
-        } else {
-            holder = (ViewHolder) convertView.getTag();
-        }
-
-        Contact c = contacts.get(position);
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        ViewHolder holder = new ViewHolder();
+        View newView =  inflater.inflate(R.layout.item_contact, parent, false);
+        holder.textView = (TextView) newView.findViewById(R.id.contact_name);
+        newView.setTag(holder);
+        Contact c = getCachedContact( cursor );
         holder.textView.setText(c.name);
-
-        return convertView;
+        return newView;
     }
 
     @Override
-    public long getHeaderId(int i) {
-        return contacts.get(i).lastName.subSequence(0,1).charAt(0);
+    public void bindView(View view, Context context, Cursor cursor) {
+        ViewHolder holder = (ViewHolder) view.getTag();
+        Contact c = getCachedContact( cursor );
+        holder.textView.setText(c.name);
     }
 
     @Override
-    public int getCount() {
-        return contacts.size();
+    public long getHeaderId(int  position ) {
+        return getCachedContact( position ).lastName.subSequence(0,1).charAt(0);
     }
 
-    @Override
-    public Object getItem(int position) {
-        return contacts.get(position);
+    private Contact getCachedContact( int position ) {
+        return getCachedContact( (Cursor)getItem( position ) );
     }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
+    private Contact getCachedContact( Cursor cursor ) {
+        int id = cursor.getInt( cursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_ID ) );
+        Contact c = contactCache.get( id );
+        if( c == null ) {
+            c = new Contact();
+            c.fromCursor( cursor );
+            contactCache.put( c.id, c  );
+        }
+        return c;
     }
+
+//    @Override
+//    public int getCount() {
+//        return contacts.size();
+//    }
+//
+//    @Override
+//    public Object getItem(int position) {
+//        return contacts.get(position);
+//    }
+//
+//    @Override
+//    public long getItemId(int position) {
+//        return position;
+//    }
 
     class HeaderViewHolder {
         TextView textView;

@@ -47,6 +47,7 @@ public class DataProviderService extends Service {
     private static final String SQL_DATABASE_NAME = "badge.db";
     private static final int DATABASE_VERSION = 1;
     private static final String CREATE_DATABASE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text);", TABLE_CONTACTS, COLUMN_CONTACT_ID, COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL );
+    private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
@@ -122,7 +123,7 @@ public class DataProviderService extends Service {
 
     protected void readContacts( SQLiteDatabase db ) {
         contactList.clear();
-        Cursor contacts = db.rawQuery( String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME ), EMPTY_STRING_ARRAY );
+        Cursor contacts = db.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
         while( contacts.moveToNext() ) {
             Contact contact = new Contact();
             contact.fromCursor( contacts );
@@ -173,6 +174,19 @@ public class DataProviderService extends Service {
     public class LocalBinding extends Binder {
         public List<Contact> getContacts() {
             return contactList;
+        }
+
+        /**
+         * Query the db to get a cursor to the latest set of all contacts.
+         * Caller is responsible for closing the cursor when finished.
+         *
+         * @return a cursor to all contact rows
+         */
+        public Cursor getContactsCursor() {
+            if( database != null ) {
+                return database.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
+            }
+            return null;
         }
     }
 }
