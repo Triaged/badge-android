@@ -14,6 +14,7 @@ public class Contact {
     public String firstName;
     public String lastName;
     public String avatarUrl;
+    public String name;
 
     public Contact() {
 
@@ -30,6 +31,7 @@ public class Contact {
         this.firstName = contactCursor.getString( contactCursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_FIRST_NAME ) );
         this.lastName = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_LAST_NAME ) );
         this.avatarUrl = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_AVATAR_URL ) );
+        this.name = String.format( "%s %s", firstName, lastName );
     }
 
     @Override

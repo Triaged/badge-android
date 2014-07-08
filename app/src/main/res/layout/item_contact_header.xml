@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="48dp"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:descendantFocusability="blocksDescendants"
+    android:background="@color/white"
+    >
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/section_heading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="6dp"
+        android:layout_marginLeft="24dp"
+        android:textColor="@color/sub_text_gray"
+        android:textAllCaps="true"
+        android:textSize="14sp"
+        custom:font="Roboto-Bold.ttf"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentBottom="true"
+        android:background="@color/dark_divider" />
+
+</RelativeLayout>
