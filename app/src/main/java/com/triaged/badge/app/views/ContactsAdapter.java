@@ -2,6 +2,7 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -61,10 +62,12 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         View newView =  inflater.inflate(R.layout.item_contact, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
+        holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
         newView.setTag(holder);
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        setContactImage( c, holder.thumbImage );
         return newView;
     }
 
@@ -74,6 +77,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        setContactImage(c, holder.thumbImage );
     }
 
     @Override
@@ -94,6 +98,10 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             contactCache.put( c.id, c  );
         }
         return c;
+    }
+
+    private void setContactImage( Contact c, ImageView thumbImageView ) {
+
     }
 
 //    @Override
