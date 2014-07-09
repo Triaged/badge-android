@@ -4,6 +4,7 @@
     android:layout_width="match_parent" android:layout_height="48dp"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:descendantFocusability="blocksDescendants"
+    android:background="@drawable/section_header_background"
     >
 
     <com.triaged.badge.app.views.TextViewWithFont
@@ -18,11 +19,5 @@
         android:textSize="14sp"
         custom:font="Roboto-Bold.ttf"
         />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_alignParentBottom="true"
-        android:background="@color/dark_divider" />
 
 </RelativeLayout>

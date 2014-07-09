@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
@@ -29,11 +30,13 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
+    private float densityMultiplier = 1;
 
     public ContactsAdapter(Context context, Cursor cursor ) {
         super( context, cursor, false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
+        densityMultiplier = context.getResources().getDisplayMetrics().density;
     }
 
     @Override
@@ -65,6 +68,17 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        if (c.jobTitle == null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0,0,0,0);
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        } else {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
+            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        }
         return newView;
     }
 
@@ -74,6 +88,17 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        if (c.jobTitle == null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0,0,0,0);
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        } else {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
+            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        }
     }
 
     @Override

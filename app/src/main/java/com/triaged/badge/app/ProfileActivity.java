@@ -118,9 +118,15 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        overridePendingTransition(0,0);
+    }
+
+    @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
         if ( tab.getPosition() == 0) {
-              tab.setIcon(R.drawable.messages_selected);
+              // tab.setIcon(R.drawable.messages_selected);
 //            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
 //            startActivity(intent);
         } else if (tab.getPosition() == 1) {

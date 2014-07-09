@@ -148,6 +148,12 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        overridePendingTransition(0,0);
+    }
+
+    @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
         Log.d(TAG, "TAB SELECTED");
     }
