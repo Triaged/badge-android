@@ -48,8 +48,8 @@ public class ProfileContactInfoView extends View {
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         if (secondaryValue == null) {
             canvas.drawText(primaryValue, leftTextOffset, noTitleTextOffset, primaryPaint);
         } else {

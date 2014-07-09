@@ -1,6 +1,7 @@
 package com.triaged.badge.app.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.text.TextPaint;
@@ -12,19 +13,30 @@ import android.view.View;
  */
 public class ProfileManagesUserView extends ProfileContactInfoView {
 
+    private Bitmap bitmap;
+    private float densityMultiplier;
+
     public ProfileManagesUserView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        float densityMultiplier = context.getResources().getDisplayMetrics().density;
+        densityMultiplier = context.getResources().getDisplayMetrics().density;
         primaryPaint.setTextSize(18 * densityMultiplier);
         primaryTextTopOffset = 29 * densityMultiplier;
         noTitleTextOffset = 39 * densityMultiplier;
         secondaryTextTopOffset = 49 * densityMultiplier;
-        leftTextOffset = 53f * densityMultiplier;
+        leftTextOffset = 74f * densityMultiplier;
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (bitmap != null) {
+            canvas.drawBitmap(bitmap, 16 * densityMultiplier, (getHeight() - bitmap.getHeight()) /2 , null);
+        }
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+        invalidate();
     }
 }

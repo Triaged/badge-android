@@ -416,14 +416,14 @@ public class DataProviderService extends Service {
                     HttpResponse response = httpClient.execute(host, imageGet);
                     if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
                         InputStream imgStream = response.getEntity().getContent();
-                        Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
+                        final Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
                         imgStream.close();
                         if( bitmap != null ) {
-                            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
+                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
                             handler.post( new Runnable() {
                                 @Override
                                 public void run() {
-                                    thumbImageView.setImageBitmap( scaledBitmap );
+                                    thumbImageView.setImageBitmap( bitmap );
                                 }
                             } );
 
