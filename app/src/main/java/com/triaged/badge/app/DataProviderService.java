@@ -78,6 +78,7 @@ public class DataProviderService extends Service {
             COLUMN_CONTACT_SHARING_OFFICE_LOCATION
     );
     private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
+    private static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s FROM %s WHERE %s = ?", COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL, COLUMN_CONTACT_JOB_TITLE, TABLE_CONTACTS, COLUMN_CONTACT_MANAGER_ID );
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
@@ -196,6 +197,22 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * Return a cursor to a set of contact rows that the given id manages.
+     * Only name, avatar, and title columns are available in the returned cursor.
+     *
+     * Caller must close the Cursor when no longer needed.
+     *
+     * @param contactId manager id
+     * @return db cursor
+     */
+    protected Cursor getContactsManaged( int contactId ) {
+        if( database != null  ) {
+            return database.rawQuery( SELECT_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
+        }
+        return null;
+    }
+
     public class LocalBinding extends Binder {
         public List<Contact> getContacts() {
             return contactList;
@@ -247,6 +264,11 @@ public class DataProviderService extends Service {
             return initialized;
         }
 
-
+        /**
+         * @see com.triaged.badge.app.DataProviderService#getContactsManaged(int)
+         */
+        public Cursor getContactsManaged( int contactId ) {
+            return DataProviderService.this.getContactsManaged( contactId );
+        }
     }
 }
