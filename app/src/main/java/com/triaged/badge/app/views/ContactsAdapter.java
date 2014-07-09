@@ -10,9 +10,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
@@ -63,7 +65,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         ViewHolder holder = new ViewHolder();
         View newView =  inflater.inflate(R.layout.item_contact, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
@@ -73,6 +75,13 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        holder.messageButton = (ImageButton) newView.findViewById(R.id.message_contact);
+        holder.messageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
+            }
+        });
         if (c.jobTitle == null) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
             layoutParams.setMargins(0,0,0,0);
@@ -151,6 +160,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         TextView nameTextView;
         TextView titleTextView;
         ImageView thumbImage;
+        ImageButton messageButton;
     }
 
 }

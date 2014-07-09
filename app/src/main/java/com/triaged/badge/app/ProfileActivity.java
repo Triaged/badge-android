@@ -40,6 +40,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     private ProfileContactInfoView birthDateView = null;
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
+    private TextView managesHeader = null;
 
     private ListView manangesListView = null;
     private ProfileManagesAdapter managesAdapter;;
@@ -69,6 +70,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
         profileImage = (ImageView)findViewById( R.id.profile_image );
         manangesListView = (ListView) findViewById(R.id.manages_list);
+        managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
 
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
@@ -96,6 +98,10 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_selected).select();
     }
 
     @Override
@@ -126,10 +132,6 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     }
 
     private void setupProfile() {
-        ActionBar actionBar = getActionBar();
-        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
-        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
-        actionBar.getTabAt(2).setIcon(R.drawable.profile_selected).select();
         manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -174,6 +176,11 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
                 startDateView.invalidate();
             }
             Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
+            if (managedContactsCursor.getCount() > 0) {
+                managesHeader.setVisibility(View.VISIBLE);
+            } else {
+                managesHeader.setVisibility(View.GONE);
+            }
             managesAdapter = new ProfileManagesAdapter(getBaseContext(), managedContactsCursor, dataProviderServiceBinding);
             manangesListView.setAdapter(managesAdapter);
             currentLocationView.isOn = false;

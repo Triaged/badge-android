@@ -152,6 +152,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
     }
 
     @Override
