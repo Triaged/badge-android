@@ -351,8 +351,14 @@ public class DataProviderService extends Service {
                     if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
                         Bitmap bitmap = BitmapFactory.decodeStream( response.getEntity().getContent() );
                         if( bitmap != null ) {
-                            bitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
-                            thumbImageView.setImageBitmap(bitmap);
+                            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
+                            handler.post( new Runnable() {
+                                @Override
+                                public void run() {
+                                    thumbImageView.setImageBitmap( scaledBitmap );
+                                }
+                            } );
+
                             thumbCache.put(urlStr, bitmap);
                         }
                         else {
