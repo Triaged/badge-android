@@ -13,6 +13,7 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.Contact;
@@ -30,11 +31,13 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
+    private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
-    public ContactsAdapter(Context context, Cursor cursor ) {
+    public ContactsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
         super( context, cursor, false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
+        this.dataProviderServiceBinding = dataProviderServiceBinding;
     }
 
     @Override
@@ -67,7 +70,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
-        setContactImage( c, holder.thumbImage );
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
         return newView;
     }
 
@@ -77,7 +80,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
-        setContactImage(c, holder.thumbImage );
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
     }
 
     @Override
