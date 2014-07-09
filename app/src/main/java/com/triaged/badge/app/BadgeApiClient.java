@@ -21,6 +21,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -63,11 +64,23 @@ public class BadgeApiClient extends DefaultHttpClient {
             if (statusCode == HttpStatus.SC_OK) {
                 ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 256 * 1024 /* 256 k */ );
                 response.getEntity().writeTo( jsonBuffer );
+
+
                 JSONArray companyArr = new JSONArray( jsonBuffer.toString( "UTF-8" ) );
                 JSONObject companyObj = companyArr.getJSONObject(0);
                 // Allow immediate GC
                 jsonBuffer = null;
                 ContentValues values = new ContentValues();
+
+                HashMap<Integer, String> departmentMap = new HashMap<Integer, String>( deptsArr.length(), 1f );
+                if( companyObj.has( "uses_departments" ) && companyObj.getBoolean( "uses_departments" ) ) {
+                    JSONArray deptsArr = companyObj.getJSONArray( "departments" );
+                    for( int i = 0; i < deptsArr.length(); i++ ) {
+                        JSONObject dept = deptsArr.getJSONObject( i );
+                        departmentMap.put( dept.getInt( "id" ), dept.getString( "name" ) );
+                    }
+                }
+
                 JSONArray contactsArr = companyObj.getJSONArray( "users" );
                 for( int i = 0; i < contactsArr.length(); i++ ) {
                     JSONObject newContact = contactsArr.getJSONObject(i);
@@ -94,7 +107,9 @@ public class BadgeApiClient extends DefaultHttpClient {
                         values.put( DataProviderService.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, newContact.getInt( "current_office_location_id" ) );
                     }
                     if( newContact.has( "department_id" ) && !newContact.get("department_id").equals("") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID, newContact.getInt( "department_id" ) );
+                        int departmentId = newContact.getInt( "department_id" );
+                        values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
+                        values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_NAME, departmentMap.get( departmentId ) );
                     }
                     if( newContact.has( "sharing_office_location" ) && !newContact.isNull("sharing_office_location") ) {
                         boolean isSharing = newContact.getBoolean( "sharing_office_location" );
