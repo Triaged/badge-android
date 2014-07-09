@@ -24,5 +24,6 @@
     <string name="profile_heading_availability">Availability</string>
     <string name="profile_heading_manages">Manages</string>
     <string name="profile_heading_contact">Contact Information</string>
+    <string name="content_description_profile_image">Profile Image</string>
 
 </resources>

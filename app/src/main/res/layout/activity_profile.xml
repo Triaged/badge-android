@@ -17,6 +17,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginTop="23dp"
+            android:contentDescription="@string/content_description_profile_image"
             />
 
         <com.triaged.badge.app.views.TextViewWithFont
@@ -36,7 +37,6 @@
             android:layout_height="wrap_content"
             android:textColor="@color/light_text_gray"
             android:gravity="center"
-            android:layout_centerHorizontal="true"
             android:textSize="15sp"
             custom:font="Roboto-Regular.ttf"
             />

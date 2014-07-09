@@ -43,7 +43,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     private TextView managesHeader = null;
 
     private ListView manangesListView = null;
-    private ProfileManagesAdapter managesAdapter;;
+    private ProfileManagesAdapter managesAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

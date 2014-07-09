@@ -24,14 +24,12 @@ public class ProfileManagesAdapter extends CursorAdapter {
 
     LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
-    private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     public ProfileManagesAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
         super( context, cursor, false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
-        densityMultiplier = context.getResources().getDisplayMetrics().density;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
     }
 
