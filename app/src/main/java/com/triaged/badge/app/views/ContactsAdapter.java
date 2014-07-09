@@ -103,10 +103,6 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         return c;
     }
 
-    private void setContactImage( Contact c, ImageView thumbImageView ) {
-
-    }
-
 //    @Override
 //    public int getCount() {
 //        return contacts.size();
