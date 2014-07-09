@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -29,6 +30,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     private Contact contact = null;
     private TextView profileName = null;
     private TextView profileTitle = null;
+    private ImageView profileImage = null;
     private ProfileContactInfoView emailView = null;
     private ProfileContactInfoView officePhoneView = null;
     private ProfileContactInfoView cellPhoneView = null;
@@ -62,7 +64,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
         birthDateView = (ProfileContactInfoView) findViewById(R.id.profile_birth_date);
         startDateView = (ProfileContactInfoView) findViewById(R.id.profile_start_date);
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
-
+        profileImage = (ImageView)findViewById( R.id.profile_image );
         manangesListView = (ListView) findViewById(R.id.manages_list);
     }
 
@@ -74,6 +76,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
         Intent intent = getIntent();
         int id = intent.getIntExtra("PROFILE_ID", 0);
         contact = dataProviderServiceBinding.getContact(id);
+        dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
         if (contact != null) {
             profileName.setText(contact.name);
             profileTitle.setText(contact.jobTitle);

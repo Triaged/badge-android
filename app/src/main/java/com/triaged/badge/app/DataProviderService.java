@@ -33,6 +33,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -294,8 +295,20 @@ public class DataProviderService extends Service {
             thumbImageView.setImageBitmap( b );
         }
         else {
-            new DownloadImageTask( c.avatarUrl, thumbImageView ).execute();
+            new DownloadImageTask( c.avatarUrl, thumbImageView, thumbCache ).execute();
         }
+    }
+
+    /**
+     * Downloads the image each time it's called and sets the bitmap resource on the imageview.
+     *
+     * TODO This should use the same disk cache as the small contact image once that's implemented.
+     *
+     * @param c contact
+     * @param imageView
+     */
+    protected void setLargeContactImage( Contact c, ImageView imageView ) {
+        new DownloadImageTask( c.avatarUrl, imageView ).execute();
     }
 
     /**
@@ -334,6 +347,13 @@ public class DataProviderService extends Service {
         }
 
         /**
+         * @see com.triaged.badge.app.DataProviderService#setLargeContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
+         */
+        public void setLargeContactImage( Contact c, ImageView imageView ) {
+            DataProviderService.this.setLargeContactImage( c, imageView );
+        }
+
+        /**
          * Reports whether the database is initialized and ready to return data.
          *
          * @return true if data is available
@@ -350,13 +370,37 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * Background task to fetch an image from the server, set it as the resource
+     * for an image view, and optionally cache the image for future use.
+     */
     private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
         private String urlStr = null;
         private ImageView thumbImageView = null;
+        private LruCache<String, Bitmap> memoryCache = null;
 
-        protected DownloadImageTask( String url, ImageView thumbImageView ) {
+
+        /**
+         * Task won't save images in a memory cache.
+         *
+         * @param url
+         * @param thumbImageView
+         */
+        protected DownloadImageTask( String url, ImageView thumbImageView  ) {
+            this( url, thumbImageView, null );
+        }
+
+        /**
+         * Task will save images in a memory cache.
+         *
+         * @param url
+         * @param thumbImageView
+         * @param memoryCache cache to put image in to after downloading.
+         */
+        protected DownloadImageTask( String url, ImageView thumbImageView, LruCache<String, Bitmap> memoryCache ) {
             this.urlStr = url;
             this.thumbImageView = thumbImageView;
+            this.memoryCache = memoryCache;
         }
 
         @Override
@@ -371,7 +415,9 @@ public class DataProviderService extends Service {
                     HttpHost host = new HttpHost( uri.getHost() );
                     HttpResponse response = httpClient.execute(host, imageGet);
                     if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
-                        Bitmap bitmap = BitmapFactory.decodeStream( response.getEntity().getContent() );
+                        InputStream imgStream = response.getEntity().getContent();
+                        Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
+                        imgStream.close();
                         if( bitmap != null ) {
                             final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
                             handler.post( new Runnable() {
@@ -381,14 +427,18 @@ public class DataProviderService extends Service {
                                 }
                             } );
 
-                            thumbCache.put(urlStr, bitmap);
+                            if( memoryCache != null ) {
+                                memoryCache.put(urlStr, bitmap);
+                            }
                         }
                         else {
                             Log.w( LOG_TAG, "Decoded bitmap from " + urlStr + " was null. Bad image data?" );
                         }
                     }
                     else {
-                        response.getEntity().consumeContent();
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
                     }
                 }
                 catch (URISyntaxException e) {
