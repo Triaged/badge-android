@@ -16,6 +16,7 @@ public class Contact {
     public String avatarUrl;
     public String name;
     public String jobTitle;
+    public String departmentName;
     public String email;
     public String startDateString;
     public String birthDateString;
@@ -56,6 +57,7 @@ public class Contact {
         this.primaryOfficeLocationId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID ) );
         this.currentOfficeLocationId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID ) );
         this.departmentId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID ) );
+        this.departmentName = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID ) );
         /** DYNAMIC FIELDS */
         this.name = String.format( "%s %s", firstName, lastName );
         this.sharingOfficeLocation = this.sharingOfficeLocationInt == 1;
