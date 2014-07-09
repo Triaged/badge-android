@@ -126,6 +126,10 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     }
 
     private void setupProfile() {
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_selected).select();
         manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
