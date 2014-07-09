@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
@@ -31,7 +32,10 @@ public class ProfileManagesUserView extends ProfileContactInfoView {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (bitmap != null) {
-            canvas.drawBitmap(bitmap, 16 * densityMultiplier, (getHeight() - bitmap.getHeight()) /2 , null);
+            Matrix matrix = new Matrix();
+            matrix.setTranslate(16 * densityMultiplier, (getHeight() - (40 * densityMultiplier)) /2);
+            matrix.setScale(bitmap.getWidth()/ (40 * densityMultiplier), bitmap.getHeight() / (40*densityMultiplier));
+            canvas.drawBitmap(bitmap, matrix, null);
         }
     }
 
