@@ -106,6 +106,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(ContactsActivity.this, ProfileActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
             }

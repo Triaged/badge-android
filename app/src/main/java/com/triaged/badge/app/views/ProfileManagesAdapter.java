@@ -78,4 +78,8 @@ public class ProfileManagesAdapter extends CursorAdapter {
         return c;
     }
 
+    public Contact getCachedContact( int position ) {
+        return getCachedContact( (Cursor)getItem( position ) );
+    }
+
 }

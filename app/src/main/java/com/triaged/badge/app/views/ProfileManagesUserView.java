@@ -34,7 +34,7 @@ public class ProfileManagesUserView extends ProfileContactInfoView {
         if (bitmap != null) {
             Matrix matrix = new Matrix();
             matrix.setTranslate(16 * densityMultiplier, (getHeight() - (40 * densityMultiplier)) /2);
-            matrix.setScale(bitmap.getWidth()/ (40 * densityMultiplier), bitmap.getHeight() / (40*densityMultiplier));
+            matrix.postScale(bitmap.getWidth()/ (40 * densityMultiplier), bitmap.getHeight() / (40*densityMultiplier));
             canvas.drawBitmap(bitmap, matrix, null);
         }
     }
