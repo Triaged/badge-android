@@ -331,7 +331,7 @@ public class DataProviderService extends Service {
             ((ImageView)v).setImageBitmap( b );
         }
         else if( v instanceof ProfileManagesUserView  ) {
-            ((ProfileManagesUserView)v).setProfileThumbBitmap( b );
+            ((ProfileManagesUserView)v).setBitmap( b );
         }
     }
 
