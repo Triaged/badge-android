@@ -78,7 +78,7 @@ public class DataProviderService extends Service {
             COLUMN_CONTACT_SHARING_OFFICE_LOCATION
     );
     private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
-    private static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s FROM %s WHERE %s = ?", COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL, COLUMN_CONTACT_JOB_TITLE, TABLE_CONTACTS, COLUMN_CONTACT_MANAGER_ID );
+    private static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", COLUMN_CONTACT_ID, COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL, COLUMN_CONTACT_JOB_TITLE, TABLE_CONTACTS, COLUMN_CONTACT_MANAGER_ID );
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
