@@ -1,6 +1,7 @@
 package com.triaged.badge.app.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.text.TextPaint;
@@ -11,6 +12,8 @@ import android.view.View;
  * Created by Will on 7/9/14.
  */
 public class ProfileManagesUserView extends ProfileContactInfoView {
+
+    private Bitmap bitmap = null;
 
     public ProfileManagesUserView(Context context, AttributeSet attrs) {
         super(context, attrs);
