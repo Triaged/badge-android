@@ -50,8 +50,6 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:layout_marginTop="40dp"
-        android:divider="@color/light_divider"
-        android:dividerHeight="1dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"

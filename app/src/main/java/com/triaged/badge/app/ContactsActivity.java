@@ -63,9 +63,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
-        actionBar.addTab(actionBar.newTab().setText("A").setTabListener(this));
-        actionBar.addTab(actionBar.newTab().setText("B").setTabListener(this), true);
-        actionBar.addTab(actionBar.newTab().setText("C").setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_selected).setTabListener(this), true);
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_unselected).setTabListener(this));
 
         setContentView(R.layout.activity_contacts);
 

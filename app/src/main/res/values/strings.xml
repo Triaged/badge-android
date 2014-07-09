@@ -20,4 +20,9 @@
     <string name="contacts_tab_contacts">Contacts</string>
     <string name="contacts_tab_departments">Departments</string>
 
+    <!-- PROFILE ACTIVITY -->
+    <string name="profile_heading_availability">Availability</string>
+    <string name="profile_heading_manages">Manages</string>
+    <string name="profile_heading_contact">Contact Information</string>
+
 </resources>
