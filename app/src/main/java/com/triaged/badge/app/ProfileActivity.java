@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -110,9 +111,8 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
                 startDateView.secondaryValue = "Start Date";
                 startDateView.invalidate();
             }
-            ArrayList<Contact> managedContacts = new ArrayList<Contact>();
-            managedContacts.add(contact);
-            managesAdapter = new ProfileManagesAdapter(getBaseContext(), R.layout.item_manages_contact, managedContacts);
+            Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
+            managesAdapter = new ProfileManagesAdapter(getBaseContext(), managedContactsCursor, dataProviderServiceBinding);
             manangesListView.setAdapter(managesAdapter);
             currentLocationView.isOn = false;
             currentLocationView.primaryValue = "Unavailable";

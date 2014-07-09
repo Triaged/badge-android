@@ -430,7 +430,7 @@ public class DataProviderService extends Service {
                         final Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
                         imgStream.close();
                         if( bitmap != null ) {
-                            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
+                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
                             handler.post( new Runnable() {
                                 @Override
                                 public void run() {

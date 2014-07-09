@@ -42,13 +42,13 @@ public class ProfileCurrentLocationView extends View {
         densityMultiplier = context.getResources().getDisplayMetrics().density;
         primaryPaint.setTextSize(18 * densityMultiplier);
 
-        leftTextOffset = 49f * densityMultiplier;
+        leftTextOffset = 50f * densityMultiplier;
 
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         Rect bounds = new Rect();
         primaryPaint.getTextBounds(primaryValue, 0, primaryValue.length(), bounds);
         if (isOn) {
