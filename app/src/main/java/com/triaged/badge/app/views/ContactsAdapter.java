@@ -2,6 +2,7 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.Contact;
@@ -31,12 +33,14 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
+    private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
-    public ContactsAdapter(Context context, Cursor cursor ) {
+    public ContactsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
         super( context, cursor, false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
         densityMultiplier = context.getResources().getDisplayMetrics().density;
+        this.dataProviderServiceBinding = dataProviderServiceBinding;
     }
 
     @Override
@@ -64,6 +68,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         View newView =  inflater.inflate(R.layout.item_contact, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
+        holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
         newView.setTag(holder);
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
@@ -79,6 +84,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
         return newView;
     }
 
@@ -99,6 +105,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
     }
 
     @Override

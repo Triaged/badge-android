@@ -111,7 +111,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
             managedContacts.add(contact);
             managesAdapter = new ProfileManagesAdapter(getBaseContext(), R.layout.item_manages_contact, managedContacts);
             manangesListView.setAdapter(managesAdapter);
-            currentLocationView.isOn = true;
+            currentLocationView.isOn = false;
             currentLocationView.primaryValue = "Unavailable";
             currentLocationView.invalidate();
         }
