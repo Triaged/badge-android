@@ -56,4 +56,18 @@
         android:overScrollMode="never"
         />
 
+    <ListView
+        android:id="@+id/departments_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_marginTop="56dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        />
+
 </RelativeLayout>

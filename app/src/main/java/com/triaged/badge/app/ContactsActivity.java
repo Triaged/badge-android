@@ -19,9 +19,11 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
+import com.triaged.badge.app.views.DepartmentsAdapter;
 import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
@@ -40,6 +42,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
+
+    private ListView departmentsListView = null;
+    private DepartmentsAdapter departmentsAdapter = null;
 
     private Button contactsTabButton = null;
     private Button departmentsTabButton = null;
@@ -113,11 +118,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         });
 
+        departmentsListView = (ListView) findViewById(R.id.departments_list);
+
         receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "CONTACTS AVAILABLE YAAAAY");
-                setupContacts();
+                setupContactsAndDepartments();
             }
         };
 
@@ -134,7 +141,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
-        setupContacts();
+        setupContactsAndDepartments();
     }
 
 
@@ -174,12 +181,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
 
-    private void setupContacts() {
+    private void setupContactsAndDepartments() {
         if (dataProviderServiceBinding.isInitialized() ) {
             // SETUP CONTACTS
             contactsCursor = dataProviderServiceBinding.getContactsCursor();
             contactsAdapter = new ContactsAdapter(this, contactsCursor, dataProviderServiceBinding );
             contactsListView.setAdapter(contactsAdapter);
+
+            // SETUP DEPARTMENTS
+            // get cursor
+            // create adapter
+            // set adapter
         }
     }
 }
