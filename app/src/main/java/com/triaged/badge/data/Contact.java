@@ -40,6 +40,8 @@ public class Contact {
      * @param contactCursor cursor in to sql lite db.
      */
     public void fromCursor( Cursor contactCursor ) {
+        int index;
+
         this.id = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_ID ) );
         /** STRING FIELDS */
         this.firstName = contactCursor.getString( contactCursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_FIRST_NAME ) );
@@ -57,10 +59,14 @@ public class Contact {
         this.primaryOfficeLocationId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID ) );
         this.currentOfficeLocationId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID ) );
         this.departmentId = contactCursor.getInt( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID ) );
-        this.departmentName = contactCursor.getString( contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID ) );
         /** DYNAMIC FIELDS */
         this.name = String.format( "%s %s", firstName, lastName );
         this.sharingOfficeLocation = this.sharingOfficeLocationInt == 1;
+
+        index = contactCursor.getColumnIndex( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID );
+        if( index != -1 ) {
+            this.departmentName = contactCursor.getString( index );
+        }
     }
 
     @Override
