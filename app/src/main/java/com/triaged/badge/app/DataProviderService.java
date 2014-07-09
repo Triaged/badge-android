@@ -1,26 +1,41 @@
 package com.triaged.badge.app;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
+import android.util.LruCache;
+import android.webkit.MimeTypeMap;
+import android.widget.ImageView;
 
 import com.triaged.badge.data.Contact;
 
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -89,9 +104,11 @@ public class DataProviderService extends Service {
     protected ArrayList<Contact> contactList;
     protected Handler handler;
     protected volatile boolean initialized;
+    protected LruCache<String, Bitmap> thumbCache;
+    protected HttpClient httpClient;
+    protected MimeTypeMap mimeTypeMap;
 
     private LocalBinding localBinding;
-
     private LocalBroadcastManager localBroadcastManager;
 
 
@@ -111,8 +128,25 @@ public class DataProviderService extends Service {
         contactList = new ArrayList( 250 );
         handler = new Handler();
         localBinding = new LocalBinding();
+        mimeTypeMap = MimeTypeMap.getSingleton();
 
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        int cacheSize = maxMemory / 8;
+        thumbCache = new LruCache<String, Bitmap>( cacheSize ) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
 
         sqlThread.submit( new Runnable() {
             @Override
@@ -136,6 +170,7 @@ public class DataProviderService extends Service {
                 }
             }
         }  );
+        httpClient = new DefaultHttpClient();
     }
 
     @Override
@@ -144,6 +179,7 @@ public class DataProviderService extends Service {
         sqlThread.shutdownNow();
         databaseHelper.close();
         apiClient.shutdown();
+        httpClient.getConnectionManager().shutdown();
         database = null;
     }
 
@@ -213,46 +249,88 @@ public class DataProviderService extends Service {
         return null;
     }
 
-    public class LocalBinding extends Binder {
-        public List<Contact> getContacts() {
-            return contactList;
+    /**
+     * Query the db to get a contact given an id. Always returns the
+     * latest and greatest local device data.
+     *
+     * @param contactId, an integer
+     * @return a Contact
+     */
+    protected Contact getContact(int contactId) {
+        if (database !=null ) {
+            Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
+            try {
+                if (cursor.moveToFirst()) {
+                    Contact contact = new Contact();
+                    contact.fromCursor(cursor);
+                    return contact;
+                }
+            } finally {
+                cursor.close();
+            }
         }
+        return null;
+    }
 
+    /**
+     * Draws the contact's thumb as a bitmap in to the specified image view.
+     *
+     * First, a small in memory cache is consulted to see if the bitmap is available, and if
+     * so, the bitmap is synchronously drawn in to the image view.
+     *
+     * If not, a much larger disk cache is consulted asynchronously, and if it is, the bitmap is decoded
+     * and stored in the memory cache before being drawn back on the main thread.
+     *
+     * If not in the disk cache, as a last resort, the image is downloaded in the BG and
+     * placed in to the disk and memory caches.
+     *
+     * @param c contact
+     * @param thumbImageView
+     */
+    protected void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+        Bitmap b = thumbCache.get( c.avatarUrl );
+        if( b != null ) {
+            // Hooray!
+            thumbImageView.setImageBitmap( b );
+        }
+        else {
+            new DownloadImageTask( c.avatarUrl, thumbImageView ).execute();
+        }
+    }
+
+    /**
+     * Query the db to get a cursor to the latest set of all contacts.
+     * Caller is responsible for closing the cursor when finished.
+     *
+     * @return a cursor to all contact rows
+     */
+    protected Cursor getContactsCursor() {
+        if (database != null) {
+            return database.rawQuery(QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY);
+        }
+        return null;
+    }
+
+    public class LocalBinding extends Binder {
         /**
-         * Query the db to get a cursor to the latest set of all contacts.
-         * Caller is responsible for closing the cursor when finished.
-         *
-         * @return a cursor to all contact rows
+         * @see DataProviderService#getContactsCursor()
          */
         public Cursor getContactsCursor() {
-            if (database != null) {
-                return database.rawQuery(QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY);
-            }
-            return null;
+            return DataProviderService.this.getContactsCursor();
         }
 
         /**
-         * Query the db to get a contact given an id
-         *
-         * TODO: Optimize this method to have a cache of contacts.
-         *
-         * @param contactId, an integer
-         * @return a Contact
+         * @see com.triaged.badge.app.DataProviderService#getContact(int)
          */
         public Contact getContact(int contactId) {
-            if (database !=null ) {
-                Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
-                try {
-                    if (cursor.moveToFirst()) {
-                        Contact contact = new Contact();
-                        contact.fromCursor(cursor);
-                        return contact;
-                    }
-                } finally {
-                    cursor.close();
-                }
-            }
-            return null;
+            return DataProviderService.this.getContact( contactId );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
+         */
+        public void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+            DataProviderService.this.setSmallContactImage(c, thumbImageView);
         }
 
         /**
@@ -269,6 +347,59 @@ public class DataProviderService extends Service {
          */
         public Cursor getContactsManaged( int contactId ) {
             return DataProviderService.this.getContactsManaged( contactId );
+        }
+    }
+
+    private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
+        private String urlStr = null;
+        private ImageView thumbImageView = null;
+
+        protected DownloadImageTask( String url, ImageView thumbImageView ) {
+            this.urlStr = url;
+            this.thumbImageView = thumbImageView;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE );
+            NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+            if( info != null && info.isConnected() ) {
+
+                try {
+                    URI uri = new URI(urlStr);
+                    HttpGet imageGet = new HttpGet( uri );
+                    HttpHost host = new HttpHost( uri.getHost() );
+                    HttpResponse response = httpClient.execute(host, imageGet);
+                    if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
+                        Bitmap bitmap = BitmapFactory.decodeStream( response.getEntity().getContent() );
+                        if( bitmap != null ) {
+                            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
+                            handler.post( new Runnable() {
+                                @Override
+                                public void run() {
+                                    thumbImageView.setImageBitmap( scaledBitmap );
+                                }
+                            } );
+
+                            thumbCache.put(urlStr, bitmap);
+                        }
+                        else {
+                            Log.w( LOG_TAG, "Decoded bitmap from " + urlStr + " was null. Bad image data?" );
+                        }
+                    }
+                    else {
+                        response.getEntity().consumeContent();
+                    }
+                }
+                catch (URISyntaxException e) {
+                    // Womp womp
+                    Log.e(LOG_TAG, "Either we got a bad URL from the api or we did something stupid", e);
+                }
+                catch( IOException e ) {
+                    Log.w( LOG_TAG, "Network issue reading image data" );
+                }
+            }
+            return null;
         }
     }
 }
