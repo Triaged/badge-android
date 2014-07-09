@@ -35,6 +35,14 @@ public class ProfileManagesUserView extends ProfileContactInfoView {
         }
     }
 
+    /**
+     * When recycling this view, call this function to clear out the previous
+     * bitmap while waiting for the new one.
+     */
+    public void clearBitmap() {
+        this.bitmap = null;
+    }
+
     public void setBitmap(Bitmap bitmap) {
         this.bitmap = bitmap;
         invalidate();

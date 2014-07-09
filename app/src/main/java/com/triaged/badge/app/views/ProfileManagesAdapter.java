@@ -45,7 +45,8 @@ public class ProfileManagesAdapter extends CursorAdapter {
 
         holder.profileManagesUserView.primaryValue = c.name;
         holder.profileManagesUserView.secondaryValue = c.jobTitle;
-        holder.profileManagesUserView.invalidate();
+        dataProviderServiceBinding.setSmallContactImage( c, holder.profileManagesUserView );
+        //holder.profileManagesUserView.invalidate();
 
         return newView;
 
@@ -57,15 +58,13 @@ public class ProfileManagesAdapter extends CursorAdapter {
         Contact c = getCachedContact( cursor );
         holder.profileManagesUserView.primaryValue = c.name;
         holder.profileManagesUserView.secondaryValue = c.jobTitle;
-        holder.profileManagesUserView.invalidate();
+        holder.profileManagesUserView.clearBitmap();
+        dataProviderServiceBinding.setSmallContactImage( c, holder.profileManagesUserView );
+        //holder.profileManagesUserView.invalidate();
     }
 
     class ViewHolder {
         ProfileManagesUserView profileManagesUserView;
-    }
-
-    public Contact getCachedContact( int position ) {
-        return getCachedContact( (Cursor)getItem( position ) );
     }
 
     public Contact getCachedContact( Cursor cursor ) {

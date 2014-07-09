@@ -353,7 +353,7 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View)
          */
-        public void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+        public void setSmallContactImage( Contact c, View thumbImageView ) {
             DataProviderService.this.setSmallContactImage(c, thumbImageView);
         }
 
