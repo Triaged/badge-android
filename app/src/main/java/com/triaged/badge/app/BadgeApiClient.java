@@ -72,7 +72,7 @@ public class BadgeApiClient extends DefaultHttpClient {
                 jsonBuffer = null;
                 ContentValues values = new ContentValues();
 
-                HashMap<Integer, String> departmentMap = new HashMap<Integer, String>( deptsArr.length(), 1f );
+                HashMap<Integer, String> departmentMap = new HashMap<Integer, String>( 50 );
                 if( companyObj.has( "uses_departments" ) && companyObj.getBoolean( "uses_departments" ) ) {
                     JSONArray deptsArr = companyObj.getJSONArray( "departments" );
                     for( int i = 0; i < deptsArr.length(); i++ ) {
