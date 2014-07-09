@@ -19,9 +19,11 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.LruCache;
+import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
+import com.triaged.badge.app.views.ProfileManagesUserView;
 import com.triaged.badge.data.Contact;
 
 import org.apache.http.HttpHost;
@@ -288,11 +290,11 @@ public class DataProviderService extends Service {
      * @param c contact
      * @param thumbImageView
      */
-    protected void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+    protected void setSmallContactImage( Contact c, View thumbImageView ) {
         Bitmap b = thumbCache.get( c.avatarUrl );
         if( b != null ) {
             // Hooray!
-            thumbImageView.setImageBitmap( b );
+            assignBitmapToView( b, thumbImageView );
         }
         else {
             new DownloadImageTask( c.avatarUrl, thumbImageView, thumbCache ).execute();
@@ -324,6 +326,15 @@ public class DataProviderService extends Service {
         return null;
     }
 
+    protected void assignBitmapToView( Bitmap b, View v ) {
+        if( v instanceof ImageView ) {
+            ((ImageView)v).setImageBitmap( b );
+        }
+        else if( v instanceof ProfileManagesUserView  ) {
+            ((ProfileManagesUserView)v).setBitmap( b );
+        }
+    }
+
     public class LocalBinding extends Binder {
         /**
          * @see DataProviderService#getContactsCursor()
@@ -336,13 +347,13 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#getContact(int)
          */
         public Contact getContact(int contactId) {
-            return DataProviderService.this.getContact( contactId );
+            return DataProviderService.this.getContact(contactId);
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View)
          */
-        public void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+        public void setSmallContactImage( Contact c, View thumbImageView ) {
             DataProviderService.this.setSmallContactImage(c, thumbImageView);
         }
 
@@ -350,7 +361,7 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#setLargeContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
          */
         public void setLargeContactImage( Contact c, ImageView imageView ) {
-            DataProviderService.this.setLargeContactImage( c, imageView );
+            DataProviderService.this.setLargeContactImage(c, imageView);
         }
 
         /**
@@ -376,7 +387,7 @@ public class DataProviderService extends Service {
      */
     private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
         private String urlStr = null;
-        private ImageView thumbImageView = null;
+        private View thumbView = null;
         private LruCache<String, Bitmap> memoryCache = null;
 
 
@@ -384,22 +395,22 @@ public class DataProviderService extends Service {
          * Task won't save images in a memory cache.
          *
          * @param url
-         * @param thumbImageView
+         * @param thumbView
          */
-        protected DownloadImageTask( String url, ImageView thumbImageView  ) {
-            this( url, thumbImageView, null );
+        protected DownloadImageTask( String url, View thumbView  ) {
+            this( url, thumbView, null );
         }
 
         /**
          * Task will save images in a memory cache.
          *
          * @param url
-         * @param thumbImageView
+         * @param thumbView
          * @param memoryCache cache to put image in to after downloading.
          */
-        protected DownloadImageTask( String url, ImageView thumbImageView, LruCache<String, Bitmap> memoryCache ) {
+        protected DownloadImageTask( String url, View thumbView, LruCache<String, Bitmap> memoryCache ) {
             this.urlStr = url;
-            this.thumbImageView = thumbImageView;
+            this.thumbView = thumbView;
             this.memoryCache = memoryCache;
         }
 
@@ -419,11 +430,11 @@ public class DataProviderService extends Service {
                         final Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
                         imgStream.close();
                         if( bitmap != null ) {
-                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
+                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
                             handler.post( new Runnable() {
                                 @Override
                                 public void run() {
-                                    thumbImageView.setImageBitmap( bitmap );
+                                    assignBitmapToView( bitmap, thumbView );
                                 }
                             } );
 

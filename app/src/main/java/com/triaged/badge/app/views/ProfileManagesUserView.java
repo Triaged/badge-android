@@ -14,7 +14,7 @@ import android.view.View;
  */
 public class ProfileManagesUserView extends ProfileContactInfoView {
 
-    private Bitmap bitmap;
+    private Bitmap bitmap = null;
     private float densityMultiplier;
 
     public ProfileManagesUserView(Context context, AttributeSet attrs) {
@@ -37,6 +37,14 @@ public class ProfileManagesUserView extends ProfileContactInfoView {
             matrix.setScale(bitmap.getWidth()/ (40 * densityMultiplier), bitmap.getHeight() / (40*densityMultiplier));
             canvas.drawBitmap(bitmap, matrix, null);
         }
+    }
+
+    /**
+     * When recycling this view, call this function to clear out the previous
+     * bitmap while waiting for the new one.
+     */
+    public void clearBitmap() {
+        this.bitmap = null;
     }
 
     public void setBitmap(Bitmap bitmap) {
