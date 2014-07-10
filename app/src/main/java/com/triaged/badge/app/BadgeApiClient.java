@@ -175,7 +175,9 @@ public class BadgeApiClient extends DefaultHttpClient {
         catch( JSONException e ) {
             Log.e( LOG_TAG, "Unexpected json exception creating /session post entity.", e );
         }
-        createSession.setEntity( new StringEntity( req.toString(), "UTF-8" ) );
+        StringEntity body = new StringEntity( req.toString(), "UTF-8" );
+        body.setContentType( "application/json" );
+        createSession.setEntity( body );
         return execute( httpHost, createSession );
     }
 

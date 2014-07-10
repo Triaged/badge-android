@@ -130,27 +130,6 @@ public class DataProviderService extends Service {
             }
         };
 
-        sqlThread.submit( new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    database = databaseHelper.getWritableDatabase();
-                    // TODO for now just making sure this runs at most once per half hour.
-                    // In the future it should ask for any records modified since last sync
-                    // every time.
-
-                    initialized = true;
-                    localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
-
-                    if (loggedIn && lastSynced < System.currentTimeMillis() - 1800000) {
-                        syncCompany(database);
-                    }
-
-                } catch (Throwable t) {
-                    Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
-                }
-            }
-        }  );
         httpClient = new DefaultHttpClient();
     }
 
@@ -163,6 +142,8 @@ public class DataProviderService extends Service {
         httpClient.getConnectionManager().shutdown();
         database = null;
     }
+
+
 
     /**
      * Syncs company info from the cloud to the device.
@@ -335,9 +316,44 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Get a writable database and do an incremental sync of new data from the cloud.
+     *
+     * Notifies listeners via the {@link #DB_AVAILABLE_INTENT} when the database is ready for use.
+     */
+    protected void initDatabase() {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    database = databaseHelper.getWritableDatabase();
+                    // TODO for now just making sure this runs at most once per half hour.
+                    // In the future it should ask for any records modified since last sync
+                    // every time.
+
+                    initialized = true;
+                    localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
+
+                    if (loggedIn && lastSynced < System.currentTimeMillis() - 1800000) {
+                        syncCompany(database);
+                    }
+
+                } catch (Throwable t) {
+                    Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
+                }
+            }
+        }  );
+    }
+    /**
      * Local, non rpc interface for this service.
      */
     public class LocalBinding extends Binder {
+        /**
+         * @see DataProviderService#initDatabase()
+         */
+        public void initDatabase() {
+            DataProviderService.this.initDatabase();
+        }
+
         /**
          * @see DataProviderService#getContactsCursor()
          */

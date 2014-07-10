@@ -127,6 +127,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         app = (BadgeApplication) getApplication();
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
+        filter.addAction(DataProviderService.DB_UPDATED_INTENT);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
         localBroadcastManager.registerReceiver(receiver, filter);
         dataProviderServiceBinding = app.dataProviderServiceBinding;

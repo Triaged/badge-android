@@ -78,7 +78,7 @@ public class LoginActivity extends BadgeActivity {
         };
 
         // TODO This should actually be the sync finished action.
-        localBroadcastManager.registerReceiver( dataSyncedListener, new IntentFilter( DataProviderService.CONTACTS_AVAILABLE_ACTION ));
+        localBroadcastManager.registerReceiver( dataSyncedListener, new IntentFilter( DataProviderService.DB_UPDATED_INTENT ));
     }
 
     @Override
