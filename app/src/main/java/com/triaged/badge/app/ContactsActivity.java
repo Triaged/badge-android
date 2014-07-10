@@ -160,7 +160,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        contactsAdapter.destroy();
+        if( contactsAdapter != null ) {
+            contactsAdapter.destroy();
+        }
         localBroadcastManager.unregisterReceiver( receiver );
     }
 

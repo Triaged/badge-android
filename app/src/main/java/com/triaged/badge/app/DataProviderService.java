@@ -333,7 +333,7 @@ public class DataProviderService extends Service {
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
 
-                    if (loggedIn && lastSynced < System.currentTimeMillis() - 1800000) {
+                    if ( loggedIn ) {
                         syncCompany(database);
                     }
 

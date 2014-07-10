@@ -131,8 +131,8 @@ public class BadgeApiClient extends DefaultHttpClient {
                     }
                     db.insert( CompanySQLiteHelper.TABLE_CONTACTS, "", values );
                     values.clear();
-                    return true;
                 }
+                return true;
             }
             else if( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
                 // Wipe DB, we're locked/logged out
