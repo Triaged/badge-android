@@ -73,7 +73,8 @@ public class DataProviderService extends Service {
     public static final String COLUMN_CONTACT_DEPARTMENT_ID = "department_id";
     public static final String COLUMN_CONTACT_SHARING_OFFICE_LOCATION = "sharing_office_location";
 
-    public static final String CONTACTS_AVAILABLE_INTENT = "com.triage.badge.CONTACTS_AVAILABLE";
+    public static final String CONTACTS_AVAILABLE_ACTION = "com.triage.badge.CONTACTS_AVAILABLE";
+    public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     private static final String SQL_DATABASE_NAME = "badge.db";
     private static final int DATABASE_VERSION = 1;
@@ -97,6 +98,8 @@ public class DataProviderService extends Service {
     );
     private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
     private static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", COLUMN_CONTACT_ID, COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL, COLUMN_CONTACT_JOB_TITLE, TABLE_CONTACTS, COLUMN_CONTACT_MANAGER_ID );
+
+    private static final String API_TOKEN_PREF_KEY = "apiToken";
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
@@ -124,16 +127,20 @@ public class DataProviderService extends Service {
     public void onCreate() {
         super.onCreate();
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+
+        String apiToken = prefs.getString( API_TOKEN_PREF_KEY, "" );
+        if( "".equals( apiToken ) ) {
+            loggedOut();
+        }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
         databaseHelper = new CompanySQLiteHelper();
-        apiClient = new BadgeApiClient();
+        apiClient = new BadgeApiClient( "8ekayof3x1P5kE_LvPFv" );
         contactList = new ArrayList( 250 );
         handler = new Handler();
         localBinding = new LocalBinding();
         mimeTypeMap = MimeTypeMap.getSingleton();
-
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         // Get max available VM memory, exceeding this amount will throw an
         // OutOfMemory exception. Stored in kilobytes as LruCache takes an
@@ -194,7 +201,7 @@ public class DataProviderService extends Service {
 //            contact.fromCursor( contacts );
 //            contactList.add( contact );
 //        }
-        localBroadcastManager.sendBroadcast(new Intent(CONTACTS_AVAILABLE_INTENT));
+        localBroadcastManager.sendBroadcast(new Intent(CONTACTS_AVAILABLE_ACTION));
     }
 
     protected void syncCompany( SQLiteDatabase db ) {
@@ -335,6 +342,23 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * When the service detects that there is no active user
+     * or api token, it calls this function.
+     *
+     * This launches the login activity in a new task and sends a local
+     * broadcast so that activities can listen and kill themselves.
+     */
+    protected void loggedOut() {
+        Intent intent = new Intent( this, LoginActivity.class );
+        intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+        startActivity( intent );
+        localBroadcastManager.sendBroadcast( new Intent( LOGGED_OUT_ACTION ) );
+    }
+
+    /**
+     * Local, non rpc interface for this service.
+     */
     public class LocalBinding extends Binder {
         /**
          * @see DataProviderService#getContactsCursor()

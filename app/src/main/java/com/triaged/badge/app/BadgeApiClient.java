@@ -36,11 +36,12 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String API_HOST = "api.badge.co";
 
     private HttpHost httpHost;
+    private String apiToken;
 
-    public BadgeApiClient() {
+    public BadgeApiClient( String apiToken ) {
         super();
         httpHost = new HttpHost( API_HOST );
-
+        this.apiToken = apiToken;
 
     }
 
@@ -55,7 +56,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public void downloadCompany( SQLiteDatabase db, long lastSynced ) throws IOException, JSONException {
         HttpGet getCompany = new HttpGet( String.format( "https://%s/v1/company", API_HOST ) );
-        getCompany.setHeader( "Authorization", "8ekayof3x1P5kE_LvPFv" );
+        getCompany.setHeader( "Authorization", apiToken );
         HttpResponse response = execute( httpHost, getCompany );
 
         try {

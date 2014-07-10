@@ -35,18 +35,21 @@ public class LoginActivity extends BadgeActivity {
             public void onClick(View v) {
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
+
+
+
                 Toast.makeText(LoginActivity.this, email, Toast.LENGTH_SHORT).show();
             }
         });
 
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(LoginActivity.this, ContactsActivity.class);
-                startActivity(intent);
-            }
-        }, 2000);
+//        Handler handler = new Handler();
+//        handler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                Intent intent = new Intent(LoginActivity.this, ContactsActivity.class);
+//                startActivity(intent);
+//            }
+//        }, 2000);
     }
 
 }
