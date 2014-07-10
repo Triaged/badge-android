@@ -56,7 +56,8 @@ import java.util.concurrent.Executors;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
-    public static final String CONTACTS_AVAILABLE_ACTION = "com.triage.badge.CONTACTS_AVAILABLE";
+    public static final String DB_UPDATED_INTENT = "com.triage.badge.DB_UPDATED";
+    public static final String DB_AVAILABLE_INTENT = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
@@ -65,6 +66,8 @@ public class DataProviderService extends Service {
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
+
+
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
@@ -136,18 +139,13 @@ public class DataProviderService extends Service {
                     // In the future it should ask for any records modified since last sync
                     // every time.
 
-                    if( !loggedIn ) {
-                        // TODO do we wipe data here? Prob not necessary.
-                    }
+                    initialized = true;
+                    localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
 
                     if (loggedIn && lastSynced < System.currentTimeMillis() - 1800000) {
                         syncCompany(database);
                     }
 
-                    initialized = true;
-
-                    // Populate list of contacts.
-                    readContacts(database);
                 } catch (Throwable t) {
                     Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
                 }
@@ -166,18 +164,23 @@ public class DataProviderService extends Service {
         database = null;
     }
 
-    protected void readContacts( SQLiteDatabase db ) {
-        contactList.clear();
-//        Cursor contacts = db.rawQuery( QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY );
-//        while( contacts.moveToNext() ) {
-//            Contact contact = new Contact();
-//            contact.fromCursor( contacts );
-//            contactList.add( contact );
-//        }
-        localBroadcastManager.sendBroadcast(new Intent(CONTACTS_AVAILABLE_ACTION));
-    }
-
+    /**
+     * Syncs company info from the cloud to the device.
+     *
+     * Notifies listeners via local broadcast that data has been updated.
+     *
+     * @param db
+     */
     protected void syncCompany( SQLiteDatabase db ) {
+        ConnectivityManager cMgr = (ConnectivityManager) getSystemService( Context.CONNECTIVITY_SERVICE );
+        NetworkInfo info = cMgr.getActiveNetworkInfo();
+        if( info == null || !info.isConnected() ) {
+            // TODO listen for network becoming available so we can sync then.
+
+            return;
+        }
+
+        boolean updated = false;
         lastSynced = System.currentTimeMillis();
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
@@ -187,6 +190,7 @@ public class DataProviderService extends Service {
                 loggedOut();
             }
             db.setTransactionSuccessful();
+            updated = true;
         }
         catch( IOException e ) {
             Log.e( LOG_TAG, "IO exception downloading company that should be handled more softly than this.", e );
@@ -197,6 +201,10 @@ public class DataProviderService extends Service {
         finally {
             db.endTransaction();
         }
+        if( updated ) {
+            localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_INTENT ) );
+        }
+
     }
 
     /**
