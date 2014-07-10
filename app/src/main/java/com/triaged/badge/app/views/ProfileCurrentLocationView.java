@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.view.View;
@@ -27,7 +26,6 @@ public class ProfileCurrentLocationView extends View {
     public boolean isOn;
     private static final int offColor = Color.parseColor("#FF222222");
     private static final int onColor = Color.parseColor("#FF00A798");
-    private float densityMultiplier;
 
     public ProfileCurrentLocationView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -39,16 +37,16 @@ public class ProfileCurrentLocationView extends View {
         primaryPaint = new TextPaint();
         primaryPaint.setTypeface(roboto);
 
-        densityMultiplier = context.getResources().getDisplayMetrics().density;
+        float densityMultiplier = context.getResources().getDisplayMetrics().density;
         primaryPaint.setTextSize(18 * densityMultiplier);
 
-        leftTextOffset = 49f * densityMultiplier;
+        leftTextOffset = 50f * densityMultiplier;
 
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         Rect bounds = new Rect();
         primaryPaint.getTextBounds(primaryValue, 0, primaryValue.length(), bounds);
         if (isOn) {

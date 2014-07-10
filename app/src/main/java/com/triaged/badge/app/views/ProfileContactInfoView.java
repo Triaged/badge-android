@@ -3,7 +3,6 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.text.TextPaint;
 import android.util.AttributeSet;
@@ -48,8 +47,8 @@ public class ProfileContactInfoView extends View {
     }
 
     @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
+    public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         if (secondaryValue == null) {
             canvas.drawText(primaryValue, leftTextOffset, noTitleTextOffset, primaryPaint);
         } else {

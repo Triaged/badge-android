@@ -19,9 +19,11 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.LruCache;
+import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
+import com.triaged.badge.app.views.ProfileManagesUserView;
 import com.triaged.badge.data.Contact;
 
 import org.apache.http.HttpHost;
@@ -33,6 +35,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -301,15 +304,27 @@ public class DataProviderService extends Service {
      * @param c contact
      * @param thumbImageView
      */
-    protected void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+    protected void setSmallContactImage( Contact c, View thumbImageView ) {
         Bitmap b = thumbCache.get( c.avatarUrl );
         if( b != null ) {
             // Hooray!
-            thumbImageView.setImageBitmap( b );
+            assignBitmapToView( b, thumbImageView );
         }
         else {
-            new DownloadImageTask( c.avatarUrl, thumbImageView ).execute();
+            new DownloadImageTask( c.avatarUrl, thumbImageView, thumbCache ).execute();
         }
+    }
+
+    /**
+     * Downloads the image each time it's called and sets the bitmap resource on the imageview.
+     *
+     * TODO This should use the same disk cache as the small contact image once that's implemented.
+     *
+     * @param c contact
+     * @param imageView
+     */
+    protected void setLargeContactImage( Contact c, ImageView imageView ) {
+        new DownloadImageTask( c.avatarUrl, imageView ).execute();
     }
 
     /**
@@ -325,6 +340,15 @@ public class DataProviderService extends Service {
         return null;
     }
 
+    protected void assignBitmapToView( Bitmap b, View v ) {
+        if( v instanceof ImageView ) {
+            ((ImageView)v).setImageBitmap( b );
+        }
+        else if( v instanceof ProfileManagesUserView  ) {
+            ((ProfileManagesUserView)v).setBitmap( b );
+        }
+    }
+
     public class LocalBinding extends Binder {
         /**
          * @see DataProviderService#getContactsCursor()
@@ -337,14 +361,21 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#getContact(int)
          */
         public Contact getContact(int contactId) {
-            return DataProviderService.this.getContact( contactId );
+            return DataProviderService.this.getContact(contactId);
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View)
          */
-        public void setSmallContactImage( Contact c, ImageView thumbImageView ) {
+        public void setSmallContactImage( Contact c, View thumbImageView ) {
             DataProviderService.this.setSmallContactImage(c, thumbImageView);
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#setLargeContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
+         */
+        public void setLargeContactImage( Contact c, ImageView imageView ) {
+            DataProviderService.this.setLargeContactImage(c, imageView);
         }
 
         /**
@@ -364,13 +395,37 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * Background task to fetch an image from the server, set it as the resource
+     * for an image view, and optionally cache the image for future use.
+     */
     private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
         private String urlStr = null;
-        private ImageView thumbImageView = null;
+        private View thumbView = null;
+        private LruCache<String, Bitmap> memoryCache = null;
 
-        protected DownloadImageTask( String url, ImageView thumbImageView ) {
+
+        /**
+         * Task won't save images in a memory cache.
+         *
+         * @param url
+         * @param thumbView
+         */
+        protected DownloadImageTask( String url, View thumbView  ) {
+            this( url, thumbView, null );
+        }
+
+        /**
+         * Task will save images in a memory cache.
+         *
+         * @param url
+         * @param thumbView
+         * @param memoryCache cache to put image in to after downloading.
+         */
+        protected DownloadImageTask( String url, View thumbView, LruCache<String, Bitmap> memoryCache ) {
             this.urlStr = url;
-            this.thumbImageView = thumbImageView;
+            this.thumbView = thumbView;
+            this.memoryCache = memoryCache;
         }
 
         @Override
@@ -385,24 +440,30 @@ public class DataProviderService extends Service {
                     HttpHost host = new HttpHost( uri.getHost() );
                     HttpResponse response = httpClient.execute(host, imageGet);
                     if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
-                        Bitmap bitmap = BitmapFactory.decodeStream( response.getEntity().getContent() );
+                        InputStream imgStream = response.getEntity().getContent();
+                        final Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
+                        imgStream.close();
                         if( bitmap != null ) {
-                            final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbImageView.getWidth(), thumbImageView.getHeight(), false);
+                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
                             handler.post( new Runnable() {
                                 @Override
                                 public void run() {
-                                    thumbImageView.setImageBitmap( scaledBitmap );
+                                    assignBitmapToView( bitmap, thumbView );
                                 }
                             } );
 
-                            thumbCache.put(urlStr, bitmap);
+                            if( memoryCache != null ) {
+                                memoryCache.put(urlStr, bitmap);
+                            }
                         }
                         else {
                             Log.w( LOG_TAG, "Decoded bitmap from " + urlStr + " was null. Bad image data?" );
                         }
                     }
                     else {
-                        response.getEntity().consumeContent();
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
                     }
                 }
                 catch (URISyntaxException e) {

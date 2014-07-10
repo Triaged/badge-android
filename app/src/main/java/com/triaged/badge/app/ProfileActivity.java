@@ -4,11 +4,15 @@ import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.app.views.ProfileCurrentLocationView;
@@ -29,12 +33,14 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     private Contact contact = null;
     private TextView profileName = null;
     private TextView profileTitle = null;
+    private ImageView profileImage = null;
     private ProfileContactInfoView emailView = null;
     private ProfileContactInfoView officePhoneView = null;
     private ProfileContactInfoView cellPhoneView = null;
     private ProfileContactInfoView birthDateView = null;
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
+    private TextView managesHeader = null;
 
     private ListView manangesListView = null;
     private ProfileManagesAdapter managesAdapter;
@@ -62,18 +68,80 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
         birthDateView = (ProfileContactInfoView) findViewById(R.id.profile_birth_date);
         startDateView = (ProfileContactInfoView) findViewById(R.id.profile_start_date);
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
-
+        profileImage = (ImageView)findViewById( R.id.profile_image );
         manangesListView = (ListView) findViewById(R.id.manages_list);
-    }
+        managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         Intent intent = getIntent();
         int id = intent.getIntExtra("PROFILE_ID", 0);
         contact = dataProviderServiceBinding.getContact(id);
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setupProfile();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        int id = intent.getIntExtra("PROFILE_ID", 0);
+        contact = dataProviderServiceBinding.getContact(id);
+        setupProfile();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        overridePendingTransition(0,0);
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_selected).select();
+    }
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+        if ( tab.getPosition() == 0) {
+              // tab.setIcon(R.drawable.messages_selected);
+//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+//            startActivity(intent);
+        } else if (tab.getPosition() == 1) {
+            tab.setIcon(R.drawable.contacts_selected);
+            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        if ( tab.getPosition() == 2) {
+            tab.setIcon(R.drawable.profile_unselected);
+            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
+
+    }
+
+    private void setupProfile() {
+        manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(ProfileActivity.this, ProfileActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", managesAdapter.getCachedContact(position).id);
+                startActivity(intent);
+            }
+        });
+        dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
         if (contact != null) {
             profileName.setText(contact.name);
             profileTitle.setText(contact.jobTitle);
@@ -107,46 +175,17 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
                 startDateView.secondaryValue = "Start Date";
                 startDateView.invalidate();
             }
-            ArrayList<Contact> managedContacts = new ArrayList<Contact>();
-            managedContacts.add(contact);
-            managesAdapter = new ProfileManagesAdapter(getBaseContext(), R.layout.item_manages_contact, managedContacts);
+            Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
+            if (managedContactsCursor.getCount() > 0) {
+                managesHeader.setVisibility(View.VISIBLE);
+            } else {
+                managesHeader.setVisibility(View.GONE);
+            }
+            managesAdapter = new ProfileManagesAdapter(getBaseContext(), managedContactsCursor, dataProviderServiceBinding);
             manangesListView.setAdapter(managesAdapter);
             currentLocationView.isOn = false;
             currentLocationView.primaryValue = "Unavailable";
             currentLocationView.invalidate();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
-    }
-
-    @Override
-    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        if ( tab.getPosition() == 0) {
-              // tab.setIcon(R.drawable.messages_selected);
-//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
-//            startActivity(intent);
-        } else if (tab.getPosition() == 1) {
-            tab.setIcon(R.drawable.contacts_selected);
-            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        if ( tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_unselected);
-            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-
     }
 }

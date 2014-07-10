@@ -19,9 +19,11 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
+import com.triaged.badge.app.views.DepartmentsAdapter;
 import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
@@ -40,6 +42,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
+
+    private ListView departmentsListView = null;
+    private DepartmentsAdapter departmentsAdapter = null;
 
     private Button contactsTabButton = null;
     private Button departmentsTabButton = null;
@@ -106,11 +111,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(ContactsActivity.this, ProfileActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
             }
 
         });
+
         databaseReady = false;
         receiver = new BroadcastReceiver() {
             @Override
@@ -119,10 +126,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     databaseReadyCallback();
                 }
                 else if( intent.getAction().equals( DataProviderService.DB_UPDATED_INTENT ) ) {
-                    loadContacts();
+                    loadContactsAndDepartments();
                 }
             }
         };
+
+
+        departmentsListView = (ListView) findViewById(R.id.departments_list);
         app = (BadgeApplication) getApplication();
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
@@ -149,6 +159,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
     }
 
     @Override
@@ -184,18 +198,25 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             databaseReady = true;
             // SETUP CONTACTS
             dataProviderServiceBinding = app.dataProviderServiceBinding;
-            loadContacts();
+            loadContactsAndDepartments();
         }
     }
 
-    protected void loadContacts() {
+    protected void loadContactsAndDepartments() {
         if( contactsAdapter != null ) {
             contactsAdapter.refresh();
+
+            // Refresh departments
         }
         else {
 
             contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding);
             contactsListView.setAdapter(contactsAdapter);
+
+            // SETUP DEPARTMENTS
+            // get cursor
+            // create adapter
+            // set adapter
         }
     }
 }

@@ -20,7 +20,6 @@ public class LoginActivity extends BadgeActivity {
 
     private EditText loginEmail = null;
     private EditText loginPassword = null;
-    private Button loginButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +27,8 @@ public class LoginActivity extends BadgeActivity {
         setContentView(R.layout.activity_login);
 
         loginEmail = (EditText) findViewById(R.id.login_email);
-        loginPassword = (EditText) findViewById(R.id.login_email);
-        loginButton = (Button) findViewById(R.id.login_button);
+        loginPassword = (EditText) findViewById(R.id.login_password);
+        Button loginButton = (Button) findViewById(R.id.login_button);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
