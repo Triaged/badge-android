@@ -16,6 +16,8 @@ import android.widget.Toast;
 public class OtherProfileActivity extends AbstractProfileActivity {
 
     private TextView backButton = null;
+    private ImageButton makeCallButton = null;
+    private ImageButton newEmailButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +37,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             }
         });
 
-        ImageButton newEmailButton = (ImageButton) findViewById(R.id.new_email_button);
+        newEmailButton = (ImageButton) findViewById(R.id.new_email_button);
         newEmailButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,7 +54,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             }
         });
 
-        ImageButton makeCallButton = (ImageButton) findViewById(R.id.call_button);
+        makeCallButton = (ImageButton) findViewById(R.id.call_button);
         makeCallButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -73,6 +75,16 @@ public class OtherProfileActivity extends AbstractProfileActivity {
     protected void setupProfile() {
         super.setupProfile();
         backButton.setText(contact.name);
-        // setup bottom contact bar
+        if (contact.cellPhone == null) {
+            makeCallButton.setVisibility(View.INVISIBLE);
+        } else {
+            makeCallButton.setVisibility(View.VISIBLE);
+        }
+        if (contact.email == null) {
+            newEmailButton.setVisibility(View.INVISIBLE);
+        } else {
+            newEmailButton.setVisibility(View.VISIBLE);
+        }
+
     }
 }

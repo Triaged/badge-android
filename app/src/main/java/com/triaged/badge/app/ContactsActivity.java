@@ -158,19 +158,30 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.d(TAG, "TAB SELECTED");
+        if ( tab.getPosition() == 0) {
+            // tab.setIcon(R.drawable.messages_selected);
+//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+//            startActivity(intent);
+        } else if (tab.getPosition() == 2) {
+            tab.setIcon(R.drawable.profile_selected);
+            Intent intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
+            startActivity(intent);
+        }
     }
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.d(TAG, "TAB UNSELECTED");
+        if ( tab.getPosition() == 1) {
+            tab.setIcon(R.drawable.contacts_unselected);
+        }
     }
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
         Log.d(TAG, "TAB RESELECTED");
     }
-
 
     private void setupContactsAndDepartments() {
         if (dataProviderServiceBinding.isInitialized() ) {
