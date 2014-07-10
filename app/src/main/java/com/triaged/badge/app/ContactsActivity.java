@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -101,7 +100,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(ContactsActivity.this, ProfileActivity.class);
+                Intent intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
@@ -168,19 +167,30 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.d(TAG, "TAB SELECTED");
+        if ( tab.getPosition() == 0) {
+            // tab.setIcon(R.drawable.messages_selected);
+//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+//            startActivity(intent);
+        } else if (tab.getPosition() == 2) {
+            tab.setIcon(R.drawable.profile_selected);
+            Intent intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
+            startActivity(intent);
+        }
     }
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.d(TAG, "TAB UNSELECTED");
+        if ( tab.getPosition() == 1) {
+            tab.setIcon(R.drawable.contacts_unselected);
+        }
     }
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
         Log.d(TAG, "TAB RESELECTED");
     }
-
 
     /**
      * This callback should be invoked whenever the database is determined
@@ -191,6 +201,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void databaseReadyCallback() {
         if( !databaseReady ) {
             databaseReady = true;
+
             // SETUP CONTACTS
             dataProviderServiceBinding = app.dataProviderServiceBinding;
             loadContactsAndDepartments();

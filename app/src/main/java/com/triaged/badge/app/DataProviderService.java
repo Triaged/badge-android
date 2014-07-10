@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -309,10 +308,10 @@ public class DataProviderService extends Service {
      *
      * @param email
      * @param password
-     * @param loginFailedCallback if non null, {@link com.triaged.badge.app.DataProviderService.LoginFailedCallback#loginFailed(String)} on this obj will be called on auth failure.
+     * @param loginCallback if non null, {@link com.triaged.badge.app.DataProviderService.LoginCallback#loginFailed(String)} on this obj will be called on auth failure.
      */
-    protected void loginAsync( String email, String password, LoginFailedCallback loginFailedCallback ) {
-        new LoginTask( email, password, loginFailedCallback ).execute();
+    protected void loginAsync( String email, String password, LoginCallback loginCallback) {
+        new LoginTask( email, password, loginCallback).execute();
     }
 
     /**
@@ -399,8 +398,8 @@ public class DataProviderService extends Service {
         }
 
 
-        public void loginAsync( String email, String password, LoginFailedCallback loginFailedCallback ) {
-            DataProviderService.this.loginAsync( email, password, loginFailedCallback );
+        public void loginAsync( String email, String password, LoginCallback loginCallback) {
+            DataProviderService.this.loginAsync( email, password, loginCallback);
         }
     }
 
@@ -490,12 +489,12 @@ public class DataProviderService extends Service {
     protected class LoginTask extends AsyncTask<Void, Void, Void> {
         private String email;
         private String password;
-        private LoginFailedCallback loginFailedCallback;
+        private LoginCallback loginCallback;
 
-        public LoginTask(String email, String password, LoginFailedCallback loginFailedCallback) {
+        public LoginTask(String email, String password, LoginCallback loginCallback) {
             this.email = email;
             this.password = password;
-            this.loginFailedCallback = loginFailedCallback;
+            this.loginCallback = loginCallback;
         }
 
         @Override
@@ -526,6 +525,16 @@ public class DataProviderService extends Service {
                             }
                         } );
 
+                        // TODO persist and cache current user info.
+
+                        if( loginCallback != null ) {
+                            handler.post( new Runnable() {
+                                @Override
+                                public void run() {
+                                    loginCallback.loginSuccess();
+                                }
+                            } );
+                        }
                     }
                     catch( JSONException e ) {
                         Log.e( LOG_TAG, "JSON exception parsing login success.", e );
@@ -554,11 +563,11 @@ public class DataProviderService extends Service {
         }
 
         private void fail( final String reason ) {
-            if( loginFailedCallback != null ) {
+            if( loginCallback != null ) {
                 handler.post( new Runnable() {
                     @Override
                     public void run() {
-                        loginFailedCallback.loginFailed( reason );
+                        loginCallback.loginFailed( reason );
                     }
                 } );
             }
@@ -566,14 +575,16 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Simple callback interface to handle login failure asynchronously
+     * Simple callback interface to handle login response asynchronously
      */
-    public interface LoginFailedCallback {
+    public interface LoginCallback {
         /**
          * Called if login was unsuccessful. Always invoked on the main UI thread.
          *
          * @param reason Human readable message describing the failure.
          */
         public void loginFailed( String reason );
+
+        public void loginSuccess(  );
     }
 }
