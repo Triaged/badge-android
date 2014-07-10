@@ -35,8 +35,8 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
-    public ContactsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
-        super( context, cursor, false );
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding) {
+        super( context, dataProviderServiceBinding.getContactsCursor(), false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
         densityMultiplier = context.getResources().getDisplayMetrics().density;
@@ -126,6 +126,22 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             contactCache.put( c.id, c  );
         }
         return c;
+    }
+
+    /**
+     * Notifies the adapter that new data is available so it should
+     * re-query and refresh the data shown in the list.
+     */
+    public void refresh() {
+        changeCursor( dataProviderServiceBinding.getContactsCursor() );
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Call when adapter is going away for good (listview or containing activity being destroyed)
+     */
+    public void destroy() {
+        getCursor().close();
     }
 
 //    @Override
