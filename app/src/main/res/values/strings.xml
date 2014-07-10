@@ -35,6 +35,10 @@
     <string name="welcome_last_name">Last Name</string>
     <string name="welcome_cell_number">Cell Number</string>
     <string name="welcome_birthday">Birthday (optional)</string>
+    <string name="tell_us_more_title">Tell us more about your position</string>
+    <string name="your_job_title">Your Job Title</string>
+    <string name="your_department">Choose Department</string>
+    <string name="reporting_to">Reporting to</string>
 
 
 </resources>

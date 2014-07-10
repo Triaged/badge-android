@@ -26,7 +26,6 @@ import java.util.Locale;
  */
 public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.OnDateSetListener {
 
-    private OnboardingDotsView onboardingDotsView = null;
     private EditText firstName = null;
     private EditText lastName = null;
     private EditText cellNumber = null;
@@ -39,9 +38,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
-        onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
-        onboardingDotsView.currentDotIndex = 0;
-        onboardingDotsView.invalidate();
         firstName = (EditText) findViewById(R.id.first_name);
         lastName = (EditText) findViewById(R.id.last_name);
         cellNumber = (EditText) findViewById(R.id.cell_number);

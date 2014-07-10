@@ -12,87 +12,77 @@
         android:layout_marginTop="44dp"
         />
 
-    <com.triaged.badge.app.views.TextViewWithFont
-        android:id="@+id/welcome_title"
+    <ImageView
+        android:id="@+id/nametag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:src="@drawable/nametag"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:text="@string/welcome_title"
+        android:layout_below="@id/onboarding_dots"
+        android:layout_marginTop="35dp"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/tell_us_more_title"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="35dp"
+        android:layout_below="@id/nametag"
+        android:text="@string/tell_us_more_title"
         android:textColor="@color/accent_turquoise"
         android:textSize="31sp"
         custom:font="Roboto-Light.ttf"
-        />
-
-    <com.triaged.badge.app.views.TextViewWithFont
-        android:id="@+id/welcome_info"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:text="@string/welcome_info"
-        android:textColor="@color/sub_text_gray"
-        android:textSize="14sp"
         android:gravity="center"
-        android:layout_below="@id/welcome_title"
-        custom:font="Roboto-Regular.ttf"
         />
 
     <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/first_name"
+        android:id="@+id/your_job_title"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:textColor="@color/main_text_black"
         android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_first_name"
-        android:layout_below="@id/welcome_info"
-        android:layout_marginTop="65dp"
+        android:hint="@string/your_job_title"
+        android:layout_below="@id/tell_us_more_title"
+        android:layout_marginTop="55dp"
         android:textSize="15sp"
         custom:font="Roboto-Regular.ttf"
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp"
         />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/last_name"
+    <TextView
+        android:text="@string/your_department"
+        android:id="@+id/your_department"
+        android:textColor="@color/light_text_gray"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_last_name"
-        android:layout_below="@id/first_name"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
+        style="?android:attr/spinnerStyle"
+        android:singleLine="true"
+        android:ellipsize="marquee"
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp"
+        android:textSize="15sp"
+        android:layout_below="@id/your_job_title"
         />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/cell_number"
+    <TextView
+        android:text="@string/reporting_to"
+        android:id="@+id/reporting_to"
+        android:textColor="@color/light_text_gray"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_cell_number"
-        android:layout_below="@id/last_name"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
+        style="?android:attr/spinnerStyle"
+        android:singleLine="true"
+        android:ellipsize="marquee"
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp"
-        />
-
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/birthday"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_birthday"
-        android:layout_below="@id/cell_number"
         android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
+        android:layout_below="@id/your_department"
         />
 
     <com.triaged.badge.app.views.ButtonWithFont
@@ -107,5 +97,6 @@
         android:textSize="16sp"
         custom:font="Roboto-Regular.ttf"
         />
+
 
 </RelativeLayout>
