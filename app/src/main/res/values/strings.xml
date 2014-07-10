@@ -12,6 +12,11 @@
     <string name="login_password_hint">Password</string>
     <string name="login_button">Continue</string>
 
+    <!-- WELCOME ACTIVITY -->
+    <string name="welcome_info">Before you start, we would like to get to know you a bit better.</string>
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_continue">Continue</string>
+
     <!-- CONTACT LISTVIEW ELEMENT -->
     <string name="content_description_thumb">Contact Thumbnail Image</string>
     <string name="content_description_message_contact">Message Contact</string>
@@ -26,5 +31,10 @@
     <string name="profile_heading_contact">Contact Information</string>
     <string name="content_description_profile_image">Profile Image</string>
     <string name="content_description_my_settings">My Settings</string>
+    <string name="welcome_first_name">First Name</string>
+    <string name="welcome_last_name">Last Name</string>
+    <string name="welcome_cell_number">Cell Number</string>
+    <string name="welcome_birthday">Birthday (optional)</string>
+
 
 </resources>
