@@ -24,8 +24,10 @@ import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
 import com.triaged.badge.app.views.ProfileManagesUserView;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -33,7 +35,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -52,54 +56,15 @@ import java.util.concurrent.Executors;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
-    protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
-    protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
-
-    protected static final String TABLE_CONTACTS = "contacts";
-    public static final String COLUMN_CONTACT_ID = "_id";
-    public static final String COLUMN_CONTACT_LAST_NAME = "last_name";
-    public static final String COLUMN_CONTACT_FIRST_NAME = "first_name";
-    public static final String COLUMN_CONTACT_AVATAR_URL= "avatar_url";
-
-    public static final String COLUMN_CONTACT_JOB_TITLE = "job_title";
-    public static final String COLUMN_CONTACT_EMAIL = "email";
-    public static final String COLUMN_CONTACT_START_DATE = "start_date";
-    public static final String COLUMN_CONTACT_BIRTH_DATE = "birth_date";
-    public static final String COLUMN_CONTACT_CELL_PHONE = "cell_phone";
-    public static final String COLUMN_CONTACT_OFFICE_PHONE = "office_phone";
-    public static final String COLUMN_CONTACT_MANAGER_ID = "manager_id";
-    public static final String COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID = "primary_office_location_id";
-    public static final String COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID = "current_office_location_id";
-    public static final String COLUMN_CONTACT_DEPARTMENT_ID = "department_id";
-    public static final String COLUMN_CONTACT_SHARING_OFFICE_LOCATION = "sharing_office_location";
-
     public static final String CONTACTS_AVAILABLE_ACTION = "com.triage.badge.CONTACTS_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
-    private static final String SQL_DATABASE_NAME = "badge.db";
-    private static final int DATABASE_VERSION = 1;
-    private static final String CREATE_DATABASE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
-            TABLE_CONTACTS,
-            COLUMN_CONTACT_ID,
-            COLUMN_CONTACT_FIRST_NAME,
-            COLUMN_CONTACT_LAST_NAME,
-            COLUMN_CONTACT_AVATAR_URL,
-            COLUMN_CONTACT_JOB_TITLE,
-            COLUMN_CONTACT_EMAIL,
-            COLUMN_CONTACT_START_DATE,
-            COLUMN_CONTACT_BIRTH_DATE,
-            COLUMN_CONTACT_CELL_PHONE,
-            COLUMN_CONTACT_OFFICE_PHONE,
-            COLUMN_CONTACT_MANAGER_ID,
-            COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
-            COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID,
-            COLUMN_CONTACT_DEPARTMENT_ID,
-            COLUMN_CONTACT_SHARING_OFFICE_LOCATION
-    );
-    private static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", TABLE_CONTACTS, COLUMN_CONTACT_LAST_NAME );
-    private static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", COLUMN_CONTACT_ID, COLUMN_CONTACT_FIRST_NAME, COLUMN_CONTACT_LAST_NAME, COLUMN_CONTACT_AVATAR_URL, COLUMN_CONTACT_JOB_TITLE, TABLE_CONTACTS, COLUMN_CONTACT_MANAGER_ID );
+    protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
+    protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
 
-    private static final String API_TOKEN_PREF_KEY = "apiToken";
+    protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
+    protected static final String API_TOKEN_PREFS_KEY = "apiToken";
+    protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
 
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
@@ -113,6 +78,7 @@ public class DataProviderService extends Service {
     protected LruCache<String, Bitmap> thumbCache;
     protected HttpClient httpClient;
     protected MimeTypeMap mimeTypeMap;
+    protected volatile boolean loggedIn;
 
     private LocalBinding localBinding;
     private LocalBroadcastManager localBroadcastManager;
@@ -129,14 +95,17 @@ public class DataProviderService extends Service {
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
-        String apiToken = prefs.getString( API_TOKEN_PREF_KEY, "" );
+        String apiToken = prefs.getString( API_TOKEN_PREFS_KEY, "" );
         if( "".equals( apiToken ) ) {
             loggedOut();
         }
+        else {
+            loggedIn = true;
+        }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
-        databaseHelper = new CompanySQLiteHelper();
-        apiClient = new BadgeApiClient( "8ekayof3x1P5kE_LvPFv" );
+        databaseHelper = new CompanySQLiteHelper( this );
+        apiClient = new BadgeApiClient( apiToken ); // "8ekayof3x1P5kE_LvPFv"
         contactList = new ArrayList( 250 );
         handler = new Handler();
         localBinding = new LocalBinding();
@@ -167,7 +136,11 @@ public class DataProviderService extends Service {
                     // In the future it should ask for any records modified since last sync
                     // every time.
 
-                    if (lastSynced < System.currentTimeMillis() - 1800000) {
+                    if( !loggedIn ) {
+                        // TODO do we wipe data here? Prob not necessary.
+                    }
+
+                    if (loggedIn && lastSynced < System.currentTimeMillis() - 1800000) {
                         syncCompany(database);
                     }
 
@@ -209,8 +182,10 @@ public class DataProviderService extends Service {
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
             db.beginTransaction();
-            db.execSQL( String.format( "DELETE FROM %s", TABLE_CONTACTS ) );
-            apiClient.downloadCompany(db, lastSynced);
+            databaseHelper.clearContacts();
+            if( !apiClient.downloadCompany(db, lastSynced) ) {
+                loggedOut();
+            }
             db.setTransactionSuccessful();
         }
         catch( IOException e ) {
@@ -221,25 +196,6 @@ public class DataProviderService extends Service {
         }
         finally {
             db.endTransaction();
-        }
-    }
-
-    protected class CompanySQLiteHelper extends SQLiteOpenHelper {
-
-        public CompanySQLiteHelper() {
-            super( DataProviderService.this, SQL_DATABASE_NAME, null, DATABASE_VERSION);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            db.execSQL(CREATE_DATABASE_SQL);
-            syncCompany( db );
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            db.execSQL( "DROP TABLE IF EXISTS" + TABLE_CONTACTS + ";" );
-            onCreate( db );
         }
     }
 
@@ -350,10 +306,24 @@ public class DataProviderService extends Service {
      * broadcast so that activities can listen and kill themselves.
      */
     protected void loggedOut() {
+        loggedIn = false;
+        prefs.edit().remove( API_TOKEN_PREFS_KEY ).commit();
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
         localBroadcastManager.sendBroadcast( new Intent( LOGGED_OUT_ACTION ) );
+    }
+
+    /**
+     * Attempt to create a new persistent app session by exchanging email
+     * and password credentials for an api token over the network.
+     *
+     * @param email
+     * @param password
+     * @param loginFailedCallback if non null, {@link com.triaged.badge.app.DataProviderService.LoginFailedCallback#loginFailed(String)} on this obj will be called on auth failure.
+     */
+    protected void loginAsync( String email, String password, LoginFailedCallback loginFailedCallback ) {
+        new LoginTask( email, password, loginFailedCallback ).execute();
     }
 
     /**
@@ -402,6 +372,11 @@ public class DataProviderService extends Service {
          */
         public Cursor getContactsManaged( int contactId ) {
             return DataProviderService.this.getContactsManaged( contactId );
+        }
+
+
+        public void loginAsync( String email, String password, LoginFailedCallback loginFailedCallback ) {
+            DataProviderService.this.loginAsync( email, password, loginFailedCallback );
         }
     }
 
@@ -486,5 +461,95 @@ public class DataProviderService extends Service {
             }
             return null;
         }
+    }
+
+    protected class LoginTask extends AsyncTask<Void, Void, Void> {
+        private String email;
+        private String password;
+        private LoginFailedCallback loginFailedCallback;
+
+        public LoginTask(String email, String password, LoginFailedCallback loginFailedCallback) {
+            this.email = email;
+            this.password = password;
+            this.loginFailedCallback = loginFailedCallback;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                HttpResponse response = apiClient.executeLogin(email, password);
+                int statusCode = response.getStatusLine().getStatusCode();
+                if( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
+                    try {
+                        JSONObject errorObj = parseJSONResponse(response.getEntity());
+                        String error = errorObj.getJSONArray("errors").getString(0);
+                        fail( error );
+                    }
+                    catch( JSONException e ) {
+                        Log.e( LOG_TAG, "JSON exception parsing error response from 401.", e );
+                        fail( "Login failed." );
+                    }
+                }
+                else if ( statusCode == HttpStatus.SC_OK ) {
+                    try {
+                        JSONObject account = parseJSONResponse(response.getEntity());
+                        apiClient.apiToken = account.getString( "authentication_token" );
+                        prefs.edit().putString( API_TOKEN_PREFS_KEY, apiClient.apiToken ).commit();
+                        sqlThread.submit( new Runnable() {
+                            @Override
+                            public void run() {
+                                syncCompany( database );
+                            }
+                        } );
+
+                    }
+                    catch( JSONException e ) {
+                        Log.e( LOG_TAG, "JSON exception parsing login success.", e );
+                        fail( "The response wasn't understood. Please notify Badge HQ." );
+                    }
+                }
+                else {
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    Log.e( LOG_TAG, "Unexpected http response code " + statusCode + " from api." );
+                    fail( "We didn't understand Badge's response. Please notify Badge HQ." );
+                }
+            }
+            catch( IOException e ) {
+                fail( "We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again." );
+            }
+            return null;
+        }
+
+        private JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
+            ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
+            entity.writeTo( jsonBuffer );
+            String json = jsonBuffer.toString("UTF-8");
+            return new JSONObject( json );
+        }
+
+        private void fail( final String reason ) {
+            if( loginFailedCallback != null ) {
+                handler.post( new Runnable() {
+                    @Override
+                    public void run() {
+                        loginFailedCallback.loginFailed( reason );
+                    }
+                } );
+            }
+        }
+    }
+
+    /**
+     * Simple callback interface to handle login failure asynchronously
+     */
+    public interface LoginFailedCallback {
+        /**
+         * Called if login was unsuccessful. Always invoked on the main UI thread.
+         *
+         * @param reason Human readable message describing the failure.
+         */
+        public void loginFailed( String reason );
     }
 }

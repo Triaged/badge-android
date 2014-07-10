@@ -43,6 +43,8 @@
         android:layout_below="@id/login_info"
         android:layout_marginTop="88dp"
         android:textSize="15sp"
+        android:text="\@startupgiraffe.com"
+        android:inputType="textNoSuggestions"
         custom:font="Roboto-Regular.ttf"
         />
 
@@ -55,6 +57,7 @@
         android:hint="@string/login_password_hint"
         android:layout_below="@id/login_email"
         android:textSize="15sp"
+        android:inputType="textPassword"
         custom:font="Roboto-Regular.ttf"
         />
 

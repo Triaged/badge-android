@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 import java.util.List;
@@ -127,7 +128,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     public Contact getCachedContact( Cursor cursor ) {
-        int id = cursor.getInt( cursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_ID ) );
+        int id = Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID );
         Contact c = contactCache.get( id );
         if( c == null ) {
             c = new Contact();

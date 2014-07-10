@@ -173,7 +173,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
 
     private void setupContactsAndDepartments() {
-        if (dataProviderServiceBinding.isInitialized() ) {
+        if (dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
             // SETUP CONTACTS
             contactsCursor = dataProviderServiceBinding.getContactsCursor();
             contactsAdapter = new ContactsAdapter(this, contactsCursor, dataProviderServiceBinding );
