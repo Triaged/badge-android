@@ -3,31 +3,22 @@ package com.triaged.badge.app;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.DepartmentsAdapter;
-import com.triaged.badge.data.Contact;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
@@ -110,7 +101,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(ContactsActivity.this, ProfileActivity.class);
+                Intent intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
