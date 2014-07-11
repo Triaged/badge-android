@@ -40,6 +40,18 @@
     <string name="your_department">Choose Department</string>
     <string name="reporting_to">Reporting to</string>
     <string name="which_location_title">At which office do you work?</string>
+    <string name="settings_button">Settings</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_edit_profile">Edit Profile</string>
+    <string name="settings_change_password">Change Password</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_new_message">New Message</string>
+    <string name="settings_office_location">Office Location</string>
+    <string name="settings_more">More</string>
+    <string name="settings_about">About</string>
+    <string name="settings_log_out">Log Out</string>
+    <string name="edit_profile_back">Edit Profile</string>
+    <string name="edit_profile_your">Your Profile</string>
 
 
 </resources>
