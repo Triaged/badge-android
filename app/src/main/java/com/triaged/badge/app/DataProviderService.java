@@ -67,7 +67,7 @@ public class DataProviderService extends Service {
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
 
 
-
+    protected volatile Contact loggedInUser;
     protected ExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
     protected SQLiteDatabase database = null;
@@ -80,7 +80,6 @@ public class DataProviderService extends Service {
     protected LruCache<String, Bitmap> thumbCache;
     protected HttpClient httpClient;
     protected MimeTypeMap mimeTypeMap;
-    protected volatile boolean loggedIn;
 
     private LocalBinding localBinding;
     private LocalBroadcastManager localBroadcastManager;
@@ -102,7 +101,8 @@ public class DataProviderService extends Service {
             loggedOut();
         }
         else {
-            loggedIn = true;
+            // TODO Restore current cached logged in user
+            loggedInUser = new Contact();
         }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
@@ -294,7 +294,7 @@ public class DataProviderService extends Service {
      * broadcast so that activities can listen and kill themselves.
      */
     protected void loggedOut() {
-        loggedIn = false;
+        loggedInUser = null;
         prefs.edit().remove( API_TOKEN_PREFS_KEY ).commit();
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
@@ -332,7 +332,7 @@ public class DataProviderService extends Service {
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
 
-                    if ( loggedIn ) {
+                    if ( isLoggedIn() ) {
                         syncCompany(database);
                     }
 
@@ -342,6 +342,11 @@ public class DataProviderService extends Service {
             }
         }  );
     }
+
+    protected boolean isLoggedIn() {
+        return loggedInUser != null;
+    }
+
     /**
      * Local, non rpc interface for this service.
      */
@@ -397,9 +402,18 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getContactsManaged( contactId );
         }
 
-
+        /**
+         * @see com.triaged.badge.app.DataProviderService#loginAsync(String, String, com.triaged.badge.app.DataProviderService.LoginCallback)
+         */
         public void loginAsync( String email, String password, LoginCallback loginCallback) {
             DataProviderService.this.loginAsync( email, password, loginCallback);
+        }
+
+        /**
+         * @return null of not logged in, contact representing user acct otherwise.
+         */
+        public Contact getLoggedInUser( ) {
+            return loggedInUser;
         }
     }
 
@@ -525,7 +539,10 @@ public class DataProviderService extends Service {
                             }
                         } );
 
-                        // TODO persist and cache current user info.
+                        // TODO persist
+                        loggedInUser = new Contact();
+                        loggedInUser.fromJSON( account.getJSONObject( "current_user" ) );
+
 
                         if( loginCallback != null ) {
                             handler.post( new Runnable() {

@@ -4,6 +4,9 @@ import android.database.Cursor;
 
 import com.triaged.badge.app.DataProviderService;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * POJO representation of a contact.
  *
@@ -59,30 +62,52 @@ public class Contact {
         int index;
         index = contactCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_CONTACT_ID );
         if( index != -1 ) {
-            this.id = contactCursor.getInt( index );
+            id = contactCursor.getInt( index );
         }
 
         /** STRING FIELDS */
-        this.firstName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME );
-        this.lastName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
-        this.avatarUrl = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL );
-        this.email = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL );
-        this.startDateString = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE );
-        this.birthDateString = getStringSafelyFromCursor( contactCursor,  CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
-        this.cellPhone = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE );
-        this.officePhone = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE );
-        this.jobTitle = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE );
+        firstName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME );
+        lastName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
+        avatarUrl = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL );
+        email = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL );
+        startDateString = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE );
+        birthDateString = getStringSafelyFromCursor( contactCursor,  CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
+        cellPhone = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE );
+        officePhone = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE );
+        jobTitle = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE );
 
         /** INTEGER FIELDS */
-        this.sharingOfficeLocationInt = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION );
-        this.managerId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
-        this.primaryOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID );
-        this.currentOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID );
-        this.departmentId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+        sharingOfficeLocationInt = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION );
+        managerId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
+        primaryOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID );
+        currentOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID );
+        departmentId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
 
         /** DYNAMIC FIELDS */
-        this.name = String.format( "%s %s", firstName, lastName );
-        this.sharingOfficeLocation = this.sharingOfficeLocationInt == 1;
+        constructName();
+        sharingOfficeLocation = sharingOfficeLocationInt == 1;
+    }
+
+    public void fromJSON( JSONObject contactJson ) throws JSONException {
+        id = contactJson.getInt( "id" );
+        if( !contactJson.isNull( "first_name" ) ) {
+            firstName = contactJson.getString( "first_name" );
+        }
+        if( !contactJson.isNull( "last_name" ) ) {
+            lastName = contactJson.getString( "last_name" );
+        }
+        JSONObject employeeInfo  = contactJson.getJSONObject("employee_info" );
+        if( !employeeInfo.isNull( "cell_phone" ) ) {
+            cellPhone = employeeInfo.getString( "cell_phone" );
+        }
+        if( !employeeInfo.isNull( "birth_date" ) ) {
+            birthDateString = employeeInfo.getString("birth_date");
+        }
+        constructName();
+    }
+
+    private void constructName() {
+        name = String.format( "%s %s", firstName, lastName );
     }
 
     @Override
