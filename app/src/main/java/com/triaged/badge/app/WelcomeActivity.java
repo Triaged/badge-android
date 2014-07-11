@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
+import com.triaged.badge.data.Contact;
 
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
@@ -34,15 +35,23 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     private DatePickerDialogNoYear datePickerDialog = null;
     protected Calendar birthdayCalendar = null;
     protected SimpleDateFormat birthdayFormat;
+    protected DataProviderService.LocalBinding dataProviderServiceBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         setContentView(R.layout.activity_welcome);
         firstName = (EditText) findViewById(R.id.first_name);
         lastName = (EditText) findViewById(R.id.last_name);
         cellNumber = (EditText) findViewById(R.id.cell_number);
         birthday = (EditText) findViewById(R.id.birthday);
+
+        Contact account = dataProviderServiceBinding.getLoggedInUser();
+        lastName.setText( account.lastName );
+        firstName.setText( account.firstName );
+        cellNumber.setText( account.cellPhone );
+        birthday.setText( account.birthDateString );
 
         Button continueButton = (Button) findViewById(R.id.continue_button);
 

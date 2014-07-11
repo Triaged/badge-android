@@ -12,6 +12,7 @@ import android.widget.ListView;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 import java.util.ArrayList;
@@ -66,8 +67,8 @@ public class ProfileManagesAdapter extends CursorAdapter {
     }
 
     public Contact getCachedContact( Cursor cursor ) {
-        int id = cursor.getInt( cursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_ID ) );
-        Contact c = contactCache.get( id );
+        int id = Contact.getIntSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID);
+        Contact c = contactCache.get(id);
         if( c == null ) {
             c = new Contact();
             c.fromCursor( cursor );

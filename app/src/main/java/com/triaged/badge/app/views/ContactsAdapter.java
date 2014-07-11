@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 import java.util.List;
@@ -37,8 +38,8 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
-    public ContactsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
-        super( context, cursor, false );
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding) {
+        super( context, dataProviderServiceBinding.getContactsCursor(), false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
         densityMultiplier = context.getResources().getDisplayMetrics().density;
@@ -127,7 +128,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     public Contact getCachedContact( Cursor cursor ) {
-        int id = cursor.getInt( cursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_ID ) );
+        int id = Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID );
         Contact c = contactCache.get( id );
         if( c == null ) {
             c = new Contact();
@@ -135,6 +136,22 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             contactCache.put( c.id, c  );
         }
         return c;
+    }
+
+    /**
+     * Notifies the adapter that new data is available so it should
+     * re-query and refresh the data shown in the list.
+     */
+    public void refresh() {
+        changeCursor( dataProviderServiceBinding.getContactsCursor() );
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Call when adapter is going away for good (listview or containing activity being destroyed)
+     */
+    public void destroy() {
+        getCursor().close();
     }
 
 //    @Override

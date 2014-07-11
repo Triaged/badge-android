@@ -22,7 +22,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
         onboardingDotsView.currentDotIndex = 2;
         onboardingDotsView.invalidate();
-
+        continueButton = (Button)findViewById( R.id.continue_button );
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

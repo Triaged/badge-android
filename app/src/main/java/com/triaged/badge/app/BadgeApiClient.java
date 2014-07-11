@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 import org.apache.http.HttpEntity;
@@ -12,6 +13,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,16 +36,21 @@ import java.util.List;
  * @author Created by jc on 7/7/14.
  */
 public class BadgeApiClient extends DefaultHttpClient {
-    private static final String LOG_TAG = BadgeApiClient.class.getName();
+    protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
+    protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
+
+    protected static final String LOG_TAG = BadgeApiClient.class.getName();
     private static final String API_HOST = "api.badge.co";
 
-    private HttpHost httpHost;
 
-    public BadgeApiClient() {
+
+    private HttpHost httpHost;
+    String apiToken;
+
+    public BadgeApiClient( String apiToken ) {
         super();
         httpHost = new HttpHost( API_HOST );
-
-
+        this.apiToken = apiToken;
     }
 
     /**
@@ -51,11 +60,12 @@ public class BadgeApiClient extends DefaultHttpClient {
      *
      * @param db The sqlite database to write the data to.
      * @param lastSynced It should request only contacts at that company modified since this time in milliseconds
-     * @throws IOException
+     * @return true if sync successful, false if credentials not honored.
+     * @throws IOException if network issues prevent syncing
      */
-    public void downloadCompany( SQLiteDatabase db, long lastSynced ) throws IOException, JSONException {
+    public boolean downloadCompany( SQLiteDatabase db, long lastSynced ) throws IOException, JSONException {
         HttpGet getCompany = new HttpGet( String.format( "https://%s/v1/company", API_HOST ) );
-        getCompany.setHeader( "Authorization", "8ekayof3x1P5kE_LvPFv" );
+        getCompany.setHeader( "Authorization", apiToken );
         HttpResponse response = execute( httpHost, getCompany );
 
         try {
@@ -71,61 +81,68 @@ public class BadgeApiClient extends DefaultHttpClient {
                 JSONArray contactsArr = companyObj.getJSONArray( "users" );
                 for( int i = 0; i < contactsArr.length(); i++ ) {
                     JSONObject newContact = contactsArr.getJSONObject(i);
-                    values.put( DataProviderService.COLUMN_CONTACT_ID, newContact.getInt( "id" ) );
+                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_ID, newContact.getInt( "id" ) );
                     if(newContact.has( "last_name" ) ) {
-                        values.put(DataProviderService.COLUMN_CONTACT_LAST_NAME, newContact.getString("last_name"));
+                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, newContact.getString("last_name"));
                     }
                     if( newContact.has( "first_name" ) ) {
-                        values.put(DataProviderService.COLUMN_CONTACT_FIRST_NAME, newContact.getString("first_name"));
+                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, newContact.getString("first_name"));
                     }
                     if( newContact.has( "avatar_face_url") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_AVATAR_URL, newContact.getString( "avatar_face_url" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, newContact.getString( "avatar_face_url" ) );
                     }
                     if( newContact.has( "email" ) ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_EMAIL, newContact.getString( "email" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_EMAIL, newContact.getString( "email" ) );
                     }
                     if( newContact.has( "manager_id" ) && !newContact.get("manager_id").equals("") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_MANAGER_ID, newContact.getInt( "manager_id" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, newContact.getInt( "manager_id" ) );
                     }
                     if( newContact.has( "primary_office_location_id" ) && !newContact.get("primary_office_location_id").equals("") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, newContact.getInt( "primary_office_location_id" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, newContact.getInt( "primary_office_location_id" ) );
                     }
                     if( newContact.has( "current_office_location_id" ) && !newContact.get("current_office_location_id").equals("") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, newContact.getInt( "current_office_location_id" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, newContact.getInt( "current_office_location_id" ) );
                     }
                     if( newContact.has( "department_id" ) && !newContact.get("department_id").equals("") ) {
-                        values.put( DataProviderService.COLUMN_CONTACT_DEPARTMENT_ID, newContact.getInt( "department_id" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, newContact.getInt( "department_id" ) );
                     }
                     if( newContact.has( "sharing_office_location" ) && !newContact.isNull("sharing_office_location") ) {
                         boolean isSharing = newContact.getBoolean( "sharing_office_location" );
                         int sharingInt = isSharing ? 1 : 0;
-                        values.put( DataProviderService.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt );
                     }
                     if( newContact.has("employee_info") ) {
                         JSONObject employeeInfo = newContact.getJSONObject("employee_info");
                         if ( employeeInfo.has( "job_title" ) && !employeeInfo.isNull("job_title") ) {
-                            values.put( DataProviderService.COLUMN_CONTACT_JOB_TITLE, employeeInfo.getString( "job_title" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, employeeInfo.getString( "job_title" ) );
                         }
                         if ( employeeInfo.has( "start_date" ) && !employeeInfo.isNull("start_date") ) {
-                            values.put( DataProviderService.COLUMN_CONTACT_START_DATE, employeeInfo.getString( "start_date" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, employeeInfo.getString( "start_date" ) );
                         }
                         if ( employeeInfo.has( "birth_date" ) && !employeeInfo.isNull("birth_date") ) {
-                            values.put( DataProviderService.COLUMN_CONTACT_BIRTH_DATE, employeeInfo.getString( "birth_date" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, employeeInfo.getString( "birth_date" ) );
                         }
                         if ( employeeInfo.has( "cell_phone" ) && !employeeInfo.isNull("cell_phone") ) {
-                            values.put( DataProviderService.COLUMN_CONTACT_CELL_PHONE, employeeInfo.getString( "cell_phone" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, employeeInfo.getString( "cell_phone" ) );
                         }
                         if ( employeeInfo.has( "office_phone" ) && !employeeInfo.isNull("office_phone") ) {
-                            values.put( DataProviderService.COLUMN_CONTACT_OFFICE_PHONE, employeeInfo.getString( "office_phone" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE, employeeInfo.getString( "office_phone" ) );
                         }
                     }
-                    db.insert( DataProviderService.TABLE_CONTACTS, "", values );
+                    db.insert( CompanySQLiteHelper.TABLE_CONTACTS, "", values );
                     values.clear();
                 }
+                return true;
+            }
+            else if( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
+                // Wipe DB, we're locked/logged out
+                db.execSQL( CLEAR_CONTACTS_SQL );
+                db.execSQL( CLEAR_DEPARTMENTS_SQL );
             }
             else {
                 Log.e( LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!" );
             }
+            return false;
         }
         finally {
             HttpEntity entity = response.getEntity();
@@ -134,6 +151,34 @@ public class BadgeApiClient extends DefaultHttpClient {
             }
         }
 
+    }
+
+    /**
+     * Make an api request to create a new session using email/pass creds
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and closes the stream for the response.
+     *
+     * @param email
+     * @param password
+     */
+    public HttpResponse executeLogin( String email, String password ) throws IOException {
+        HttpPost createSession = new HttpPost( String.format( "https://%s/v1/sessions", API_HOST ) );
+        createSession.setHeader( "Content-Type", "application/json" );
+        JSONObject req = new JSONObject();
+        JSONObject creds = new JSONObject();
+        try {
+            creds.put( "email", email );
+            creds.put( "password", password );
+            req.put( "user_login", creds );
+        }
+        catch( JSONException e ) {
+            Log.e( LOG_TAG, "Unexpected json exception creating /session post entity.", e );
+        }
+        StringEntity body = new StringEntity( req.toString(), "UTF-8" );
+        body.setContentType( "application/json" );
+        createSession.setEntity( body );
+        return execute( httpHost, createSession );
     }
 
     public void shutdown() {

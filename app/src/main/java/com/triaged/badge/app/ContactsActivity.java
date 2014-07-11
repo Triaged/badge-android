@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -44,11 +43,11 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface regular = null;
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-
+    protected boolean databaseReady;
     protected BroadcastReceiver receiver;
+    protected BadgeApplication app;
 
     private LocalBroadcastManager localBroadcastManager;
-    private Cursor contactsCursor = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,41 +108,42 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         });
 
-        departmentsListView = (ListView) findViewById(R.id.departments_list);
-
+        databaseReady = false;
         receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "CONTACTS AVAILABLE YAAAAY");
-                setupContactsAndDepartments();
+                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_INTENT ) ) {
+                    databaseReadyCallback();
+                }
+                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_INTENT ) ) {
+                    loadContactsAndDepartments();
+                }
             }
         };
 
+
+        departmentsListView = (ListView) findViewById(R.id.departments_list);
+        app = (BadgeApplication) getApplication();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
+        filter.addAction(DataProviderService.DB_UPDATED_INTENT);
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        localBroadcastManager.registerReceiver(receiver, filter);
+        dataProviderServiceBinding = app.dataProviderServiceBinding;
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+            databaseReadyCallback();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(DataProviderService.CONTACTS_AVAILABLE_INTENT);
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        localBroadcastManager.registerReceiver(receiver, filter);
-
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
-        setupContactsAndDepartments();
     }
 
 
     @Override
     protected void onStop() {
         super.onStop();
-        if( contactsCursor != null ) {
-            contactsCursor.close();
-        }
-        localBroadcastManager.unregisterReceiver(receiver);
-
     }
 
     @Override
@@ -154,6 +154,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if( contactsAdapter != null ) {
+            contactsAdapter.destroy();
+        }
+        localBroadcastManager.unregisterReceiver( receiver );
     }
 
     @Override
@@ -183,11 +192,31 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         Log.d(TAG, "TAB RESELECTED");
     }
 
-    private void setupContactsAndDepartments() {
-        if (dataProviderServiceBinding.isInitialized() ) {
+    /**
+     * This callback should be invoked whenever the database is determined
+     * to be ready, which may be asynchronous with activity create and start.
+     *
+     * No contacts db operation should occur until this has been called.
+     */
+    protected void databaseReadyCallback() {
+        if( !databaseReady ) {
+            databaseReady = true;
+
             // SETUP CONTACTS
-            contactsCursor = dataProviderServiceBinding.getContactsCursor();
-            contactsAdapter = new ContactsAdapter(this, contactsCursor, dataProviderServiceBinding );
+            dataProviderServiceBinding = app.dataProviderServiceBinding;
+            loadContactsAndDepartments();
+        }
+    }
+
+    protected void loadContactsAndDepartments() {
+        if( contactsAdapter != null ) {
+            contactsAdapter.refresh();
+
+            // Refresh departments
+        }
+        else {
+
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding);
             contactsListView.setAdapter(contactsAdapter);
 
             // SETUP DEPARTMENTS
