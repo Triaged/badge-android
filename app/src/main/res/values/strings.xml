@@ -52,6 +52,7 @@
     <string name="settings_log_out">Log Out</string>
     <string name="edit_profile_back">Edit Profile</string>
     <string name="edit_profile_your">Your Profile</string>
+    <string name="save_and_exit">Save and Exit</string>
 
 
 </resources>

@@ -22,6 +22,21 @@
             android:drawablePadding="2dp"
             android:text="@string/edit_profile_back"
             />
+
+        <com.triaged.badge.app.views.TextViewWithFont
+            android:id="@+id/save_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="center_vertical"
+            custom:font="Roboto-Regular.ttf"
+            android:textColor="@color/main_orange"
+            android:textSize="18sp"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="16dp"
+            android:text="@string/save_and_exit"
+            />
+
     </RelativeLayout>
 
     <ScrollView
