@@ -10,27 +10,27 @@ import com.triaged.badge.app.views.OnboardingDotsView;
 /**
  * Created by Will on 7/10/14.
  */
-public class OnboardingPositionActivity extends BadgeActivity {
+public class OnboardingLocationActivity extends BadgeActivity {
 
     private Button continueButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_onboarding_position);
+        setContentView(R.layout.activity_onboarding_location);
 
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
-        onboardingDotsView.currentDotIndex = 1;
+        onboardingDotsView.currentDotIndex = 2;
         onboardingDotsView.invalidate();
 
-        continueButton = (Button) findViewById(R.id.continue_button);
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
+                Intent intent = new Intent(OnboardingLocationActivity.this, ContactsActivity.class);
                 startActivity(intent);
             }
         });
+
     }
 
     @Override
@@ -38,4 +38,5 @@ public class OnboardingPositionActivity extends BadgeActivity {
         super.onResume();
         overridePendingTransition(0,0);
     }
+
 }

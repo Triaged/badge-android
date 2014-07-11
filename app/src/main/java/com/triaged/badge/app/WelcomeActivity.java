@@ -2,6 +2,7 @@ package com.triaged.badge.app;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -52,7 +53,9 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 String lastNameString = lastName.getText().toString();
                 String cellNumberString = cellNumber.getText().toString();
                 String birthdayString = birthday.getText().toString();
-                Toast.makeText(WelcomeActivity.this, firstNameString, Toast.LENGTH_SHORT).show();
+                // Toast.makeText(WelcomeActivity.this, firstNameString, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
+                startActivity(intent);
             }
         });
 
