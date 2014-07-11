@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/profile_row_background"
+        >
+        <com.triaged.badge.app.views.TextViewWithFont
+            android:id="@+id/back_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="center_vertical"
+            custom:font="Roboto-Regular.ttf"
+            android:textColor="@color/main_orange"
+            android:textSize="18sp"
+            android:drawableLeft="@drawable/ic_action_previous_item"
+            android:drawablePadding="2dp"
+            android:text="@string/edit_profile_back"
+            />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:layout_marginTop="48dp"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            >
+
+            <!-- YOUR PROFILE -->
+            <com.triaged.badge.app.views.TextViewWithFont
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/sub_text_gray"
+                android:textAllCaps="true"
+                android:textSize="14sp"
+                android:gravity="bottom"
+                custom:font="Roboto-Bold.ttf"
+                android:background="@drawable/section_header_background"
+                android:text="@string/edit_profile_your"
+                />
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

@@ -1,35 +1,23 @@
 package com.triaged.badge.app;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 /**
- * User settings view
- *
- * Created by Will on 7/10/14.
+ * Created by Will on 7/11/14.
  */
-public class SettingsActivity extends BadgeActivity {
+public class EditProfileActivity extends BadgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        setContentView(R.layout.activity_edit_profile);
         TextView backButton = (TextView) findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
-            }
-        });
-        Button editProfileButton = (Button) findViewById(R.id.edit_profile_button);
-        editProfileButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(SettingsActivity.this, EditProfileActivity.class);
-                startActivity(intent);
             }
         });
     }
