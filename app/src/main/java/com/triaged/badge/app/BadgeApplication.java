@@ -16,7 +16,7 @@ import android.util.Log;
 public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
-    public DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
 
     @Override
@@ -28,6 +28,7 @@ public class BadgeApplication extends Application {
             public void onServiceConnected(ComponentName name, IBinder service) {
                 Log.d(TAG, "SERVICE CONNECTED YAAAAY");
                 dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
+                dataProviderServiceBinding.initDatabase();
             }
 
             @Override
@@ -37,6 +38,7 @@ public class BadgeApplication extends Application {
         };
 
         if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
+            Log.e( "SEVERE", "Couldn't bind to data provider service." );
             unbindService(dataProviderServiceConnnection);
         }
     }

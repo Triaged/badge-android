@@ -1,41 +1,55 @@
 package com.triaged.badge.app;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 /**
- * All app activities should inherit from this super class, which implements global functionality.
+ * All app activities should inherit from this super
+ * class, which implements global functionality.
  *
- * Created by Will on 7/7/14.
+ * @author Created by Will on 7/7/14.
  */
-public abstract class BadgeActivity extends ActionBarActivity {
+public abstract class BadgeActivity extends Activity {
+
+    protected LocalBroadcastManager localBroadcastManager;
+    private BroadcastReceiver logoutListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        localBroadcastManager = LocalBroadcastManager.getInstance( this );
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction( DataProviderService.LOGGED_OUT_ACTION );
+        logoutListener =  new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                logout();
+            }
+        };
+        localBroadcastManager.registerReceiver( logoutListener, intentFilter );
         super.onCreate(savedInstanceState);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.contacts, menu);
-        return true;
+    protected void onDestroy() {
+        super.onDestroy();
+        localBroadcastManager.unregisterReceiver( logoutListener );
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    /**
+     * Override this method in the activity impl to change activity
+     * behavior when a logged out state is detected.
+     *
+     * Default behavior is to close the activity.
+     */
+    protected void logout() {
+        finish();
     }
-
 }

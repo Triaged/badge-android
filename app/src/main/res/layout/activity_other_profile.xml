@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/profile_row_background"
+        >
+        <com.triaged.badge.app.views.TextViewWithFont
+            android:id="@+id/back_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="center_vertical"
+            custom:font="Roboto-Regular.ttf"
+            android:textColor="@color/main_orange"
+            android:textSize="18sp"
+            android:drawableLeft="@drawable/ic_action_previous_item"
+            android:drawablePadding="2dp"
+            />
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp"
+        >
+        <include layout="@layout/include_profile" />
+    </ScrollView>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@color/main_orange"
+        android:layout_alignParentBottom="true"
+        >
+
+        <ImageButton
+            android:id="@+id/new_message_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_chat_beige"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@null"
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:layout_centerVertical="true"
+            />
+
+        <ImageButton
+            android:id="@+id/new_email_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_new_email_beige"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@null"
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"
+            />
+
+        <ImageButton
+            android:id="@+id/call_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_action_call_beige"
+            android:layout_alignParentRight="true"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@null"
+            android:paddingRight="16dp"
+            android:paddingLeft="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:layout_centerVertical="true"
+            android:visibility="invisible"
+            />
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <com.triaged.badge.app.views.OnboardingDotsView
+        android:id="@+id/onboarding_dots"
+        android:layout_width="44dp"
+        android:layout_height="8dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="44dp"
+        />
+
+    <ImageView
+        android:id="@+id/nametag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/nametag"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/onboarding_dots"
+        android:layout_marginTop="35dp"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/tell_us_more_title"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="35dp"
+        android:layout_below="@id/nametag"
+        android:text="@string/tell_us_more_title"
+        android:textColor="@color/accent_turquoise"
+        android:textSize="31sp"
+        custom:font="Roboto-Light.ttf"
+        android:gravity="center"
+        />
+
+    <com.triaged.badge.app.views.EditTextWithFont
+        android:id="@+id/your_job_title"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/main_text_black"
+        android:textColorHint="@color/light_text_gray"
+        android:hint="@string/your_job_title"
+        android:layout_below="@id/tell_us_more_title"
+        android:layout_marginTop="55dp"
+        android:textSize="15sp"
+        custom:font="Roboto-Regular.ttf"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        />
+
+    <TextView
+        android:text="@string/your_department"
+        android:id="@+id/your_department"
+        android:textColor="@color/light_text_gray"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        style="?android:attr/spinnerStyle"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:textSize="15sp"
+        android:layout_below="@id/your_job_title"
+        />
+
+    <TextView
+        android:text="@string/reporting_to"
+        android:id="@+id/reporting_to"
+        android:textColor="@color/light_text_gray"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        style="?android:attr/spinnerStyle"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:textSize="15sp"
+        android:layout_below="@id/your_department"
+        />
+
+    <com.triaged.badge.app.views.ButtonWithFont
+        android:id="@+id/continue_button"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/white"
+        android:text="@string/welcome_continue"
+        android:gravity="center"
+        android:background="@drawable/full_width_button"
+        android:layout_alignParentBottom="true"
+        android:textSize="16sp"
+        custom:font="Roboto-Regular.ttf"
+        />
+
+
+</RelativeLayout>

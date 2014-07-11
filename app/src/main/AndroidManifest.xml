@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
 
 
     <application
@@ -22,6 +23,11 @@
             android:screenOrientation="portrait"
             android:theme="@style/Tabbed"
             >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
 
         </activity>
         <activity android:name=".LoginActivity"
@@ -34,7 +40,38 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ProfileActivity"
+        <activity android:name=".WelcomeActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity android:name=".OnboardingPositionActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity android:name=".OnboardingLocationActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity android:name=".OtherProfileActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity android:name=".MyProfileActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/Tabbed"
+            >
+        </activity>
+        <activity android:name=".SettingsActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
+        <activity android:name=".EditProfileActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             >

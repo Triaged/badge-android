@@ -2,6 +2,7 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,11 +10,16 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 import java.util.List;
@@ -29,11 +35,15 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     LruCache<Integer, Contact> contactCache;
     private LayoutInflater inflater;
+    private float densityMultiplier = 1;
+    private DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
-    public ContactsAdapter(Context context, Cursor cursor ) {
-        super( context, cursor, false );
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding) {
+        super( context, dataProviderServiceBinding.getContactsCursor(), false );
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
+        densityMultiplier = context.getResources().getDisplayMetrics().density;
+        this.dataProviderServiceBinding = dataProviderServiceBinding;
     }
 
     @Override
@@ -56,15 +66,35 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         ViewHolder holder = new ViewHolder();
         View newView =  inflater.inflate(R.layout.item_contact, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
+        holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
         newView.setTag(holder);
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        holder.messageButton = (ImageButton) newView.findViewById(R.id.message_contact);
+        holder.messageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
+            }
+        });
+        if (c.jobTitle == null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0,0,0,0);
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        } else {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
+            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        }
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
         return newView;
     }
 
@@ -74,6 +104,18 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
+        if (c.jobTitle == null) {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0,0,0,0);
+            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        } else {
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
+            layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
+            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
+            holder.nameTextView.setLayoutParams(layoutParams);
+        }
+        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
     }
 
     @Override
@@ -86,7 +128,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     public Contact getCachedContact( Cursor cursor ) {
-        int id = cursor.getInt( cursor.getColumnIndex(DataProviderService.COLUMN_CONTACT_ID ) );
+        int id = Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID );
         Contact c = contactCache.get( id );
         if( c == null ) {
             c = new Contact();
@@ -94,6 +136,22 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             contactCache.put( c.id, c  );
         }
         return c;
+    }
+
+    /**
+     * Notifies the adapter that new data is available so it should
+     * re-query and refresh the data shown in the list.
+     */
+    public void refresh() {
+        changeCursor( dataProviderServiceBinding.getContactsCursor() );
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Call when adapter is going away for good (listview or containing activity being destroyed)
+     */
+    public void destroy() {
+        getCursor().close();
     }
 
 //    @Override
@@ -119,6 +177,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         TextView nameTextView;
         TextView titleTextView;
         ImageView thumbImage;
+        ImageButton messageButton;
     }
 
 }

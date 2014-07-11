@@ -10,11 +10,10 @@
     <style name="Tabbed" parent="AppTheme">
         <item name="android:windowNoTitle">false</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:windowTitleSize">0dp</item>
+
         <item name="android:navigationMode">tabMode</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
-        <item name="android:actionBarTabTextStyle">@color/light_text_gray</item>
     </style>
 
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
