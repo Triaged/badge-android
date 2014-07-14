@@ -15,6 +15,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.DepartmentsAdapter;
@@ -80,6 +81,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setSelected(false);
                 contactsTabButton.setTypeface(medium);
                 departmentsTabButton.setTypeface(regular);
+                departmentsListView.setVisibility( View.INVISIBLE );
                 contactsListView.setVisibility(View.VISIBLE);
             }
         });
@@ -92,6 +94,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 contactsTabButton.setTypeface(regular);
                 departmentsTabButton.setTypeface(medium);
                 contactsListView.setVisibility(View.INVISIBLE);
+                departmentsListView.setVisibility(View.VISIBLE);
             }
         });
 
@@ -123,6 +126,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
 
         departmentsListView = (ListView) findViewById(R.id.departments_list);
+
+        departmentsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(ContactsActivity.this, "DEPT #" + departmentsAdapter.getCachedDepartment(position).id, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         app = (BadgeApplication) getApplication();
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
@@ -133,17 +144,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
             databaseReadyCallback();
         }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     @Override
@@ -162,28 +162,32 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( contactsAdapter != null ) {
             contactsAdapter.destroy();
         }
+        if( departmentsAdapter != null ) {
+            departmentsAdapter.destroy();
+        }
         localBroadcastManager.unregisterReceiver( receiver );
     }
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.v( TAG , String.format( "onTabSelected, %d bizitch", tab.getPosition() ) );
         if ( tab.getPosition() == 0) {
-            // tab.setIcon(R.drawable.messages_selected);
-//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+//            tab.setIcon(R.drawable.messages_selected);
+//            Intent intent = new Intent(this, ContactsActivity.class);
 //            startActivity(intent);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
-            startActivity(intent);
+//            tab.setIcon(R.drawable.profile_selected);
+//            Intent intent = new Intent( this, MyProfileActivity.class );
+//            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+//            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
+//            startActivity(intent);
         }
     }
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
         if ( tab.getPosition() == 1) {
-            tab.setIcon(R.drawable.contacts_unselected);
+            // tab.setIcon(R.drawable.contacts_unselected);
         }
     }
 
@@ -211,18 +215,18 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void loadContactsAndDepartments() {
         if( contactsAdapter != null ) {
             contactsAdapter.refresh();
-
-            // Refresh departments
         }
         else {
-
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding);
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_with_msg);
             contactsListView.setAdapter(contactsAdapter);
+        }
 
-            // SETUP DEPARTMENTS
-            // get cursor
-            // create adapter
-            // set adapter
+        if( departmentsAdapter != null ) {
+            departmentsAdapter.refresh();
+        }
+        else {
+            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
+            departmentsListView.setAdapter( departmentsAdapter );
         }
     }
 }

@@ -62,6 +62,7 @@ public class DataProviderService extends Service {
 
     protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
     protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
+    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
@@ -164,6 +165,7 @@ public class DataProviderService extends Service {
         try {
             db.beginTransaction();
             databaseHelper.clearContacts();
+            databaseHelper.clearDepartments();
             if( apiClient.downloadCompany(db, lastSynced) ) {
                 loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
             }
@@ -277,6 +279,14 @@ public class DataProviderService extends Service {
         }
         return null;
     }
+
+    protected Cursor getDepartmentCursor() {
+        if( database != null ) {
+            return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, EMPTY_STRING_ARRAY );
+        }
+        return null;
+    }
+
 
     protected void assignBitmapToView( Bitmap b, View v ) {
         if( v instanceof ImageView ) {
@@ -495,7 +505,14 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(com.triaged.badge.data.Contact, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void saveBasicProfileDataAsync( Contact contact, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.saveBasicProfileDataAsync( contact, saveCallback );
+            DataProviderService.this.saveBasicProfileDataAsync(contact, saveCallback);
+        }
+
+        /**
+         * @see DataProviderService#getDepartmentCursor()
+         */
+        public Cursor getDepartmentCursor() {
+            return DataProviderService.this.getDepartmentCursor();
         }
     }
 

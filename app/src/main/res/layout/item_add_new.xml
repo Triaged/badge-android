@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.triaged.badge.app.views.ButtonWithFont
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/add_new"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    custom:font="Roboto-Regular.ttf"
+    android:textColor="@color/main_orange"
+    android:paddingLeft="8dp"
+    android:textSize="18sp"
+    android:background="@drawable/profile_row_background"
+    android:drawableLeft="@drawable/centering_on"
+    android:drawablePadding="8dp"
+    android:gravity="center_vertical"
+    />

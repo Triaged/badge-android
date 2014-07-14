@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/profile_row_background"
+        >
+        <com.triaged.badge.app.views.TextViewWithFont
+            android:id="@+id/back_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:gravity="center_vertical"
+            custom:font="Roboto-Regular.ttf"
+            android:textColor="@color/main_orange"
+            android:textSize="18sp"
+            android:drawableLeft="@drawable/ic_action_previous_item"
+            android:drawablePadding="2dp"
+            android:text="@string/add_new_office_back"
+            />
+    </RelativeLayout>
+
+    <com.triaged.badge.app.views.AutocompleteTextViewWithFont
+        android:id="@+id/autocomplete_location"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/main_text_black"
+        android:textColorHint="@color/light_text_gray"
+        android:hint="@string/address"
+        android:layout_marginTop="48dp"
+        android:textSize="15sp"
+        custom:font="Roboto-Regular.ttf"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        />
+
+    <!-- GOOGLE MAP GOES HERE -->
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="96dp"
+        android:layout_marginBottom="48dp"
+        android:name="com.google.android.gms.maps.MapFragment"/>
+
+    <ImageButton
+        android:id="@+id/find_me_button"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_action_location_found"
+        android:layout_marginLeft="16dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="64dp"
+        android:background="@drawable/white_rounded_bg"
+        />
+
+    <com.triaged.badge.app.views.ButtonWithFont
+        android:id="@+id/add_location_button"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/white"
+        android:text="@string/add_location_button"
+        android:gravity="center"
+        android:background="@drawable/full_width_button"
+        android:layout_alignParentBottom="true"
+        android:textSize="16sp"
+        custom:font="Roboto-Regular.ttf"
+        android:textAllCaps="true"
+        />
+
+</RelativeLayout>
