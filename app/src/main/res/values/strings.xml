@@ -53,6 +53,10 @@
     <string name="edit_profile_back">Edit Profile</string>
     <string name="edit_profile_your">Your Profile</string>
     <string name="save_and_exit">Save and Exit</string>
+    <string name="add_new_office_back">Add New Office</string>
+    <string name="select_department">Select Department</string>
+    <string name="address">Address</string>
+    <string name="add_location_button">Add</string>
 
 
 </resources>
