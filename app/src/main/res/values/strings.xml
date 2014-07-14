@@ -73,6 +73,7 @@
     <string name="check_mark">Currently Selected</string>
     <string name="add_new_location">Add a New Office</string>
     <string name="no_office_button">I don\'t work at an office</string>
+    <string name="profile_heading_department">Department</string>
 
 
 </resources>

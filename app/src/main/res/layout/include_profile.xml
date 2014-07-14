@@ -2,152 +2,176 @@
 
 
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:custom="http://schemas.android.com/apk/res-auto"
-        android:layout_width="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    >
+
+    <ImageView
+        android:id="@+id/profile_image"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="23dp"
+        android:contentDescription="@string/content_description_profile_image"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/profile_name"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        >
+        android:textColor="@color/main_text_black"
+        android:gravity="center"
+        android:textSize="30sp"
+        android:layout_marginTop="20dp"
+        custom:font="Roboto-Regular.ttf"
+        />
 
-        <ImageView
-            android:id="@+id/profile_image"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_marginTop="23dp"
-            android:contentDescription="@string/content_description_profile_image"
-            />
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/profile_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/light_text_gray"
+        android:gravity="center"
+        android:textSize="15sp"
+        custom:font="Roboto-Regular.ttf"
+        />
 
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:id="@+id/profile_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/main_text_black"
-            android:gravity="center"
-            android:textSize="30sp"
-            android:layout_marginTop="20dp"
-            custom:font="Roboto-Regular.ttf"
-            />
+    <!-- AVAILABILITY -->
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:textAllCaps="true"
+        android:textSize="12sp"
+        android:textColor="@color/light_text_gray"
+        android:text="@string/profile_heading_availability"
+        android:background="@color/light_gray_background"
+        custom:font="Roboto-Medium.ttf"
+        android:layout_marginTop="10dp"
+        />
 
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:id="@+id/profile_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/light_text_gray"
-            android:gravity="center"
-            android:textSize="15sp"
-            custom:font="Roboto-Regular.ttf"
-            />
+    <com.triaged.badge.app.views.ProfileCurrentLocationView
+        android:id="@+id/profile_current_location"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        />
 
-        <!-- AVAILABILITY -->
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:gravity="center_vertical"
-            android:paddingLeft="16dp"
-            android:textAllCaps="true"
-            android:textSize="12sp"
-            android:textColor="@color/light_text_gray"
-            android:text="@string/profile_heading_availability"
-            android:background="@color/light_gray_background"
-            custom:font="Roboto-Medium.ttf"
-            android:layout_marginTop="10dp"
-            />
+    <!-- MANAGES -->
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/profile_heading_manages"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:textAllCaps="true"
+        android:textSize="12sp"
+        android:textColor="@color/light_text_gray"
+        android:text="@string/profile_heading_manages"
+        android:background="@color/light_gray_background"
+        custom:font="Roboto-Medium.ttf"
+        />
 
-        <com.triaged.badge.app.views.ProfileCurrentLocationView
-            android:id="@+id/profile_current_location"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="24dp"
-            android:layout_marginRight="24dp"
-            />
+    <ListView
+        android:id="@+id/manages_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+    </ListView>
 
-        <!-- MANAGES -->
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:id="@+id/profile_heading_manages"
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:gravity="center_vertical"
-            android:paddingLeft="16dp"
-            android:textAllCaps="true"
-            android:textSize="12sp"
-            android:textColor="@color/light_text_gray"
-            android:text="@string/profile_heading_manages"
-            android:background="@color/light_gray_background"
-            custom:font="Roboto-Medium.ttf"
-            />
+    <!-- DEPARTMENT -->
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:textAllCaps="true"
+        android:textSize="12sp"
+        android:textColor="@color/light_text_gray"
+        android:text="@string/profile_heading_department"
+        android:background="@color/light_gray_background"
+        custom:font="Roboto-Medium.ttf"
+        />
 
-        <ListView
-            android:id="@+id/manages_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </ListView>
+    <com.triaged.badge.app.views.ButtonWithFont
+        android:id="@+id/profile_department"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-        <!-- CONTACT INFORMATION -->
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:gravity="center_vertical"
-            android:paddingLeft="16dp"
-            android:textAllCaps="true"
-            android:textSize="12sp"
-            android:textColor="@color/light_text_gray"
-            android:text="@string/profile_heading_contact"
-            android:background="@color/light_gray_background"
-            custom:font="Roboto-Medium.ttf"
-            />
+    <!-- CONTACT INFORMATION -->
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:textAllCaps="true"
+        android:textSize="12sp"
+        android:textColor="@color/light_text_gray"
+        android:text="@string/profile_heading_contact"
+        android:background="@color/light_gray_background"
+        custom:font="Roboto-Medium.ttf"
+        />
 
-        <com.triaged.badge.app.views.ProfileContactInfoView
-            android:id="@+id/profile_email"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/profile_row_background"
-            android:visibility="gone"
-            />
+    <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_email"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-        <com.triaged.badge.app.views.ProfileContactInfoView
-            android:id="@+id/profile_office_phone"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/profile_row_background"
-            android:visibility="gone"
-            />
+    <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_office_phone"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-        <com.triaged.badge.app.views.ProfileContactInfoView
-            android:id="@+id/profile_cell_phone"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/profile_row_background"
-            android:visibility="gone"
-            />
+    <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_cell_phone"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-        <com.triaged.badge.app.views.ProfileContactInfoView
-            android:id="@+id/profile_birth_date"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/profile_row_background"
-            android:visibility="gone"
-            />
+    <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_birth_date"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-        <com.triaged.badge.app.views.ProfileContactInfoView
-            android:id="@+id/profile_start_date"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:background="@drawable/profile_row_background"
-            android:visibility="gone"
-            />
+    <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_start_date"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+        />
 
-    </LinearLayout>
+</LinearLayout>
 
 
