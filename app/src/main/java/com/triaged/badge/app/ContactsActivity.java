@@ -80,6 +80,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setSelected(false);
                 contactsTabButton.setTypeface(medium);
                 departmentsTabButton.setTypeface(regular);
+                departmentsListView.setVisibility( View.INVISIBLE );
                 contactsListView.setVisibility(View.VISIBLE);
             }
         });
@@ -92,6 +93,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 contactsTabButton.setTypeface(regular);
                 departmentsTabButton.setTypeface(medium);
                 contactsListView.setVisibility(View.INVISIBLE);
+                departmentsListView.setVisibility(View.VISIBLE);
             }
         });
 
@@ -159,16 +161,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.v( TAG , String.format( "onTabSelected, %d bizitch", tab.getPosition() ) );
         if ( tab.getPosition() == 0) {
-            // tab.setIcon(R.drawable.messages_selected);
-//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
+//            tab.setIcon(R.drawable.messages_selected);
+//            Intent intent = new Intent(this, ContactsActivity.class);
 //            startActivity(intent);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
-            startActivity(intent);
+//            tab.setIcon(R.drawable.profile_selected);
+//            Intent intent = new Intent( this, MyProfileActivity.class );
+//            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+//            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
+//            startActivity(intent);
         }
     }
 

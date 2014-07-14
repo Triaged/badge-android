@@ -93,7 +93,9 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
-        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
+        if( c.avatarUrl != null ) {
+            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+        }
         return newView;
     }
 
@@ -114,7 +116,10 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
-        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
+        holder.thumbImage.setImageBitmap( null );
+        if( c.avatarUrl != null ) {
+            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+        }
     }
 
     @Override

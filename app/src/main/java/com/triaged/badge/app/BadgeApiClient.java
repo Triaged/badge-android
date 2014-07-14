@@ -107,7 +107,7 @@ public class BadgeApiClient extends DefaultHttpClient {
                     if( newContact.has( "first_name" ) ) {
                         values.put(CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, newContact.getString("first_name"));
                     }
-                    if( newContact.has( "avatar_face_url") ) {
+                    if( newContact.has( "avatar_face_url") && !newContact.isNull( "avatar_face_url" ) ) {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, newContact.getString( "avatar_face_url" ) );
                     }
                     if( newContact.has( "email" ) ) {
