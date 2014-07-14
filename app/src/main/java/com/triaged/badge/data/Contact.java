@@ -1,11 +1,19 @@
 package com.triaged.badge.data;
 
 import android.database.Cursor;
+import android.util.Log;
 
 import com.triaged.badge.app.DataProviderService;
+import com.triaged.badge.app.WelcomeActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * POJO representation of a contact.
@@ -13,6 +21,10 @@ import org.json.JSONObject;
  * @author Created by Will on 7/7/14.
  */
 public class Contact {
+    public static final TimeZone GMT = TimeZone.getTimeZone( "GMT" );
+
+    private static final String LOG_TAG = Contact.class.getName();
+
     public int id;
     public String firstName;
     public String lastName;
@@ -86,6 +98,7 @@ public class Contact {
     }
 
     public void fromJSON( JSONObject contactJson ) throws JSONException {
+
         id = contactJson.getInt( "id" );
         if( !contactJson.isNull( "first_name" ) ) {
             firstName = contactJson.getString( "first_name" );
@@ -98,7 +111,17 @@ public class Contact {
             cellPhone = employeeInfo.getString( "cell_phone" );
         }
         if( !employeeInfo.isNull( "birth_date" ) ) {
-            birthDateString = employeeInfo.getString("birth_date");
+            String birthDateStr = employeeInfo.getString("birth_date");
+            try {
+                DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+                Date birthDate = iso8601.parse(birthDateStr.replace( "+00:00", "+0000" ) );
+                SimpleDateFormat ui = new SimpleDateFormat( WelcomeActivity.BIRTHDAY_FORMAT_STRING );
+                ui.setTimeZone( GMT );
+                birthDateString = ui.format( birthDate );
+            }
+            catch( ParseException e ) {
+                Log.w(LOG_TAG, "Error parsing date from server as iso 8601", e );
+            }
         }
         constructName();
     }

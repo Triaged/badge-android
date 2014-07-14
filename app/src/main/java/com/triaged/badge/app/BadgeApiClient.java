@@ -12,6 +12,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.BasicHttpEntity;
@@ -25,6 +26,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,6 +41,8 @@ import java.util.List;
  * @author Created by jc on 7/7/14.
  */
 public class BadgeApiClient extends DefaultHttpClient {
+    public static final String MIME_TYPE_JSON = "application/json";
+
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
 
@@ -179,7 +185,6 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse executeLogin( String email, String password ) throws IOException {
         HttpPost createSession = new HttpPost( String.format( "https://%s/v1/sessions", API_HOST ) );
-        createSession.setHeader( "Content-Type", "application/json" );
         JSONObject req = new JSONObject();
         JSONObject creds = new JSONObject();
         try {
@@ -191,9 +196,32 @@ public class BadgeApiClient extends DefaultHttpClient {
             Log.e( LOG_TAG, "Unexpected json exception creating /session post entity.", e );
         }
         StringEntity body = new StringEntity( req.toString(), "UTF-8" );
-        body.setContentType( "application/json" );
+        body.setContentType( MIME_TYPE_JSON );
         createSession.setEntity( body );
         return execute( httpHost, createSession );
+    }
+
+    public HttpResponse executeAccountPatch( JSONObject data ) throws IOException {
+        HttpEntityEnclosingRequestBase patch = new HttpEntityEnclosingRequestBase() {
+            @Override
+            public String getMethod() {
+                return "PATCH";
+            }
+        };
+        try {
+            patch.setURI(new URI(String.format("https://%s/v1/account", API_HOST)));
+            StringEntity body = new StringEntity( data.toString(), "UTF-8" );
+            body.setContentType( MIME_TYPE_JSON );
+            patch.setEntity( body );
+            patch.setHeader( "Authorization", apiToken );
+            return execute( httpHost, patch );
+        }
+        catch( URISyntaxException e ) {
+            throw new IllegalStateException( "Couldn't parse what should be a constant URL, bombing out.", e );
+        }
+        catch( UnsupportedEncodingException e ) {
+            throw new IllegalStateException( "Unsupported encoding UTF-8. WTF?", e );
+        }
     }
 
     public void shutdown() {

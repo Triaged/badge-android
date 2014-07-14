@@ -1,6 +1,7 @@
 package com.triaged.badge.app;
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -64,6 +65,7 @@ public class DataProviderService extends Service {
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
+    protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
 
 
@@ -100,14 +102,10 @@ public class DataProviderService extends Service {
         if( "".equals( apiToken ) ) {
             loggedOut();
         }
-        else {
-            // TODO Restore current cached logged in user
-            loggedInUser = new Contact();
-        }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
         databaseHelper = new CompanySQLiteHelper( this );
-        apiClient = new BadgeApiClient( apiToken ); // "8ekayof3x1P5kE_LvPFv"
+        apiClient = new BadgeApiClient( apiToken );
         contactList = new ArrayList( 250 );
         handler = new Handler();
         localBinding = new LocalBinding();
@@ -166,7 +164,10 @@ public class DataProviderService extends Service {
         try {
             db.beginTransaction();
             databaseHelper.clearContacts();
-            if( !apiClient.downloadCompany(db, lastSynced) ) {
+            if( apiClient.downloadCompany(db, lastSynced) ) {
+                loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
+            }
+            else {
                 loggedOut();
             }
             db.setTransactionSuccessful();
@@ -295,11 +296,11 @@ public class DataProviderService extends Service {
      */
     protected void loggedOut() {
         loggedInUser = null;
-        prefs.edit().remove( API_TOKEN_PREFS_KEY ).commit();
+        prefs.edit().remove( API_TOKEN_PREFS_KEY ).remove(LOGGED_IN_USER_ID_PREFS_KEY ).commit();
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
-        localBroadcastManager.sendBroadcast( new Intent( LOGGED_OUT_ACTION ) );
+        localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
     }
 
     /**
@@ -332,10 +333,10 @@ public class DataProviderService extends Service {
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
 
-                    if ( isLoggedIn() ) {
+
+                    if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
                     }
-
                 } catch (Throwable t) {
                     Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
                 }
@@ -343,8 +344,82 @@ public class DataProviderService extends Service {
         }  );
     }
 
-    protected boolean isLoggedIn() {
-        return loggedInUser != null;
+    protected void saveBasicProfileDataAsync( final Contact contact, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    if( saveCallback != null ) {
+                        saveCallback.saveFailed( "Database not ready yet. Please report to Badge HQ" );
+                    }
+                    return;
+                }
+
+                // Wrap entire operation in the transaction so if syncing over http fails
+                // the tx will roll back.
+
+                database.beginTransaction();
+                try {
+                    // Update local data.
+                    ContentValues values = new ContentValues();
+                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, contact.firstName );
+                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, contact.lastName );
+                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, contact.cellPhone );
+                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, contact.birthDateString );
+                    //values.put( CompanySQLiteHelper.COL)
+                    database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contact.id ) } );
+
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+                    JSONObject user = new JSONObject();
+                    user.put( "user", data );
+                    data.put( "employee_info_attributes", employeeInfo );
+                    data.put( "first_name", contact.firstName );
+                    data.put( "last_name", contact.lastName );
+                    employeeInfo.put( "birth_date", contact.birthDateString );
+                    employeeInfo.put( "cell_phone", contact.cellPhone );
+                    HttpResponse response = apiClient.executeAccountPatch( user );
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        database.setTransactionSuccessful();
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase() );
+                    }
+                }
+                catch( IOException e ) {
+                    fail( "There was a network issue saving, please check your connection and try again." );
+                }
+                catch( JSONException e ) {
+                    fail( "Unexpected issue, please contact Badge HQ." );
+                }
+                finally {
+                    database.endTransaction();
+                }
+            }
+
+            private void fail( final String reason ) {
+                if( saveCallback != null ) {
+                    handler.post( new Runnable() {
+                        @Override
+                        public void run() {
+                            saveCallback.saveFailed( reason );
+                        }
+                    });
+                }
+            }
+        } );
     }
 
     /**
@@ -414,6 +489,13 @@ public class DataProviderService extends Service {
          */
         public Contact getLoggedInUser( ) {
             return loggedInUser;
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(com.triaged.badge.data.Contact, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void saveBasicProfileDataAsync( Contact contact, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.saveBasicProfileDataAsync( contact, saveCallback );
         }
     }
 
@@ -542,13 +624,13 @@ public class DataProviderService extends Service {
                         // TODO persist
                         loggedInUser = new Contact();
                         loggedInUser.fromJSON( account.getJSONObject( "current_user" ) );
-
+                        prefs.edit().putInt( LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id ).commit();
 
                         if( loginCallback != null ) {
                             handler.post( new Runnable() {
                                 @Override
                                 public void run() {
-                                    loginCallback.loginSuccess();
+                                    loginCallback.loginSuccess( loggedInUser );
                                 }
                             } );
                         }
@@ -592,16 +674,41 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Simple callback interface to handle login response asynchronously
+     * Simple callback interface to handle login response asynchronously.
+     * Callbacks are always invoked on main UI thread.
      */
     public interface LoginCallback {
         /**
-         * Called if login was unsuccessful. Always invoked on the main UI thread.
+         * Called if login was unsuccessful.
          *
          * @param reason Human readable message describing the failure.
          */
         public void loginFailed( String reason );
 
-        public void loginSuccess(  );
+        /**
+         * Login was successful, {@link com.triaged.badge.app.DataProviderService.LocalBinding#getLoggedInUser()}
+         * is now guaranteed to return non null.
+         *
+         * @param user the now logged in user
+         */
+        public void loginSuccess( Contact user );
+    }
+
+    /**
+     * All profile saves are async and take a callback argument.
+     * If you need to be notified of the save result.
+     */
+    public interface AsyncSaveCallback {
+        /**
+         * Save has finished successfully.
+         */
+        public void saveSuccess();
+
+        /**
+         * Save encountered an issue.
+         *
+         * @param reason human readable reason for user messaging
+         */
+        public void saveFailed( String reason );
     }
 }

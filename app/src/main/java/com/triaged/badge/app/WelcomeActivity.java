@@ -24,9 +24,11 @@ import java.util.Locale;
 /**
  * Allow user to setup first name, last name, cell number and birthday.
  *
- * Created by Will on 7/10/14.
+ * @author Created by Will on 7/10/14.
  */
 public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.OnDateSetListener {
+
+    public static final String BIRTHDAY_FORMAT_STRING = "MMMM dd";
 
     private EditText firstName = null;
     private EditText lastName = null;
@@ -55,22 +57,36 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
         Button continueButton = (Button) findViewById(R.id.continue_button);
 
+        final DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+            @Override
+            public void saveSuccess() {
+                Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
+                startActivity(intent);
+            }
+
+            @Override
+            public void saveFailed(String reason) {
+                Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
+            }
+        };
+
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String firstNameString = firstName.getText().toString();
-                String lastNameString = lastName.getText().toString();
-                String cellNumberString = cellNumber.getText().toString();
-                String birthdayString = birthday.getText().toString();
-                // Toast.makeText(WelcomeActivity.this, firstNameString, Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
-                startActivity(intent);
+                Contact transientContact = new Contact();
+                transientContact.firstName = firstName.getText().toString();
+                transientContact.lastName = lastName.getText().toString();
+                transientContact.cellPhone = cellNumber.getText().toString();
+                birthdayCalendar.setTimeZone( Contact.GMT );
+                transientContact.birthDateString = birthdayCalendar.getTime().toString();
+                dataProviderServiceBinding.saveBasicProfileDataAsync( transientContact, saveCallback );
             }
         });
 
         birthdayCalendar = Calendar.getInstance();
-        String birthdayFormatString = "MMMM dd";
-        birthdayFormat = new SimpleDateFormat(birthdayFormatString, Locale.US);
+        birthdayCalendar.set( Calendar.YEAR, 1 );
+
+        birthdayFormat = new SimpleDateFormat(BIRTHDAY_FORMAT_STRING, Locale.US);
 
         datePickerDialog = new DatePickerDialogNoYear(this, this, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 
