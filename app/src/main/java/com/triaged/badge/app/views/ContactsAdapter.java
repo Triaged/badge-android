@@ -22,6 +22,8 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
@@ -37,12 +39,14 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    private int contactResourceId;
 
-    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding) {
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int contactResourceId) {
         super( context, dataProviderServiceBinding.getContactsCursor(), false );
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
+        this.contactResourceId= contactResourceId;
     }
 
     @Override   
@@ -67,34 +71,38 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     @Override
     public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         ViewHolder holder = new ViewHolder();
-        View newView =  inflater.inflate(R.layout.item_contact, parent, false);
+        View newView =  inflater.inflate(contactResourceId, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
         holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
+        holder.noPhotoThumb = (TextView) newView.findViewById(R.id.no_photo_thumb );
         newView.setTag(holder);
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
         holder.messageButton = (ImageButton) newView.findViewById(R.id.message_contact);
-        holder.messageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
-            }
-        });
+        if (holder.messageButton !=null) {
+            holder.messageButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         if (c.jobTitle == null || c.jobTitle.equals("")) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
-            layoutParams.setMargins(0,0,0,0);
-            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            layoutParams.setMargins(0, (int) (19 * densityMultiplier),0,0);
             holder.nameTextView.setLayoutParams(layoutParams);
         } else {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
             layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
-            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
         if( c.avatarUrl != null ) {
             dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+        } else {
+            holder.noPhotoThumb.setText(c.initials);
+            holder.noPhotoThumb.setVisibility(View.VISIBLE);
         }
         return newView;
     }
@@ -105,20 +113,22 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
-        if (c.jobTitle == null) {
+        if (c.jobTitle == null || c.jobTitle.equals("")) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
-            layoutParams.setMargins(0,0,0,0);
-            layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+            layoutParams.setMargins(0, (int) (19 * densityMultiplier),0,0);
             holder.nameTextView.setLayoutParams(layoutParams);
         } else {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
             layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
-            layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
         holder.thumbImage.setImageBitmap( null );
         if( c.avatarUrl != null ) {
             dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+            holder.noPhotoThumb.setVisibility(View.GONE);
+        } else {
+            holder.noPhotoThumb.setText(c.initials);
+            holder.noPhotoThumb.setVisibility(View.VISIBLE);
         }
     }
 
@@ -183,6 +193,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         TextView titleTextView;
         ImageView thumbImage;
         ImageButton messageButton;
+        TextView noPhotoThumb;
     }
 
 }

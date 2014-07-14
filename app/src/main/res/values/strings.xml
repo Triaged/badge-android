@@ -69,6 +69,10 @@
     <!-- ONBOARDING MAP -->
     <string name="address">Address</string>
     <string name="add_location_button">Add</string>
+    <string name="add_reporting_to">Reporting To</string>
+    <string name="check_mark">Currently Selected</string>
+    <string name="add_new_location">Add a New Office</string>
+    <string name="no_office_button">I don\'t work at an office</string>
 
 
 </resources>

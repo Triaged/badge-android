@@ -36,6 +36,21 @@
         android:gravity="center"
         />
 
+    <ListView
+        android:id="@+id/office_locations_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp"
+        android:layout_below="@id/which_location_title"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        />
+
     <com.triaged.badge.app.views.ButtonWithFont
         android:id="@+id/continue_button"
         android:layout_width="match_parent"

@@ -31,6 +31,10 @@
         android:layout_marginTop="48dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
         />
 
 </RelativeLayout>

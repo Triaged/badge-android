@@ -31,6 +31,7 @@ public class Contact {
     public int departmentId;
     public int sharingOfficeLocationInt;
     public boolean sharingOfficeLocation;
+    public String initials;
 
     public static String getStringSafelyFromCursor( Cursor contactCursor, String columnName ) {
         int index = contactCursor.getColumnIndex( columnName );
@@ -77,6 +78,7 @@ public class Contact {
 
         /** DYNAMIC FIELDS */
         constructName();
+        constructInitials();
         sharingOfficeLocation = sharingOfficeLocationInt == 1;
     }
 
@@ -100,6 +102,10 @@ public class Contact {
 
     private void constructName() {
         name = String.format( "%s %s", firstName, lastName );
+    }
+
+    private void constructInitials() {
+        initials = String.valueOf(firstName.substring(0,1) + lastName.substring(0,1)).toUpperCase();
     }
 
     @Override

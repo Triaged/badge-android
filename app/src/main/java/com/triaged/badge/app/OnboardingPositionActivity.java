@@ -15,6 +15,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
     private Button continueButton = null;
     private TextView yourDepartmentButton = null;
+    private TextView reportingToButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +30,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // CHECK FOR EMPTY VALUES
                 Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
                 startActivity(intent);
             }
@@ -42,6 +44,15 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 startActivity(intent);
             }
         });
+
+        reportingToButton = (TextView) findViewById(R.id.reporting_to);
+        reportingToButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingReportingToActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -49,16 +60,20 @@ public class OnboardingPositionActivity extends BadgeActivity {
         super.onResume();
         overridePendingTransition(0,0);
 
-        // You can be pretty confident that the intent will not be null here.
         Intent intent = getIntent();
 
-// Get the extras (if there are any)
         Bundle extras = intent.getExtras();
         if (extras != null) {
             if (extras.containsKey("DEPARTMENT_ID")) {
                 int deptId = extras.getInt("DEPARTMENT_ID", 0);
                 String deptName = extras.getString("DEPARTMENT_NAME");
                 yourDepartmentButton.setText(deptName);
+                yourDepartmentButton.setSelected(true);
+            } else if (extras.containsKey("REPORTS_TO_ID")) {
+                int managerId = extras.getInt("REPORTS_TO_ID", 0);
+                String managerName = extras.getString("REPORTS_TO_NAME");
+                reportingToButton.setText(managerName);
+                reportingToButton.setSelected(true);
             }
         }
 

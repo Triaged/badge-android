@@ -217,7 +217,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             contactsAdapter.refresh();
         }
         else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding);
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_with_msg);
             contactsListView.setAdapter(contactsAdapter);
         }
 

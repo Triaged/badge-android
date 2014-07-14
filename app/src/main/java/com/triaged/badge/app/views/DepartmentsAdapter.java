@@ -31,7 +31,6 @@ public class DepartmentsAdapter extends CursorAdapter {
     public DepartmentsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
         super(context, dataProviderServiceBinding.getDepartmentCursor(), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
-        this.context = context;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
     }

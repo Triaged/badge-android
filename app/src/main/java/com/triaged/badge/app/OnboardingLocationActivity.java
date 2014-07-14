@@ -2,9 +2,16 @@ package com.triaged.badge.app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.triaged.badge.app.views.DepartmentsAdapter;
+import com.triaged.badge.app.views.OfficeLocationsAdapter;
 import com.triaged.badge.app.views.OnboardingDotsView;
 
 /**
@@ -13,6 +20,9 @@ import com.triaged.badge.app.views.OnboardingDotsView;
 public class OnboardingLocationActivity extends BadgeActivity {
 
     private Button continueButton = null;
+    private ListView officeLocationsList = null;
+    private OfficeLocationsAdapter officeLocationsAdapter = null;
+    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,12 +41,56 @@ public class OnboardingLocationActivity extends BadgeActivity {
             }
         });
 
+        officeLocationsList = (ListView) findViewById(R.id.office_locations_list);
+        officeLocationsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(OnboardingLocationActivity.this, "Office Location Selected", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        Button noLocationView = (Button) inflater.inflate(R.layout.item_no_location, null);
+        noLocationView.setText(getString(R.string.no_office_button));
+        officeLocationsList.addFooterView(noLocationView);
+        noLocationView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Button addView = (Button) inflater.inflate(R.layout.item_add_new, null);
+        addView.setText(getString(R.string.add_new_location));
+        officeLocationsList.addFooterView(addView);
+        addView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(OnboardingLocationActivity.this, OnboardingMapActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+
+        loadOffices();
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+    }
+
+    private void loadOffices() {
+        if( officeLocationsAdapter != null ) {
+            officeLocationsAdapter.refresh();
+        }
+        else {
+            officeLocationsAdapter = new OfficeLocationsAdapter( this, dataProviderServiceBinding, R.layout.item_office_location);
+            officeLocationsList.setAdapter( officeLocationsAdapter );
+        }
     }
 
 }
