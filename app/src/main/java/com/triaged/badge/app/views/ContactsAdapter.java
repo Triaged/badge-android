@@ -33,7 +33,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
  */
 public class ContactsAdapter extends CursorAdapter implements StickyListHeadersAdapter {
 
-    LruCache<Integer, Contact> contactCache;
+    protected static final LruCache<Integer, Contact> contactCache = new LruCache<Integer, Contact>( 100 );
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -41,12 +41,11 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding) {
         super( context, dataProviderServiceBinding.getContactsCursor(), false );
         inflater = LayoutInflater.from(context);
-        contactCache = new LruCache<Integer, Contact>( 100 );
         densityMultiplier = context.getResources().getDisplayMetrics().density;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
     }
 
-    @Override
+    @Override   
     public View getHeaderView(int position, View convertView, ViewGroup parent) {
         HeaderViewHolder holder;
         if (convertView == null) {
@@ -94,7 +93,9 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
-        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
+        if( c.avatarUrl != null ) {
+            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+        }
         return newView;
     }
 
@@ -115,7 +116,10 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             layoutParams.addRule(RelativeLayout.ALIGN_LEFT);
             holder.nameTextView.setLayoutParams(layoutParams);
         }
-        dataProviderServiceBinding.setSmallContactImage( c, holder.thumbImage );
+        holder.thumbImage.setImageBitmap( null );
+        if( c.avatarUrl != null ) {
+            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
+        }
     }
 
     @Override
@@ -143,6 +147,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
      * re-query and refresh the data shown in the list.
      */
     public void refresh() {
+        contactCache.evictAll();
         changeCursor( dataProviderServiceBinding.getContactsCursor() );
         notifyDataSetChanged();
     }

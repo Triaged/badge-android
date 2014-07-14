@@ -33,6 +33,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
     public static final String COLUMN_DEPARTMENT_ID = "_id";
     public static final String COLUMN_DEPARTMENT_NAME = "name";
+    public static final String COLUMN_DEPARTMENT_NUM_CONTACTS = "num_contacts";
 
 
     protected static final String SQL_DATABASE_NAME = "badge.db";
@@ -57,15 +58,17 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_CONTACT_SHARING_OFFICE_LOCATION
     );
 
-    protected static final String CREATE_DEPARTMENTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key, %s text );",
+    protected static final String CREATE_DEPARTMENTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key, %s text, %s integer );",
             TABLE_DEPARTMENTS,
             COLUMN_DEPARTMENT_ID,
-            COLUMN_DEPARTMENT_NAME
+            COLUMN_DEPARTMENT_NAME,
+            COLUMN_DEPARTMENT_NUM_CONTACTS
     );
 
     protected static final String DROP_CONTACTS_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_CONTACTS );
     protected static final String DROP_DEPARTMENTS_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s", TABLE_CONTACTS);
+    protected static final String CLEAR_DEPARTMENTS_SQL = String.format("DELETE FROM %s", TABLE_DEPARTMENTS );
 
 
     private SQLiteDatabase openDatabase = null;
@@ -90,6 +93,15 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public void clearContacts() {
         if (openDatabase != null) {
             openDatabase.execSQL( CLEAR_CONTACTS_SQL );
+        }
+        else {
+            throw new IllegalStateException( "Can't access the database before getWritableDatabase() has been called." );
+        }
+    }
+
+    public void clearDepartments() {
+        if( openDatabase != null ) {
+            openDatabase.execSQL( CLEAR_DEPARTMENTS_SQL );
         }
         else {
             throw new IllegalStateException( "Can't access the database before getWritableDatabase() has been called." );
