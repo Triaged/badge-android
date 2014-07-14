@@ -25,10 +25,12 @@
     </RelativeLayout>
 
     <ListView
-        android:id="@+id/departments_list_with_add"
+        android:id="@+id/departments_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="48dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
         />
 
 </RelativeLayout>

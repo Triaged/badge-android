@@ -14,6 +14,7 @@
         <item name="android:navigationMode">tabMode</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
+        <item name="android:actionBarDivider">@null</item>
     </style>
 
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">

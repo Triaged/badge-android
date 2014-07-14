@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
 
@@ -13,6 +14,7 @@ import com.triaged.badge.app.views.OnboardingDotsView;
 public class OnboardingPositionActivity extends BadgeActivity {
 
     private Button continueButton = null;
+    private TextView yourDepartmentButton = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,11 +33,34 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 startActivity(intent);
             }
         });
+
+        yourDepartmentButton = (TextView) findViewById(R.id.your_department);
+        yourDepartmentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingDepartmentActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+
+        // You can be pretty confident that the intent will not be null here.
+        Intent intent = getIntent();
+
+// Get the extras (if there are any)
+        Bundle extras = intent.getExtras();
+        if (extras != null) {
+            if (extras.containsKey("DEPARTMENT_ID")) {
+                int deptId = extras.getInt("DEPARTMENT_ID", 0);
+                String deptName = extras.getString("DEPARTMENT_NAME");
+                yourDepartmentButton.setText(deptName);
+            }
+        }
+
     }
 }

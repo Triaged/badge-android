@@ -82,7 +82,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
                 Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
             }
         });
-        if (c.jobTitle == null) {
+        if (c.jobTitle == null || c.jobTitle.equals("")) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
             layoutParams.setMargins(0,0,0,0);
             layoutParams.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);

@@ -16,6 +16,10 @@
     <string name="welcome_info">Before you start, we would like to get to know you a bit better.</string>
     <string name="welcome_title">Welcome</string>
     <string name="welcome_continue">Continue</string>
+    <string name="welcome_first_name">First Name</string>
+    <string name="welcome_last_name">Last Name</string>
+    <string name="welcome_cell_number">Cell Number</string>
+    <string name="welcome_birthday">Birthday (optional)</string>
 
     <!-- CONTACT LISTVIEW ELEMENT -->
     <string name="content_description_thumb">Contact Thumbnail Image</string>
@@ -31,15 +35,14 @@
     <string name="profile_heading_contact">Contact Information</string>
     <string name="content_description_profile_image">Profile Image</string>
     <string name="content_description_my_settings">My Settings</string>
-    <string name="welcome_first_name">First Name</string>
-    <string name="welcome_last_name">Last Name</string>
-    <string name="welcome_cell_number">Cell Number</string>
-    <string name="welcome_birthday">Birthday (optional)</string>
+
     <string name="tell_us_more_title">Tell us more about your position</string>
     <string name="your_job_title">Your Job Title</string>
     <string name="your_department">Choose Department</string>
     <string name="reporting_to">Reporting to</string>
     <string name="which_location_title">At which office do you work?</string>
+
+    <!-- SETTINGS -->
     <string name="settings_button">Settings</string>
     <string name="settings_account">Account</string>
     <string name="settings_edit_profile">Edit Profile</string>
@@ -50,11 +53,20 @@
     <string name="settings_more">More</string>
     <string name="settings_about">About</string>
     <string name="settings_log_out">Log Out</string>
+
+    <!-- EDIT PROFILE -->
     <string name="edit_profile_back">Edit Profile</string>
     <string name="edit_profile_your">Your Profile</string>
     <string name="save_and_exit">Save and Exit</string>
+
+    <!-- ONBOARDING OFFICE -->
     <string name="add_new_office_back">Add New Office</string>
+
+    <!-- ONBOARDING DEPARTMENT -->
     <string name="select_department">Select Department</string>
+    <string name="add_new_department">Add New Department</string>
+
+    <!-- ONBOARDING MAP -->
     <string name="address">Address</string>
     <string name="add_location_button">Add</string>
 

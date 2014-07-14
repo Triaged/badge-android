@@ -15,6 +15,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.DepartmentsAdapter;
@@ -125,6 +126,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
 
         departmentsListView = (ListView) findViewById(R.id.departments_list);
+
+        departmentsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(ContactsActivity.this, "DEPT #" + departmentsAdapter.getCachedDepartment(position).id, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         app = (BadgeApplication) getApplication();
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
@@ -178,7 +187,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
         if ( tab.getPosition() == 1) {
-            tab.setIcon(R.drawable.contacts_unselected);
+            // tab.setIcon(R.drawable.contacts_unselected);
         }
     }
 
@@ -216,7 +225,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter.refresh();
         }
         else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding );
+            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
             departmentsListView.setAdapter( departmentsAdapter );
         }
     }
