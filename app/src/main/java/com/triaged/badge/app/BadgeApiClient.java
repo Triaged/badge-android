@@ -141,7 +141,7 @@ public class BadgeApiClient extends DefaultHttpClient {
                             values.put( CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, employeeInfo.getString( "start_date" ) );
                         }
                         if ( employeeInfo.has( "birth_date" ) && !employeeInfo.isNull("birth_date") ) {
-                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, employeeInfo.getString( "birth_date" ) );
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( employeeInfo.getString( "birth_date" ) ) );
                         }
                         if ( employeeInfo.has( "cell_phone" ) && !employeeInfo.isNull("cell_phone") ) {
                             values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, employeeInfo.getString( "cell_phone" ) );

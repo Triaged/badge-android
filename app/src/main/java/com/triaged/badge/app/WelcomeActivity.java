@@ -28,7 +28,7 @@ import java.util.Locale;
  */
 public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.OnDateSetListener {
 
-    public static final String BIRTHDAY_FORMAT_STRING = "MMMM dd";
+    public static final String BIRTHDAY_FORMAT_STRING = "MMMM d";
 
     private EditText firstName = null;
     private EditText lastName = null;

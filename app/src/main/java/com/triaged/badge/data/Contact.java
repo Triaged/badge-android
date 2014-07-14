@@ -60,6 +60,26 @@ public class Contact {
         return -1;
     }
 
+    /**
+     * Strings come from the api in iso 8601 format, we show and store dates
+     * as just a human readable month and year.
+     *
+     * @param bday string representing date in iso 8601 format a la rails
+     * @return "August 3"
+     */
+    public static String convertBirthdayString( String bday ) {
+        try {
+            DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+            Date birthDate = iso8601.parse(bday.replace( "+00:00", "+0000" ) );
+            SimpleDateFormat ui = new SimpleDateFormat( WelcomeActivity.BIRTHDAY_FORMAT_STRING );
+            ui.setTimeZone( GMT );
+            return( ui.format( birthDate ) );
+        }
+        catch( ParseException e ) {
+            Log.w(LOG_TAG, "Error parsing date from server as iso 8601 " + bday, e );
+        }
+        return null;
+    }
 
     public Contact() {
 
@@ -111,17 +131,7 @@ public class Contact {
             cellPhone = employeeInfo.getString( "cell_phone" );
         }
         if( !employeeInfo.isNull( "birth_date" ) ) {
-            String birthDateStr = employeeInfo.getString("birth_date");
-            try {
-                DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
-                Date birthDate = iso8601.parse(birthDateStr.replace( "+00:00", "+0000" ) );
-                SimpleDateFormat ui = new SimpleDateFormat( WelcomeActivity.BIRTHDAY_FORMAT_STRING );
-                ui.setTimeZone( GMT );
-                birthDateString = ui.format( birthDate );
-            }
-            catch( ParseException e ) {
-                Log.w(LOG_TAG, "Error parsing date from server as iso 8601", e );
-            }
+            birthDateString = convertBirthdayString( employeeInfo.getString("birth_date") );
         }
         constructName();
     }
