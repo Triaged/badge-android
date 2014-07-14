@@ -6,6 +6,7 @@ import android.util.LruCache;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -19,20 +20,25 @@ public class DepartmentsAdapter extends CursorAdapter {
 
     protected static LruCache<Integer, Department > departmentCache = new LruCache<Integer, Department>(30);
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
+    private Context context;
 
     public DepartmentsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding ) {
         super(context, dataProviderServiceBinding.getDepartmentCursor(), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
+        this.context = context;
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        return null;
+        // TODO temporary just to test
+        TextView textView = new TextView( context );
+        textView.setText( getCachedDepartment( cursor ).name );
+        return textView;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-
+        ((TextView)view).setText( getCachedDepartment( cursor ).name );
     }
 
     /**
@@ -63,6 +69,13 @@ public class DepartmentsAdapter extends CursorAdapter {
             departmentCache.put( id, dept );
         }
         return dept;
+    }
+
+    /**
+     * Call when adapter is going away for good (listview or containing activity being destroyed)
+     */
+    public void destroy() {
+        getCursor().close();
     }
 
     /**

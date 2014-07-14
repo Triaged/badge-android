@@ -127,7 +127,9 @@ public class BadgeApiClient extends DefaultHttpClient {
                         String deptName = departmentMap.get(departmentId);
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, deptName );
-                        departmentContactCountMap.put(departmentId, departmentContactCountMap.get(deptName) + 1);
+                        if( deptName != null ) {
+                            departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
+                        }
                     }
                     if( newContact.has( "sharing_office_location" ) && !newContact.isNull("sharing_office_location") ) {
                         boolean isSharing = newContact.getBoolean( "sharing_office_location" );

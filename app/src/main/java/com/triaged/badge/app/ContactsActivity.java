@@ -136,17 +136,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
@@ -161,6 +150,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         super.onDestroy();
         if( contactsAdapter != null ) {
             contactsAdapter.destroy();
+        }
+        if( departmentsAdapter != null ) {
+            departmentsAdapter.destroy();
         }
         localBroadcastManager.unregisterReceiver( receiver );
     }
