@@ -41,16 +41,11 @@ public class Contact {
     }
 
     public static int getIntSafelyFromCursor( Cursor contactCursor, String columnName ) {
-        int index = contactCursor.getColumnIndex( columnName );
-        if( index != -1 ) {
-            return contactCursor.getInt( index );
+        int index = contactCursor.getColumnIndex(columnName);
+        if (index != -1) {
+            return contactCursor.getInt(index);
         }
         return -1;
-    }
-
-
-    public Contact() {
-
     }
 
     /**

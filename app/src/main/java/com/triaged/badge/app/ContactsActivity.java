@@ -211,18 +211,18 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void loadContactsAndDepartments() {
         if( contactsAdapter != null ) {
             contactsAdapter.refresh();
-
-            // Refresh departments
         }
         else {
-
             contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding);
             contactsListView.setAdapter(contactsAdapter);
+        }
 
-            // SETUP DEPARTMENTS
-            // get cursor
-            // create adapter
-            // set adapter
+        if( departmentsAdapter != null ) {
+            departmentsAdapter.refresh();
+        }
+        else {
+            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding );
+            departmentsListView.setAdapter( departmentsAdapter );
         }
     }
 }

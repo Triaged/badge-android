@@ -26,7 +26,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * All requests to the badge api should be made through this client.
@@ -82,12 +84,16 @@ public class BadgeApiClient extends DefaultHttpClient {
                 jsonBuffer = null;
                 ContentValues values = new ContentValues();
 
-                HashMap<Integer, String> departmentMap = new HashMap<Integer, String>( 50 );
+                LinkedHashMap<Integer, String> departmentMap = new LinkedHashMap<Integer, String>( 50 );
+                HashMap<Integer, Integer> departmentContactCountMap = new HashMap<Integer, Integer>(50);
                 if( companyObj.has( "uses_departments" ) && companyObj.getBoolean( "uses_departments" ) ) {
                     JSONArray deptsArr = companyObj.getJSONArray( "departments" );
                     for( int i = 0; i < deptsArr.length(); i++ ) {
                         JSONObject dept = deptsArr.getJSONObject( i );
-                        departmentMap.put( dept.getInt( "id" ), dept.getString( "name" ) );
+                        String name = dept.getString("name");
+                        int id = dept.getInt("id");
+                        departmentMap.put(id, name);
+                        departmentContactCountMap.put(id, 0);
                     }
                 }
 
@@ -118,8 +124,10 @@ public class BadgeApiClient extends DefaultHttpClient {
                     }
                     if( newContact.has( "department_id" ) && !newContact.get("department_id").equals("") ) {
                         int departmentId = newContact.getInt( "department_id" );
+                        String deptName = departmentMap.get(departmentId);
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
-                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, departmentMap.get( departmentId ) );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, deptName );
+                        departmentContactCountMap.put(departmentId, departmentContactCountMap.get(deptName) + 1);
                     }
                     if( newContact.has( "sharing_office_location" ) && !newContact.isNull("sharing_office_location") ) {
                         boolean isSharing = newContact.getBoolean( "sharing_office_location" );
@@ -146,6 +154,17 @@ public class BadgeApiClient extends DefaultHttpClient {
                     }
                     db.insert( CompanySQLiteHelper.TABLE_CONTACTS, "", values );
                     values.clear();
+                }
+
+                if( companyObj.has( "uses_departments" ) && companyObj.getBoolean( "uses_departments" ) ) {
+                    for(Map.Entry<Integer, String> dept : departmentMap.entrySet() ) {
+                        int id = dept.getKey();
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, id );
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getValue() );
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, departmentContactCountMap.get(id) );
+                        db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, "", values);
+                        values.clear();
+                    }
                 }
                 return true;
             }
