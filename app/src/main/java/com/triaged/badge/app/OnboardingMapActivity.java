@@ -45,7 +45,8 @@ import java.util.Locale;
  */
 public class OnboardingMapActivity extends BadgeActivity implements
         AdapterView.OnItemClickListener,
-        LocationListener, GooglePlayServicesClient.ConnectionCallbacks,
+        LocationListener,
+        GooglePlayServicesClient.ConnectionCallbacks,
         GooglePlayServicesClient.OnConnectionFailedListener {
 
     private GoogleMap map = null;
