@@ -76,14 +76,12 @@ public class OnboardingPositionActivity extends BadgeActivity {
         if( resultCode != RESULT_CANCELED ) {
             switch (requestCode) {
                 case DEPARTMENT_REQUEST_CODE:
-                    String dept = data.getStringExtra( OnboardingDepartmentActivity.DEPT_NAME_EXTRA );
+                    yourDepartmentButton.setText( data.getStringExtra( OnboardingDepartmentActivity.DEPT_NAME_EXTRA ) );
+                    deptartmentId = resultCode;
                     break;
                 case MANAGER_REQUEST_CODE:
-                    String mgr = data.getStringExtra( OnboardingReportingToActivity.MGR_NAME_EXTRA );
-
-                    break;
-                case RESULT_CANCELED:
-                    // Derp derp
+                    reportingToButton.setText( data.getStringExtra( OnboardingReportingToActivity.MGR_NAME_EXTRA ) );
+                    managerId = resultCode;
                     break;
             }
         }

@@ -108,7 +108,6 @@ public class Contact {
         departmentName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_DEPARTMENT_NAME );
         String managerFirstName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME);
         String managerLastName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME);
-        managerName = String.format( "%s %s", managerFirstName, managerLastName );
 
         /** INTEGER FIELDS */
         sharingOfficeLocationInt = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
@@ -116,6 +115,10 @@ public class Contact {
         primaryOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID );
         currentOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID );
         departmentId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+
+        if( managerId > 0) {
+            managerName = String.format("%s %s", managerFirstName, managerLastName);
+        }
 
         /** DYNAMIC FIELDS */
         constructName();
