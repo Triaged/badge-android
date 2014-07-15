@@ -40,6 +40,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         View newView =  inflater.inflate(resourceId, parent, false);
         holder.officeName = (TextView) newView.findViewById(R.id.office_title);
         holder.officeDetails = (TextView) newView.findViewById(R.id.office_details);
+        holder.selectedIcon = (ImageView) newView.findViewById(R.id.selected_icon);
         newView.setTag(holder);
         setupView( holder, cursor );
         return newView;
