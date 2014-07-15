@@ -65,6 +65,7 @@ public class DataProviderService extends Service {
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
+    protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL = String.format("SELECT * FROM %s WHERE %s != ? ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
     protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
@@ -285,10 +286,6 @@ public class DataProviderService extends Service {
 
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                 } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                    // Wipe DB, we're not logged in anymore.
-                    db.execSQL(CLEAR_CONTACTS_SQL);
-                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
-                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
                     loggedOut();
                 } else {
                     Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");
@@ -439,6 +436,19 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Query the db to get a cursor to all contacts except for
+     * the logged in user.
+     *
+     * @return a cursor to all contact rows minus 1
+     */
+    protected Cursor getContactsCursorExcludingLoggedInUser() {
+        if( database != null ) {
+            return database.rawQuery(QUERY_CONTACTS_WITH_EXCEPTION_SQL, new String[] { String.valueOf( loggedInUser.id ) } );
+        }
+        throw new IllegalStateException( "getContactsCursorExcludingLoggedInUser() called before database available." );
+    }
+
+    /**
      * Query the db to get a cursor to the full list of departments
      *
      * @return a cursor to all dept rows
@@ -487,6 +497,10 @@ public class DataProviderService extends Service {
     protected void loggedOut() {
         loggedInUser = null;
         prefs.edit().remove( API_TOKEN_PREFS_KEY ).remove(LOGGED_IN_USER_ID_PREFS_KEY ).commit();
+        // Wipe DB, we're not logged in anymore.
+        database.execSQL(CLEAR_CONTACTS_SQL);
+        database.execSQL(CLEAR_DEPARTMENTS_SQL);
+        database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
@@ -642,6 +656,13 @@ public class DataProviderService extends Service {
         }
 
         /**
+         * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
+         */
+        public Cursor getContactsCursorExcludingLoggedInUser() {
+           return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
+        }
+
+        /**
          * @see com.triaged.badge.app.DataProviderService#getContact(int)
          */
         public Contact getContact(int contactId) {
@@ -706,6 +727,10 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getDepartmentCursor();
         }
 
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#getOfficeLocationsCursor() ()
+         */
         public Cursor getOfficeLocationsCursor() {
             return DataProviderService.this.getOfficeLocationsCursor();
         }

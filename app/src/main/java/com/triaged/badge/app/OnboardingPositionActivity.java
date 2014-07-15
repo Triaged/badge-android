@@ -30,6 +30,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 // CHECK FOR EMPTY VALUES
                 Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
                 startActivity(intent);
