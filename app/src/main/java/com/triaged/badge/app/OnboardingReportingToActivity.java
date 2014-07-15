@@ -12,6 +12,8 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
+ * Allow the logged in user to select their manager.
+ *
  * Created by Will on 7/14/14.
  */
 public class OnboardingReportingToActivity extends BadgeActivity {
@@ -36,16 +38,10 @@ public class OnboardingReportingToActivity extends BadgeActivity {
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = contactsAdapter.getCachedContact(position).id;
-                if (userId == clickedId) {
-                    Toast.makeText(OnboardingReportingToActivity.this, "Please go back if you do not have a manager", Toast.LENGTH_SHORT).show();
-                } else {
-                    Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                    intent.putExtra("REPORTS_TO_ID", contactsAdapter.getCachedContact(position).id);
-                    intent.putExtra("REPORTS_TO_NAME", contactsAdapter.getCachedContact(position).name);
-                    startActivity(intent);
-                }
+                Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
+                intent.putExtra("REPORTS_TO_ID", contactsAdapter.getCachedContact(position).id);
+                intent.putExtra("REPORTS_TO_NAME", contactsAdapter.getCachedContact(position).name);
+                startActivity(intent);
             }
 
         });
