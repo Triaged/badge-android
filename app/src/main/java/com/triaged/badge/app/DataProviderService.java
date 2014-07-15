@@ -314,20 +314,32 @@ public class DataProviderService extends Service {
 
     }
 
+    /**
+     * Pulls an int from json and sets it as a content value if the key exists and is not a null literal.
+     *
+     * @param json json object possibly containing key
+     * @param key key in to json object where value should live
+     * @param values database values to add to if the key exists
+     * @param column column name to set in database values
+     * @throws JSONException
+     */
     private static void setStringContentValueFromJSONUnlessNull(JSONObject json, String key, ContentValues values, String column) throws JSONException {
-        if ( json.has( key ) && !json.isNull( key ) ) {
+        if ( !json.isNull( key ) ) {
             values.put( column, json.getString( key ));
         }
     }
 
-    private static void setStringContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
-        if ( json.has( key ) && !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
-            values.put( column, json.getString( key ));
-        }
-    }
-
+    /**
+     * Pulls an int from json and sets it as a content value if the key exists and is not the empty string.
+     *
+     * @param json json object possibly containing key
+     * @param key key in to json object where value should live
+     * @param values database values to add to if the key exists
+     * @param column column name to set in database values
+     * @throws JSONException
+     */
     private static void setIntContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
-        if ( json.has( key ) && !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
+        if ( !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
             values.put( column, json.getInt( key ));
         }
     }
