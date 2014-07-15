@@ -59,7 +59,7 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this));
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_selected).setTabListener(this), true);
 
-        setContentView(R.layout.activity_profile);
+        setContentView(R.layout.activity_my_profile);
         profileName = (TextView) findViewById(R.id.profile_name);
         profileTitle = (TextView) findViewById(R.id.profile_title);
         emailView = (ProfileContactInfoView) findViewById(R.id.profile_email);

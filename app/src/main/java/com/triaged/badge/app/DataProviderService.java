@@ -69,6 +69,7 @@ public class DataProviderService extends Service {
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
+    protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
     protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
@@ -180,6 +181,7 @@ public class DataProviderService extends Service {
             db.beginTransaction();
             db.execSQL(CLEAR_CONTACTS_SQL);
             db.execSQL(CLEAR_DEPARTMENTS_SQL);
+            db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
             HttpResponse response = apiClient.downloadCompany( lastSynced );
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -286,6 +288,7 @@ public class DataProviderService extends Service {
                     // Wipe DB, we're not logged in anymore.
                     db.execSQL(CLEAR_CONTACTS_SQL);
                     db.execSQL(CLEAR_DEPARTMENTS_SQL);
+                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
                     loggedOut();
                 } else {
                     Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");

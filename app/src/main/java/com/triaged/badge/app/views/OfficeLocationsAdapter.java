@@ -30,7 +30,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
-        usersOffice = dataProviderServiceBinding.getLoggedInUser().currentOfficeLocationId;
+        usersOffice = dataProviderServiceBinding.getLoggedInUser().primaryOfficeLocationId;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         String details = String.format( "%s, %s %s, %s", address, city, zip, country );
         holder.officeDetails.setText( details );
 
-        holder.selectedIcon.setVisibility( usersOffice == Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID ) ? View.VISIBLE : View.INVISIBLE);
+        holder.selectedIcon.setVisibility( (usersOffice > 0 && usersOffice == Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID ) )? View.VISIBLE : View.INVISIBLE);
     }
 
     public class ViewHolder {
