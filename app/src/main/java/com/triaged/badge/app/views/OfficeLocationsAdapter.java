@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
+import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.Department;
 
 /**
@@ -23,7 +25,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     private int resourceId;
 
     public OfficeLocationsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
-        super(context, dataProviderServiceBinding.getDepartmentCursor(), false );
+        super(context, dataProviderServiceBinding.getOfficeLocationsCursor(), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
@@ -37,18 +39,18 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         holder.officeName = (TextView) newView.findViewById(R.id.office_title);
         holder.officeDetails = (TextView) newView.findViewById(R.id.office_details);
         newView.setTag(holder);
-        // Department d = getCachedDepartment(cursor);
-
-        holder.officeName.setText("NAME");
-        holder.officeDetails.setText("DETAILS");
+        setupView( holder, cursor );
         return newView;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
-        // Department d = getCachedDepartment( cursor );
-        holder.officeName.setText("NAME");
+        setupView( holder, cursor );
+    }
+
+    private void setupView( ViewHolder holder, Cursor cursor ) {
+        holder.officeName.setText(Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME ) );
         holder.officeDetails.setText("DETAILS");
     }
 
@@ -58,8 +60,8 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         ImageView selectedIcon;
     }
 
-    public void refresh() {
-
+    public void destroy() {
+        getCursor().close();
     }
 
 }

@@ -73,8 +73,8 @@ public class OnboardingLocationActivity extends BadgeActivity {
 
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
 
-        loadOffices();
-
+        officeLocationsAdapter = new OfficeLocationsAdapter( this, dataProviderServiceBinding, R.layout.item_office_location);
+        officeLocationsList.setAdapter( officeLocationsAdapter );
     }
 
     @Override
@@ -83,14 +83,9 @@ public class OnboardingLocationActivity extends BadgeActivity {
         overridePendingTransition(0,0);
     }
 
-    private void loadOffices() {
-        if( officeLocationsAdapter != null ) {
-            officeLocationsAdapter.refresh();
-        }
-        else {
-            officeLocationsAdapter = new OfficeLocationsAdapter( this, dataProviderServiceBinding, R.layout.item_office_location);
-            officeLocationsList.setAdapter( officeLocationsAdapter );
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        officeLocationsAdapter.destroy();
     }
-
 }
