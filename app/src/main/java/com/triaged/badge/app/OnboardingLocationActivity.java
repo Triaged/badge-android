@@ -55,13 +55,15 @@ public class OnboardingLocationActivity extends BadgeActivity {
         });
 
         LayoutInflater inflater = LayoutInflater.from(this);
-        Button noLocationView = (Button) inflater.inflate(R.layout.item_no_location, null);
+        final Button noLocationView = (Button) inflater.inflate(R.layout.item_no_location, null);
         noLocationView.setText(getString(R.string.no_office_button));
         officeLocationsList.addFooterView(noLocationView);
         noLocationView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
+                officeLocationsAdapter.usersOffice = -1;
+                officeLocationsAdapter.notifyDataSetChanged();
+
             }
         });
 
