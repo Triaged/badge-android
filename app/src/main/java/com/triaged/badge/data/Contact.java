@@ -1,11 +1,19 @@
 package com.triaged.badge.data;
 
 import android.database.Cursor;
+import android.util.Log;
 
 import com.triaged.badge.app.DataProviderService;
+import com.triaged.badge.app.WelcomeActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * POJO representation of a contact.
@@ -13,6 +21,10 @@ import org.json.JSONObject;
  * @author Created by Will on 7/7/14.
  */
 public class Contact {
+    public static final TimeZone GMT = TimeZone.getTimeZone( "GMT" );
+
+    private static final String LOG_TAG = Contact.class.getName();
+
     public int id;
     public String firstName;
     public String lastName;
@@ -50,6 +62,31 @@ public class Contact {
     }
 
     /**
+     * Strings come from the api in iso 8601 format, we show and store dates
+     * as just a human readable month and year.
+     *
+     * @param bday string representing date in iso 8601 format a la rails
+     * @return "August 3"
+     */
+    public static String convertBirthdayString( String bday ) {
+        try {
+            DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+            Date birthDate = iso8601.parse(bday.replace( "+00:00", "+0000" ) );
+            SimpleDateFormat ui = new SimpleDateFormat( WelcomeActivity.BIRTHDAY_FORMAT_STRING );
+            ui.setTimeZone( GMT );
+            return( ui.format( birthDate ) );
+        }
+        catch( ParseException e ) {
+            Log.w(LOG_TAG, "Error parsing date from server as iso 8601 " + bday, e );
+        }
+        return null;
+    }
+
+    public Contact() {
+
+    }
+
+    /**
      * Populate this contact pojo with values from a row in the local
      * SQLite database.
      *
@@ -83,6 +120,7 @@ public class Contact {
     }
 
     public void fromJSON( JSONObject contactJson ) throws JSONException {
+
         id = contactJson.getInt( "id" );
         if( !contactJson.isNull( "first_name" ) ) {
             firstName = contactJson.getString( "first_name" );
@@ -95,7 +133,7 @@ public class Contact {
             cellPhone = employeeInfo.getString( "cell_phone" );
         }
         if( !employeeInfo.isNull( "birth_date" ) ) {
-            birthDateString = employeeInfo.getString("birth_date");
+            birthDateString = convertBirthdayString( employeeInfo.getString("birth_date") );
         }
         constructName();
     }

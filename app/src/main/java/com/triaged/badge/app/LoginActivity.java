@@ -10,6 +10,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.triaged.badge.data.Contact;
+
 /**
  * Activity for authentication.
  *
@@ -40,7 +42,7 @@ public class LoginActivity extends BadgeActivity {
             }
 
             @Override
-            public void loginSuccess() {
+            public void loginSuccess( Contact user ) {
                 Intent activityIntent = new Intent( LoginActivity.this, WelcomeActivity.class );
                 activityIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
                 startActivity(activityIntent);

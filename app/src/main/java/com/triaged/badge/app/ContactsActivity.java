@@ -122,10 +122,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_INTENT ) ) {
+                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
                     databaseReadyCallback();
                 }
-                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_INTENT ) ) {
+                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
                     loadContactsAndDepartments();
                 }
             }
@@ -143,8 +143,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         app = (BadgeApplication) getApplication();
         IntentFilter filter = new IntentFilter();
-        filter.addAction(DataProviderService.DB_AVAILABLE_INTENT);
-        filter.addAction(DataProviderService.DB_UPDATED_INTENT);
+        filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
+        filter.addAction(DataProviderService.DB_UPDATED_ACTION);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
         localBroadcastManager.registerReceiver(receiver, filter);
         dataProviderServiceBinding = app.dataProviderServiceBinding;

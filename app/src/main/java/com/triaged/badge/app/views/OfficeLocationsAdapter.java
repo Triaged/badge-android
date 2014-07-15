@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
+import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.Department;
 
 /**
@@ -21,12 +23,14 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private LayoutInflater inflater;
     private int resourceId;
+    public int usersOffice;
 
     public OfficeLocationsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
-        super(context, dataProviderServiceBinding.getDepartmentCursor(), false );
+        super(context, dataProviderServiceBinding.getOfficeLocationsCursor(), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
+        usersOffice = dataProviderServiceBinding.getLoggedInUser().primaryOfficeLocationId;
     }
 
     @Override
@@ -36,30 +40,38 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         View newView =  inflater.inflate(resourceId, parent, false);
         holder.officeName = (TextView) newView.findViewById(R.id.office_title);
         holder.officeDetails = (TextView) newView.findViewById(R.id.office_details);
+        holder.selectedIcon = (ImageView) newView.findViewById(R.id.selected_icon);
         newView.setTag(holder);
-        // Department d = getCachedDepartment(cursor);
-
-        holder.officeName.setText("NAME");
-        holder.officeDetails.setText("DETAILS");
+        setupView( holder, cursor );
         return newView;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
-        // Department d = getCachedDepartment( cursor );
-        holder.officeName.setText("NAME");
-        holder.officeDetails.setText("DETAILS");
+        setupView( holder, cursor );
     }
 
-    class ViewHolder {
+    private void setupView( ViewHolder holder, Cursor cursor ) {
+        holder.officeName.setText(Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME ) );
+        String address = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
+        String city = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
+        String zip = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
+        String country = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
+        String details = String.format( "%s, %s %s, %s", address, city, zip, country );
+        holder.officeDetails.setText( details );
+
+        holder.selectedIcon.setVisibility( (usersOffice > 0 && usersOffice == Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID ) )? View.VISIBLE : View.INVISIBLE);
+    }
+
+    public class ViewHolder {
         TextView officeName;
         TextView officeDetails;
         ImageView selectedIcon;
     }
 
-    public void refresh() {
-
+    public void destroy() {
+        getCursor().close();
     }
 
 }
