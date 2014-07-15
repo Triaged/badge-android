@@ -23,12 +23,14 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private LayoutInflater inflater;
     private int resourceId;
+    public int usersOffice;
 
     public OfficeLocationsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
         super(context, dataProviderServiceBinding.getOfficeLocationsCursor(), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
+        usersOffice = dataProviderServiceBinding.getLoggedInUser().currentOfficeLocationId;
     }
 
     @Override
@@ -51,7 +53,14 @@ public class OfficeLocationsAdapter extends CursorAdapter {
 
     private void setupView( ViewHolder holder, Cursor cursor ) {
         holder.officeName.setText(Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME ) );
-        holder.officeDetails.setText("DETAILS");
+        String address = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
+        String city = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
+        String zip = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
+        String country = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
+        String details = String.format( "%s, %s %s, %s", address, city, zip, country );
+        holder.officeDetails.setText( details );
+
+        holder.selectedIcon.setVisibility( usersOffice == Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID ) ? View.VISIBLE : View.INVISIBLE);
     }
 
     class ViewHolder {
