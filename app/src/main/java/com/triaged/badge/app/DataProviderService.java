@@ -70,7 +70,7 @@ public class DataProviderService extends Service {
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
-    protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+    protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
