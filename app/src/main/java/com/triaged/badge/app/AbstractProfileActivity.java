@@ -91,6 +91,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         overridePendingTransition(0,0);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if( managesAdapter != null ) {
+            managesAdapter.destroy();
+        }
+    }
+
     /**
      * Repopulates profile information on creation and on new intent.
      *

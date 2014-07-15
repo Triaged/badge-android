@@ -81,4 +81,8 @@ public class ProfileManagesAdapter extends CursorAdapter {
         return getCachedContact( (Cursor)getItem( position ) );
     }
 
+    public void destroy() {
+        getCursor().close();
+    }
+
 }

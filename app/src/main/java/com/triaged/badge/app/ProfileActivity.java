@@ -105,6 +105,14 @@ public class ProfileActivity extends BadgeActivity implements ActionBar.TabListe
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if( managesAdapter != null ) {
+            managesAdapter.destroy();
+        }
+    }
+
+    @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
         if ( tab.getPosition() == 0) {
               // tab.setIcon(R.drawable.messages_selected);

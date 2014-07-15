@@ -34,6 +34,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,6 +44,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,6 +67,8 @@ public class DataProviderService extends Service {
     protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
     protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
+    protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
+    protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
@@ -141,7 +147,14 @@ public class DataProviderService extends Service {
         database = null;
     }
 
-
+    /**
+     * Call this function to cause a full refresh of site data
+     * next time we sync, rather than a delta. Primary use case
+     * is when an app upgrade causes a DB schema change.
+     */
+    public void dataClearedCallback() {
+        lastSynced = 0l;
+    }
 
     /**
      * Syncs company info from the cloud to the device.
@@ -164,13 +177,124 @@ public class DataProviderService extends Service {
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
             db.beginTransaction();
-            databaseHelper.clearContacts();
-            databaseHelper.clearDepartments();
-            if( apiClient.downloadCompany(db, lastSynced) ) {
-                loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
+            db.execSQL(CLEAR_CONTACTS_SQL);
+            db.execSQL(CLEAR_DEPARTMENTS_SQL);
+            HttpResponse response = apiClient.downloadCompany( lastSynced );
+            try {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_OK) {
+
+                    ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream(256 * 1024 /* 256 k */);
+                    response.getEntity().writeTo(jsonBuffer);
+
+
+                    JSONArray companyArr = new JSONArray(jsonBuffer.toString("UTF-8"));
+                    JSONObject companyObj = companyArr.getJSONObject(0);
+                    // Allow immediate GC
+                    jsonBuffer = null;
+                    ContentValues values = new ContentValues();
+
+                    LinkedHashMap<Integer, String> departmentMap = new LinkedHashMap<Integer, String>(50);
+                    HashMap<Integer, Integer> departmentContactCountMap = new HashMap<Integer, Integer>(50);
+                    if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
+                        JSONArray deptsArr = companyObj.getJSONArray("departments");
+                        int deptsLength = deptsArr.length();
+                        for (int i = 0; i < deptsLength; i++) {
+                            JSONObject dept = deptsArr.getJSONObject(i);
+                            String name = dept.getString("name");
+                            int id = dept.getInt("id");
+                            departmentMap.put(id, name);
+                            departmentContactCountMap.put(id, 0);
+                        }
+                    }
+
+                    JSONArray contactsArr = companyObj.getJSONArray("users");
+                    int contactsLength = contactsArr.length();
+                    for (int i = 0; i < contactsLength; i++) {
+                        JSONObject newContact = contactsArr.getJSONObject(i);
+                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, newContact.getInt("id"));
+                        setStringContentValueFromJSONUnlessNull(newContact, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
+                        setStringContentValueFromJSONUnlessNull(newContact, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
+                        setStringContentValueFromJSONUnlessNull(newContact, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
+                        setStringContentValueFromJSONUnlessNull(newContact, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
+                        setIntContentValueFromJSONUnlessBlank( newContact, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
+                        setIntContentValueFromJSONUnlessBlank( newContact, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
+                        setIntContentValueFromJSONUnlessBlank( newContact, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
+                        if (newContact.has("department_id") && !newContact.get("department_id").equals("")) {
+                            int departmentId = newContact.getInt("department_id");
+                            String deptName = departmentMap.get(departmentId);
+                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
+                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, deptName);
+                            if (deptName != null) {
+                                departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
+                            }
+                        }
+                        if (newContact.has("sharing_office_location") && !newContact.isNull("sharing_office_location")) {
+                            int sharingInt = newContact.getBoolean("sharing_office_location") ? 1 : 0;
+                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
+                        }
+                        if (newContact.has("employee_info")) {
+                            JSONObject employeeInfo = newContact.getJSONObject("employee_info");
+                            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
+                            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+                            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
+                            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
+                            String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
+                            if( birthDateStr != null ) {
+                                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
+                            }
+                            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
+                            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
+                        }
+                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, "", values);
+                        values.clear();
+                    }
+
+                    if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
+                        for (Map.Entry<Integer, String> dept : departmentMap.entrySet()) {
+                            int id = dept.getKey();
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, id);
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getValue());
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, departmentContactCountMap.get(id));
+                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, "", values);
+                            values.clear();
+                        }
+                    }
+
+                    if( companyObj.has( "office_locations" ) ) {
+                        JSONArray locations = companyObj.getJSONArray( "office_locations" );
+                        int locationsLength = locations.length();
+                        for( int i = 0; i < locationsLength; i++ ) {
+                            JSONObject location = locations.getJSONObject( i );
+                            values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, location.getInt( "id" ) );
+                            setStringContentValueFromJSONUnlessNull( location, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+                            setStringContentValueFromJSONUnlessNull( location, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
+                            setStringContentValueFromJSONUnlessNull( location, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
+                            setStringContentValueFromJSONUnlessNull( location, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE );
+                            setStringContentValueFromJSONUnlessNull( location, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
+                            setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
+                            setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
+                            setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
+                            db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, "", values );
+                            values.clear();
+                        }
+                    }
+
+                    loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
+                } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                    // Wipe DB, we're not logged in anymore.
+                    db.execSQL(CLEAR_CONTACTS_SQL);
+                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
+                    loggedOut();
+                } else {
+                    Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");
+                }
             }
-            else {
-                loggedOut();
+            finally {
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    entity.consumeContent();
+                }
             }
             db.setTransactionSuccessful();
             updated = true;
@@ -188,6 +312,24 @@ public class DataProviderService extends Service {
             localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_INTENT ) );
         }
 
+    }
+
+    private static void setStringContentValueFromJSONUnlessNull(JSONObject json, String key, ContentValues values, String column) throws JSONException {
+        if ( json.has( key ) && !json.isNull( key ) ) {
+            values.put( column, json.getString( key ));
+        }
+    }
+
+    private static void setStringContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
+        if ( json.has( key ) && !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
+            values.put( column, json.getString( key ));
+        }
+    }
+
+    private static void setIntContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
+        if ( json.has( key ) && !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
+            values.put( column, json.getInt( key ));
+        }
     }
 
     /**
