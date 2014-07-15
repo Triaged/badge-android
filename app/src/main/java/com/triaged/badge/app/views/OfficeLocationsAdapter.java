@@ -63,7 +63,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         holder.selectedIcon.setVisibility( usersOffice == Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID ) ? View.VISIBLE : View.INVISIBLE);
     }
 
-    class ViewHolder {
+    public class ViewHolder {
         TextView officeName;
         TextView officeDetails;
         ImageView selectedIcon;

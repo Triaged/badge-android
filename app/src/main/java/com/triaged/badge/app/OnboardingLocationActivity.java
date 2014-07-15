@@ -1,6 +1,7 @@
 package com.triaged.badge.app;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,8 @@ import android.widget.Toast;
 import com.triaged.badge.app.views.DepartmentsAdapter;
 import com.triaged.badge.app.views.OfficeLocationsAdapter;
 import com.triaged.badge.app.views.OnboardingDotsView;
+import com.triaged.badge.data.CompanySQLiteHelper;
+import com.triaged.badge.data.Contact;
 
 /**
  * Created by Will on 7/10/14.
@@ -45,7 +48,9 @@ public class OnboardingLocationActivity extends BadgeActivity {
         officeLocationsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(OnboardingLocationActivity.this, "Office Location Selected", Toast.LENGTH_SHORT).show();
+                Cursor officeCursor = (Cursor)officeLocationsAdapter.getItem( position );
+                officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
+                officeLocationsAdapter.notifyDataSetChanged();
             }
         });
 
