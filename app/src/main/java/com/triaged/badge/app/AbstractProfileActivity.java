@@ -9,7 +9,9 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.app.views.ProfileCurrentLocationView;
 import com.triaged.badge.app.views.ProfileManagesAdapter;
@@ -30,6 +32,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView profileName = null;
     private TextView profileTitle = null;
     private ImageView profileImage = null;
+    private ButtonWithFont departmentView = null;
     private ProfileContactInfoView emailView = null;
     private ProfileContactInfoView officePhoneView = null;
     private ProfileContactInfoView cellPhoneView = null;
@@ -48,6 +51,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
         profileName = (TextView) findViewById(R.id.profile_name);
         profileTitle = (TextView) findViewById(R.id.profile_title);
+        departmentView = (ButtonWithFont) findViewById(R.id.profile_department);
         emailView = (ProfileContactInfoView) findViewById(R.id.profile_email);
         officePhoneView = (ProfileContactInfoView) findViewById(R.id.profile_office_phone);
         cellPhoneView = (ProfileContactInfoView) findViewById(R.id.profile_cell_phone);
@@ -60,9 +64,17 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
-        Intent intent = getIntent();
+        final Intent intent = getIntent();
         int id = intent.getIntExtra("PROFILE_ID", 0);
         contact = dataProviderServiceBinding.getContact(id);
+
+        departmentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                Intent departmentIntent = new Intent(AbstractProfileActivity.this, ContactsActivity.class);
+//                startActivity(intent);
+            }
+        });
 
     }
 
@@ -107,9 +119,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = managesAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                }
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", managesAdapter.getCachedContact(position).id);
+                intent.putExtra("PROFILE_ID", clickedId);
                 startActivity(intent);
             }
         });
@@ -117,6 +136,10 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         if (contact != null) {
             profileName.setText(contact.name);
             profileTitle.setText(contact.jobTitle);
+            if (contact.departmentName != null) {
+                departmentView.setVisibility(View.VISIBLE);
+                departmentView.setText(contact.departmentName);
+            }
             if (contact.email != null) {
                 emailView.setVisibility(View.VISIBLE);
                 emailView.primaryValue = contact.email;

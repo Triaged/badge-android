@@ -26,8 +26,8 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this));
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this), false);
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this), false);
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_selected).setTabListener(this), true);
 
         super.onCreate(savedInstanceState);
@@ -60,9 +60,9 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
         if ( tab.getPosition() == 0) {
-            // tab.setIcon(R.drawable.messages_selected);
-//            Intent intent = new Intent(ProfileActivity.this, ContactsActivity.class);
-//            startActivity(intent);
+            tab.setIcon(R.drawable.messages_selected);
+            Intent intent = new Intent(this, MessagesIndexActivity.class);
+            startActivity(intent);
         } else if (tab.getPosition() == 1) {
             tab.setIcon(R.drawable.contacts_selected);
             Intent intent = new Intent(MyProfileActivity.this, ContactsActivity.class);

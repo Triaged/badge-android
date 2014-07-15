@@ -12,6 +12,8 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
+ * Allow the logged in user to select their manager.
+ *
  * Created by Will on 7/14/14.
  */
 public class OnboardingReportingToActivity extends BadgeActivity {

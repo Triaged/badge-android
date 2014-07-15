@@ -1,99 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <com.triaged.badge.app.views.OnboardingDotsView
-        android:id="@+id/onboarding_dots"
-        android:layout_width="44dp"
-        android:layout_height="8dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="44dp"
-        />
+    <ScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:layout_marginBottom="48dp"
+        >
 
-    <com.triaged.badge.app.views.TextViewWithFont
-        android:id="@+id/welcome_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:text="@string/welcome_title"
-        android:textColor="@color/accent_turquoise"
-        android:textSize="31sp"
-        custom:font="Roboto-Light.ttf"
-        />
+        <RelativeLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content">
 
-    <com.triaged.badge.app.views.TextViewWithFont
-        android:id="@+id/welcome_info"
-        android:layout_width="240dp"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:text="@string/welcome_info"
-        android:textColor="@color/sub_text_gray"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:layout_below="@id/welcome_title"
-        custom:font="Roboto-Regular.ttf"
-        />
+            <com.triaged.badge.app.views.OnboardingDotsView
+                android:id="@+id/onboarding_dots"
+                android:layout_width="44dp"
+                android:layout_height="8dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="44dp"
+                />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/first_name"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_first_name"
-        android:layout_below="@id/welcome_info"
-        android:layout_marginTop="65dp"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
-        />
+            <com.triaged.badge.app.views.TextViewWithFont
+                android:id="@+id/welcome_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="100dp"
+                android:text="@string/welcome_title"
+                android:textColor="@color/accent_turquoise"
+                android:textSize="31sp"
+                custom:font="Roboto-Light.ttf"
+                />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/last_name"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_last_name"
-        android:layout_below="@id/first_name"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
-        />
+            <com.triaged.badge.app.views.TextViewWithFont
+                android:id="@+id/welcome_info"
+                android:layout_width="240dp"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="30dp"
+                android:text="@string/welcome_info"
+                android:textColor="@color/sub_text_gray"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_below="@id/welcome_title"
+                custom:font="Roboto-Regular.ttf"
+                />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/cell_number"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_cell_number"
-        android:layout_below="@id/last_name"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
-        />
+            <com.triaged.badge.app.views.EditTextWithFont
+                android:id="@+id/first_name"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:textColor="@color/main_text_black"
+                android:textColorHint="@color/light_text_gray"
+                android:hint="@string/welcome_first_name"
+                android:layout_below="@id/welcome_info"
+                android:layout_marginTop="65dp"
+                android:textSize="15sp"
+                custom:font="Roboto-Regular.ttf"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                />
 
-    <com.triaged.badge.app.views.EditTextWithFont
-        android:id="@+id/birthday"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textColor="@color/main_text_black"
-        android:textColorHint="@color/light_text_gray"
-        android:hint="@string/welcome_birthday"
-        android:layout_below="@id/cell_number"
-        android:textSize="15sp"
-        custom:font="Roboto-Regular.ttf"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
-        />
+            <com.triaged.badge.app.views.EditTextWithFont
+                android:id="@+id/last_name"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:textColor="@color/main_text_black"
+                android:textColorHint="@color/light_text_gray"
+                android:hint="@string/welcome_last_name"
+                android:layout_below="@id/first_name"
+                android:textSize="15sp"
+                custom:font="Roboto-Regular.ttf"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                />
+
+            <com.triaged.badge.app.views.EditTextWithFont
+                android:id="@+id/cell_number"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:textColor="@color/main_text_black"
+                android:textColorHint="@color/light_text_gray"
+                android:hint="@string/welcome_cell_number"
+                android:layout_below="@id/last_name"
+                android:textSize="15sp"
+                custom:font="Roboto-Regular.ttf"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                />
+
+            <com.triaged.badge.app.views.EditTextWithFont
+                android:id="@+id/birthday"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:textColor="@color/main_text_black"
+                android:textColorHint="@color/light_text_gray"
+                android:hint="@string/welcome_birthday"
+                android:layout_below="@id/cell_number"
+                android:textSize="15sp"
+                custom:font="Roboto-Regular.ttf"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                />
+
+        </RelativeLayout>
+
+    </ScrollView>
 
     <com.triaged.badge.app.views.ButtonWithFont
         android:id="@+id/continue_button"
@@ -105,7 +118,7 @@
         android:background="@drawable/full_width_button"
         android:layout_alignParentBottom="true"
         android:textSize="16sp"
+        android:layout_marginTop="48dp"
         custom:font="Roboto-Regular.ttf"
         />
-
 </RelativeLayout>
