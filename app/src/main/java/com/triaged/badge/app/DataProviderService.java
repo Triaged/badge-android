@@ -64,9 +64,56 @@ public class DataProviderService extends Service {
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
-    protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
-    protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL = String.format("SELECT * FROM %s WHERE %s != ? ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
-    protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
+    protected static final String QUERY_ALL_CONTACTS_SQL =
+            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+    protected static final String QUERY_CONTACT_SQL =
+            String.format( "SELECT contact.*, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s  WHERE contact.%s = ?",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
+                CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
+                CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID
+            );
+    protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
+            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s != ? ORDER BY %s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+    protected static final String QUERY_MANAGED_CONTACTS_SQL =
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
@@ -109,9 +156,6 @@ public class DataProviderService extends Service {
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         String apiToken = prefs.getString( API_TOKEN_PREFS_KEY, "" );
-        if( "".equals( apiToken ) ) {
-            loggedOut();
-        }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
         databaseHelper = new CompanySQLiteHelper( this );
@@ -228,7 +272,6 @@ public class DataProviderService extends Service {
                             int departmentId = newContact.getInt("department_id");
                             String deptName = departmentMap.get(departmentId);
                             values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, deptName);
                             if (deptName != null) {
                                 departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
                             }
@@ -347,7 +390,7 @@ public class DataProviderService extends Service {
 
     /**
      * Return a cursor to a set of contact rows that the given id manages.
-     * Only name, avatar, and title columns are available in the returned cursor.
+     * All columns included.
      *
      * Caller must close the Cursor when no longer needed.
      *
@@ -356,7 +399,7 @@ public class DataProviderService extends Service {
      */
     protected Cursor getContactsManaged( int contactId ) {
         if( database != null  ) {
-            return database.rawQuery( SELECT_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
+            return database.rawQuery(QUERY_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
         }
         throw new IllegalStateException( "getContactsManaged() called before database available." );
     }
@@ -370,7 +413,7 @@ public class DataProviderService extends Service {
      */
     protected Contact getContact(int contactId) {
         if (database !=null ) {
-            Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
+            Cursor cursor = database.rawQuery( QUERY_CONTACT_SQL, new String[]{String.valueOf(contactId)});
             try {
                 if (cursor.moveToFirst()) {
                     Contact contact = new Contact();
@@ -438,6 +481,8 @@ public class DataProviderService extends Service {
     /**
      * Query the db to get a cursor to all contacts except for
      * the logged in user.
+     *
+     * Caller must close the cursor when finished.
      *
      * @return a cursor to all contact rows minus 1
      */
@@ -534,12 +579,15 @@ public class DataProviderService extends Service {
                     // In the future it should ask for any records modified since last sync
                     // every time.
 
+
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
 
-
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+                    }
+                    else {
+                        loggedOut();
                     }
                 } catch (Throwable t) {
                     Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);

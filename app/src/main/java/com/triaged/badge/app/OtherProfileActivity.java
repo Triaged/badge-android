@@ -64,6 +64,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
                 }
             }
         });
+
     }
 
     @Override

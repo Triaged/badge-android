@@ -5,11 +5,11 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ProfileContactInfoView;
@@ -41,12 +41,24 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private ProfileCurrentLocationView currentLocationView = null;
     private TextView managesHeader = null;
 
-    private ListView manangesListView = null;
+    private ListView managesListView = null;
     private ProfileManagesAdapter managesAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        BadgeApplication app = (BadgeApplication) getApplication();
+        dataProviderServiceBinding = app.dataProviderServiceBinding;
+
+
+        final Intent intent = getIntent();
+        int id = intent.getIntExtra("PROFILE_ID", 0);
+        contact = dataProviderServiceBinding.getContact(id);
+        if( dataProviderServiceBinding.getLoggedInUser().id == contact.id ) {
+            requestWindowFeature(Window.FEATURE_ACTION_BAR);
+        }
+
         setContentViewLayout();
 
         profileName = (TextView) findViewById(R.id.profile_name);
@@ -59,14 +71,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         startDateView = (ProfileContactInfoView) findViewById(R.id.profile_start_date);
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
         profileImage = (ImageView)findViewById( R.id.profile_image );
-        manangesListView = (ListView) findViewById(R.id.manages_list);
+        managesListView = (ListView) findViewById(R.id.manages_list);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
 
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
-        final Intent intent = getIntent();
-        int id = intent.getIntExtra("PROFILE_ID", 0);
-        contact = dataProviderServiceBinding.getContact(id);
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,6 +83,25 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             }
         });
 
+        Cursor reportsCursor = getNewManagesContactsCursor();
+        managesAdapter = new ProfileManagesAdapter(getBaseContext(), reportsCursor, dataProviderServiceBinding);
+        managesListView.setAdapter( managesAdapter );
+        managesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = managesAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                }
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", clickedId);
+                startActivity(intent);
+            }
+        });
     }
 
     /**
@@ -95,6 +121,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         int id = intent.getIntExtra("PROFILE_ID", 0);
         contact = dataProviderServiceBinding.getContact(id);
         setupProfile();
+        Cursor reportsCursor = getNewManagesContactsCursor();
+        managesAdapter.changeCursor( reportsCursor );
+        managesAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -111,27 +140,22 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         }
     }
 
+    protected Cursor getNewManagesContactsCursor() {
+        Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
+        if (managedContactsCursor.getCount() > 0) {
+            managesHeader.setVisibility(View.VISIBLE);
+        } else {
+            managesHeader.setVisibility(View.GONE);
+        }
+        return managedContactsCursor;
+    }
+
     /**
      * Repopulates profile information on creation and on new intent.
      *
      */
     protected void setupProfile() {
-        manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = managesAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-                }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
-                startActivity(intent);
-            }
-        });
+
         dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
         if (contact != null) {
             profileName.setText(contact.name);
@@ -140,11 +164,17 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 departmentView.setVisibility(View.VISIBLE);
                 departmentView.setText(contact.departmentName);
             }
+            else {
+                departmentView.setVisibility(View.GONE);
+            }
             if (contact.email != null) {
                 emailView.setVisibility(View.VISIBLE);
                 emailView.primaryValue = contact.email;
                 emailView.secondaryValue = "Email";
                 emailView.invalidate();
+            }
+            else {
+                emailView.setVisibility( View.GONE );
             }
             if (contact.officePhone != null) {
                 officePhoneView.setVisibility(View.VISIBLE);
@@ -152,32 +182,40 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 officePhoneView.secondaryValue = "Office";
                 officePhoneView.invalidate();
             }
+            else {
+                officePhoneView.setVisibility(View.GONE );
+            }
+
             if (contact.cellPhone != null) {
                 cellPhoneView.setVisibility(View.VISIBLE);
                 cellPhoneView.primaryValue = contact.cellPhone;
                 cellPhoneView.secondaryValue = "Mobile";
                 cellPhoneView.invalidate();
             }
+            else {
+                cellPhoneView.setVisibility(View.GONE);
+            }
+
             if (contact.birthDateString != null) {
                 birthDateView.setVisibility(View.VISIBLE);
                 birthDateView.primaryValue = contact.birthDateString;
                 birthDateView.secondaryValue = "Birthday";
                 birthDateView.invalidate();
             }
+            else {
+                birthDateView.setVisibility(View.GONE);
+            }
+
             if (contact.startDateString != null) {
                 startDateView.setVisibility(View.VISIBLE);
                 startDateView.primaryValue = contact.startDateString;
                 startDateView.secondaryValue = "Start Date";
                 startDateView.invalidate();
             }
-            Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
-            if (managedContactsCursor.getCount() > 0) {
-                managesHeader.setVisibility(View.VISIBLE);
-            } else {
-                managesHeader.setVisibility(View.GONE);
+            else {
+                startDateView.setVisibility(View.GONE);
             }
-            managesAdapter = new ProfileManagesAdapter(getBaseContext(), managedContactsCursor, dataProviderServiceBinding);
-            manangesListView.setAdapter(managesAdapter);
+
             currentLocationView.isOn = false;
             currentLocationView.primaryValue = "Unavailable";
             currentLocationView.invalidate();

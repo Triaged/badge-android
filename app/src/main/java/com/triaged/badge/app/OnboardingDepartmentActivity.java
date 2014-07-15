@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.DepartmentsAdapter;
+import com.triaged.badge.data.Department;
 
 /**
  * Allow the user to select their department or add a new one.
@@ -23,6 +24,8 @@ import com.triaged.badge.app.views.DepartmentsAdapter;
  * Created by Will on 7/14/14.
  */
 public class OnboardingDepartmentActivity extends BadgeActivity {
+
+    public static final String DEPT_NAME_EXTRA = "department";
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
@@ -46,9 +49,10 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(OnboardingDepartmentActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getCachedDepartment(position).id);
-                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getCachedDepartment(position).name);
-                startActivity(intent);
+                Department cachedDept = departmentsAdapter.getCachedDepartment(position);
+                intent.putExtra( DEPT_NAME_EXTRA, cachedDept.name);
+                setResult( cachedDept.id, intent );
+                finish();
             }
         });
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -85,17 +89,8 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         });
 
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        loadDepartments();
-    }
-
-    private void loadDepartments() {
-        if( departmentsAdapter != null ) {
-            departmentsAdapter.refresh();
-        }
-        else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_no_count);
-            departmentsListView.setAdapter( departmentsAdapter );
-        }
+        departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_no_count);
+        departmentsListView.setAdapter( departmentsAdapter );
     }
 
     @Override

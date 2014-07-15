@@ -20,8 +20,8 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // IF MY PROFILE
-        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+        super.onCreate(savedInstanceState);
+
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
@@ -30,7 +30,7 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this), false);
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_selected).setTabListener(this), true);
 
-        super.onCreate(savedInstanceState);
+
 
         settingsButton = (ImageButton) findViewById(R.id.settings_button);
 
@@ -41,6 +41,7 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
                 startActivity(intent);
             }
         });
+
     }
 
     @Override
@@ -82,9 +83,4 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
 
     }
 
-    @Override
-    protected void setupProfile() {
-        super.setupProfile();
-        // clicking gear brings you to settings
-    }
 }
