@@ -111,9 +111,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         manangesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = managesAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                }
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", managesAdapter.getCachedContact(position).id);
+                intent.putExtra("PROFILE_ID", clickedId);
                 startActivity(intent);
             }
         });

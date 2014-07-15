@@ -36,10 +36,16 @@ public class OnboardingReportingToActivity extends BadgeActivity {
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra("REPORTS_TO_ID", contactsAdapter.getCachedContact(position).id);
-                intent.putExtra("REPORTS_TO_NAME", contactsAdapter.getCachedContact(position).name);
-                startActivity(intent);
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = contactsAdapter.getCachedContact(position).id;
+                if (userId == clickedId) {
+                    Toast.makeText(OnboardingReportingToActivity.this, "Please go back if you do not have a manager", Toast.LENGTH_SHORT).show();
+                } else {
+                    Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
+                    intent.putExtra("REPORTS_TO_ID", contactsAdapter.getCachedContact(position).id);
+                    intent.putExtra("REPORTS_TO_NAME", contactsAdapter.getCachedContact(position).name);
+                    startActivity(intent);
+                }
             }
 
         });

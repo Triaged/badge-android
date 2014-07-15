@@ -59,9 +59,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this), false);
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_selected).setTabListener(this), true);
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_unselected).setTabListener(this));
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_unselected).setTabListener(this), false);
 
         setContentView(R.layout.activity_contacts);
 
@@ -103,9 +103,16 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = contactsAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                }
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(position).id);
+                intent.putExtra("PROFILE_ID", clickedId);
                 startActivity(intent);
             }
 
@@ -176,24 +183,25 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 //            Intent intent = new Intent(this, ContactsActivity.class);
 //            startActivity(intent);
         } else if (tab.getPosition() == 2) {
-//            tab.setIcon(R.drawable.profile_selected);
-//            Intent intent = new Intent( this, MyProfileActivity.class );
-//            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-//            intent.putExtra("PROFILE_ID", contactsAdapter.getCachedContact(0).id);
-//            startActivity(intent);
+            tab.setIcon(R.drawable.profile_selected);
+            Intent intent = new Intent( this, MyProfileActivity.class );
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+            startActivity(intent);
         }
     }
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
+        Log.v( TAG , String.format( "onTabUnselected, %d bizitch", tab.getPosition() ) );
         if ( tab.getPosition() == 1) {
-            // tab.setIcon(R.drawable.contacts_unselected);
+            tab.setIcon(R.drawable.contacts_unselected);
         }
     }
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.d(TAG, "TAB RESELECTED");
+        Log.v( TAG , String.format( "onTabReselected, %d bizitch", tab.getPosition() ) );
     }
 
     /**

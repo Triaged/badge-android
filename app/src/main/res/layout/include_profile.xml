@@ -102,10 +102,12 @@
         android:id="@+id/profile_department"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:background="@drawable/profile_row_background"
         android:visibility="gone"
+        android:textSize="16sp"
+        android:gravity="center_vertical"
         />
 
     <!-- CONTACT INFORMATION -->
