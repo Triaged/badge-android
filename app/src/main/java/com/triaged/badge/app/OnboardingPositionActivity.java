@@ -50,6 +50,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
         yourDepartmentButton = (TextView) findViewById(R.id.your_department);
         yourDepartmentButton.setText( loggedInUser.departmentName );
+        if( loggedInUser.departmentId > 0 ) {
+            yourDepartmentButton.setSelected( true );
+        }
         yourDepartmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -60,7 +63,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
         reportingToButton = (TextView) findViewById(R.id.reporting_to);
         reportingToButton.setText( loggedInUser.managerName );
-
+        if( loggedInUser.managerId > 0 ) {
+            reportingToButton.setSelected( true );
+        }
         reportingToButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -78,10 +83,12 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 case DEPARTMENT_REQUEST_CODE:
                     yourDepartmentButton.setText( data.getStringExtra( OnboardingDepartmentActivity.DEPT_NAME_EXTRA ) );
                     deptartmentId = resultCode;
+                    yourDepartmentButton.setSelected(true);
                     break;
                 case MANAGER_REQUEST_CODE:
                     reportingToButton.setText( data.getStringExtra( OnboardingReportingToActivity.MGR_NAME_EXTRA ) );
                     managerId = resultCode;
+                    reportingToButton.setSelected(true);
                     break;
             }
         }
