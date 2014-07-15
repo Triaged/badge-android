@@ -2,7 +2,12 @@
 <resources>
 
     <declare-styleable name="TextViewWithFont">
-        <attr name="font" format="string"/>>
+        <attr name="font" format="string"/>
+    </declare-styleable>
+
+    <declare-styleable name="ProfileContactInfoView">
+        <attr name="primaryValue" format="string"/>
+        <attr name="secondaryValue" format="string"/>
     </declare-styleable>
 
 </resources>

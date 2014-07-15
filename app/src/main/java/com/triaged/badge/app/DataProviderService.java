@@ -329,7 +329,7 @@ public class DataProviderService extends Service {
      */
     private static void setStringContentValueFromJSONUnlessNull(JSONObject json, String key, ContentValues values, String column) throws JSONException {
         if ( !json.isNull( key ) ) {
-            values.put( column, json.getString( key ));
+            values.put(column, json.getString(key));
         }
     }
 
@@ -708,6 +708,11 @@ public class DataProviderService extends Service {
 
         public Cursor getOfficeLocationsCursor() {
             return DataProviderService.this.getOfficeLocationsCursor();
+        }
+
+        /** @see DataProviderService#loggedOut()  */
+        public void logout() {
+            DataProviderService.this.loggedOut();
         }
     }
 

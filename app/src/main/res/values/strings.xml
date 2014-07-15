@@ -74,6 +74,22 @@
     <string name="add_new_location">Add a New Office</string>
     <string name="no_office_button">I don\'t work at an office</string>
     <string name="profile_heading_department">Department</string>
+    <string name="edit_profile_contact_info">Contact Information</string>
+    <string name="profile_picture_title">Profile Picture</string>
+    <string name="profile_picture_details">Tap to change your picture</string>
+    <string name="edit_profile_your_position">Your Position</string>
+    <string name="edit_profile_personal">Personal</string>
+    <string name="edit_profile_first_name">First Name</string>
+    <string name="edit_profile_last_name">Last Name</string>
+    <string name="edit_profile_email">Email</string>
+    <string name="edit_profile_cell_phone">Cell Phone</string>
+    <string name="edit_profile_office_phone">Office Phone</string>
+    <string name="edit_profile_job_title">Job Title</string>
+    <string name="edit_profile_department">Department</string>
+    <string name="edit_profile_reporting_to">Reporting to</string>
+    <string name="edit_profile_office_location">Office</string>
+    <string name="edit_profile_start_date">Start Date</string>
+    <string name="edit_profile_birth_date">Birthday</string>
 
 
 </resources>
