@@ -60,8 +60,8 @@ import java.util.concurrent.Executors;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
-    public static final String DB_UPDATED_INTENT = "com.triage.badge.DB_UPDATED";
-    public static final String DB_AVAILABLE_INTENT = "com.triage.badge.DB_AVAILABLE";
+    public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
+    public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
@@ -69,6 +69,7 @@ public class DataProviderService extends Service {
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
+    protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
@@ -159,7 +160,7 @@ public class DataProviderService extends Service {
     /**
      * Syncs company info from the cloud to the device.
      *
-     * Notifies listeners via local broadcast that data has been updated.
+     * Notifies listeners via local broadcast that data has been updated with the {@link #DB_UPDATED_ACTION}
      *
      * @param db
      */
@@ -309,7 +310,7 @@ public class DataProviderService extends Service {
             db.endTransaction();
         }
         if( updated ) {
-            localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_INTENT ) );
+            localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
         }
 
     }
@@ -340,7 +341,7 @@ public class DataProviderService extends Service {
      */
     private static void setIntContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
         if ( !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
-            values.put( column, json.getInt( key ));
+            values.put( column, json.getInt(key));
         }
     }
 
@@ -357,7 +358,7 @@ public class DataProviderService extends Service {
         if( database != null  ) {
             return database.rawQuery( SELECT_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
         }
-        return null;
+        throw new IllegalStateException( "getContactsManaged() called before database available." );
     }
 
     /**
@@ -380,7 +381,7 @@ public class DataProviderService extends Service {
                 cursor.close();
             }
         }
-        return null;
+        throw new IllegalStateException( "getContact() called before database available." );
     }
 
     /**
@@ -431,17 +432,39 @@ public class DataProviderService extends Service {
         if (database != null) {
             return database.rawQuery(QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY);
         }
-        return null;
+        throw new IllegalStateException( "getContactsCursor() called before database available." );
     }
 
+    /**
+     * Query the db to get a cursor to the full list of departments
+     *
+     * @return a cursor to all dept rows
+     */
     protected Cursor getDepartmentCursor() {
         if( database != null ) {
             return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, EMPTY_STRING_ARRAY );
         }
-        return null;
+        throw new IllegalStateException( "getDepartmentCursor() called before database available." );
     }
 
+    /**
+     *
+     * @return cursor to all office location rows
+     */
+    protected Cursor getOfficeLocationsCursor() {
+        if( database != null ) {
+            return database.rawQuery( QUERY_ALL_OFFICES_SQL, EMPTY_STRING_ARRAY );
+        }
+        throw new IllegalStateException( "getOfficeLocationsCursor() called before database available." );
+    }
 
+    /**
+     * Helper that sets a bitmap to a view that is either a {@link com.triaged.badge.app.views.ProfileManagesUserView}
+     * or a plain ole {@link android.widget.ImageView}
+     *
+     * @param b
+     * @param v
+     */
     protected void assignBitmapToView( Bitmap b, View v ) {
         if( v instanceof ImageView ) {
             ((ImageView)v).setImageBitmap( b );
@@ -482,7 +505,7 @@ public class DataProviderService extends Service {
     /**
      * Get a writable database and do an incremental sync of new data from the cloud.
      *
-     * Notifies listeners via the {@link #DB_AVAILABLE_INTENT} when the database is ready for use.
+     * Notifies listeners via the {@link #DB_AVAILABLE_ACTION} when the database is ready for use.
      */
     protected void initDatabase() {
         sqlThread.submit( new Runnable() {
@@ -495,7 +518,7 @@ public class DataProviderService extends Service {
                     // every time.
 
                     initialized = true;
-                    localBroadcastManager.sendBroadcast( new Intent( DB_AVAILABLE_INTENT ) );
+                    localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
 
 
                     if ( !apiClient.apiToken.isEmpty() ) {
@@ -508,6 +531,16 @@ public class DataProviderService extends Service {
         }  );
     }
 
+    /**
+     * Save first name, last name, cell phone, and birth date in local DB
+     * and PATCH these values on account in the cloud.
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param contact pojo containing firstName, lastName, cellPhone, and birthDateString to update in DB and in cloud
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
+     */
     protected void saveBasicProfileDataAsync( final Contact contact, final AsyncSaveCallback saveCallback ) {
         sqlThread.submit( new Runnable() {
             @Override
@@ -585,6 +618,7 @@ public class DataProviderService extends Service {
             }
         } );
     }
+
 
     /**
      * Local, non rpc interface for this service.
@@ -667,6 +701,10 @@ public class DataProviderService extends Service {
          */
         public Cursor getDepartmentCursor() {
             return DataProviderService.this.getDepartmentCursor();
+        }
+
+        public Cursor getOfficeLocationsCursor() {
+            return DataProviderService.this.getOfficeLocationsCursor();
         }
     }
 
