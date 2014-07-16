@@ -19,6 +19,8 @@ import android.view.MenuItem;
  */
 public abstract class BadgeActivity extends Activity {
 
+    protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
+
     protected LocalBroadcastManager localBroadcastManager;
     private BroadcastReceiver logoutListener;
 

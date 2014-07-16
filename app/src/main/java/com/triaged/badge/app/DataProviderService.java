@@ -561,7 +561,7 @@ public class DataProviderService extends Service {
      * @param loginCallback if non null, {@link com.triaged.badge.app.DataProviderService.LoginCallback#loginFailed(String)} on this obj will be called on auth failure.
      */
     protected void loginAsync( final String email, final String password, final LoginCallback loginCallback) {
-        sqlThread.submit( new Runnable() {
+        sqlThread.submit(new Runnable() {
             @Override
             public void run() {
                 JSONObject postData = new JSONObject();
@@ -571,74 +571,68 @@ public class DataProviderService extends Service {
                     creds.put("email", email);
                     creds.put("password", password);
                     postData.put("user_login", creds);
-                }
-                catch( JSONException e ) {
-                    Log.e( LOG_TAG, "JSON exception creating post body for login", e );
-                    fail( "Unexpected issue, please contact Badge HQ" );
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for login", e);
+                    fail("Unexpected issue, please contact Badge HQ");
                     return;
                 }
 
                 try {
-                    HttpResponse response = apiClient.createSessionRequest( postData );
+                    HttpResponse response = apiClient.createSessionRequest(postData);
                     int statusCode = response.getStatusLine().getStatusCode();
-                    if( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
+                    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
                         try {
                             JSONObject errorObj = parseJSONResponse(response.getEntity());
                             String error = errorObj.getJSONArray("errors").getString(0);
-                            fail( error );
+                            fail(error);
+                        } catch (JSONException e) {
+                            Log.e(LOG_TAG, "JSON exception parsing error response from 401.", e);
+                            fail("Login failed.");
                         }
-                        catch( JSONException e ) {
-                            Log.e( LOG_TAG, "JSON exception parsing error response from 401.", e );
-                            fail( "Login failed." );
-                        }
-                    }
-                    else if ( statusCode == HttpStatus.SC_OK ) {
+                    } else if (statusCode == HttpStatus.SC_OK) {
                         try {
                             JSONObject account = parseJSONResponse(response.getEntity());
-                            apiClient.apiToken = account.getString( "authentication_token" );
+                            apiClient.apiToken = account.getString("authentication_token");
                             loggedInUser = new Contact();
-                            loggedInUser.fromJSON( account.getJSONObject( "current_user" ) );
-                            prefs.edit().putString( API_TOKEN_PREFS_KEY, apiClient.apiToken ).putInt( LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id ).commit();
+                            loggedInUser.fromJSON(account.getJSONObject("current_user"));
+                            prefs.edit().putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
 
-                            if( loginCallback != null ) {
-                                handler.post( new Runnable() {
+                            if (loginCallback != null) {
+                                handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        loginCallback.loginSuccess( loggedInUser );
+                                        loginCallback.loginSuccess(loggedInUser);
                                     }
-                                } );
+                                });
                             }
-                            syncCompany( database );
+                            syncCompany(database);
+                        } catch (JSONException e) {
+                            Log.e(LOG_TAG, "JSON exception parsing login success.", e);
+                            fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
                         }
-                        catch( JSONException e ) {
-                            Log.e( LOG_TAG, "JSON exception parsing login success.", e );
-                            fail( "Credentials were OK, but the response couldn't be understood. Please notify Badge HQ." );
-                        }
-                    }
-                    else {
-                        if( response.getEntity() != null ) {
+                    } else {
+                        if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
                         }
-                        Log.e( LOG_TAG, "Unexpected http response code " + statusCode + " from api." );
-                        fail( "Server responded with "  + response.getStatusLine().getReasonPhrase()  );
+                        Log.e(LOG_TAG, "Unexpected http response code " + statusCode + " from api.");
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase());
                     }
-                }
-                catch( IOException e ) {
-                    fail( "We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again." );
+                } catch (IOException e) {
+                    fail("We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again.");
                 }
             }
 
-            private void fail( final String reason ) {
-                if( loginCallback != null ) {
-                    handler.post( new Runnable() {
+            private void fail(final String reason) {
+                if (loginCallback != null) {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            loginCallback.loginFailed( reason );
+                            loginCallback.loginFailed(reason);
                         }
-                    } );
+                    });
                 }
             }
-        } );
+        });
     }
 
     /**
@@ -680,19 +674,21 @@ public class DataProviderService extends Service {
      * Operation is atomic, local values will not save if the account
      * can't be updated in the cloud.
      *
-     * @param contact pojo containing firstName, lastName, cellPhone, and birthDateString to update in DB and in cloud
+     * @param firstName
+     * @param lastName
+     * @param birthDateString
+     * @param cellPhone
      * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
      */
-    protected void saveBasicProfileDataAsync( final Contact contact, final AsyncSaveCallback saveCallback ) {
+    protected void saveBasicProfileDataAsync( final String firstName, final String lastName, final String birthDateString, final String cellPhone, final AsyncSaveCallback saveCallback ) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
                 if( database == null ) {
-                    if( saveCallback != null ) {
-                        saveCallback.saveFailed( "Database not ready yet. Please report to Badge HQ" );
-                    }
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
                     return;
                 }
+
 
                 JSONObject user = new JSONObject();
                 try {
@@ -701,10 +697,10 @@ public class DataProviderService extends Service {
 
                     user.put( "user", data );
                     data.put( "employee_info_attributes", employeeInfo );
-                    data.put( "first_name", contact.firstName );
-                    data.put( "last_name", contact.lastName );
-                    employeeInfo.put( "birth_date", contact.birthDateString );
-                    employeeInfo.put( "cell_phone", contact.cellPhone );
+                    data.put( "first_name", firstName );
+                    data.put( "last_name", lastName );
+                    employeeInfo.put( "birth_date", birthDateString );
+                    employeeInfo.put( "cell_phone", cellPhone );
                 }
                 catch( JSONException e ) {
                     Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
@@ -713,27 +709,21 @@ public class DataProviderService extends Service {
                 }
 
 
-                // Wrap entire operation in the transaction so if syncing over http fails
-                // the tx will roll back.
-
-                database.beginTransaction();
                 try {
-                    // Update local data.
-                    ContentValues values = new ContentValues();
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, contact.firstName );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, contact.lastName );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, contact.cellPhone );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, contact.birthDateString );
-                    //values.put( CompanySQLiteHelper.COL)
-                    database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contact.id ) } );
-
                     HttpResponse response = apiClient.patchAccountRequest(user);
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
-                        database.setTransactionSuccessful();
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, firstName );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, lastName );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, cellPhone );
+                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
+                        //values.put( CompanySQLiteHelper.COL)
+                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -744,17 +734,79 @@ public class DataProviderService extends Service {
                         }
                     }
                     else {
-                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
                     }
                 }
                 catch( IOException e ) {
-                    fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
-                }
-                finally {
-                    database.endTransaction();
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
                 }
             }
 
+        } );
+    }
+
+    /**
+     * Saves the id of the primary location for the logged in user locally
+     * and via the API.
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param primaryLocation
+     * @param saveCallback
+     */
+    protected void savePrimaryLocationASync( final int primaryLocation, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if (database == null) {
+                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
+                    return;
+                }
+
+                JSONObject postData = new JSONObject();
+                JSONObject user = new JSONObject();
+                try {
+                    postData.put("user", user);
+                    user.put("primary_office_location_id", primaryLocation);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
+                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.patchAccountRequest(postData);
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation );
+                        //values.put( CompanySQLiteHelper.COL)
+                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                    }
+                } catch (IOException e) {
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
+                }
+
+            }
         } );
     }
 
@@ -770,9 +822,7 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 if( database == null ) {
-                    if( saveCallback != null ) {
-                        saveCallback.saveFailed( "Database not ready yet. Please report to Badge HQ" );
-                    }
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
                     return;
                 }
 
@@ -835,10 +885,12 @@ public class DataProviderService extends Service {
      * Operation is atomic, local values will not save if the account
      * can't be updated in the cloud.
      *
-     * @param contact contact containing id and values for all 3 fields
+     * @param jobTitle
+     * @param departmentId
+     * @param managerId
      * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
      */
-    protected void savePositionProfileDataAsync( final Contact contact, final AsyncSaveCallback saveCallback ) {
+    protected void savePositionProfileDataAsync( final String jobTitle, final int departmentId, final int managerId, final AsyncSaveCallback saveCallback ) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -858,9 +910,9 @@ public class DataProviderService extends Service {
                     JSONObject employeeInfo = new JSONObject();
                     user.put( "user", data );
                     data.put( "employee_info_attributes", employeeInfo );
-                    data.put( "department_id", contact.departmentId );
-                    data.put( "manager_id", contact.managerId );
-                    employeeInfo.put( "job_title", contact.jobTitle );
+                    data.put( "department_id", departmentId );
+                    data.put( "manager_id", managerId );
+                    employeeInfo.put( "job_title", jobTitle );
 
                 }
                 catch( JSONException e ) {
@@ -869,14 +921,7 @@ public class DataProviderService extends Service {
                     return;
                 }
 
-                database.beginTransaction();
                 try {
-                    // Update local data.
-                    ContentValues values = new ContentValues();
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, contact.jobTitle );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, contact.departmentId );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, contact.managerId );
-                    database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contact.id ) } );
 
                     HttpResponse response = apiClient.patchAccountRequest(user);
                     if( response.getEntity() != null ) {
@@ -884,7 +929,12 @@ public class DataProviderService extends Service {
                     }
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
-                        database.setTransactionSuccessful();
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, jobTitle );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId );
+                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -900,9 +950,6 @@ public class DataProviderService extends Service {
                 }
                 catch( IOException e ) {
                     fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
-                }
-                finally {
-                    database.endTransaction();
                 }
             }
         } );
@@ -1007,17 +1054,24 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(com.triaged.badge.data.Contact, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveBasicProfileDataAsync( Contact contact, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.saveBasicProfileDataAsync(contact, saveCallback);
+        public void saveBasicProfileDataAsync( String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.saveBasicProfileDataAsync( firstName, lastName, birthDateString, cellPhone, saveCallback);
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#savePositionProfileDataAsync(com.triaged.badge.data.Contact, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#savePositionProfileDataAsync(String, int, int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void savePositionProfileDataAsync( Contact contact, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.savePositionProfileDataAsync( contact, saveCallback );
+        public void savePositionProfileDataAsync( String jobTitle, int departmentId, int managerId, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.savePositionProfileDataAsync(jobTitle, departmentId, managerId, saveCallback);
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationASync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.savePrimaryLocationASync( primaryLocation, saveCallback );
         }
 
         /**

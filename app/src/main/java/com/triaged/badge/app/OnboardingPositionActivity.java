@@ -1,6 +1,9 @@
 package com.triaged.badge.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +29,12 @@ public class OnboardingPositionActivity extends BadgeActivity {
     protected int managerId = 0;
     protected int deptartmentId = 0;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
+    };
 
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
@@ -59,15 +68,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Contact transientContact = new Contact();
-                transientContact.id = loggedInUser.id;
-                transientContact.managerId = managerId;
-                transientContact.departmentId = deptartmentId;
-                transientContact.jobTitle = String.valueOf( jobTitleField.getText() );
-
                 // CHECK FOR EMPTY VALUES
 
-                dataProviderServiceBinding.savePositionProfileDataAsync( transientContact, saveCallback );
+                dataProviderServiceBinding.savePositionProfileDataAsync( String.valueOf( jobTitleField.getText() ), deptartmentId, managerId, saveCallback );
             }
         });
 
@@ -96,6 +99,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 startActivityForResult(intent, MANAGER_REQUEST_CODE);
             }
         });
+        localBroadcastManager.registerReceiver( onboardingFinishedReceiver, new IntentFilter( ONBOARDING_FINISHED_ACTION ) );
     }
 
     @Override
@@ -115,6 +119,12 @@ public class OnboardingPositionActivity extends BadgeActivity {
                     break;
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        localBroadcastManager.unregisterReceiver( onboardingFinishedReceiver );
     }
 
     @Override

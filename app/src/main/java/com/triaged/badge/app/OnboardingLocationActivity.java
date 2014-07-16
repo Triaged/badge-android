@@ -22,10 +22,27 @@ import com.triaged.badge.data.Contact;
  */
 public class OnboardingLocationActivity extends BadgeActivity {
 
+    protected static final int ADD_OFFICE_REQUEST_CODE = 1;
+
     private Button continueButton = null;
     private ListView officeLocationsList = null;
     private OfficeLocationsAdapter officeLocationsAdapter = null;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess(int newId) {
+            Intent intent = new Intent(OnboardingLocationActivity.this, ContactsActivity.class);
+            startActivity(intent);
+            localBroadcastManager.sendBroadcast( new Intent( ONBOARDING_FINISHED_ACTION ) );
+            finish();
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText( OnboardingLocationActivity.this, reason, Toast.LENGTH_SHORT ).show();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +56,8 @@ public class OnboardingLocationActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(OnboardingLocationActivity.this, ContactsActivity.class);
-                startActivity(intent);
+
+                dataProviderServiceBinding.savePrimaryLocationASync( officeLocationsAdapter.usersOffice, saveCallback );
             }
         });
 
@@ -72,7 +89,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(OnboardingLocationActivity.this, OnboardingMapActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, ADD_OFFICE_REQUEST_CODE);
             }
         });
 
@@ -92,5 +109,14 @@ public class OnboardingLocationActivity extends BadgeActivity {
     protected void onDestroy() {
         super.onDestroy();
         officeLocationsAdapter.destroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if( requestCode == ADD_OFFICE_REQUEST_CODE && resultCode != RESULT_CANCELED ) {
+            officeLocationsAdapter.usersOffice = resultCode;
+            officeLocationsAdapter.refresh();
+        }
     }
 }
