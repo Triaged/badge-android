@@ -221,7 +221,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
             if( isNotBlank( contact.officeName ) ) {
                 primaryOfficeView.primaryValue = contact.officeName;
-                primaryOfficeView.secondaryValue = "Office";
+                primaryOfficeView.secondaryValue = "Primary Office";
                 primaryOfficeView.setVisibility(View.VISIBLE);
                 primaryOfficeView.invalidate();
             }
