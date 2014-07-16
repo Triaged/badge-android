@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -37,6 +38,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private ProfileContactInfoView officePhoneView = null;
     private ProfileContactInfoView cellPhoneView = null;
     private ProfileContactInfoView birthDateView = null;
+    private ProfileContactInfoView primaryOfficeView = null;
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
     private TextView managesHeader = null;
@@ -66,6 +68,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         departmentView = (ButtonWithFont) findViewById(R.id.profile_department);
         emailView = (ProfileContactInfoView) findViewById(R.id.profile_email);
         officePhoneView = (ProfileContactInfoView) findViewById(R.id.profile_office_phone);
+        primaryOfficeView = (ProfileContactInfoView) findViewById( R.id.profile_primary_office );
         cellPhoneView = (ProfileContactInfoView) findViewById(R.id.profile_cell_phone);
         birthDateView = (ProfileContactInfoView) findViewById(R.id.profile_birth_date);
         startDateView = (ProfileContactInfoView) findViewById(R.id.profile_start_date);
@@ -160,14 +163,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         if (contact != null) {
             profileName.setText(contact.name);
             profileTitle.setText(contact.jobTitle);
-            if (contact.departmentName != null) {
+            if ( isNotBlank( contact.departmentName ) ) {
                 departmentView.setVisibility(View.VISIBLE);
                 departmentView.setText(contact.departmentName);
             }
             else {
                 departmentView.setVisibility(View.GONE);
             }
-            if (contact.email != null) {
+            if (isNotBlank( contact.email ) ) {
                 emailView.setVisibility(View.VISIBLE);
                 emailView.primaryValue = contact.email;
                 emailView.secondaryValue = "Email";
@@ -176,7 +179,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             else {
                 emailView.setVisibility( View.GONE );
             }
-            if (contact.officePhone != null) {
+            if (isNotBlank( contact.officePhone )) {
                 officePhoneView.setVisibility(View.VISIBLE);
                 officePhoneView.primaryValue = contact.officePhone;
                 officePhoneView.secondaryValue = "Office";
@@ -186,7 +189,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 officePhoneView.setVisibility(View.GONE );
             }
 
-            if (contact.cellPhone != null) {
+            if ( isNotBlank( contact.cellPhone ) ) {
                 cellPhoneView.setVisibility(View.VISIBLE);
                 cellPhoneView.primaryValue = contact.cellPhone;
                 cellPhoneView.secondaryValue = "Mobile";
@@ -196,7 +199,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 cellPhoneView.setVisibility(View.GONE);
             }
 
-            if (contact.birthDateString != null) {
+            if ( isNotBlank( contact.birthDateString ) ) {
                 birthDateView.setVisibility(View.VISIBLE);
                 birthDateView.primaryValue = contact.birthDateString;
                 birthDateView.secondaryValue = "Birthday";
@@ -206,7 +209,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 birthDateView.setVisibility(View.GONE);
             }
 
-            if (contact.startDateString != null) {
+            if ( isNotBlank( contact.startDateString ) ) {
                 startDateView.setVisibility(View.VISIBLE);
                 startDateView.primaryValue = contact.startDateString;
                 startDateView.secondaryValue = "Start Date";
@@ -216,9 +219,23 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 startDateView.setVisibility(View.GONE);
             }
 
+            if( isNotBlank( contact.officeName ) ) {
+                primaryOfficeView.primaryValue = contact.officeName;
+                primaryOfficeView.secondaryValue = "Office";
+                primaryOfficeView.setVisibility(View.VISIBLE);
+                primaryOfficeView.invalidate();
+            }
+            else {
+                primaryOfficeView.setVisibility(View.GONE);
+            }
+
             currentLocationView.isOn = false;
             currentLocationView.primaryValue = "Unavailable";
             currentLocationView.invalidate();
         }
+    }
+
+    private static boolean isNotBlank( String str ) {
+        return str != null && !str.isEmpty();
     }
 }

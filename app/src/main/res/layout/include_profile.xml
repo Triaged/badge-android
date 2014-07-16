@@ -155,6 +155,16 @@
         />
 
     <com.triaged.badge.app.views.ProfileContactInfoView
+        android:id="@+id/profile_primary_office"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/profile_row_background"
+        android:visibility="gone"
+    />
+
+    <com.triaged.badge.app.views.ProfileContactInfoView
         android:id="@+id/profile_birth_date"
         android:layout_width="match_parent"
         android:layout_height="56dp"
