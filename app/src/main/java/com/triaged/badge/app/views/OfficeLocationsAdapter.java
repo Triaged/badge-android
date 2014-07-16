@@ -70,6 +70,11 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         ImageView selectedIcon;
     }
 
+    public void refresh() {
+        changeCursor( dataProviderServiceBinding.getOfficeLocationsCursor() );
+        notifyDataSetChanged();
+    }
+
     public void destroy() {
         getCursor().close();
     }

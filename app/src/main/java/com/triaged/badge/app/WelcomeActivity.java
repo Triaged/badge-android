@@ -1,8 +1,10 @@
 package com.triaged.badge.app;
 
 import android.app.DatePickerDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -38,6 +40,25 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     protected Calendar birthdayCalendar = null;
     protected SimpleDateFormat birthdayFormat;
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
+    protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
+    };
+
+    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess( int newId ) {
+            Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
+            startActivity(intent);
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,29 +78,11 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
         Button continueButton = (Button) findViewById(R.id.continue_button);
 
-        final DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
-            @Override
-            public void saveSuccess() {
-                Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
-                startActivity(intent);
-            }
-
-            @Override
-            public void saveFailed(String reason) {
-                Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
-            }
-        };
-
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Contact transientContact = new Contact();
-                transientContact.firstName = firstName.getText().toString();
-                transientContact.lastName = lastName.getText().toString();
-                transientContact.cellPhone = cellNumber.getText().toString();
                 birthdayCalendar.setTimeZone( Contact.GMT );
-                transientContact.birthDateString = birthdayCalendar.getTime().toString();
-                dataProviderServiceBinding.saveBasicProfileDataAsync( transientContact, saveCallback );
+                dataProviderServiceBinding.saveBasicProfileDataAsync( firstName.getText().toString(), lastName.getText().toString(), birthdayCalendar.getTime().toString(), cellNumber.getText().toString(), saveCallback );
             }
         });
 
@@ -120,12 +123,19 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 return false;
             }
         });
+        localBroadcastManager.registerReceiver( onboardingFinishedReceiver, new IntentFilter( ONBOARDING_FINISHED_ACTION ) );
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        localBroadcastManager.unregisterReceiver( onboardingFinishedReceiver );
     }
 
     @Override
@@ -164,5 +174,4 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         }
         return null;
     }
-
 }

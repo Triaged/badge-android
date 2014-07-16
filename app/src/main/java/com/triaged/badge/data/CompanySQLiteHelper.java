@@ -29,8 +29,12 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID = "primary_office_location_id";
     public static final String COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID = "current_office_location_id";
     public static final String COLUMN_CONTACT_DEPARTMENT_ID = "department_id";
-    public static final String COLUMN_CONTACT_DEPARTMENT_NAME = "department_name";
     public static final String COLUMN_CONTACT_SHARING_OFFICE_LOCATION = "sharing_office_location";
+
+    public static final String JOINED_DEPARTMENT_NAME = "department_name";
+    public static final String JOINED_MANAGER_FIRST_NAME = "manager_first_name";
+    public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
+    public static final String JOINED_OFFICE_NAME = "office_name";
 
     public static final String COLUMN_DEPARTMENT_ID = "_id";
     public static final String COLUMN_DEPARTMENT_NAME = "name";
@@ -48,7 +52,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
     protected static final String SQL_DATABASE_NAME = "badge.db";
     protected static final int DATABASE_VERSION = 1;
-    private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s text, %s integer );",
+    private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
             TABLE_CONTACTS,
             COLUMN_CONTACT_ID,
             COLUMN_CONTACT_FIRST_NAME,
@@ -64,7 +68,6 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
             COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID,
             COLUMN_CONTACT_DEPARTMENT_ID,
-            COLUMN_CONTACT_DEPARTMENT_NAME,
             COLUMN_CONTACT_SHARING_OFFICE_LOCATION
     );
 

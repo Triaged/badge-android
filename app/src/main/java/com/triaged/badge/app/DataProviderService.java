@@ -63,8 +63,61 @@ public class DataProviderService extends Service {
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
-    protected static final String QUERY_ALL_CONTACTS_SQL = String.format("SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME );
-    protected static final String SELECT_MANAGED_CONTACTS_SQL = String.format( "SELECT %s, %s, %s, %s, %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, CompanySQLiteHelper.TABLE_CONTACTS, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
+    protected static final String QUERY_ALL_CONTACTS_SQL =
+            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+    protected static final String QUERY_CONTACT_SQL =
+            String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
+                CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
+                CompanySQLiteHelper.JOINED_OFFICE_NAME,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
+                CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
+                CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS,
+                CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID
+            );
+    protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
+            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s != ? ORDER BY %s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+    protected static final String QUERY_MANAGED_CONTACTS_SQL =
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
@@ -107,9 +160,6 @@ public class DataProviderService extends Service {
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         String apiToken = prefs.getString( API_TOKEN_PREFS_KEY, "" );
-        if( "".equals( apiToken ) ) {
-            loggedOut();
-        }
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadExecutor();
         databaseHelper = new CompanySQLiteHelper( this );
@@ -143,7 +193,7 @@ public class DataProviderService extends Service {
         super.onDestroy();
         sqlThread.shutdownNow();
         databaseHelper.close();
-        apiClient.shutdown();
+        apiClient.getConnectionManager().shutdown();
         httpClient.getConnectionManager().shutdown();
         database = null;
     }
@@ -181,7 +231,7 @@ public class DataProviderService extends Service {
             db.execSQL(CLEAR_CONTACTS_SQL);
             db.execSQL(CLEAR_DEPARTMENTS_SQL);
             db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
-            HttpResponse response = apiClient.downloadCompany( lastSynced );
+            HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
@@ -226,7 +276,6 @@ public class DataProviderService extends Service {
                             int departmentId = newContact.getInt("department_id");
                             String deptName = departmentMap.get(departmentId);
                             values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_NAME, deptName);
                             if (deptName != null) {
                                 departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
                             }
@@ -284,10 +333,6 @@ public class DataProviderService extends Service {
 
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                 } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                    // Wipe DB, we're not logged in anymore.
-                    db.execSQL(CLEAR_CONTACTS_SQL);
-                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
-                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
                     loggedOut();
                 } else {
                     Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");
@@ -349,7 +394,7 @@ public class DataProviderService extends Service {
 
     /**
      * Return a cursor to a set of contact rows that the given id manages.
-     * Only name, avatar, and title columns are available in the returned cursor.
+     * All columns included.
      *
      * Caller must close the Cursor when no longer needed.
      *
@@ -358,7 +403,7 @@ public class DataProviderService extends Service {
      */
     protected Cursor getContactsManaged( int contactId ) {
         if( database != null  ) {
-            return database.rawQuery( SELECT_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
+            return database.rawQuery(QUERY_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
         }
         throw new IllegalStateException( "getContactsManaged() called before database available." );
     }
@@ -372,7 +417,7 @@ public class DataProviderService extends Service {
      */
     protected Contact getContact(int contactId) {
         if (database !=null ) {
-            Cursor cursor = database.rawQuery("SELECT * FROM contacts WHERE _id=?", new String[]{String.valueOf(contactId)});
+            Cursor cursor = database.rawQuery( QUERY_CONTACT_SQL, new String[]{String.valueOf(contactId)});
             try {
                 if (cursor.moveToFirst()) {
                     Contact contact = new Contact();
@@ -438,6 +483,21 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Query the db to get a cursor to all contacts except for
+     * the logged in user.
+     *
+     * Caller must close the cursor when finished.
+     *
+     * @return a cursor to all contact rows minus 1
+     */
+    protected Cursor getContactsCursorExcludingLoggedInUser() {
+        if( database != null ) {
+            return database.rawQuery(QUERY_CONTACTS_WITH_EXCEPTION_SQL, new String[] { String.valueOf( loggedInUser.id ) } );
+        }
+        throw new IllegalStateException( "getContactsCursorExcludingLoggedInUser() called before database available." );
+    }
+
+    /**
      * Query the db to get a cursor to the full list of departments
      *
      * @return a cursor to all dept rows
@@ -482,6 +542,10 @@ public class DataProviderService extends Service {
     protected void loggedOut() {
         loggedInUser = null;
         prefs.edit().remove( API_TOKEN_PREFS_KEY ).remove(LOGGED_IN_USER_ID_PREFS_KEY ).commit();
+        // Wipe DB, we're not logged in anymore.
+        database.execSQL(CLEAR_CONTACTS_SQL);
+        database.execSQL(CLEAR_DEPARTMENTS_SQL);
+        database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
@@ -496,8 +560,79 @@ public class DataProviderService extends Service {
      * @param password
      * @param loginCallback if non null, {@link com.triaged.badge.app.DataProviderService.LoginCallback#loginFailed(String)} on this obj will be called on auth failure.
      */
-    protected void loginAsync( String email, String password, LoginCallback loginCallback) {
-        new LoginTask( email, password, loginCallback).execute();
+    protected void loginAsync( final String email, final String password, final LoginCallback loginCallback) {
+        sqlThread.submit(new Runnable() {
+            @Override
+            public void run() {
+                JSONObject postData = new JSONObject();
+                JSONObject creds = new JSONObject();
+
+                try {
+                    creds.put("email", email);
+                    creds.put("password", password);
+                    postData.put("user_login", creds);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for login", e);
+                    fail("Unexpected issue, please contact Badge HQ");
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.createSessionRequest(postData);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                        try {
+                            JSONObject errorObj = parseJSONResponse(response.getEntity());
+                            String error = errorObj.getJSONArray("errors").getString(0);
+                            fail(error);
+                        } catch (JSONException e) {
+                            Log.e(LOG_TAG, "JSON exception parsing error response from 401.", e);
+                            fail("Login failed.");
+                        }
+                    } else if (statusCode == HttpStatus.SC_OK) {
+                        try {
+                            JSONObject account = parseJSONResponse(response.getEntity());
+                            apiClient.apiToken = account.getString("authentication_token");
+                            loggedInUser = new Contact();
+                            loggedInUser.fromJSON(account.getJSONObject("current_user"));
+                            prefs.edit().putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
+
+                            if (loginCallback != null) {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        loginCallback.loginSuccess(loggedInUser);
+                                    }
+                                });
+                            }
+                            syncCompany(database);
+                        } catch (JSONException e) {
+                            Log.e(LOG_TAG, "JSON exception parsing login success.", e);
+                            fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
+                        }
+                    } else {
+                        if (response.getEntity() != null) {
+                            response.getEntity().consumeContent();
+                        }
+                        Log.e(LOG_TAG, "Unexpected http response code " + statusCode + " from api.");
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase());
+                    }
+                } catch (IOException e) {
+                    fail("We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again.");
+                }
+            }
+
+            private void fail(final String reason) {
+                if (loginCallback != null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            loginCallback.loginFailed(reason);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     /**
@@ -515,12 +650,15 @@ public class DataProviderService extends Service {
                     // In the future it should ask for any records modified since last sync
                     // every time.
 
+
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
 
-
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+                    }
+                    else {
+                        loggedOut();
                     }
                 } catch (Throwable t) {
                     Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
@@ -536,10 +674,311 @@ public class DataProviderService extends Service {
      * Operation is atomic, local values will not save if the account
      * can't be updated in the cloud.
      *
-     * @param contact pojo containing firstName, lastName, cellPhone, and birthDateString to update in DB and in cloud
+     * @param firstName
+     * @param lastName
+     * @param birthDateString
+     * @param cellPhone
      * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
      */
-    protected void saveBasicProfileDataAsync( final Contact contact, final AsyncSaveCallback saveCallback ) {
+    protected void saveBasicProfileDataAsync( final String firstName, final String lastName, final String birthDateString, final String cellPhone, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+
+                    user.put( "user", data );
+                    data.put( "employee_info_attributes", employeeInfo );
+                    data.put( "first_name", firstName );
+                    data.put( "last_name", lastName );
+                    employeeInfo.put( "birth_date", birthDateString );
+                    employeeInfo.put( "cell_phone", cellPhone );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+
+                try {
+                    HttpResponse response = apiClient.patchAccountRequest(user);
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, firstName );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, lastName );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, cellPhone );
+                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
+                        //values.put( CompanySQLiteHelper.COL)
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
+                    }
+                }
+                catch( IOException e ) {
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
+                }
+            }
+
+        } );
+    }
+
+    /**
+     * Saves the id of the primary location for the logged in user locally
+     * and via the API.
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param primaryLocation
+     * @param saveCallback
+     */
+    protected void savePrimaryLocationASync( final int primaryLocation, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if (database == null) {
+                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
+                    return;
+                }
+
+                JSONObject postData = new JSONObject();
+                JSONObject user = new JSONObject();
+                try {
+                    postData.put("user", user);
+                    user.put("primary_office_location_id", primaryLocation);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
+                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.patchAccountRequest(postData);
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation );
+                        //values.put( CompanySQLiteHelper.COL)
+                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                    }
+                } catch (IOException e) {
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
+                }
+
+            }
+        } );
+    }
+
+    /**
+     * Create a new department and persist it to the database. Database row
+     * only created if api create option successful.
+     *
+     * @param department name of new department
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
+     */
+    protected void createNewDepartmentAsync( final String department, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+                JSONObject postData = new JSONObject();
+                JSONObject departmentData = new JSONObject();
+                try {
+                    postData.put("department", departmentData);
+                    departmentData.put("name", department);
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.createDepartmentRequest( postData );
+
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                        // Get new department id
+                        JSONObject newDepartment = parseJSONResponse( response.getEntity() );
+
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        final int departmentId = newDepartment.getInt("id");
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
+                        database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( departmentId );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                    }
+                }
+                catch( IOException e ) {
+                    fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
+                }
+                catch( JSONException e ) {
+                    fail( "We didn't understand the server response, please contact Badge HQ.", saveCallback );
+                }
+            }
+        } );
+
+    }
+
+    /**
+     * Create a new office location via the API and save it to the local db if successful
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param address
+     * @param city
+     * @param state
+     * @param zip
+     * @param country
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure. if success, new office location id will be provided as arg
+     */
+    protected void createNewOfficeLocationAsync( final String address, final String city, final String state, final String zip, final String country, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+                // { “office_location” : { “street_address” : , “city” : , “zip_code” : , “state” : , “country” : , } }
+                JSONObject postData = new JSONObject();
+                JSONObject locationData = new JSONObject();
+                try {
+                    postData.put("office_location", locationData );
+                    locationData.put( "street_address", address );
+                    locationData.put( "city", city );
+                    locationData.put( "zip_code", zip );
+                    locationData.put( "state", state );
+                    locationData.put( "country", country );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for create office location", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.createLocationRequest(postData);
+
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                        // Get new department id
+                        JSONObject newOffice = parseJSONResponse( response.getEntity() );
+
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        final int officeLocationId = newOffice.getInt("id");
+                        values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, officeLocationId );
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, newOffice.getString("name"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS, newOffice.getString("street_address"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY, newOffice.getString("city"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE, newOffice.getString("state"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP, newOffice.getString("zip_code"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
+                        database.insert(CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values);
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( officeLocationId );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                    }
+                }
+                catch( IOException e ) {
+                    fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
+                }
+                catch( JSONException e ) {
+                    fail( "We didn't understand the server response, please contact Badge HQ.", saveCallback );
+                }
+            }
+        } );
+
+
+    }
+
+    /**
+     * Saves department, job title, and manager info.
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param jobTitle
+     * @param departmentId
+     * @param managerId
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
+     */
+    protected void savePositionProfileDataAsync( final String jobTitle, final int departmentId, final int managerId, final AsyncSaveCallback saveCallback ) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -553,69 +992,77 @@ public class DataProviderService extends Service {
                 // Wrap entire operation in the transaction so if syncing over http fails
                 // the tx will roll back.
 
-                database.beginTransaction();
+                JSONObject user = new JSONObject();
                 try {
-                    // Update local data.
-                    ContentValues values = new ContentValues();
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, contact.firstName );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, contact.lastName );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, contact.cellPhone );
-                    values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, contact.birthDateString );
-                    //values.put( CompanySQLiteHelper.COL)
-                    database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contact.id ) } );
-
                     JSONObject data = new JSONObject();
                     JSONObject employeeInfo = new JSONObject();
-                    JSONObject user = new JSONObject();
                     user.put( "user", data );
                     data.put( "employee_info_attributes", employeeInfo );
-                    data.put( "first_name", contact.firstName );
-                    data.put( "last_name", contact.lastName );
-                    employeeInfo.put( "birth_date", contact.birthDateString );
-                    employeeInfo.put( "cell_phone", contact.cellPhone );
-                    HttpResponse response = apiClient.executeAccountPatch( user );
+                    data.put( "department_id", departmentId );
+                    data.put( "manager_id", managerId );
+                    employeeInfo.put( "job_title", jobTitle );
+
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating patch body for position profile data", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+                try {
+
+                    HttpResponse response = apiClient.patchAccountRequest(user);
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
-                        database.setTransactionSuccessful();
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, jobTitle );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
+                        values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    saveCallback.saveSuccess();
+                                    saveCallback.saveSuccess( -1 );
                                 }
                             });
                         }
                     }
                     else {
-                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase() );
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
                     }
                 }
                 catch( IOException e ) {
-                    fail( "There was a network issue saving, please check your connection and try again." );
-                }
-                catch( JSONException e ) {
-                    fail( "Unexpected issue, please contact Badge HQ." );
-                }
-                finally {
-                    database.endTransaction();
-                }
-            }
-
-            private void fail( final String reason ) {
-                if( saveCallback != null ) {
-                    handler.post( new Runnable() {
-                        @Override
-                        public void run() {
-                            saveCallback.saveFailed( reason );
-                        }
-                    });
+                    fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
                 }
             }
         } );
     }
+
+    /**
+     * Utility method for any async save operation to invoke the fail method
+     * on the provided callback when things go awry.
+     *
+     * Invokes on the main thread.
+     *
+     * @param reason
+     * @param saveCallback
+     */
+    protected  void fail( final String reason, final AsyncSaveCallback saveCallback ) {
+        if( saveCallback != null ) {
+            handler.post( new Runnable() {
+                @Override
+                public void run() {
+                    saveCallback.saveFailed( reason );
+                }
+            });
+        }
+    }
+
 
 
     /**
@@ -634,6 +1081,13 @@ public class DataProviderService extends Service {
          */
         public Cursor getContactsCursor() {
             return DataProviderService.this.getContactsCursor();
+        }
+
+        /**
+         * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
+         */
+        public Cursor getContactsCursorExcludingLoggedInUser() {
+           return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
         }
 
         /**
@@ -688,10 +1142,24 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(com.triaged.badge.data.Contact, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveBasicProfileDataAsync( Contact contact, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.saveBasicProfileDataAsync(contact, saveCallback);
+        public void saveBasicProfileDataAsync( String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.saveBasicProfileDataAsync( firstName, lastName, birthDateString, cellPhone, saveCallback);
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#savePositionProfileDataAsync(String, int, int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void savePositionProfileDataAsync( String jobTitle, int departmentId, int managerId, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.savePositionProfileDataAsync(jobTitle, departmentId, managerId, saveCallback);
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationASync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.savePrimaryLocationASync( primaryLocation, saveCallback );
         }
 
         /**
@@ -701,6 +1169,10 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getDepartmentCursor();
         }
 
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#getOfficeLocationsCursor() ()
+         */
         public Cursor getOfficeLocationsCursor() {
             return DataProviderService.this.getOfficeLocationsCursor();
         }
@@ -708,6 +1180,20 @@ public class DataProviderService extends Service {
         /** @see DataProviderService#loggedOut()  */
         public void logout() {
             DataProviderService.this.loggedOut();
+        }
+        
+        /**
+         * @see com.triaged.badge.app.DataProviderService#createNewDepartmentAsync(String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void createNewDepartmentAsync( String department, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.createNewDepartmentAsync( department, saveCallback );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#createNewOfficeLocationAsync(String, String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
         }
     }
 
@@ -794,95 +1280,19 @@ public class DataProviderService extends Service {
         }
     }
 
-    protected class LoginTask extends AsyncTask<Void, Void, Void> {
-        private String email;
-        private String password;
-        private LoginCallback loginCallback;
-
-        public LoginTask(String email, String password, LoginCallback loginCallback) {
-            this.email = email;
-            this.password = password;
-            this.loginCallback = loginCallback;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                HttpResponse response = apiClient.executeLogin(email, password);
-                int statusCode = response.getStatusLine().getStatusCode();
-                if( statusCode == HttpStatus.SC_UNAUTHORIZED ) {
-                    try {
-                        JSONObject errorObj = parseJSONResponse(response.getEntity());
-                        String error = errorObj.getJSONArray("errors").getString(0);
-                        fail( error );
-                    }
-                    catch( JSONException e ) {
-                        Log.e( LOG_TAG, "JSON exception parsing error response from 401.", e );
-                        fail( "Login failed." );
-                    }
-                }
-                else if ( statusCode == HttpStatus.SC_OK ) {
-                    try {
-                        JSONObject account = parseJSONResponse(response.getEntity());
-                        apiClient.apiToken = account.getString( "authentication_token" );
-                        prefs.edit().putString( API_TOKEN_PREFS_KEY, apiClient.apiToken ).commit();
-                        sqlThread.submit( new Runnable() {
-                            @Override
-                            public void run() {
-                                syncCompany( database );
-                            }
-                        } );
-
-                        // TODO persist
-                        loggedInUser = new Contact();
-                        loggedInUser.fromJSON( account.getJSONObject( "current_user" ) );
-                        prefs.edit().putInt( LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id ).commit();
-
-                        if( loginCallback != null ) {
-                            handler.post( new Runnable() {
-                                @Override
-                                public void run() {
-                                    loginCallback.loginSuccess( loggedInUser );
-                                }
-                            } );
-                        }
-                    }
-                    catch( JSONException e ) {
-                        Log.e( LOG_TAG, "JSON exception parsing login success.", e );
-                        fail( "The response wasn't understood. Please notify Badge HQ." );
-                    }
-                }
-                else {
-                    if( response.getEntity() != null ) {
-                        response.getEntity().consumeContent();
-                    }
-                    Log.e( LOG_TAG, "Unexpected http response code " + statusCode + " from api." );
-                    fail( "We didn't understand Badge's response. Please notify Badge HQ." );
-                }
-            }
-            catch( IOException e ) {
-                fail( "We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again." );
-            }
-            return null;
-        }
-
-        private JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
-            ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
-            entity.writeTo( jsonBuffer );
-            String json = jsonBuffer.toString("UTF-8");
-            return new JSONObject( json );
-        }
-
-        private void fail( final String reason ) {
-            if( loginCallback != null ) {
-                handler.post( new Runnable() {
-                    @Override
-                    public void run() {
-                        loginCallback.loginFailed( reason );
-                    }
-                } );
-            }
-        }
+    /**
+     * Given an http response entity, parse in to a json object.
+     *
+     * @param entity http response body
+     * @return parsed json object
+     * @throws IOException if network stream can't be read.
+     * @throws JSONException if there's an error parsing json.
+     */
+    protected static JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
+        ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
+        entity.writeTo( jsonBuffer );
+        String json = jsonBuffer.toString("UTF-8");
+        return new JSONObject( json );
     }
 
     /**
@@ -913,8 +1323,10 @@ public class DataProviderService extends Service {
     public interface AsyncSaveCallback {
         /**
          * Save has finished successfully.
+         *
+         * @param newId if save resulted in a new record, the id of the new record. otherwise -1
          */
-        public void saveSuccess();
+        public void saveSuccess( int newId );
 
         /**
          * Save encountered an issue.

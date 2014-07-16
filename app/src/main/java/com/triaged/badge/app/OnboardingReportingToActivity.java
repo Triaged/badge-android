@@ -18,6 +18,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  */
 public class OnboardingReportingToActivity extends BadgeActivity {
 
+    public static final String MGR_NAME_EXTRA = "mgrName";
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -39,9 +40,9 @@ public class OnboardingReportingToActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra("REPORTS_TO_ID", contactsAdapter.getCachedContact(position).id);
-                intent.putExtra("REPORTS_TO_NAME", contactsAdapter.getCachedContact(position).name);
-                startActivity(intent);
+                intent.putExtra( MGR_NAME_EXTRA, contactsAdapter.getCachedContact(position).name);
+                setResult( contactsAdapter.getCachedContact(position).id, intent );
+                finish();
             }
 
         });
