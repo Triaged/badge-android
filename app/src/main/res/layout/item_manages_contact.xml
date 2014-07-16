@@ -1,10 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<com.triaged.badge.app.views.ProfileManagesUserView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/managed_user"
-    android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
-    />
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="64dp"
+    android:background="@drawable/profile_row_background"
+    android:descendantFocusability="blocksDescendants"
+    >
+
+    <ImageView
+        android:id="@+id/contact_thumb"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:layout_centerVertical="true"
+        android:background="@null"
+        android:contentDescription="@string/content_description_thumb"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/no_photo_thumb"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:layout_centerVertical="true"
+        android:background="@drawable/no_photo_thumb_bg"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:textSize="15sp"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/contact_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/main_text_black"
+        android:layout_toRightOf="@id/contact_thumb"
+        android:layout_marginTop="10dp"
+        android:textSize="18sp"
+        custom:font="Roboto-Regular.ttf"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/contact_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/sub_text_gray"
+        android:layout_toRightOf="@id/contact_thumb"
+        android:layout_below="@id/contact_name"
+        android:textSize="14sp"
+        custom:font="Roboto-Regular.ttf"
+        />
+
+</RelativeLayout>

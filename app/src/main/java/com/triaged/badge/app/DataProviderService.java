@@ -23,7 +23,6 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
-import com.triaged.badge.app.views.ProfileManagesUserView;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
@@ -462,8 +461,7 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Helper that sets a bitmap to a view that is either a {@link com.triaged.badge.app.views.ProfileManagesUserView}
-     * or a plain ole {@link android.widget.ImageView}
+     * Helper that sets a bitmap to a plain ole {@link android.widget.ImageView}
      *
      * @param b
      * @param v
@@ -471,9 +469,6 @@ public class DataProviderService extends Service {
     protected void assignBitmapToView( Bitmap b, View v ) {
         if( v instanceof ImageView ) {
             ((ImageView)v).setImageBitmap( b );
-        }
-        else if( v instanceof ProfileManagesUserView  ) {
-            ((ProfileManagesUserView)v).setBitmap( b );
         }
     }
 

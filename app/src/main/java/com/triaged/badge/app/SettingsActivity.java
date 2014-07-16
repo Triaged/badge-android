@@ -66,6 +66,8 @@ public class SettingsActivity extends BadgeActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Toast.makeText(SettingsActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
 
                     }
                 });
@@ -73,6 +75,8 @@ public class SettingsActivity extends BadgeActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                     }
                 });
                 alertDialog.show();
