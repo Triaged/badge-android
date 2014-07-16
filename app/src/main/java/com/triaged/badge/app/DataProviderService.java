@@ -264,39 +264,7 @@ public class DataProviderService extends Service {
                     int contactsLength = contactsArr.length();
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, newContact.getInt("id"));
-                        setStringContentValueFromJSONUnlessNull(newContact, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
-                        setStringContentValueFromJSONUnlessNull(newContact, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
-                        setStringContentValueFromJSONUnlessNull(newContact, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
-                        setStringContentValueFromJSONUnlessNull(newContact, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
-                        if (newContact.has("department_id") && !newContact.get("department_id").equals("")) {
-                            int departmentId = newContact.getInt("department_id");
-                            String deptName = departmentMap.get(departmentId);
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                            if (deptName != null) {
-                                departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
-                            }
-                        }
-                        if (newContact.has("sharing_office_location") && !newContact.isNull("sharing_office_location")) {
-                            int sharingInt = newContact.getBoolean("sharing_office_location") ? 1 : 0;
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
-                        }
-                        if (newContact.has("employee_info")) {
-                            JSONObject employeeInfo = newContact.getJSONObject("employee_info");
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
-                            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
-                            String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
-                            if( birthDateStr != null ) {
-                                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
-                            }
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
-                        }
+                        setContactDBValesFromJSON( newContact, values );
                         db.insert(CompanySQLiteHelper.TABLE_CONTACTS, "", values);
                         values.clear();
                     }
@@ -358,6 +326,36 @@ public class DataProviderService extends Service {
         }
         if( updated ) {
             localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
+        }
+
+    }
+
+    private void setContactDBValesFromJSON( JSONObject json, ContentValues values ) throws JSONException {
+        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, json.getInt("id"));
+        setStringContentValueFromJSONUnlessNull(json, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
+        setStringContentValueFromJSONUnlessNull(json, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
+        setIntContentValueFromJSONUnlessBlank( json, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "department_id", values, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+        if (json.has("sharing_office_location") && !json.isNull("sharing_office_location")) {
+            int sharingInt = json.getBoolean("sharing_office_location") ? 1 : 0;
+            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
+        }
+        if (json.has("employee_info")) {
+            JSONObject employeeInfo = json.getJSONObject("employee_info");
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
+            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
+            String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
+            if( birthDateStr != null ) {
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
+            }
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
         }
 
     }
@@ -665,6 +663,109 @@ public class DataProviderService extends Service {
                 }
             }
         }  );
+    }
+
+    /**
+     * Update the user's entire profile at once.
+     *
+     * @param firstName
+     * @param lastName
+     * @param cellPhone
+     * @param officePhone
+     * @param jobTitle
+     * @param departmentId
+     * @param managerId
+     * @param primaryOfficeId
+     * @param startDateString
+     * @param birthDateString
+     * @param newAvatarFileBase64Str
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
+     */
+    protected void saveAllProfileDataAsync(
+            final String firstName,
+            final String lastName,
+
+            final String cellPhone,
+            final String officePhone,
+            final String jobTitle,
+            final int departmentId,
+            final int managerId,
+            final int primaryOfficeId,
+            final String startDateString,
+            final String birthDateString,
+            final String newAvatarFileBase64Str,
+            final AsyncSaveCallback saveCallback
+    ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+
+                    user.put( "user", data );
+                    data.put( "employee_info_attributes", employeeInfo );
+                    data.put( "first_name", firstName );
+                    data.put( "last_name", lastName );
+                    data.put( "department_id", departmentId );
+                    data.put( "manager_id", managerId );
+                    data.put( "primary_office_location_id", primaryOfficeId );
+                    if( newAvatarFileBase64Str != null ) {
+                        data.put( "avatar", newAvatarFileBase64Str );
+                    }
+
+                    employeeInfo.put( "birth_date", birthDateString );
+                    employeeInfo.put( "cell_phone", cellPhone );
+                    employeeInfo.put( "job_title", jobTitle );
+                    employeeInfo.put( "office_phone", officePhone );
+                    employeeInfo.put( "job_start_date", startDateString );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+
+                try {
+                    HttpResponse response = apiClient.patchAccountRequest(user);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        JSONObject account = parseJSONResponse( response.getEntity() );
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        setContactDBValesFromJSON( account, values );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null  ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
+                    }
+                }
+                catch( IOException e ) {
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
+                }
+                catch( JSONException e ) {
+                    fail( "We didn't understand the server response, please contact Badge HQ.", saveCallback );
+                }
+            }
+        } );
     }
 
     /**
