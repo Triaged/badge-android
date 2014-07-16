@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.Contact;
@@ -20,9 +22,23 @@ public class OnboardingPositionActivity extends BadgeActivity {
     protected Button continueButton = null;
     protected TextView yourDepartmentButton = null;
     protected TextView reportingToButton = null;
-    protected int managerId = -1;
-    protected int deptartmentId = -1;
+    protected EditText jobTitleField = null;
+    protected int managerId = 0;
+    protected int deptartmentId = 0;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+
+    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess( int newId ) {
+            Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
+            startActivity(intent);
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText(OnboardingPositionActivity.this, reason, Toast.LENGTH_LONG).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,18 +49,25 @@ public class OnboardingPositionActivity extends BadgeActivity {
         onboardingDotsView.currentDotIndex = 1;
 
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+        final Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
         managerId = loggedInUser.managerId;
         deptartmentId = loggedInUser.departmentId;
+
+        jobTitleField = (EditText)findViewById( R.id.your_job_title );
 
         continueButton = (Button) findViewById(R.id.continue_button);
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Contact transientContact = new Contact();
+                transientContact.id = loggedInUser.id;
+                transientContact.managerId = managerId;
+                transientContact.departmentId = deptartmentId;
+                transientContact.jobTitle = String.valueOf( jobTitleField.getText() );
 
                 // CHECK FOR EMPTY VALUES
-                Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
-                startActivity(intent);
+
+                dataProviderServiceBinding.savePositionProfileDataAsync( transientContact, saveCallback );
             }
         });
 
@@ -117,4 +140,5 @@ public class OnboardingPositionActivity extends BadgeActivity {
 //        }
 
     }
+
 }

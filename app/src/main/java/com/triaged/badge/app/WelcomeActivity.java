@@ -39,6 +39,19 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     protected SimpleDateFormat birthdayFormat;
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
 
+    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess( int newId ) {
+            Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
+            startActivity(intent);
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,19 +69,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         birthday.setText( account.birthDateString );
 
         Button continueButton = (Button) findViewById(R.id.continue_button);
-
-        final DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
-            @Override
-            public void saveSuccess() {
-                Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
-                startActivity(intent);
-            }
-
-            @Override
-            public void saveFailed(String reason) {
-                Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
-            }
-        };
 
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -164,5 +164,4 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         }
         return null;
     }
-
 }
