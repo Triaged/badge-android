@@ -233,7 +233,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter.refresh();
         }
         else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
+            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
             departmentsListView.setAdapter( departmentsAdapter );
         }
     }
