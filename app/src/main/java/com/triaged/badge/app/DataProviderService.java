@@ -246,36 +246,24 @@ public class DataProviderService extends Service {
                     jsonBuffer = null;
                     ContentValues values = new ContentValues();
 
-                    LinkedHashMap<Integer, String> departmentMap = new LinkedHashMap<Integer, String>(50);
-                    HashMap<Integer, Integer> departmentContactCountMap = new HashMap<Integer, Integer>(50);
-                    if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
-                        JSONArray deptsArr = companyObj.getJSONArray("departments");
-                        int deptsLength = deptsArr.length();
-                        for (int i = 0; i < deptsLength; i++) {
-                            JSONObject dept = deptsArr.getJSONObject(i);
-                            String name = dept.getString("name");
-                            int id = dept.getInt("id");
-                            departmentMap.put(id, name);
-                            departmentContactCountMap.put(id, 0);
-                        }
-                    }
-
                     JSONArray contactsArr = companyObj.getJSONArray("users");
                     int contactsLength = contactsArr.length();
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
                         setContactDBValesFromJSON( newContact, values );
-                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, "", values);
+                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
                         values.clear();
                     }
 
                     if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
-                        for (Map.Entry<Integer, String> dept : departmentMap.entrySet()) {
-                            int id = dept.getKey();
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, id);
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getValue());
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, departmentContactCountMap.get(id));
-                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, "", values);
+                        JSONArray deptsArr = companyObj.getJSONArray("departments");
+                        int deptsLength = deptsArr.length();
+                        for (int i = 0; i < deptsLength; i++) {
+                            JSONObject dept = deptsArr.getJSONObject( i );
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "contact_count" ));
+                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                             values.clear();
                         }
                     }
@@ -294,7 +282,7 @@ public class DataProviderService extends Service {
                             setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
                             setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
                             setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
-                            db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, "", values );
+                            db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values );
                             values.clear();
                         }
                     }
@@ -952,6 +940,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt( "contact_count" ) );
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
