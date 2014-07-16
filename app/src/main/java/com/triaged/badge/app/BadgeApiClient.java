@@ -30,8 +30,16 @@ import java.net.URISyntaxException;
 public class BadgeApiClient extends DefaultHttpClient {
     public static final String MIME_TYPE_JSON = "application/json";
 
-    protected static final String LOG_TAG = BadgeApiClient.class.getName();
-    private static final String API_HOST = "api.badge.co";
+    private static final String API_PROTOCOL = "http";
+    private static final String PROD_API_HOST = "api.badge.co";
+    private static final String STAGING_API_HOST = "api.badge-staging.com";
+    private static final String API_HOST = STAGING_API_HOST;
+
+    private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
+    private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
+    private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
+    private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
+    private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
 
     private HttpHost httpHost;
     String apiToken;
@@ -52,7 +60,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException if network issues occur during the process.
      */
     public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException, JSONException {
-        HttpGet getCompany = new HttpGet( String.format( "https://%s/v1/company", API_HOST ) );
+        HttpGet getCompany = new HttpGet( GET_COMPANY_URI );
         getCompany.setHeader( "Authorization", apiToken );
         return execute( httpHost, getCompany );
     }
@@ -75,7 +83,7 @@ public class BadgeApiClient extends DefaultHttpClient {
             }
         };
         try {
-            patch.setURI(new URI(String.format("https://%s/v1/account", API_HOST)));
+            patch.setURI(new URI(PATCH_ACCOUNT_URI));
             StringEntity body = new StringEntity( data.toString(), "UTF-8" );
             body.setContentType( MIME_TYPE_JSON );
             patch.setEntity( body );
@@ -96,7 +104,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @param postData json object of form { "user_login": { "email": "foo@blah.com", "password" : "not4u" } }
      */
     public HttpResponse createSessionRequest( JSONObject postData ) throws IOException {
-        return postHelper( postData, String.format( "https://%s/v1/sessions", API_HOST ) );
+        return postHelper( postData, CREATE_SESSION_URI );
     }
 
     /**
@@ -110,7 +118,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse createDepartmentRequest( JSONObject department ) throws IOException {
-        return postHelper( department, String.format( "https://%s/v1/departments", API_HOST ) );
+        return postHelper( department, CREATE_DEPARTMENT_URI );
     }
 
     /**
@@ -124,7 +132,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse createLocationRequest( JSONObject location ) throws IOException {
-        return postHelper( location, String.format( "https://%s/v1/office_locations", API_HOST ) );
+        return postHelper( location, CREATE_OFFICE_LOCATION_URI );
     }
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {
