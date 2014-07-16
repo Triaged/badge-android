@@ -262,7 +262,7 @@ public class DataProviderService extends Service {
                             JSONObject dept = deptsArr.getJSONObject( i );
                             values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
                             values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "contact_count" ));
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "users_count" ));
                             db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                             values.clear();
                         }
