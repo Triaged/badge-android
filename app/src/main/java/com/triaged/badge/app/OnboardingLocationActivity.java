@@ -56,7 +56,6 @@ public class OnboardingLocationActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 dataProviderServiceBinding.savePrimaryLocationASync( officeLocationsAdapter.usersOffice, saveCallback );
             }
         });
@@ -78,7 +77,9 @@ public class OnboardingLocationActivity extends BadgeActivity {
         noLocationView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
+                officeLocationsAdapter.usersOffice = -1;
+                officeLocationsAdapter.notifyDataSetChanged();
+                //Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
             }
         });
 
