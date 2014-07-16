@@ -38,6 +38,7 @@ public class Contact {
     public String birthDateString;
     public String cellPhone;
     public String officePhone;
+    public String officeName;
     public int managerId;
     public int primaryOfficeLocationId;
     public int currentOfficeLocationId;
@@ -108,7 +109,7 @@ public class Contact {
         departmentName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_DEPARTMENT_NAME );
         String managerFirstName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME);
         String managerLastName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME);
-
+        officeName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_OFFICE_NAME );
         /** INTEGER FIELDS */
         sharingOfficeLocationInt = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
         managerId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );

@@ -58,22 +58,6 @@ public class BadgeApiClient extends DefaultHttpClient {
     }
 
     /**
-     * Make an api POST request to /sessions to log in.
-     *
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param postData json object of form { "user_login": { "email": "foo@blah.com", "password" : "not4u" } }
-     */
-    public HttpResponse createSessionRequest( JSONObject postData ) throws IOException {
-        HttpPost createSession = new HttpPost( String.format( "https://%s/v1/sessions", API_HOST ) );
-        StringEntity body = new StringEntity( postData.toString(), "UTF-8" );
-        body.setContentType( MIME_TYPE_JSON );
-        createSession.setEntity( body );
-        return execute( httpHost, createSession );
-    }
-
-    /**
      * Make an api PATCH /account request.
      *
      * The caller should make sure that it consumes all the entity content
@@ -104,6 +88,18 @@ public class BadgeApiClient extends DefaultHttpClient {
     }
 
     /**
+     * Make an api POST request to /sessions to log in.
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param postData json object of form { "user_login": { "email": "foo@blah.com", "password" : "not4u" } }
+     */
+    public HttpResponse createSessionRequest( JSONObject postData ) throws IOException {
+        return postHelper( postData, String.format( "https://%s/v1/sessions", API_HOST ) );
+    }
+
+    /**
      * Make a POST /departments request
      *
      * The caller should make sure that it consumes all the entity content
@@ -114,11 +110,31 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse createDepartmentRequest( JSONObject department ) throws IOException {
-        HttpPost createSession = new HttpPost( String.format( "https://%s/v1/departments", API_HOST ) );
-        StringEntity body = new StringEntity( department.toString(), "UTF-8" );
-        body.setContentType( MIME_TYPE_JSON );
-        createSession.setEntity( body );
-        createSession.setHeader( "Authorization", apiToken );
-        return execute( httpHost, createSession );
+        return postHelper( department, String.format( "https://%s/v1/departments", API_HOST ) );
     }
-}
+
+    /**
+     * Make a POST /office_locations request
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param location json object of form { "office_location" : {  "street_address" : "394 Broadway", "city" : "New York", ... } }
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse createLocationRequest( JSONObject location ) throws IOException {
+        return postHelper( location, String.format( "https://%s/v1/office_locations", API_HOST ) );
+    }
+
+    private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {
+        HttpPost post = new HttpPost( uri );
+        StringEntity body = new StringEntity( postData.toString(), "UTF-8" );
+        body.setContentType( MIME_TYPE_JSON );
+        post.setEntity( body );
+        if( apiToken != null && !apiToken.isEmpty() ) {
+            post.setHeader("Authorization", apiToken);
+        }
+        return execute( httpHost, post );
+    }
+ }

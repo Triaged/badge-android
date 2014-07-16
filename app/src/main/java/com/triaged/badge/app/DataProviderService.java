@@ -75,7 +75,9 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
     protected static final String QUERY_CONTACT_SQL =
-            String.format( "SELECT contact.*, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s  WHERE contact.%s = ?",
+            String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
+                CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
+                CompanySQLiteHelper.JOINED_OFFICE_NAME,
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
                 CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
                 CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
@@ -89,6 +91,9 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.TABLE_CONTACTS,
                 CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS,
+                CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_ID
             );
     protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
@@ -723,7 +728,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, cellPhone );
                         values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -880,6 +885,94 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Create a new office location via the API and save it to the local db if successful
+     *
+     * Operation is atomic, local values will not save if the account
+     * can't be updated in the cloud.
+     *
+     * @param address
+     * @param city
+     * @param state
+     * @param zip
+     * @param country
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure. if success, new office location id will be provided as arg
+     */
+    protected void createNewOfficeLocationAsync( final String address, final String city, final String state, final String zip, final String country, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+                // { “office_location” : { “street_address” : , “city” : , “zip_code” : , “state” : , “country” : , } }
+                JSONObject postData = new JSONObject();
+                JSONObject locationData = new JSONObject();
+                try {
+                    postData.put("office_location", locationData );
+                    locationData.put( "street_address", address );
+                    locationData.put( "city", city );
+                    locationData.put( "zip_code", zip );
+                    locationData.put( "state", state );
+                    locationData.put( "country", country );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for create office location", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.createLocationRequest(postData);
+
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                        // Get new department id
+                        JSONObject newOffice = parseJSONResponse( response.getEntity() );
+
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        final int officeLocationId = newOffice.getInt("id");
+                        values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, officeLocationId );
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, newOffice.getString("name"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS, newOffice.getString("street_address"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY, newOffice.getString("city"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE, newOffice.getString("state"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP, newOffice.getString("zip_code"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
+                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
+                        database.insert(CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values);
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( officeLocationId );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail( "Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback );
+                    }
+                }
+                catch( IOException e ) {
+                    fail( "There was a network issue saving, please check your connection and try again.", saveCallback );
+                }
+                catch( JSONException e ) {
+                    fail( "We didn't understand the server response, please contact Badge HQ.", saveCallback );
+                }
+            }
+        } );
+
+
+    }
+
+    /**
      * Saves department, job title, and manager info.
      *
      * Operation is atomic, local values will not save if the account
@@ -916,7 +1009,7 @@ public class DataProviderService extends Service {
 
                 }
                 catch( JSONException e ) {
-                    Log.e( LOG_TAG, "JSON exception creating patch body for position profile data", e );
+                    Log.e(LOG_TAG, "JSON exception creating patch body for position profile data", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -934,7 +1027,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, jobTitle );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId );
-                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1094,6 +1187,13 @@ public class DataProviderService extends Service {
          */
         public void createNewDepartmentAsync( String department, AsyncSaveCallback saveCallback ) {
             DataProviderService.this.createNewDepartmentAsync( department, saveCallback );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#createNewOfficeLocationAsync(String, String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
         }
     }
 

@@ -34,6 +34,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String JOINED_DEPARTMENT_NAME = "department_name";
     public static final String JOINED_MANAGER_FIRST_NAME = "manager_first_name";
     public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
+    public static final String JOINED_OFFICE_NAME = "office_name";
 
     public static final String COLUMN_DEPARTMENT_ID = "_id";
     public static final String COLUMN_DEPARTMENT_NAME = "name";

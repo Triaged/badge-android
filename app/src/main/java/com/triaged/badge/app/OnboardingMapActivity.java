@@ -51,10 +51,13 @@ public class OnboardingMapActivity extends BadgeActivity implements
 
     private GoogleMap map = null;
     private AutoCompleteTextView autoCompleteTextView;
+    private Button addButton;
     private static final String LOG_TAG = OnboardingMapActivity.class.getName();
     private ImageButton findMeButton = null;
     private String provider;
     private Location myLocation;
+    protected DataProviderService.LocalBinding dataProviderServiceBinding;
+    protected Address addressToAdd;
 
     // A request to connect to Location Services
     private LocationRequest mLocationRequest;
@@ -62,10 +65,24 @@ public class OnboardingMapActivity extends BadgeActivity implements
     // Stores the current instantiation of the location client in this object
     private LocationClient mLocationClient;
 
+    private DataProviderService.AsyncSaveCallback addNewAddressCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess(int newId) {
+            setResult( newId );
+            finish();
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText( OnboardingMapActivity.this, reason, Toast.LENGTH_SHORT ).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        addressToAdd = null;
         setContentView(R.layout.activity_onboarding_map);
         TextView backButton = (TextView) findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -81,6 +98,22 @@ public class OnboardingMapActivity extends BadgeActivity implements
         autoCompleteTextView.setAdapter(new PlacesAutocompleteAdapter(this, android.R.layout.simple_list_item_1));
         autoCompleteTextView.setOnItemClickListener(this);
 
+        addButton = (Button)findViewById( R.id.add_location_button );
+        addButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if( addressToAdd != null ) {
+                    dataProviderServiceBinding.createNewOfficeLocationAsync(
+                        addressToAdd.getAddressLine( 0 ).toString(),
+                        addressToAdd.getLocality(),
+                        addressToAdd.getAdminArea(),
+                        addressToAdd.getPostalCode(),
+                        addressToAdd.getCountryCode(),
+                        addNewAddressCallback
+                    );
+                }
+            }
+        });
         findMeButton = (ImageButton) findViewById(R.id.find_me_button);
 //
 //        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -192,6 +225,7 @@ public class OnboardingMapActivity extends BadgeActivity implements
             }
             if (addresses != null && addresses.size() > 0) {
                 Address address = addresses.get(0);
+                addressToAdd = address;
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
                 return latLng;
 
@@ -225,6 +259,7 @@ public class OnboardingMapActivity extends BadgeActivity implements
             try {
                 addresses = myLocation.getFromLocation(latLng.latitude, latLng.longitude, 1);
                 Address firstResult = addresses.get(0);
+                addressToAdd = firstResult;
                 StringBuilder strReturnedAddress = new StringBuilder("");
 
                 for (int i = 0; i < firstResult.getMaxAddressLineIndex(); i++) {
