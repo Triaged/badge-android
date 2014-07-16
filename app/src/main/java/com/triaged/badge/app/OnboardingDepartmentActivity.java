@@ -82,14 +82,13 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
                             public void saveSuccess( int newId ) {
                                 Intent intent = new Intent(OnboardingDepartmentActivity.this, OnboardingPositionActivity.class);
                                 intent.putExtra( DEPT_NAME_EXTRA, departmentName );
-                                setResult( newId );
-                                dialog.dismiss();
+                                setResult( newId, intent );
                                 finish();
                             }
 
                             @Override
                             public void saveFailed(String reason) {
-
+                                Toast.makeText( OnboardingDepartmentActivity.this, reason, Toast.LENGTH_SHORT ).show();
                             }
                         });
                     }

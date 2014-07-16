@@ -777,10 +777,10 @@ public class DataProviderService extends Service {
                 }
 
                 JSONObject postData = new JSONObject();
-                JSONObject department = new JSONObject();
+                JSONObject departmentData = new JSONObject();
                 try {
-                    postData.put("department", department);
-                    department.put("name", department);
+                    postData.put("department", departmentData);
+                    departmentData.put("name", department);
                 }
                 catch( JSONException e ) {
                     Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
@@ -792,7 +792,7 @@ public class DataProviderService extends Service {
                     HttpResponse response = apiClient.createDepartmentRequest( postData );
 
                     int statusCode = response.getStatusLine().getStatusCode();
-                    if( statusCode == HttpStatus.SC_OK ) {
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
                         // Get new department id
                         JSONObject newDepartment = parseJSONResponse( response.getEntity() );
 
