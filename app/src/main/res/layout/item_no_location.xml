@@ -8,18 +8,18 @@
     android:background="@drawable/profile_row_background"
     >
 
-<com.triaged.badge.app.views.TextViewWithFont
-    android:id="@+id/no_location_text"
-    android:layout_width="match_parent"
-    android:layout_height="48dp"
-    custom:font="Roboto-Regular.ttf"
-    android:textColor="@color/main_text_black"
-    android:layout_centerVertical="true"
-    android:paddingLeft="8dp"
-    android:textSize="18sp"
-    android:gravity="center_vertical"
-    android:text="@string/no_office_button"
-    />
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/no_location_text"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        custom:font="Roboto-Regular.ttf"
+        android:textColor="@color/main_text_black"
+        android:layout_centerVertical="true"
+        android:paddingLeft="8dp"
+        android:textSize="18sp"
+        android:gravity="center_vertical"
+        android:text="@string/no_office_button"
+        />
 
     <ImageView
         android:id="@+id/selected_icon"
@@ -31,7 +31,7 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:contentDescription="@string/check_mark"
-        android:visibility="visible"
+        android:visibility="gone"
         />
 
 </RelativeLayout>

@@ -75,7 +75,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         yourDepartmentButton = (TextView) findViewById(R.id.your_department);
-        if (loggedInUser.departmentName == null || loggedInUser.departmentName.equals("")) {
+        if (loggedInUser.departmentName != null && !loggedInUser.departmentName.equals("")) {
             yourDepartmentButton.setText( loggedInUser.departmentName );
         }
         if( loggedInUser.departmentId > 0 ) {
@@ -90,7 +90,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         reportingToButton = (TextView) findViewById(R.id.reporting_to);
-        if (loggedInUser.managerName == null || loggedInUser.managerName.equals("")) {
+        if (loggedInUser.managerName != null && !loggedInUser.managerName.equals("")) {
             reportingToButton.setText(loggedInUser.managerName);
         }
         if( loggedInUser.managerId > 0 ) {

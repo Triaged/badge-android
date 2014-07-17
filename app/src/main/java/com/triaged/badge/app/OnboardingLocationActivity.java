@@ -22,6 +22,8 @@ import com.triaged.badge.data.Contact;
 import org.w3c.dom.Text;
 
 /**
+ * Allow the user to select a primary office location.
+ *
  * Created by Will on 7/10/14.
  */
 public class OnboardingLocationActivity extends BadgeActivity {
