@@ -54,6 +54,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView managesHeader = null;
     private TextView departmentHeader = null;
     private LayoutInflater inflater = null;
+    private int numberManagedByPrevious = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,12 +113,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         int indexOfHeader = viewHolder.indexOfChild(managesHeader) + 1;
 
         // REMOVE OLD VIEWS
-        for (int i = 0; i<viewHolder.getChildCount(); i++) {
+        for (int i = 0; i<numberManagedByPrevious; i++) {
             View v = viewHolder.getChildAt(indexOfHeader);
             if (v instanceof ProfileManagesUserView) {
                 viewHolder.removeView(v);
             }
         }
+
+        numberManagedByPrevious = reportsCursor.getCount();
 
         int iterator = 0;
         final int userId = dataProviderServiceBinding.getLoggedInUser().id;
