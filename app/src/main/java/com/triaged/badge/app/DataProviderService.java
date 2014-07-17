@@ -568,7 +568,7 @@ public class DataProviderService extends Service {
      * This should only be called on the sql thread.
      */
     protected void loggedOut() {
-        if( loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
+        if( loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
             // User initiated logout, make sure they don't get "stuck"
             checkOutOfOffice( loggedInUser.currentOfficeLocationId );
         }
