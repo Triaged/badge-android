@@ -59,6 +59,8 @@ import java.util.concurrent.Executors;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
+    public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
+
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
@@ -131,6 +133,8 @@ public class DataProviderService extends Service {
     protected static final String[] DEPTS_WITH_CONTACTS_SQL_ARGS = new String[] { "0" };
     protected static final String[] ALL_DEPTS_SQL_ARGS = new String[] { "-1" };
 
+
+    protected static final String SERVICE_ANDROID = "android";
 
 
     protected volatile Contact loggedInUser;
@@ -545,7 +549,12 @@ public class DataProviderService extends Service {
      */
     protected void loggedOut() {
         loggedInUser = null;
-        prefs.edit().remove( API_TOKEN_PREFS_KEY ).remove(LOGGED_IN_USER_ID_PREFS_KEY ).commit();
+        prefs.edit().
+                remove(API_TOKEN_PREFS_KEY).
+                remove(LOGGED_IN_USER_ID_PREFS_KEY ).
+                remove( LAST_SYNCED_PREFS_KEY ).
+                remove( LoginActivity.PROPERTY_REG_ID ).
+                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).commit();
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
@@ -553,7 +562,90 @@ public class DataProviderService extends Service {
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
+
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
+    }
+
+    /**
+     * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
+     * and on success wipes local data on the phone and removes tokens.
+     *
+     */
+    protected void unregisterDevice() {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this);
+                    int deviceId = prefs.getInt(REGISTERED_DEVICE_ID_PREFS_KEY, -1);
+                    // Do this regardless of whether we can communicate with the cloud or not.
+                    loggedOut();
+                    if( deviceId != -1 ) {
+                        HttpResponse response = apiClient.unregisterDeviceRequest( deviceId );
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+
+                    }
+                }
+                catch( IOException e ) {
+                    Log.e( LOG_TAG, "Wasn't able to delete device on api", e );
+                }
+            }
+        } );
+    }
+
+    /**
+     * Posts to /devices to register upon login.
+     */
+    protected void registerDevice() {
+
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                String gcmRegId = prefs.getString( LoginActivity.PROPERTY_REG_ID, "" );
+                int androidVersion = android.os.Build.VERSION.SDK_INT;
+
+                JSONObject postData = new JSONObject();
+                JSONObject deviceData = new JSONObject();
+                try {
+                    postData.put("device", deviceData);
+                    deviceData.put("token", gcmRegId );
+                    deviceData.put( "os_version", androidVersion );
+                    deviceData.put( "service", SERVICE_ANDROID );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for device registration", e);
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.registerDeviceRequest(postData);
+
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                        // Get new department id
+                        JSONObject newDevice = parseJSONResponse( response.getEntity() );
+
+                        SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
+                        prefsEditor.putInt( REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt( "id" ) );
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                    }
+                }
+                catch( IOException e ) {
+                    // We'll try again next time the app starts.
+                    Log.e( LOG_TAG, "IOException trying to register device with badge HQ", e );
+                }
+                catch( JSONException e ) {
+                    Log.e( LOG_TAG, "Response from Badge HQ wasn't parseable, sad panda", e );
+                }
+
+            }
+        } );
     }
 
     /**
@@ -843,7 +935,7 @@ public class DataProviderService extends Service {
                 }
 
                 try {
-                    HttpResponse response = apiClient.createDepartmentRequest( postData );
+                    HttpResponse response = apiClient.createDepartmentRequest(postData);
 
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
@@ -1182,7 +1274,7 @@ public class DataProviderService extends Service {
 
         /** @see DataProviderService#loggedOut()  */
         public void logout() {
-            DataProviderService.this.loggedOut();
+            DataProviderService.this.unregisterDevice();
         }
         
         /**
@@ -1197,6 +1289,13 @@ public class DataProviderService extends Service {
          */
         public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
             DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
+        }
+
+        /**
+         * @see DataProviderService#registerDevice()
+         */
+        public void registerDevice() {
+            DataProviderService.this.registerDevice();
         }
     }
 

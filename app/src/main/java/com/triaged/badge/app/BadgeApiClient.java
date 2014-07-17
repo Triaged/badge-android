@@ -6,6 +6,7 @@ import com.triaged.badge.data.CompanySQLiteHelper;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -40,6 +41,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
+    private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
+    private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
 
     private HttpHost httpHost;
     String apiToken;
@@ -118,7 +121,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse createDepartmentRequest( JSONObject department ) throws IOException {
-        return postHelper( department, CREATE_DEPARTMENT_URI );
+        return postHelper(department, CREATE_DEPARTMENT_URI);
     }
 
     /**
@@ -133,6 +136,36 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse createLocationRequest( JSONObject location ) throws IOException {
         return postHelper( location, CREATE_OFFICE_LOCATION_URI );
+    }
+
+    /**
+     * Make a POST /devices request
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param device { "device" : { "token": "xxx", "": "os_version": 18, "service": "android" } }
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse registerDeviceRequest( JSONObject device ) throws IOException {
+        return postHelper( device, REGISTER_DEVICE_URI );
+    }
+
+    /**
+     * Make a DELETE /devices/:id/sign_out request
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param deviceId device id returned from POST /devices previously
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse unregisterDeviceRequest( int deviceId ) throws IOException {
+        HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_PROTOCOL, API_HOST, deviceId ) );
+        delete.setHeader("Authorization", apiToken);
+        return execute( httpHost, delete );
     }
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {

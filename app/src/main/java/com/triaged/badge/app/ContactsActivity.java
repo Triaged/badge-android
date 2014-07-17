@@ -6,8 +6,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +31,8 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  */
 
 public class ContactsActivity extends BadgeActivity implements ActionBar.TabListener {
+
+    private static boolean shouldRegister = true;
 
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
@@ -172,12 +176,12 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( departmentsAdapter != null ) {
             departmentsAdapter.destroy();
         }
-        localBroadcastManager.unregisterReceiver( receiver );
+        localBroadcastManager.unregisterReceiver(receiver);
     }
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v( TAG , String.format( "onTabSelected, %d bizitch", tab.getPosition() ) );
+        Log.v(TAG, String.format("onTabSelected, %d bizitch", tab.getPosition()));
         if ( tab.getPosition() == 0) {
             tab.setIcon(R.drawable.messages_selected);
             Intent intent = new Intent(this, MessagesIndexActivity.class);
@@ -216,6 +220,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
             // SETUP CONTACTS
             dataProviderServiceBinding = app.dataProviderServiceBinding;
+            lazyDeviceRegistration();
             loadContactsAndDepartments();
         }
     }
@@ -236,5 +241,24 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
             departmentsListView.setAdapter( departmentsAdapter );
         }
+    }
+
+    /**
+     * Every time we get to the contacts screen, do a quick check to see if we've registered the device yet.
+     * If not, do it!
+     */
+    private void lazyDeviceRegistration() {
+        if( shouldRegister) {
+            shouldRegister = false;
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            // Kick off async post to /devices api
+            ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
+        }
+    }
+
+    @Override
+    protected void logout() {
+        shouldRegister = true;
+        super.logout();
     }
 }

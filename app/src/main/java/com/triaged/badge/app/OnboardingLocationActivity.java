@@ -26,7 +26,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
 
     private Button continueButton = null;
     private ListView officeLocationsList = null;
-    private OfficeLocationsAdapter officeLocationsAdapter = null;
+    protected OfficeLocationsAdapter officeLocationsAdapter = null;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
@@ -56,7 +56,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dataProviderServiceBinding.savePrimaryLocationASync( officeLocationsAdapter.usersOffice, saveCallback );
+                onContinue();
             }
         });
 
@@ -66,6 +66,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Cursor officeCursor = (Cursor)officeLocationsAdapter.getItem( position );
                 officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
+                officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
                 officeLocationsAdapter.notifyDataSetChanged();
             }
         });
@@ -78,6 +79,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 officeLocationsAdapter.usersOffice = -1;
+                officeLocationsAdapter.usersOfficeName = null;
                 officeLocationsAdapter.notifyDataSetChanged();
                 //Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
             }
@@ -120,4 +122,10 @@ public class OnboardingLocationActivity extends BadgeActivity {
             officeLocationsAdapter.refresh();
         }
     }
+
+    /** Called when the "Continue" Button is clicked. Subclasses may override */
+    protected void onContinue() {
+        dataProviderServiceBinding.savePrimaryLocationASync( officeLocationsAdapter.usersOffice, saveCallback );
+    }
+
 }
