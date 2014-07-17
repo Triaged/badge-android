@@ -59,6 +59,8 @@ import java.util.concurrent.Executors;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
+    public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
+
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
@@ -128,6 +130,8 @@ public class DataProviderService extends Service {
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
     protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
+
+    protected static final String SERVICE_ANDROID = "android";
 
 
     protected volatile Contact loggedInUser;
@@ -553,6 +557,59 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Posts to /devices to register upon login.
+     */
+    protected void registerDevice() {
+
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                String gcmRegId = prefs.getString( LoginActivity.PROPERTY_REG_ID, "" );
+                int androidVersion = android.os.Build.VERSION.SDK_INT;
+
+                JSONObject postData = new JSONObject();
+                JSONObject deviceData = new JSONObject();
+                try {
+                    postData.put("device", deviceData);
+                    deviceData.put("token", gcmRegId );
+                    deviceData.put( "os_version", androidVersion );
+                    deviceData.put( "service", SERVICE_ANDROID );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for device registration", e);
+                    return;
+                }
+
+                try {
+                    HttpResponse response = apiClient.registerDeviceRequest(postData);
+
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                        // Get new department id
+                        JSONObject newDevice = parseJSONResponse( response.getEntity() );
+
+                        SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
+                        prefsEditor.putInt( REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt( "id" ) );
+                    }
+                    else {
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                    }
+                }
+                catch( IOException e ) {
+                    // We'll try again next time the app starts.
+                    Log.e( LOG_TAG, "IOException trying to register device with badge HQ", e );
+                }
+                catch( JSONException e ) {
+                    Log.e( LOG_TAG, "Response from Badge HQ wasn't parseable, sad panda", e );
+                }
+
+            }
+        } );
+    }
+
+    /**
      * Attempt to create a new persistent app session by exchanging email
      * and password credentials for an api token over the network.
      *
@@ -839,7 +896,7 @@ public class DataProviderService extends Service {
                 }
 
                 try {
-                    HttpResponse response = apiClient.createDepartmentRequest( postData );
+                    HttpResponse response = apiClient.createDepartmentRequest(postData);
 
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
@@ -1194,6 +1251,13 @@ public class DataProviderService extends Service {
          */
         public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
             DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
+        }
+
+        /**
+         * @see DataProviderService#registerDevice()
+         */
+        public void registerDevice() {
+            DataProviderService.this.registerDevice();
         }
     }
 

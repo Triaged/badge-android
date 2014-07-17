@@ -40,6 +40,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
+    private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
 
     private HttpHost httpHost;
     String apiToken;
@@ -133,6 +134,20 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse createLocationRequest( JSONObject location ) throws IOException {
         return postHelper( location, CREATE_OFFICE_LOCATION_URI );
+    }
+
+    /**
+     * Make a POST /devices request
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param device { "device" : { "token": "xxx", "": "os_version": 18, "service": "android" } }
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse registerDeviceRequest( JSONObject device ) throws IOException {
+        return postHelper( device, REGISTER_DEVICE_URI );
     }
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {

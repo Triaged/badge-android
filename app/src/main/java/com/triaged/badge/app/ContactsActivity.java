@@ -6,8 +6,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -53,6 +55,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        lazyDeviceRegistration();
 
         requestWindowFeature(Window.FEATURE_ACTION_BAR);
         ActionBar actionBar = getActionBar();
@@ -235,6 +239,19 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         else {
             departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
             departmentsListView.setAdapter( departmentsAdapter );
+        }
+    }
+
+    /**
+     * Every time we get to the contacts screen, do a quick check to see if we've registered the device yet.
+     * If not, do it!
+     */
+    private void lazyDeviceRegistration() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String deviceId = prefs.getString( DataProviderService.REGISTERED_DEVICE_ID_PREFS_KEY, "" );
+        if( "".equals( deviceId ) ) {
+            // Kick off async post to /devices api
+            ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
         }
     }
 }
