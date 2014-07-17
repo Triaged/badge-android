@@ -27,12 +27,14 @@ public class DepartmentsAdapter extends CursorAdapter {
     private Context context;
     private LayoutInflater inflater;
     private int resourceId;
+    private boolean onlyNonEmptyDepartments;
 
-    public DepartmentsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
-        super(context, dataProviderServiceBinding.getDepartmentCursor(), false );
+    public DepartmentsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId, boolean onlyNonEmptyDepartments) {
+        super(context, dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments ), false );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
+        this.onlyNonEmptyDepartments = onlyNonEmptyDepartments;
     }
 
     @Override
@@ -106,7 +108,7 @@ public class DepartmentsAdapter extends CursorAdapter {
      */
     public void refresh() {
         departmentCache.evictAll();
-        changeCursor(dataProviderServiceBinding.getDepartmentCursor());
+        changeCursor(dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments ));
         notifyDataSetChanged();
     }
 

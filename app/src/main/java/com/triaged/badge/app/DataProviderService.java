@@ -72,6 +72,19 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+
+    protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s = ? ORDER BY contact.%s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+
     protected static final String QUERY_CONTACT_SQL =
             String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
                 CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
@@ -117,7 +130,7 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
 
-    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
+    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
@@ -127,6 +140,9 @@ public class DataProviderService extends Service {
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
     protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
+    protected static final String[] DEPTS_WITH_CONTACTS_SQL_ARGS = new String[] { "0" };
+    protected static final String[] ALL_DEPTS_SQL_ARGS = new String[] { "-1" };
+
 
     protected static final String SERVICE_ANDROID = "android";
 
@@ -396,6 +412,18 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Return only contacts in a given department. Same fields returned as {@link #getContactsCursor()}
+     * @param departmentId
+     * @return
+     */
+    protected Cursor getContactsByDepartmentCursor(int departmentId) {
+        if( database != null ) {
+            return database.rawQuery( QUERY_DEPARTMENT_CONTACTS_SQL, new String[] { String.valueOf( departmentId ) } );
+        }
+        throw new IllegalStateException( "getContactsByDepartmentCursor() called before database available." );
+    }
+
+    /**
      * Query the db to get a contact given an id. Always returns the
      * latest and greatest local device data.
      *
@@ -489,9 +517,10 @@ public class DataProviderService extends Service {
      *
      * @return a cursor to all dept rows
      */
-    protected Cursor getDepartmentCursor() {
+    protected Cursor getDepartmentCursor( boolean onlyThoseWithContacts ) {
         if( database != null ) {
-            return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, EMPTY_STRING_ARRAY );
+            String[] args = onlyThoseWithContacts ? DEPTS_WITH_CONTACTS_SQL_ARGS : ALL_DEPTS_SQL_ARGS;
+            return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, args );
         }
         throw new IllegalStateException( "getDepartmentCursor() called before database available." );
     }
@@ -1262,6 +1291,13 @@ public class DataProviderService extends Service {
         }
 
         /**
+         * @see com.triaged.badge.app.DataProviderService#getContactsByDepartmentCursor(int)
+         */
+        public Cursor getContactsByDepartmentCursor( int departmentId ) {
+            return DataProviderService.this.getContactsByDepartmentCursor(departmentId);
+        }
+
+        /**
          * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
          */
         public Cursor getContactsCursorExcludingLoggedInUser() {
@@ -1349,12 +1385,11 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#getDepartmentCursor()
+         * @see DataProviderService#getDepartmentCursor(boolean)
          */
-        public Cursor getDepartmentCursor() {
-            return DataProviderService.this.getDepartmentCursor();
+        public Cursor getDepartmentCursor( boolean onlyNonEmptyDepts ) {
+            return DataProviderService.this.getDepartmentCursor( onlyNonEmptyDepts );
         }
-
 
         /**
          * @see com.triaged.badge.app.DataProviderService#getOfficeLocationsCursor() ()

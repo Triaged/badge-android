@@ -104,7 +104,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         });
 
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_no_count);
+        departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_no_count, false );
         departmentsListView.setAdapter( departmentsAdapter );
     }
 
