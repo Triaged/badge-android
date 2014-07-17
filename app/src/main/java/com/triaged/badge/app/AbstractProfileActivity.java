@@ -18,6 +18,8 @@ import com.triaged.badge.app.views.ProfileCurrentLocationView;
 import com.triaged.badge.app.views.ProfileManagesAdapter;
 import com.triaged.badge.data.Contact;
 
+import org.w3c.dom.Text;
+
 /**
  * Generic abstract class for my own profile and other profiles
  *
@@ -43,6 +45,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
     private TextView managesHeader = null;
+    private TextView departmentHeader = null;
 
     private ListView managesListView = null;
     private ProfileManagesAdapter managesAdapter;
@@ -78,7 +81,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         missingProfileImage = (TextView) findViewById(R.id.missing_profile_image);
         managesListView = (ListView) findViewById(R.id.manages_list);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
-
+        departmentHeader = (TextView) findViewById(R.id.department_header);
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -174,10 +177,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             profileTitle.setText(contact.jobTitle);
             if ( isNotBlank( contact.departmentName ) ) {
                 departmentView.setVisibility(View.VISIBLE);
+                departmentHeader.setVisibility(View.VISIBLE);
                 departmentView.setText(contact.departmentName);
             }
             else {
                 departmentView.setVisibility(View.GONE);
+                departmentHeader.setVisibility(View.GONE);
             }
             if (isNotBlank( contact.email ) ) {
                 emailView.setVisibility(View.VISIBLE);

@@ -372,6 +372,9 @@ public class EditProfileActivity extends BadgeActivity {
                         photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
                         byte[] byteArray = byteArrayOutputStream.toByteArray();
                         encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                        if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                            profileImageMissingView.setVisibility(View.GONE);
+                        }
                     }
                     break;
                 case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:

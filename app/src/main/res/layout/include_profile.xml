@@ -101,6 +101,7 @@
 
     <!-- DEPARTMENT -->
     <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/department_header"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:gravity="center_vertical"
