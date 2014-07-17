@@ -36,6 +36,7 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
+        android:dividerHeight="0dp"
         />
 
 </RelativeLayout>

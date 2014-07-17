@@ -1,9 +1,13 @@
 package com.triaged.badge.app;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.triaged.badge.app.views.MessageThreadAdapter;
+import com.triaged.badge.data.Contact;
 
 /**
  * Created by Will on 7/15/14.
@@ -22,6 +26,16 @@ public class MessageShowActivity extends BadgeActivity {
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         setContentView(R.layout.activity_message_show);
+
+        TextView backButton;
+        backButton = (TextView) findViewById(R.id.back_button);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
         threadList = (ListView) findViewById(R.id.message_thread);
 
         String[] values = new String[] {
@@ -42,5 +56,13 @@ public class MessageShowActivity extends BadgeActivity {
         adapter = new MessageThreadAdapter(this, values);
         threadList.setAdapter(adapter);
 
+        Intent intent = getIntent();
+        int userId = intent.getIntExtra("CONTACT_ID", 0);
+        if (userId != 0) {
+            Contact counterPart = dataProviderServiceBinding.getContact(userId);
+            backButton.setText(counterPart.name);
+        } else {
+            backButton.setText("Back");
+        }
     }
 }

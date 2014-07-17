@@ -64,9 +64,9 @@
     <ImageButton
         android:id="@+id/message_contact"
         android:background="@null"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginRight="8dp"
+        android:layout_width="48dp"
+        android:layout_height="64dp"
+        android:gravity="center"
         android:src="@drawable/ic_action_chat"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
