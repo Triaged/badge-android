@@ -32,7 +32,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 public class ContactsActivity extends BadgeActivity implements ActionBar.TabListener {
 
-    private static boolean shouldRegister = false;
+    private static boolean shouldRegister = true;
 
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
