@@ -24,6 +24,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     private LayoutInflater inflater;
     private int resourceId;
     public int usersOffice;
+    public String usersOfficeName;
 
     public OfficeLocationsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId) {
         super(context, dataProviderServiceBinding.getOfficeLocationsCursor(), false );
@@ -31,6 +32,7 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
         usersOffice = dataProviderServiceBinding.getLoggedInUser().primaryOfficeLocationId;
+        usersOfficeName = dataProviderServiceBinding.getLoggedInUser().officeName;
     }
 
     @Override

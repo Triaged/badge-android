@@ -18,6 +18,20 @@
         />
 
     <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/missing_profile_image"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="23dp"
+        android:contentDescription="@string/content_description_profile_image"
+        custom:font="Roboto-Regular.ttf"
+        android:background="@drawable/no_photo_thumb_bg"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:textSize="35sp"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/profile_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -103,11 +117,14 @@
         android:id="@+id/profile_department"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
         android:visibility="gone"
         android:textSize="16sp"
         android:gravity="center_vertical"
+        android:background="@null"
         />
 
     <!-- CONTACT INFORMATION -->

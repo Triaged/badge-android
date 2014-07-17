@@ -8,13 +8,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +35,7 @@ import com.triaged.badge.app.views.EditProfileInfoView;
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.data.Contact;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,6 +51,8 @@ import java.util.Locale;
 public class EditProfileActivity extends BadgeActivity {
 
     private static final int PICTURE_REQUEST_CODE = 1888;
+    private static final int EDIT_MY_LOCATION_REQUEST_CODE = 20;
+
     private static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
     private static final String LOG_TAG = EditProfileActivity.class.getName();
 
@@ -56,7 +63,6 @@ public class EditProfileActivity extends BadgeActivity {
     private TextView profileImageMissingView = null;
     private EditProfileInfoView firstName = null;
     private EditProfileInfoView lastName = null;
-    private EditProfileInfoView email = null;
     private EditProfileInfoView cellPhone = null;
     private EditProfileInfoView officePhone = null;
     private EditProfileInfoView jobTitle = null;
@@ -73,6 +79,12 @@ public class EditProfileActivity extends BadgeActivity {
     private DatePickerDialog startDateDialog = null;
     protected Calendar startDateCalendar = null;
     protected SimpleDateFormat startDateFormat;
+
+    /** Values set in onActivityResult callbacks */
+    protected int managerId = 0;
+    protected int departmentId = 0;
+    protected int officeId = 0;
+    protected String encodedProfilePhoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,9 +121,6 @@ public class EditProfileActivity extends BadgeActivity {
         lastName = (EditProfileInfoView) findViewById(R.id.edit_last_name);
         lastName.secondaryValue = loggedInUser.lastName;
 
-        email = (EditProfileInfoView) findViewById(R.id.edit_email);
-        email.secondaryValue = loggedInUser.email != null ? loggedInUser.email : "Add";
-
         cellPhone = (EditProfileInfoView) findViewById(R.id.edit_cell_phone);
         cellPhone.secondaryValue = loggedInUser.cellPhone != null ? loggedInUser.cellPhone: "Add";
 
@@ -124,12 +133,11 @@ public class EditProfileActivity extends BadgeActivity {
         department = (EditProfileInfoView) findViewById(R.id.edit_department);
         department.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
 
-        // TODO: UPDATE
         reportingTo = (EditProfileInfoView) findViewById(R.id.edit_reporting_to);
-        reportingTo.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
+        reportingTo.secondaryValue = loggedInUser.managerName != null ? loggedInUser.managerName : "Add";
 
         officeLocation = (EditProfileInfoView) findViewById(R.id.edit_office_location);
-        officeLocation.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
+        officeLocation.secondaryValue = loggedInUser.officeName != null ? loggedInUser.officeName : "Add";
 
         startDate = (EditProfileInfoView) findViewById(R.id.edit_start_date);
         startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Select Date";
@@ -147,13 +155,16 @@ public class EditProfileActivity extends BadgeActivity {
                     public void onClick(View v) {
                         switch (editView.getId()) {
                             case R.id.edit_department:
-                                Toast.makeText(EditProfileActivity.this, "STARTACTIVITYFORINTENT DEPT", Toast.LENGTH_SHORT).show();
+                                Intent editDepartmentIntent = new Intent(EditProfileActivity.this, OnboardingDepartmentActivity.class);
+                                startActivityForResult(editDepartmentIntent, OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE);
                                 break;
                             case R.id.edit_reporting_to:
-                                Toast.makeText(EditProfileActivity.this, "STARTACTIVITYFORINTENT REPORTING TO", Toast.LENGTH_SHORT).show();
+                                Intent editManagerIntent = new Intent(EditProfileActivity.this, OnboardingReportingToActivity.class);
+                                startActivityForResult(editManagerIntent, OnboardingPositionActivity.MANAGER_REQUEST_CODE);
                                 break;
                             case R.id.edit_office_location:
-                                Toast.makeText(EditProfileActivity.this, "STARTACTIVITYFORINTENT OFFICE", Toast.LENGTH_SHORT).show();
+                                Intent editLocationIntent = new Intent(EditProfileActivity.this, EditLocationActivity.class);
+                                startActivityForResult(editLocationIntent, EDIT_MY_LOCATION_REQUEST_CODE);
                                 break;
                             case R.id.edit_start_date:
                                 startDateDialog.show();
@@ -297,26 +308,42 @@ public class EditProfileActivity extends BadgeActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            if (requestCode == PICTURE_REQUEST_CODE) {
-                final boolean isCamera;
-                if (data == null) {
-                    isCamera = true;
-                } else {
-                    final String action = data.getAction();
-                    if (action == null) {
-                        isCamera = false;
-                    } else {
-                        isCamera = action.equals(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        if( resultCode != RESULT_CANCELED ) {
+            switch (requestCode) {
+                case PICTURE_REQUEST_CODE:
+                    if (data != null) {
+                        // GET FROM GALLERY
+                        boolean isCamera = MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
+                        Bitmap photo;
+                        if (isCamera) {
+                            photo = (Bitmap) data.getExtras().get("data");
+                        } else {
+                            photo = getBitmapFromCameraData(data, EditProfileActivity.this);
+                        }
+                        photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
+                        profileImageView.setImageBitmap(photo);
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                        byte[] byteArray = byteArrayOutputStream.toByteArray();
+                        encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
                     }
-                }
-
-                Uri selectedImageUri;
-                if (isCamera) {
-                    // selectedImageUri = outputFileUri;
-                } else {
-                    selectedImageUri = data == null ? null : data.getData();
-                }
+                    break;
+                case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:
+                    department.secondaryValue = data.getStringExtra(OnboardingDepartmentActivity.DEPT_NAME_EXTRA);
+                    department.invalidate();
+                    departmentId = resultCode;
+                    break;
+                case OnboardingPositionActivity.MANAGER_REQUEST_CODE:
+                    reportingTo.secondaryValue = data.getStringExtra(OnboardingReportingToActivity.MGR_NAME_EXTRA);
+                    reportingTo.invalidate();
+                    managerId = resultCode;
+                    break;
+                case EDIT_MY_LOCATION_REQUEST_CODE:
+                    String officeNameFromResult = data.getStringExtra(EditLocationActivity.OFFICE_NAME_EXTRA);
+                    officeLocation.secondaryValue = officeNameFromResult == null ? "None" : officeNameFromResult;
+                    officeLocation.invalidate();
+                    officeId = resultCode;
+                    break;
             }
         }
     }
@@ -351,6 +378,22 @@ public class EditProfileActivity extends BadgeActivity {
             }
         }
         return null;
+    }
+
+    /**
+    * Use for decoding camera response data.
+    *
+    * @param data * @param context * @return
+    */
+    public static Bitmap getBitmapFromCameraData(Intent data, Context context){
+        Uri selectedImage = data.getData();
+        String[] filePathColumn = { MediaStore.Images.Media.DATA };
+        Cursor cursor = context.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
+        cursor.moveToFirst();
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        String picturePath = cursor.getString(columnIndex);
+        cursor.close();
+        return BitmapFactory.decodeFile(picturePath);
     }
 
 }

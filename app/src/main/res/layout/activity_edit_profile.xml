@@ -155,14 +155,6 @@
                 />
 
             <com.triaged.badge.app.views.EditProfileInfoView
-                android:id="@+id/edit_email"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:background="@drawable/profile_row_background"
-                custom:primaryValue="@string/edit_profile_email"
-                />
-
-            <com.triaged.badge.app.views.EditProfileInfoView
                 android:id="@+id/edit_cell_phone"
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
