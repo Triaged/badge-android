@@ -49,6 +49,8 @@
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
+        android:divider="@null"
+        android:dividerHeight="0dp"
         />
 
     <com.triaged.badge.app.views.ButtonWithFont

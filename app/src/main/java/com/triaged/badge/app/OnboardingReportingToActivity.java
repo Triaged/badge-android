@@ -55,7 +55,7 @@ public class OnboardingReportingToActivity extends BadgeActivity {
             contactsAdapter.refresh();
         }
         else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg, false);
             contactsListView.setAdapter(contactsAdapter);
         }
     }

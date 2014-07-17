@@ -1,6 +1,7 @@
 package com.triaged.badge.app.views;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.util.LruCache;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
+import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
@@ -42,7 +44,11 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     private int contactResourceId;
 
     public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int contactResourceId) {
-        super( context, dataProviderServiceBinding.getContactsCursor(), false );
+        this(context, dataProviderServiceBinding, contactResourceId, true);
+    }
+
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int contactResourceId, boolean includeMe) {
+        super( context, includeMe ? dataProviderServiceBinding.getContactsCursor() : dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), false);
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
@@ -77,7 +83,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
         holder.noPhotoThumb = (TextView) newView.findViewById(R.id.no_photo_thumb );
         newView.setTag(holder);
-        Contact c = getCachedContact( cursor );
+        final Contact c = getCachedContact( cursor );
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
         holder.messageButton = (ImageButton) newView.findViewById(R.id.message_contact);
@@ -85,7 +91,9 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             holder.messageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(context, "HELLO", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(context, MessageShowActivity.class);
+                    intent.putExtra("CONTACT_ID", c.id);
+                    context.startActivity(intent);
                 }
             });
         }
@@ -141,7 +149,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         return getCachedContact( (Cursor)getItem( position ) );
     }
 
-    public Contact getCachedContact( Cursor cursor ) {
+    public static Contact getCachedContact( Cursor cursor ) {
         int id = Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID );
         Contact c = contactCache.get( id );
         if( c == null ) {

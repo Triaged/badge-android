@@ -25,13 +25,14 @@
         android:textColor="@color/main_text_black"
         android:textSize="14sp"
         android:layout_marginLeft="56dp"
-        android:paddingLeft="18dp"
+        android:paddingLeft="22dp"
         android:paddingRight="16dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp"
         android:layout_below="@id/timestamp"
         android:layout_marginTop="3dp"
         android:background="@drawable/other_bubble"
+        android:lineSpacingMultiplier="1.2"
         />
 
 </RelativeLayout>

@@ -3,6 +3,7 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.text.TextPaint;
 import android.util.AttributeSet;
@@ -37,7 +38,9 @@ public class ProfileContactInfoView extends View {
 
         float densityMultiplier = context.getResources().getDisplayMetrics().density;
         primaryPaint.setTextSize(16 * densityMultiplier);
+        primaryPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         secondaryPaint.setTextSize(14 * densityMultiplier);
+        secondaryPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 
         primaryTextTopOffset = 24 * densityMultiplier;
         secondaryTextTopOffset = 43 * densityMultiplier;

@@ -75,7 +75,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         yourDepartmentButton = (TextView) findViewById(R.id.your_department);
-        yourDepartmentButton.setText( loggedInUser.departmentName );
+        if (loggedInUser.departmentName != null && !loggedInUser.departmentName.equals("")) {
+            yourDepartmentButton.setText( loggedInUser.departmentName );
+        }
         if( loggedInUser.departmentId > 0 ) {
             yourDepartmentButton.setSelected( true );
         }
@@ -88,7 +90,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         reportingToButton = (TextView) findViewById(R.id.reporting_to);
-        reportingToButton.setText( loggedInUser.managerName );
+        if (loggedInUser.managerName != null && !loggedInUser.managerName.equals("")) {
+            reportingToButton.setText(loggedInUser.managerName);
+        }
         if( loggedInUser.managerId > 0 ) {
             reportingToButton.setSelected( true );
         }
@@ -131,24 +135,6 @@ public class OnboardingPositionActivity extends BadgeActivity {
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
-
-//        Intent intent = getIntent();
-//
-//        Bundle extras = intent.getExtras();
-//        if (extras != null) {
-//            if (extras.containsKey("DEPARTMENT_ID")) {
-//                int deptId = extras.getInt("DEPARTMENT_ID", 0);
-//                String deptName = extras.getString("DEPARTMENT_NAME");
-//                yourDepartmentButton.setText(deptName);
-//                yourDepartmentButton.setSelected(true);
-//            } else if (extras.containsKey("REPORTS_TO_ID")) {
-//                int managerId = extras.getInt("REPORTS_TO_ID", 0);
-//                String managerName = extras.getString("REPORTS_TO_NAME");
-//                reportingToButton.setText(managerName);
-//                reportingToButton.setSelected(true);
-//            }
-//        }
-
     }
 
 }

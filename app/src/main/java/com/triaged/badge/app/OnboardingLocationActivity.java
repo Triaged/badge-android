@@ -7,7 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,7 +19,11 @@ import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
+import org.w3c.dom.Text;
+
 /**
+ * Allow the user to select a primary office location.
+ *
  * Created by Will on 7/10/14.
  */
 public class OnboardingLocationActivity extends BadgeActivity {
@@ -25,7 +31,8 @@ public class OnboardingLocationActivity extends BadgeActivity {
     protected static final int ADD_OFFICE_REQUEST_CODE = 1;
 
     private Button continueButton = null;
-    private ListView officeLocationsList = null;
+    protected ListView officeLocationsList = null;
+    protected ImageView noLocationCheck = null;
     protected OfficeLocationsAdapter officeLocationsAdapter = null;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
@@ -68,12 +75,14 @@ public class OnboardingLocationActivity extends BadgeActivity {
                 officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
                 officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
                 officeLocationsAdapter.notifyDataSetChanged();
+                noLocationCheck.setVisibility(View.GONE);
             }
         });
 
         LayoutInflater inflater = LayoutInflater.from(this);
-        Button noLocationView = (Button) inflater.inflate(R.layout.item_no_location, null);
-        noLocationView.setText(getString(R.string.no_office_button));
+        RelativeLayout noLocationView = (RelativeLayout) inflater.inflate(R.layout.item_no_location, null);
+        noLocationCheck = (ImageView) noLocationView.findViewById(R.id.selected_icon);
+
         officeLocationsList.addFooterView(noLocationView);
         noLocationView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -81,6 +90,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
                 officeLocationsAdapter.usersOffice = -1;
                 officeLocationsAdapter.usersOfficeName = null;
                 officeLocationsAdapter.notifyDataSetChanged();
+                noLocationCheck.setVisibility(View.VISIBLE);
                 //Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
             }
         });
@@ -120,6 +130,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
         if( requestCode == ADD_OFFICE_REQUEST_CODE && resultCode != RESULT_CANCELED ) {
             officeLocationsAdapter.usersOffice = resultCode;
             officeLocationsAdapter.refresh();
+            noLocationCheck.setVisibility(View.GONE);
         }
     }
 

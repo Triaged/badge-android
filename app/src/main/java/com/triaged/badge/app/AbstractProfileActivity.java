@@ -5,18 +5,27 @@ import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.internal.id;
 import com.triaged.badge.app.views.ButtonWithFont;
+import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.app.views.ProfileCurrentLocationView;
 import com.triaged.badge.app.views.ProfileManagesAdapter;
+import com.triaged.badge.app.views.ProfileManagesUserView;
+import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
+
+import org.w3c.dom.Text;
 
 /**
  * Generic abstract class for my own profile and other profiles
@@ -43,9 +52,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
     private TextView managesHeader = null;
-
-    private ListView managesListView = null;
-    private ProfileManagesAdapter managesAdapter;
+    private TextView departmentHeader = null;
+    private LayoutInflater inflater = null;
+    private int numberManagedByPrevious = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,38 +86,85 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
         profileImage = (ImageView)findViewById( R.id.profile_image );
         missingProfileImage = (TextView) findViewById(R.id.missing_profile_image);
-        managesListView = (ListView) findViewById(R.id.manages_list);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
+        departmentHeader = (TextView) findViewById(R.id.department_header);
 
 
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent departmentIntent = new Intent(AbstractProfileActivity.this, ContactsActivity.class);
-//                startActivity(intent);
-            }
-        });
-
-        Cursor reportsCursor = getNewManagesContactsCursor();
-        managesAdapter = new ProfileManagesAdapter(getBaseContext(), reportsCursor, dataProviderServiceBinding);
-        managesListView.setAdapter( managesAdapter );
-        managesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = managesAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-                }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
+                Intent intent = new Intent(AbstractProfileActivity.this, ContactsForDepartmentActivity.class);
+                intent.putExtra("DEPARTMENT_ID", contact.departmentId);
+                intent.putExtra("DEPARTMENT_NAME", contact.departmentName);
                 startActivity(intent);
             }
         });
+
+        inflater = LayoutInflater.from(this);
+
+        Cursor reportsCursor = getNewManagesContactsCursor();
+        replaceAndCreateManagedContacts(reportsCursor);
+
+    }
+
+    private void replaceAndCreateManagedContacts(Cursor reportsCursor) {
+
+        Log.d(AbstractProfileActivity.class.getName(), "CURSOR LENGTH " + reportsCursor.getCount());
+
+        LinearLayout viewHolder = (LinearLayout) findViewById(R.id.view_holder);
+
+        int indexOfHeader = viewHolder.indexOfChild(managesHeader) + 1;
+
+        // REMOVE OLD VIEWS
+        for (int i = 0; i<numberManagedByPrevious; i++) {
+            View v = viewHolder.getChildAt(indexOfHeader);
+            if (v instanceof ProfileManagesUserView) {
+                viewHolder.removeView(v);
+            }
+        }
+
+        numberManagedByPrevious = reportsCursor.getCount();
+
+        int iterator = 0;
+        final int userId = dataProviderServiceBinding.getLoggedInUser().id;
+        while (reportsCursor.moveToNext()) {
+            ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
+            Contact contact = new Contact();
+            contact = ContactsAdapter.getCachedContact(reportsCursor);
+            newView.setupView(contact);
+            if( contact.avatarUrl != null ) {
+                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage);
+                newView.noPhotoThumb.setVisibility(View.GONE);
+            } else {
+                newView.noPhotoThumb.setText(contact.initials);
+                newView.noPhotoThumb.setVisibility(View.VISIBLE);
+            }
+            final int contactId = newView.profileId;
+            newView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent;
+                    if (userId == contactId) {
+                        intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", contactId);
+                    startActivity(intent);
+                }
+            });
+            viewHolder.addView(newView, indexOfHeader + iterator);
+            iterator++;
+        }
+
+        if (reportsCursor.getCount() > 0) {
+            managesHeader.setVisibility(View.VISIBLE);
+        } else {
+            managesHeader.setVisibility(View.GONE);
+        }
+
     }
 
     /**
@@ -129,8 +185,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         contact = dataProviderServiceBinding.getContact(id);
         setupProfile();
         Cursor reportsCursor = getNewManagesContactsCursor();
-        managesAdapter.changeCursor( reportsCursor );
-        managesAdapter.notifyDataSetChanged();
+        replaceAndCreateManagedContacts(reportsCursor);
+
     }
 
     @Override
@@ -142,18 +198,10 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if( managesAdapter != null ) {
-            managesAdapter.destroy();
-        }
     }
 
     protected Cursor getNewManagesContactsCursor() {
         Cursor managedContactsCursor = dataProviderServiceBinding.getContactsManaged(contact.id);
-        if (managedContactsCursor.getCount() > 0) {
-            managesHeader.setVisibility(View.VISIBLE);
-        } else {
-            managesHeader.setVisibility(View.GONE);
-        }
         return managedContactsCursor;
     }
 
@@ -176,10 +224,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             profileTitle.setText(contact.jobTitle);
             if ( isNotBlank( contact.departmentName ) ) {
                 departmentView.setVisibility(View.VISIBLE);
+                departmentHeader.setVisibility(View.VISIBLE);
                 departmentView.setText(contact.departmentName);
             }
             else {
                 departmentView.setVisibility(View.GONE);
+                departmentHeader.setVisibility(View.GONE);
             }
             if (isNotBlank( contact.email ) ) {
                 emailView.setVisibility(View.VISIBLE);

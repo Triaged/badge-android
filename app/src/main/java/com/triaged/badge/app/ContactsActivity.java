@@ -17,6 +17,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TabWidget;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
@@ -140,7 +141,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         departmentsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(ContactsActivity.this, "DEPT #" + departmentsAdapter.getCachedDepartment(position).id, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(ContactsActivity.this, ContactsForDepartmentActivity.class);
+                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getCachedDepartment(position).id);
+                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getCachedDepartment(position).name);
+                startActivity(intent);
             }
         });
 
@@ -196,7 +200,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v( TAG , String.format( "onTabUnselected, %d bizitch", tab.getPosition() ) );
+        Log.v(TAG, String.format("onTabUnselected, %d bizitch", tab.getPosition()));
         if ( tab.getPosition() == 1) {
             tab.setIcon(R.drawable.contacts_unselected);
         }
@@ -237,8 +241,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter.refresh();
         }
         else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
-            departmentsListView.setAdapter(departmentsAdapter);
+            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
+            departmentsListView.setAdapter( departmentsAdapter );
         }
     }
 

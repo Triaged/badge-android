@@ -86,6 +86,18 @@ public class EditProfileActivity extends BadgeActivity {
     protected int officeId = 0;
     protected String encodedProfilePhoto;
 
+    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess(int newId) {
+            finish();
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText( EditProfileActivity.this, reason, Toast.LENGTH_SHORT ).show();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,6 +115,27 @@ public class EditProfileActivity extends BadgeActivity {
             }
         });
 
+        TextView saveButton = (TextView) findViewById(R.id.save_button);
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataProviderServiceBinding.saveAllProfileDataAsync(
+                        firstName.valueToSave,
+                        lastName.valueToSave,
+                        cellPhone.valueToSave,
+                        officePhone.valueToSave,
+                        jobTitle.valueToSave,
+                        departmentId,
+                        managerId,
+                        officeId,
+                        startDate.valueToSave,
+                        birthDate.valueToSave,
+                        encodedProfilePhoto,
+                        saveCallback
+                );
+            }
+        });
+
         Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
 
         profileImageView = (ImageView) findViewById(R.id.contact_thumb);
@@ -117,33 +150,43 @@ public class EditProfileActivity extends BadgeActivity {
 
         firstName = (EditProfileInfoView) findViewById(R.id.edit_first_name);
         firstName.secondaryValue = loggedInUser.firstName;
+        firstName.valueToSave = loggedInUser.firstName;
 
         lastName = (EditProfileInfoView) findViewById(R.id.edit_last_name);
         lastName.secondaryValue = loggedInUser.lastName;
+        lastName.valueToSave = loggedInUser.lastName;
 
         cellPhone = (EditProfileInfoView) findViewById(R.id.edit_cell_phone);
         cellPhone.secondaryValue = loggedInUser.cellPhone != null ? loggedInUser.cellPhone: "Add";
+        cellPhone.valueToSave = loggedInUser.cellPhone;
 
         officePhone = (EditProfileInfoView) findViewById(R.id.edit_office_phone);
         officePhone.secondaryValue = loggedInUser.officePhone != null ? loggedInUser.officePhone : "Add";
+        officePhone.valueToSave = loggedInUser.officePhone;
 
         jobTitle = (EditProfileInfoView) findViewById(R.id.edit_job_title);
         jobTitle.secondaryValue = loggedInUser.jobTitle != null ? loggedInUser.jobTitle : "Add";
+        jobTitle.valueToSave = loggedInUser.jobTitle;
 
         department = (EditProfileInfoView) findViewById(R.id.edit_department);
         department.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
+        departmentId = loggedInUser.departmentId;
 
         reportingTo = (EditProfileInfoView) findViewById(R.id.edit_reporting_to);
         reportingTo.secondaryValue = loggedInUser.managerName != null ? loggedInUser.managerName : "Add";
+        managerId = loggedInUser.managerId;
 
         officeLocation = (EditProfileInfoView) findViewById(R.id.edit_office_location);
         officeLocation.secondaryValue = loggedInUser.officeName != null ? loggedInUser.officeName : "Add";
+        officeId = loggedInUser.primaryOfficeLocationId;
 
         startDate = (EditProfileInfoView) findViewById(R.id.edit_start_date);
-        startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Select Date";
+        startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Add";
+        startDate.valueToSave = loggedInUser.startDateString;
 
         birthDate = (EditProfileInfoView) findViewById(R.id.edit_birth_date);
         birthDate.secondaryValue = loggedInUser.birthDateString != null ? loggedInUser.birthDateString : "Add";
+        birthDate.valueToSave = loggedInUser.birthDateString;
 
         LinearLayout editFieldsWrapper = (LinearLayout) findViewById(R.id.edit_fields_wrapper);
         for (int i=0; i<editFieldsWrapper.getChildCount(); i++) {
@@ -209,6 +252,7 @@ public class EditProfileActivity extends BadgeActivity {
                                     public void onClick(DialogInterface dialog, int which) {
                                         // VALIDATION?
                                         editView.secondaryValue = input.getText().toString();
+                                        editView.valueToSave = input.getText().toString();
                                         editView.invalidate();
                                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                                         imm.hideSoftInputFromWindow(editView.getWindowToken(), 0);
@@ -277,6 +321,7 @@ public class EditProfileActivity extends BadgeActivity {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
+                birthDate.valueToSave = birthdayFormat.format(birthdayCalendar.getTime());
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
@@ -294,6 +339,7 @@ public class EditProfileActivity extends BadgeActivity {
                 startDateCalendar.set(Calendar.MONTH, monthOfYear);
                 startDateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 startDate.secondaryValue = startDateFormat.format(startDateCalendar.getTime());
+                startDate.valueToSave = startDateFormat.format(startDateCalendar.getTime());
                 startDate.invalidate();
             }
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
@@ -326,6 +372,9 @@ public class EditProfileActivity extends BadgeActivity {
                         photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
                         byte[] byteArray = byteArrayOutputStream.toByteArray();
                         encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                        if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                            profileImageMissingView.setVisibility(View.GONE);
+                        }
                     }
                     break;
                 case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:

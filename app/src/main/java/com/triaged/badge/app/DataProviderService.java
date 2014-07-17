@@ -46,9 +46,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -78,6 +75,19 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+
+    protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s = ? ORDER BY contact.%s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+
     protected static final String QUERY_CONTACT_SQL =
             String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
                 CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
@@ -123,7 +133,7 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
 
-    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
+    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
@@ -136,6 +146,9 @@ public class DataProviderService extends Service {
     protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
 
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
+    protected static final String[] DEPTS_WITH_CONTACTS_SQL_ARGS = new String[] { "0" };
+    protected static final String[] ALL_DEPTS_SQL_ARGS = new String[] { "-1" };
+
 
     protected static final String SERVICE_ANDROID = "android";
 
@@ -256,68 +269,24 @@ public class DataProviderService extends Service {
                     jsonBuffer = null;
                     ContentValues values = new ContentValues();
 
-                    LinkedHashMap<Integer, String> departmentMap = new LinkedHashMap<Integer, String>(50);
-                    HashMap<Integer, Integer> departmentContactCountMap = new HashMap<Integer, Integer>(50);
-                    if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
-                        JSONArray deptsArr = companyObj.getJSONArray("departments");
-                        int deptsLength = deptsArr.length();
-                        for (int i = 0; i < deptsLength; i++) {
-                            JSONObject dept = deptsArr.getJSONObject(i);
-                            String name = dept.getString("name");
-                            int id = dept.getInt("id");
-                            departmentMap.put(id, name);
-                            departmentContactCountMap.put(id, 0);
-                        }
-                    }
-
                     JSONArray contactsArr = companyObj.getJSONArray("users");
                     int contactsLength = contactsArr.length();
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, newContact.getInt("id"));
-                        setStringContentValueFromJSONUnlessNull(newContact, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
-                        setStringContentValueFromJSONUnlessNull(newContact, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
-                        setStringContentValueFromJSONUnlessNull(newContact, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
-                        setStringContentValueFromJSONUnlessNull(newContact, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
-                        setIntContentValueFromJSONUnlessBlank( newContact, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
-                        if (newContact.has("department_id") && !newContact.get("department_id").equals("")) {
-                            int departmentId = newContact.getInt("department_id");
-                            String deptName = departmentMap.get(departmentId);
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                            if (deptName != null) {
-                                departmentContactCountMap.put(departmentId, departmentContactCountMap.get(departmentId) + 1);
-                            }
-                        }
-                        if (newContact.has("sharing_office_location") && !newContact.isNull("sharing_office_location")) {
-                            int sharingInt = newContact.getBoolean("sharing_office_location") ? 1 : 0;
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
-                        }
-                        if (newContact.has("employee_info")) {
-                            JSONObject employeeInfo = newContact.getJSONObject("employee_info");
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
-                            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
-                            String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
-                            if( birthDateStr != null ) {
-                                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
-                            }
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
-                            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
-                        }
-                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, "", values);
+                        setContactDBValesFromJSON( newContact, values );
+                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
                         values.clear();
                     }
 
                     if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
-                        for (Map.Entry<Integer, String> dept : departmentMap.entrySet()) {
-                            int id = dept.getKey();
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, id);
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getValue());
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, departmentContactCountMap.get(id));
-                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, "", values);
+                        JSONArray deptsArr = companyObj.getJSONArray("departments");
+                        int deptsLength = deptsArr.length();
+                        for (int i = 0; i < deptsLength; i++) {
+                            JSONObject dept = deptsArr.getJSONObject( i );
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
+                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "users_count" ));
+                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                             values.clear();
                         }
                     }
@@ -336,7 +305,7 @@ public class DataProviderService extends Service {
                             setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
                             setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
                             setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
-                            db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, "", values );
+                            db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values );
                             values.clear();
                         }
                     }
@@ -368,6 +337,36 @@ public class DataProviderService extends Service {
         }
         if( updated ) {
             localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
+        }
+
+    }
+
+    private void setContactDBValesFromJSON( JSONObject json, ContentValues values ) throws JSONException {
+        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, json.getInt("id"));
+        setStringContentValueFromJSONUnlessNull(json, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
+        setStringContentValueFromJSONUnlessNull(json, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
+        setIntContentValueFromJSONUnlessBlank( json, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank( json, "department_id", values, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+        if (json.has("sharing_office_location") && !json.isNull("sharing_office_location")) {
+            int sharingInt = json.getBoolean("sharing_office_location") ? 1 : 0;
+            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
+        }
+        if (json.has("employee_info")) {
+            JSONObject employeeInfo = json.getJSONObject("employee_info");
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
+            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
+            String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
+            if( birthDateStr != null ) {
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
+            }
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
         }
 
     }
@@ -416,6 +415,18 @@ public class DataProviderService extends Service {
             return database.rawQuery(QUERY_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
         }
         throw new IllegalStateException( "getContactsManaged() called before database available." );
+    }
+
+    /**
+     * Return only contacts in a given department. Same fields returned as {@link #getContactsCursor()}
+     * @param departmentId
+     * @return
+     */
+    protected Cursor getContactsByDepartmentCursor(int departmentId) {
+        if( database != null ) {
+            return database.rawQuery( QUERY_DEPARTMENT_CONTACTS_SQL, new String[] { String.valueOf( departmentId ) } );
+        }
+        throw new IllegalStateException( "getContactsByDepartmentCursor() called before database available." );
     }
 
     /**
@@ -512,9 +523,10 @@ public class DataProviderService extends Service {
      *
      * @return a cursor to all dept rows
      */
-    protected Cursor getDepartmentCursor() {
+    protected Cursor getDepartmentCursor( boolean onlyThoseWithContacts ) {
         if( database != null ) {
-            return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, EMPTY_STRING_ARRAY );
+            String[] args = onlyThoseWithContacts ? DEPTS_WITH_CONTACTS_SQL_ARGS : ALL_DEPTS_SQL_ARGS;
+            return database.rawQuery( QUERY_ALL_DEPARTMENTS_SQL, args );
         }
         throw new IllegalStateException( "getDepartmentCursor() called before database available." );
     }
@@ -805,7 +817,7 @@ public class DataProviderService extends Service {
                 @Override
                 public void run() {
                     try {
-                        HttpResponse response = apiClient.checkoutRequest( officeId );
+                        HttpResponse response = apiClient.checkoutRequest(officeId);
                         int status = response.getStatusLine().getStatusCode();
                         if( response.getEntity() != null ) {
                             response.getEntity().consumeContent();
@@ -877,6 +889,108 @@ public class DataProviderService extends Service {
                 }
             }
         }  );
+    }
+
+    /**
+     * Update the user's entire profile at once.
+     *
+     * @param firstName
+     * @param lastName
+     * @param cellPhone
+     * @param officePhone
+     * @param jobTitle
+     * @param departmentId
+     * @param managerId
+     * @param primaryOfficeId
+     * @param startDateString
+     * @param birthDateString
+     * @param newAvatarFileBase64Str
+     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
+     */
+    protected void saveAllProfileDataAsync(
+            final String firstName,
+            final String lastName,
+            final String cellPhone,
+            final String officePhone,
+            final String jobTitle,
+            final int departmentId,
+            final int managerId,
+            final int primaryOfficeId,
+            final String startDateString,
+            final String birthDateString,
+            final String newAvatarFileBase64Str,
+            final AsyncSaveCallback saveCallback
+    ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                if( database == null ) {
+                    fail( "Database not ready yet. Please report to Badge HQ", saveCallback );
+                    return;
+                }
+
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+
+                    user.put( "user", data );
+                    data.put( "employee_info_attributes", employeeInfo );
+                    data.put( "first_name", firstName );
+                    data.put( "last_name", lastName );
+                    data.put( "department_id", departmentId );
+                    data.put( "manager_id", managerId );
+                    data.put( "primary_office_location_id", primaryOfficeId );
+                    if( newAvatarFileBase64Str != null ) {
+                        data.put( "avatar", newAvatarFileBase64Str );
+                    }
+
+                    employeeInfo.put( "birth_date", birthDateString );
+                    employeeInfo.put( "cell_phone", cellPhone );
+                    employeeInfo.put( "job_title", jobTitle );
+                    employeeInfo.put( "office_phone", officePhone );
+                    employeeInfo.put( "job_start_date", startDateString );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
+                }
+
+
+                try {
+                    HttpResponse response = apiClient.patchAccountRequest(user);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        JSONObject account = parseJSONResponse( response.getEntity() );
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        setContactDBValesFromJSON( account, values );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        if( response.getEntity() != null  ) {
+                            response.getEntity().consumeContent();
+                        }
+                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
+                    }
+                }
+                catch( IOException e ) {
+                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
+                }
+                catch( JSONException e ) {
+                    fail("We didn't understand the server response, please contact Badge HQ.", saveCallback);
+                }
+            }
+        } );
     }
 
     /**
@@ -1063,6 +1177,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count") );
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
@@ -1296,6 +1411,13 @@ public class DataProviderService extends Service {
         }
 
         /**
+         * @see com.triaged.badge.app.DataProviderService#getContactsByDepartmentCursor(int)
+         */
+        public Cursor getContactsByDepartmentCursor( int departmentId ) {
+            return DataProviderService.this.getContactsByDepartmentCursor(departmentId);
+        }
+
+        /**
          * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
          */
         public Cursor getContactsCursorExcludingLoggedInUser() {
@@ -1357,7 +1479,7 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void saveBasicProfileDataAsync( String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.saveBasicProfileDataAsync( firstName, lastName, birthDateString, cellPhone, saveCallback);
+            DataProviderService.this.saveBasicProfileDataAsync(firstName, lastName, birthDateString, cellPhone, saveCallback);
         }
 
         /**
@@ -1374,18 +1496,26 @@ public class DataProviderService extends Service {
             DataProviderService.this.savePrimaryLocationASync(primaryLocation, saveCallback);
         }
 
+
         /**
-         * @see DataProviderService#getDepartmentCursor()
+         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public Cursor getDepartmentCursor() {
-            return DataProviderService.this.getDepartmentCursor();
+        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, String newAvatarFileBase64Str, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFileBase64Str, saveCallback);
         }
 
         /**
          * @see DataProviderService#getOfficeLocationName(int)
          */
         public String getOfficeLocationName( int locationId ) {
-            return DataProviderService.this.getOfficeLocationName( locationId );
+            return DataProviderService.this.getOfficeLocationName(locationId);
+        }
+
+        /*
+         * @see DataProviderService#getDepartmentCursor(boolean)
+         */
+        public Cursor getDepartmentCursor( boolean onlyNonEmptyDepts ) {
+            return DataProviderService.this.getDepartmentCursor( onlyNonEmptyDepts );
         }
 
         /**

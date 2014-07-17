@@ -9,8 +9,8 @@
 
     <style name="Tabbed" parent="AppTheme">
         <item name="android:windowNoTitle">false</item>
+        <item name="android:windowTitleStyle">@style/CustomWindowTitleStyle</item>
         <item name="android:windowActionBar">false</item>
-
         <item name="android:navigationMode">tabMode</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
@@ -19,6 +19,14 @@
 
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
         <item name="android:background">@drawable/tab_bg</item>
+    </style>
+
+    <style name="CustomWindowTitleStyle">
+        <item name="android:textAppearance">@style/CustomWindowTitleTextAppearance</item>
+    </style>
+
+    <style name="CustomWindowTitleTextAppearance">
+        <item name="android:textColor">@color/white</item>
     </style>
 
 </resources>
