@@ -58,8 +58,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        lazyDeviceRegistration();
-
         requestWindowFeature(Window.FEATURE_ACTION_BAR);
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowTitleEnabled(false);
@@ -222,6 +220,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
             // SETUP CONTACTS
             dataProviderServiceBinding = app.dataProviderServiceBinding;
+            lazyDeviceRegistration();
             loadContactsAndDepartments();
         }
     }
