@@ -28,6 +28,7 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {
             noLocationCheck.setVisibility(View.VISIBLE);
         } else {
+            noLocationCheck.setVisibility(View.GONE);
             officeLocationsAdapter.usersOffice = loggedInUser.primaryOfficeLocationId;
             officeLocationsAdapter.usersOfficeName = loggedInUser.officeName;
             officeLocationsAdapter.refresh();

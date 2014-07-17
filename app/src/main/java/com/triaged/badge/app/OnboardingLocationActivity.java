@@ -73,6 +73,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
                 officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
                 officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
                 officeLocationsAdapter.notifyDataSetChanged();
+                noLocationCheck.setVisibility(View.GONE);
             }
         });
 
@@ -127,6 +128,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
         if( requestCode == ADD_OFFICE_REQUEST_CODE && resultCode != RESULT_CANCELED ) {
             officeLocationsAdapter.usersOffice = resultCode;
             officeLocationsAdapter.refresh();
+            noLocationCheck.setVisibility(View.GONE);
         }
     }
 

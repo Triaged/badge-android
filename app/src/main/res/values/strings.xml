@@ -35,12 +35,13 @@
     <string name="profile_heading_contact">Contact Information</string>
     <string name="content_description_profile_image">Profile Image</string>
     <string name="content_description_my_settings">My Settings</string>
+    <string name="profile_heading_department">Department</string>
 
+    <!-- ONBOARDING POSITION -->
     <string name="tell_us_more_title">Tell us more about your position</string>
     <string name="your_job_title">Your Job Title</string>
     <string name="your_department">Choose Department</string>
     <string name="reporting_to">Reporting to</string>
-    <string name="which_location_title">At which office do you work?</string>
 
     <!-- SETTINGS -->
     <string name="settings_button">Settings</string>
@@ -59,21 +60,21 @@
     <string name="edit_profile_your">Your Profile</string>
     <string name="save_and_exit">Save and Exit</string>
 
-    <!-- ONBOARDING OFFICE -->
-    <string name="add_new_office_back">Add New Office</string>
-
     <!-- ONBOARDING DEPARTMENT -->
     <string name="select_department">Select Department</string>
     <string name="add_new_department">Add New Department</string>
 
-    <!-- ONBOARDING MAP -->
+    <!-- ONBOARDING MAP + LOCATION -->
+    <string name="add_new_office_back">Add New Office</string>
+    <string name="which_location_title">At which office do you work?</string>
     <string name="address">Address</string>
     <string name="add_location_button">Add</string>
     <string name="add_reporting_to">Reporting To</string>
     <string name="check_mark">Currently Selected</string>
     <string name="add_new_location">Add a New Office</string>
     <string name="no_office_button">I don\'t work at an office</string>
-    <string name="profile_heading_department">Department</string>
+
+    <!-- EDIT PROFILE -->
     <string name="edit_profile_contact_info">Contact Information</string>
     <string name="profile_picture_title">Profile Picture</string>
     <string name="profile_picture_details">Tap to change your picture</string>
