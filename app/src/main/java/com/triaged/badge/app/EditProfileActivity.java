@@ -89,7 +89,7 @@ public class EditProfileActivity extends BadgeActivity {
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
-            onBackPressed();
+            finish();
         }
 
         @Override

@@ -129,7 +129,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     @Override
     protected void onResume() {
         super.onResume();
-        overridePendingTransition(0,0);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 
     @Override

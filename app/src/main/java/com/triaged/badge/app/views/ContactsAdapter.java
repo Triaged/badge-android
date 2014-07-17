@@ -42,7 +42,11 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     private int contactResourceId;
 
     public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int contactResourceId) {
-        super( context, dataProviderServiceBinding.getContactsCursor(), false );
+        this(context, dataProviderServiceBinding, contactResourceId, true);
+    }
+
+    public ContactsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int contactResourceId, boolean includeMe) {
+        super( context, includeMe ? dataProviderServiceBinding.getContactsCursor() : dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), false);
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
@@ -141,7 +145,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         return getCachedContact( (Cursor)getItem( position ) );
     }
 
-    public Contact getCachedContact( Cursor cursor ) {
+    public static Contact getCachedContact( Cursor cursor ) {
         int id = Contact.getIntSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID );
         Contact c = contactCache.get( id );
         if( c == null ) {

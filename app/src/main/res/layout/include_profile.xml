@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout
+    android:id="@+id/view_holder"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -89,15 +90,6 @@
         android:background="@color/light_gray_background"
         custom:font="Roboto-Medium.ttf"
         />
-
-    <ListView
-        android:id="@+id/manages_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        >
-    </ListView>
 
     <!-- DEPARTMENT -->
     <com.triaged.badge.app.views.TextViewWithFont
