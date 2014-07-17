@@ -40,7 +40,7 @@ public class LocationTrackingService extends Service implements LocationListener
 
     public static final String TRACK_LOCATION_PREFS_KEY = "trackLocation";
 
-    protected static final float OFFICE_DISTANCE_THRESHOLD_M = 100f;
+    protected static final float OFFICE_DISTANCE_THRESHOLD_M = 150f;
 
     // A request to connect to Location Services
     private LocationRequest mLocationRequest;
