@@ -13,6 +13,8 @@ import com.triaged.badge.app.R;
  */
 public class EditProfileInfoView extends ProfileContactInfoView {
 
+    public String valueToSave;
+
     public EditProfileInfoView(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray attrValues = context.obtainStyledAttributes(attrs, R.styleable.ProfileContactInfoView);

@@ -669,7 +669,6 @@ public class DataProviderService extends Service {
     protected void saveAllProfileDataAsync(
             final String firstName,
             final String lastName,
-
             final String cellPhone,
             final String officePhone,
             final String jobTitle,
@@ -747,7 +746,7 @@ public class DataProviderService extends Service {
                     fail("There was a network issue saving, please check your connection and try again.", saveCallback);
                 }
                 catch( JSONException e ) {
-                    fail( "We didn't understand the server response, please contact Badge HQ.", saveCallback );
+                    fail("We didn't understand the server response, please contact Badge HQ.", saveCallback);
                 }
             }
         } );
@@ -937,7 +936,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt( "contact_count" ) );
+                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count") );
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
@@ -1246,7 +1245,15 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationASync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.savePrimaryLocationASync( primaryLocation, saveCallback );
+            DataProviderService.this.savePrimaryLocationASync(primaryLocation, saveCallback);
+        }
+
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, String newAvatarFileBase64Str, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFileBase64Str, saveCallback);
         }
 
         /**
