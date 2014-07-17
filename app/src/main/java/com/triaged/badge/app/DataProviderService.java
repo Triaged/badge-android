@@ -16,6 +16,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.LruCache;
@@ -609,6 +610,8 @@ public class DataProviderService extends Service {
                     deviceData.put("token", gcmRegId );
                     deviceData.put( "os_version", androidVersion );
                     deviceData.put( "service", SERVICE_ANDROID );
+                    deviceData.put( "guid", Settings.Secure.getString( DataProviderService.this.getContentResolver(),
+                            Settings.Secure.ANDROID_ID ) );
                 }
                 catch( JSONException e ) {
                     Log.e(LOG_TAG, "JSON exception creating post body for device registration", e);
@@ -1278,14 +1281,14 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#createNewDepartmentAsync(String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void createNewDepartmentAsync( String department, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.createNewDepartmentAsync( department, saveCallback );
+            DataProviderService.this.createNewDepartmentAsync(department, saveCallback);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#createNewOfficeLocationAsync(String, String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
+            DataProviderService.this.createNewOfficeLocationAsync(address, city, state, zip, country, saveCallback);
         }
 
         /**
