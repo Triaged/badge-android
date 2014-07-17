@@ -73,6 +73,19 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+
+    protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s = ? ORDER BY contact.%s;",
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                CompanySQLiteHelper.TABLE_CONTACTS,
+                CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            );
+
     protected static final String QUERY_CONTACT_SQL =
             String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
                 CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
@@ -409,6 +422,18 @@ public class DataProviderService extends Service {
             return database.rawQuery(QUERY_MANAGED_CONTACTS_SQL, new String[] { String.valueOf( contactId ) } );
         }
         throw new IllegalStateException( "getContactsManaged() called before database available." );
+    }
+
+    /**
+     * Return only contacts in a given department. Same fields returned as {@link #getContactsCursor()}
+     * @param departmentId
+     * @return
+     */
+    protected Cursor getContactsByDepartmentCursor(int departmentId) {
+        if( database != null ) {
+            return database.rawQuery( QUERY_DEPARTMENT_CONTACTS_SQL, new String[] { String.valueOf( departmentId ) } );
+        }
+        throw new IllegalStateException( "getContactsByDepartmentCursor() called before database available." );
     }
 
     /**
@@ -1088,6 +1113,13 @@ public class DataProviderService extends Service {
         }
 
         /**
+         * @see com.triaged.badge.app.DataProviderService#getContactsByDepartmentCursor(int)
+         */
+        public Cursor getContactsByDepartmentCursor( int departmentId ) {
+            return DataProviderService.this.getContactsByDepartmentCursor(departmentId);
+        }
+
+        /**
          * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
          */
         public Cursor getContactsCursorExcludingLoggedInUser() {
@@ -1198,6 +1230,7 @@ public class DataProviderService extends Service {
         public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
             DataProviderService.this.createNewOfficeLocationAsync( address, city, state, zip, country, saveCallback );
         }
+
     }
 
     /**
