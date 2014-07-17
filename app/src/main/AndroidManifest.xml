@@ -113,10 +113,9 @@
         </activity>
 
         <!-- SERVICES -->
-        <service
-            android:name=".DataProviderService"
-            android:enabled="true" >
-        </service>
+        <service android:name=".DataProviderService" android:enabled="true" />
+        <service android:name=".LocationTrackingService" android:enabled="true" />
+
 
         <!-- GOOGLE MAPS API KEY AND GMS VERSION -->
         <!-- TODO: THIS IS A DEBUG KEY!!! NEED TO GENERATE PRODUCTION ONE FROM BADGE'S GOOGLE CONSOLE ACCOUNT -->
@@ -142,7 +141,9 @@
         </receiver>
         -->
 
-        <receiver android:name=".DeviceBootedReceiver" android:enabled="true" android:exported="true">
+
+
+        <receiver android:name=".DeviceBootReceiver" android:enabled="true" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <category android:name="android.intent.category.DEFAULT" />
