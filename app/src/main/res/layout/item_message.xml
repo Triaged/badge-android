@@ -5,7 +5,7 @@
     android:layout_width="match_parent" android:layout_height="88dp"
     android:descendantFocusability="blocksDescendants"
     android:paddingLeft="16dp"
-    android:paddingTop="16dp"
+    android:paddingTop="12dp"
     >
 
     <ImageButton
@@ -38,6 +38,7 @@
         android:textColor="@color/main_text_black"
         android:textSize="15sp"
         custom:font="Roboto-Regular.ttf"
+        android:lineSpacingMultiplier="1.1"
         />
 
     <com.triaged.badge.app.views.TextViewWithFont
@@ -45,11 +46,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="72dp"
-        android:layout_marginRight="72dp"
+        android:layout_marginRight="48dp"
         android:textColor="@color/light_text_gray"
         android:layout_below="@id/contact_name"
         android:textSize="14sp"
         custom:font="Roboto-Regular.ttf"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:lineSpacingMultiplier="1.1"
         />
 
     <com.triaged.badge.app.views.TextViewWithFont

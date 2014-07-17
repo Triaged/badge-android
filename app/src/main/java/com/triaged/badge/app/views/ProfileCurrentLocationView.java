@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.text.TextPaint;
@@ -36,6 +37,8 @@ public class ProfileCurrentLocationView extends View {
 
         primaryPaint = new TextPaint();
         primaryPaint.setTypeface(roboto);
+
+        primaryPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 
         float densityMultiplier = context.getResources().getDisplayMetrics().density;
         primaryPaint.setTextSize(18 * densityMultiplier);

@@ -40,6 +40,7 @@ public class ProfileContactInfoView extends View {
         primaryPaint.setTextSize(16 * densityMultiplier);
         primaryPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         secondaryPaint.setTextSize(14 * densityMultiplier);
+        secondaryPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
 
         primaryTextTopOffset = 24 * densityMultiplier;
         secondaryTextTopOffset = 43 * densityMultiplier;
