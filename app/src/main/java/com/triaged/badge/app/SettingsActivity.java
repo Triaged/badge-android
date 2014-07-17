@@ -4,8 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -32,6 +34,7 @@ public class SettingsActivity extends BadgeActivity {
 
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( this );
 
         setContentView(R.layout.activity_settings);
         TextView backButton = (TextView) findViewById(R.id.back_button);
@@ -109,11 +112,18 @@ public class SettingsActivity extends BadgeActivity {
         });
 
         Switch broadcastOfficeLocationSwitch = (Switch) findViewById(R.id.office_location_switch);
-        broadcastOfficeLocationSwitch.setChecked(true);
+        broadcastOfficeLocationSwitch.setChecked( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ) );
         broadcastOfficeLocationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                Toast.makeText(SettingsActivity.this, "Office Location Switch Changed", Toast.LENGTH_SHORT).show();
+                if( isChecked ) {
+                    prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ).commit();
+                    startService(new Intent(SettingsActivity.this, LocationTrackingService.class ));
+                }
+                else {
+                    prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ).commit();
+                    stopService(new Intent(SettingsActivity.this, LocationTrackingService.class ) );
+                }
             }
         });
     }

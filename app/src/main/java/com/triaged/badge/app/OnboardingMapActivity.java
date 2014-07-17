@@ -314,8 +314,8 @@ public class OnboardingMapActivity extends BadgeActivity implements
         if (ConnectionResult.SUCCESS == resultCode) {
             // Continue
             return true;
-            // Google Play services was not available for some reason
         } else {
+            // Google Play services was not available for some reason
             // Display an error dialog
             Log.d(LOG_TAG, "GMS unavailable");
             return false;

@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
@@ -43,6 +44,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
     private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
     private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
+    private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/offices/%d/entered";
+    private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/offices/%d/exited";
 
     private HttpHost httpHost;
     String apiToken;
@@ -107,7 +110,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @param postData json object of form { "user_login": { "email": "foo@blah.com", "password" : "not4u" } }
      */
     public HttpResponse createSessionRequest( JSONObject postData ) throws IOException {
-        return postHelper( postData, CREATE_SESSION_URI );
+        return postHelper(postData, CREATE_SESSION_URI);
     }
 
     /**
@@ -149,7 +152,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse registerDeviceRequest( JSONObject device ) throws IOException {
-        return postHelper( device, REGISTER_DEVICE_URI );
+        return postHelper(device, REGISTER_DEVICE_URI);
     }
 
     /**
@@ -165,8 +168,36 @@ public class BadgeApiClient extends DefaultHttpClient {
     public HttpResponse unregisterDeviceRequest( int deviceId ) throws IOException {
         HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_PROTOCOL, API_HOST, deviceId ) );
         delete.setHeader("Authorization", apiToken);
-        return execute( httpHost, delete );
+        return execute(httpHost, delete);
     }
+
+    /**
+     * PUTS to /offices/:id/entered to check in to an office
+     *
+     * @param officeId office to check in to
+     * @return
+     */
+    public HttpResponse checkinRequest(int officeId) throws IOException {
+        HttpPut put = new HttpPut( String.format( ENTER_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        put.setHeader( "Authorization", apiToken );
+        return execute( httpHost, put );
+    }
+
+    /**
+     * PUTS to /offices/:id/exited to check out of an office
+     *
+     * @param officeId office to check out of
+     * @return
+     */
+    public HttpResponse checkoutRequest(int officeId) throws IOException {
+        HttpPut put = new HttpPut( String.format( EXIT_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        put.setHeader( "Authorization", apiToken );
+        return execute( httpHost, put );
+    }
+
+
+
+
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {
         HttpPost post = new HttpPost( uri );
@@ -178,4 +209,4 @@ public class BadgeApiClient extends DefaultHttpClient {
         }
         return execute( httpHost, post );
     }
- }
+}

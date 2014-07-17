@@ -29,7 +29,6 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  * Primary activity for displaying a user's list of contacts and departments.
  *
  */
-
 public class ContactsActivity extends BadgeActivity implements ActionBar.TabListener {
 
     private static boolean shouldRegister = true;

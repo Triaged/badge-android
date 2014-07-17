@@ -596,21 +596,20 @@ public class DataProviderService extends Service {
      */
     protected void registerDevice() {
 
-        sqlThread.submit( new Runnable() {
+        sqlThread.submit(new Runnable() {
             @Override
             public void run() {
-                String gcmRegId = prefs.getString( LoginActivity.PROPERTY_REG_ID, "" );
+                String gcmRegId = prefs.getString(LoginActivity.PROPERTY_REG_ID, "");
                 int androidVersion = android.os.Build.VERSION.SDK_INT;
 
                 JSONObject postData = new JSONObject();
                 JSONObject deviceData = new JSONObject();
                 try {
                     postData.put("device", deviceData);
-                    deviceData.put("token", gcmRegId );
-                    deviceData.put( "os_version", androidVersion );
-                    deviceData.put( "service", SERVICE_ANDROID );
-                }
-                catch( JSONException e ) {
+                    deviceData.put("token", gcmRegId);
+                    deviceData.put("os_version", androidVersion);
+                    deviceData.put("service", SERVICE_ANDROID);
+                } catch (JSONException e) {
                     Log.e(LOG_TAG, "JSON exception creating post body for device registration", e);
                     return;
                 }
@@ -619,29 +618,26 @@ public class DataProviderService extends Service {
                     HttpResponse response = apiClient.registerDeviceRequest(postData);
 
                     int statusCode = response.getStatusLine().getStatusCode();
-                    if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
+                    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED) {
                         // Get new department id
-                        JSONObject newDevice = parseJSONResponse( response.getEntity() );
+                        JSONObject newDevice = parseJSONResponse(response.getEntity());
 
                         SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
-                        prefsEditor.putInt( REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt( "id" ) );
-                    }
-                    else {
-                        if( response.getEntity() != null ) {
+                        prefsEditor.putInt(REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt("id"));
+                    } else {
+                        if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
                         }
                     }
-                }
-                catch( IOException e ) {
+                } catch (IOException e) {
                     // We'll try again next time the app starts.
-                    Log.e( LOG_TAG, "IOException trying to register device with badge HQ", e );
-                }
-                catch( JSONException e ) {
-                    Log.e( LOG_TAG, "Response from Badge HQ wasn't parseable, sad panda", e );
+                    Log.e(LOG_TAG, "IOException trying to register device with badge HQ", e);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "Response from Badge HQ wasn't parseable, sad panda", e);
                 }
 
             }
-        } );
+        });
     }
 
     /**
@@ -725,6 +721,79 @@ public class DataProviderService extends Service {
                 }
             }
         });
+    }
+
+    /**
+     * Changes current user's office to this office id, when location svcs determine
+     * they are there. If a current office is already set, does nothing.
+     *
+     * @param officeId
+     */
+    protected void checkInToOffice(final int officeId) {
+        if( loggedInUser.currentOfficeLocationId == -1 || loggedInUser.currentOfficeLocationId == officeId ) {
+            sqlThread.submit( new Runnable() {
+                @Override
+                public void run() {
+
+                    try {
+                        HttpResponse response = apiClient.checkinRequest( officeId );
+                        int status = response.getStatusLine().getStatusCode();
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        if(  status == HttpStatus.SC_OK ) {
+                            ContentValues values = new ContentValues();
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId );
+                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
+                            loggedInUser.currentOfficeLocationId = officeId;
+                        }
+                        else {
+                            Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
+                        }
+                    }
+                    catch( IOException e ) {
+                        Log.w( LOG_TAG, "Couldn't check out in to office due to IOException " + officeId );
+                        // Rats. Next time?
+                    }
+
+                }
+            });
+        }
+    }
+
+    /**
+     * If the user is currently "checked in" to this office,
+     * clear that status because they are no longer close to it.
+     */
+    protected void checkOutOfOffice(final int officeId) {
+        if (loggedInUser.currentOfficeLocationId == officeId) {
+            sqlThread.submit( new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        HttpResponse response = apiClient.checkoutRequest( officeId );
+                        int status = response.getStatusLine().getStatusCode();
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+                        if(  status == HttpStatus.SC_OK ) {
+                            ContentValues values = new ContentValues();
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
+                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
+                            loggedInUser.currentOfficeLocationId = -1;
+                        }
+                        else {
+                            Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
+                        }
+                    }
+                    catch( IOException e ) {
+                        Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
+                        // Rats. Next time?
+                    }
+
+                }
+            } );
+        }
     }
 
     /**
@@ -878,7 +947,7 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation );
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) } );
+                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1293,6 +1362,20 @@ public class DataProviderService extends Service {
          */
         public void registerDevice() {
             DataProviderService.this.registerDevice();
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#checkInToOffice(int)
+         */
+        public void checkInToOffice( int officeId  ) {
+            DataProviderService.this.checkInToOffice(officeId);
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#checkOutOfOffice(int)
+         */
+        public void checkOutOfOffice( int officeId ) {
+            DataProviderService.this.checkOutOfOffice(officeId);
         }
     }
 
