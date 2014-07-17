@@ -48,6 +48,8 @@ public class LocationTrackingService extends Service implements LocationListener
     // Stores the current instantiation of the location client in this object
     private LocationClient mLocationClient;
 
+
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -86,6 +88,16 @@ public class LocationTrackingService extends Service implements LocationListener
     public void onDestroy() {
         super.onDestroy();
         mLocationClient.removeLocationUpdates(this);
+        DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication) getApplication()).dataProviderServiceBinding;
+
+        // In many cases (phone shutting down), toggling the share location preference,
+        // the user is still logged in and may be associated with an office.
+        // We try to clear that so that they don't end up "stuck" in that office forever.
+        if( dataProviderServiceBinding != null ) {
+            Contact user = dataProviderServiceBinding.getLoggedInUser();
+            if( user != null &&  user.currentOfficeLocationId > 0 )
+            dataProviderServiceBinding.checkOutOfOffice( user.currentOfficeLocationId );
+        }
     }
 
     @Override
@@ -102,9 +114,13 @@ public class LocationTrackingService extends Service implements LocationListener
 
     @Override
     public void onLocationChanged( final Location location) {
+        Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
+
+
+
         // Check against each office.
         final DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() && dataProviderServiceBinding.getLoggedInUser() != null ) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
@@ -112,7 +128,7 @@ public class LocationTrackingService extends Service implements LocationListener
                     Location officeLocation = new Location(LocationManager.NETWORK_PROVIDER );
                     while( officeLocations.moveToNext() ) {
                         String latStr = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
-                        String lngStr = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
+                        String lngStr = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
                         int officeId = Contact.getIntSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
                         if( latStr != null && !"".equals( latStr ) ) {
                             officeLocation.setLatitude( Float.parseFloat( latStr ) );
@@ -129,7 +145,7 @@ public class LocationTrackingService extends Service implements LocationListener
                     }
                     return null;
                 }
-            };
+            }.execute();
         }
 
     }

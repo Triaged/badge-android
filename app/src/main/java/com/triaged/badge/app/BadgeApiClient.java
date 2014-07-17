@@ -44,8 +44,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
     private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
     private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
-    private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/offices/%d/entered";
-    private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/offices/%d/exited";
+    private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/entered";
+    private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
 
     private HttpHost httpHost;
     String apiToken;

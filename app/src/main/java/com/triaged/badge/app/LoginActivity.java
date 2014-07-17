@@ -64,6 +64,7 @@ public class LoginActivity extends BadgeActivity {
 
             @Override
             public void loginSuccess( Contact user ) {
+                startService( new Intent( LoginActivity.this, LocationTrackingService.class ) );
                 Intent activityIntent = new Intent( LoginActivity.this, WelcomeActivity.class );
                 activityIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
                 startActivity(activityIntent);

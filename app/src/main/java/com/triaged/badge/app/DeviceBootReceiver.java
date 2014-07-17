@@ -18,7 +18,7 @@ public class DeviceBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( context );
-        if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ) ) {
+        if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ) && !"".equals( prefs.getString( DataProviderService.API_TOKEN_PREFS_KEY, "" ) ) ) {
             context.startService( new Intent( context, LocationTrackingService.class ) );
         }
     }

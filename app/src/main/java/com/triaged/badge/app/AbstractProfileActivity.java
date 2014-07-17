@@ -64,6 +64,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
         setContentViewLayout();
 
+
         profileName = (TextView) findViewById(R.id.profile_name);
         profileTitle = (TextView) findViewById(R.id.profile_title);
         departmentView = (ButtonWithFont) findViewById(R.id.profile_department);
@@ -78,6 +79,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         missingProfileImage = (TextView) findViewById(R.id.missing_profile_image);
         managesListView = (ListView) findViewById(R.id.manages_list);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
+
 
 
         departmentView.setOnClickListener(new View.OnClickListener() {
@@ -218,6 +220,17 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 birthDateView.setVisibility(View.GONE);
             }
 
+            int currentLocationId = contact.currentOfficeLocationId;
+            if( currentLocationId > 0 ) {
+                currentLocationView.isOn = true;
+                currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
+            }
+            else {
+                currentLocationView.primaryValue = "Unavailable";
+                currentLocationView.isOn = false;
+            }
+            currentLocationView.invalidate();
+
             if ( isNotBlank( contact.startDateString ) ) {
                 startDateView.setVisibility(View.VISIBLE);
                 startDateView.primaryValue = contact.startDateString;
@@ -237,10 +250,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             else {
                 primaryOfficeView.setVisibility(View.GONE);
             }
-
-            currentLocationView.isOn = false;
-            currentLocationView.primaryValue = "Unavailable";
-            currentLocationView.invalidate();
         }
     }
 

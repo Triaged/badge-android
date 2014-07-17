@@ -21,7 +21,6 @@ import android.util.Log;
 public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
-    protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
 
     public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
@@ -30,28 +29,7 @@ public class BadgeApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // Start service on app install/upgrade.
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                // Has this version of the app ever been installed?
-                try {
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( getApplicationContext() );
-                    PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                    if( pInfo.versionCode > prefs.getInt( INSTALLED_VERSION_PREFS_KEY, -1 ) ) {
-                        prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode ).commit();
-                        if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ) ) {
-                            startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
-                        }
-                    }
-                }
-                catch( PackageManager.NameNotFoundException e ) {
-                    // Look at all the fucks I give!
-                }
 
-                return null;
-            }
-        }.execute();
 
         dataProviderServiceConnnection = new ServiceConnection() {
             @Override

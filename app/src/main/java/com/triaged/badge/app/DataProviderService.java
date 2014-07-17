@@ -5,6 +5,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -126,10 +128,13 @@ public class DataProviderService extends Service {
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
     protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+    protected static final String QUERY_OFFICE_LOCATION_SQL = String.format( "SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     protected static final String API_TOKEN_PREFS_KEY = "apiToken";
     protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
+    protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
+
     protected static final String[] EMPTY_STRING_ARRAY = new String[] { };
 
     protected static final String SERVICE_ANDROID = "android";
@@ -525,6 +530,22 @@ public class DataProviderService extends Service {
         throw new IllegalStateException( "getOfficeLocationsCursor() called before database available." );
     }
 
+
+    /**
+     * @param locationId id of the office
+     * @return Name of the office.
+     */
+    private String getOfficeLocationName(int locationId) {
+        if( database != null ) {
+            Cursor cursor = database.rawQuery( QUERY_OFFICE_LOCATION_SQL, new String[] { String.valueOf( locationId ) } );
+            cursor.moveToFirst();
+            String name = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+            cursor.close();
+            return name;
+        }
+        throw new IllegalStateException( "getOfficeLocationName() called before database available." );
+    }
+
     /**
      * Helper that sets a bitmap to a plain ole {@link android.widget.ImageView}
      *
@@ -543,15 +564,24 @@ public class DataProviderService extends Service {
      *
      * This launches the login activity in a new task and sends a local
      * broadcast so that activities can listen and kill themselves.
+     *
+     * This should only be called on the sql thread.
      */
     protected void loggedOut() {
+        if( loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
+            // User initiated logout, make sure they don't get "stuck"
+            checkOutOfOffice( loggedInUser.currentOfficeLocationId );
+        }
         loggedInUser = null;
         prefs.edit().
-                remove(API_TOKEN_PREFS_KEY).
-                remove(LOGGED_IN_USER_ID_PREFS_KEY ).
+                remove( API_TOKEN_PREFS_KEY).
+                remove( LOGGED_IN_USER_ID_PREFS_KEY ).
                 remove( LAST_SYNCED_PREFS_KEY ).
                 remove( LoginActivity.PROPERTY_REG_ID ).
-                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).commit();
+                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
+                remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
+        stopService( new Intent( this, LocationTrackingService.class ) );
+
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
@@ -734,7 +764,7 @@ public class DataProviderService extends Service {
      * @param officeId
      */
     protected void checkInToOffice(final int officeId) {
-        if( loggedInUser.currentOfficeLocationId == -1 || loggedInUser.currentOfficeLocationId == officeId ) {
+        if( loggedInUser.currentOfficeLocationId <= 0 ) {
             sqlThread.submit( new Runnable() {
                 @Override
                 public void run() {
@@ -821,6 +851,23 @@ public class DataProviderService extends Service {
 
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+
+                        // Check if this is the first boot of a new install
+                        // If it is, since we're logged in, if the user hasnt
+                        // disabled location tracking, start the tracking service.
+                        try {
+                            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                            if( pInfo.versionCode > prefs.getInt( INSTALLED_VERSION_PREFS_KEY, -1 ) ) {
+                                prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode ).commit();
+                                if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true )  ) {
+                                    startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
+                                }
+                            }
+                        }
+                        catch( PackageManager.NameNotFoundException e ) {
+                            // Look at all the fucks I give!
+                        }
+
                     }
                     else {
                         loggedOut();
@@ -1324,7 +1371,7 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationASync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.savePrimaryLocationASync( primaryLocation, saveCallback );
+            DataProviderService.this.savePrimaryLocationASync(primaryLocation, saveCallback);
         }
 
         /**
@@ -1334,6 +1381,12 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getDepartmentCursor();
         }
 
+        /**
+         * @see DataProviderService#getOfficeLocationName(int)
+         */
+        public String getOfficeLocationName( int locationId ) {
+            return DataProviderService.this.getOfficeLocationName( locationId );
+        }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#getOfficeLocationsCursor() ()
@@ -1382,6 +1435,7 @@ public class DataProviderService extends Service {
             DataProviderService.this.checkOutOfOffice(officeId);
         }
     }
+
 
     /**
      * Background task to fetch an image from the server, set it as the resource
