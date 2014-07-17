@@ -32,6 +32,8 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 public class ContactsActivity extends BadgeActivity implements ActionBar.TabListener {
 
+    private static boolean shouldRegister = false;
+
     private static final String TAG = ContactsActivity.class.getName();
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
@@ -176,12 +178,12 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( departmentsAdapter != null ) {
             departmentsAdapter.destroy();
         }
-        localBroadcastManager.unregisterReceiver( receiver );
+        localBroadcastManager.unregisterReceiver(receiver);
     }
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v( TAG , String.format( "onTabSelected, %d bizitch", tab.getPosition() ) );
+        Log.v(TAG, String.format("onTabSelected, %d bizitch", tab.getPosition()));
         if ( tab.getPosition() == 0) {
             tab.setIcon(R.drawable.messages_selected);
             Intent intent = new Intent(this, MessagesIndexActivity.class);
@@ -238,7 +240,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         }
         else {
             departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count);
-            departmentsListView.setAdapter( departmentsAdapter );
+            departmentsListView.setAdapter(departmentsAdapter);
         }
     }
 
@@ -247,11 +249,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
      * If not, do it!
      */
     private void lazyDeviceRegistration() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String deviceId = prefs.getString( DataProviderService.REGISTERED_DEVICE_ID_PREFS_KEY, "" );
-        if( "".equals( deviceId ) ) {
+        if( shouldRegister) {
+            shouldRegister = false;
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             // Kick off async post to /devices api
             ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
         }
+    }
+
+    @Override
+    protected void logout() {
+        shouldRegister = true;
+        super.logout();
     }
 }

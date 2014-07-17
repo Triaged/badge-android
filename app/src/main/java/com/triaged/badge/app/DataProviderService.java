@@ -545,7 +545,12 @@ public class DataProviderService extends Service {
      */
     protected void loggedOut() {
         loggedInUser = null;
-        prefs.edit().remove( API_TOKEN_PREFS_KEY ).remove(LOGGED_IN_USER_ID_PREFS_KEY ).commit();
+        prefs.edit().
+                remove(API_TOKEN_PREFS_KEY).
+                remove(LOGGED_IN_USER_ID_PREFS_KEY ).
+                remove( LAST_SYNCED_PREFS_KEY ).
+                remove( LoginActivity.PROPERTY_REG_ID ).
+                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).commit();
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
@@ -553,7 +558,37 @@ public class DataProviderService extends Service {
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
+
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
+    }
+
+    /**
+     * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
+     * and on success wipes local data on the phone and removes tokens.
+     *
+     */
+    protected void unregisterDevice() {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this);
+                    int deviceId = prefs.getInt(REGISTERED_DEVICE_ID_PREFS_KEY, -1);
+                    // Do this regardless of whether we can communicate with the cloud or not.
+                    loggedOut();
+                    if( deviceId != -1 ) {
+                        HttpResponse response = apiClient.unregisterDeviceRequest( deviceId );
+                        if( response.getEntity() != null ) {
+                            response.getEntity().consumeContent();
+                        }
+
+                    }
+                }
+                catch( IOException e ) {
+                    Log.e( LOG_TAG, "Wasn't able to delete device on api", e );
+                }
+            }
+        } );
     }
 
     /**
@@ -1236,7 +1271,7 @@ public class DataProviderService extends Service {
 
         /** @see DataProviderService#loggedOut()  */
         public void logout() {
-            DataProviderService.this.loggedOut();
+            DataProviderService.this.unregisterDevice();
         }
         
         /**
