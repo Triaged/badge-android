@@ -83,8 +83,10 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent departmentIntent = new Intent(AbstractProfileActivity.this, ContactsActivity.class);
-//                startActivity(intent);
+                Intent intent = new Intent(AbstractProfileActivity.this, ContactsForDepartmentActivity.class);
+                intent.putExtra("DEPARTMENT_ID", contact.departmentId);
+                intent.putExtra("DEPARTMENT_NAME", contact.departmentName);
+                startActivity(intent);
             }
         });
 
