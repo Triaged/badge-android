@@ -90,6 +90,11 @@
             android:screenOrientation="portrait"
             >
         </activity>
+        <activity android:name=".EditLocationActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            >
+        </activity>
         <activity android:name=".MessagesIndexActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"

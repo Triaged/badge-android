@@ -14,6 +14,7 @@
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
+        android:divider="@null"
         />
 
     <RelativeLayout

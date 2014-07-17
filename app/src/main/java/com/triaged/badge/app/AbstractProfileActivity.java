@@ -33,6 +33,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView profileName = null;
     private TextView profileTitle = null;
     private ImageView profileImage = null;
+    private TextView missingProfileImage = null;
     private ButtonWithFont departmentView = null;
     private ProfileContactInfoView emailView = null;
     private ProfileContactInfoView officePhoneView = null;
@@ -74,6 +75,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         startDateView = (ProfileContactInfoView) findViewById(R.id.profile_start_date);
         currentLocationView = (ProfileCurrentLocationView) findViewById(R.id.profile_current_location);
         profileImage = (ImageView)findViewById( R.id.profile_image );
+        missingProfileImage = (TextView) findViewById(R.id.missing_profile_image);
         managesListView = (ListView) findViewById(R.id.manages_list);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
 
@@ -158,9 +160,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
      *
      */
     protected void setupProfile() {
-
-        dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
         if (contact != null) {
+            if (contact.avatarUrl != null) {
+                profileImage.setVisibility(View.VISIBLE);
+                missingProfileImage.setVisibility(View.GONE);
+                dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
+            } else {
+                missingProfileImage.setVisibility(View.VISIBLE);
+                profileImage.setVisibility(View.GONE);
+                missingProfileImage.setText(contact.initials);
+            }
             profileName.setText(contact.name);
             profileTitle.setText(contact.jobTitle);
             if ( isNotBlank( contact.departmentName ) ) {
