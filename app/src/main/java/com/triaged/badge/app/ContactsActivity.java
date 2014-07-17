@@ -17,6 +17,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TabWidget;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
