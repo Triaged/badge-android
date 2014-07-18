@@ -18,6 +18,9 @@ import com.triaged.badge.data.Department;
 
 import org.w3c.dom.Text;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * This is a simple array adapter of {@link com.triaged.badge.data.Department} pojos.
  *
@@ -30,6 +33,7 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
     private LayoutInflater inflater;
     private int resourceId;
     private boolean onlyNonEmptyDepartments;
+    private List<Department> baseList;
 
     public DepartmentsAdapter(Context context, int resourceId, DataProviderService.LocalBinding dataProviderServiceBinding, boolean onlyNonEmptyDepartments) {
         super(context, resourceId);
@@ -38,17 +42,21 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
         this.resourceId = resourceId;
         this.onlyNonEmptyDepartments = onlyNonEmptyDepartments;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
+        baseList = new LinkedList<Department>();
         addDepartments();
     }
 
     private void addDepartments() {
         clear();
+        baseList.clear();
         Cursor c = dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments );
         while( c.moveToNext() ) {
             Department dept = new Department();
             dept.fromCursor(c);
             add( dept );
+            baseList.add( dept );
         }
+
         c.close();
     }
 
@@ -83,6 +91,24 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
         if (holder.deptCountView != null) {
             holder.deptCountView.setText(String.valueOf(d.numContacts));
         }
+    }
+
+    public void setFilter( String filter ) {
+        filter = filter.toLowerCase();
+        clear();
+        for( Department d : baseList ) {
+            if( d.name.toLowerCase().indexOf( filter ) > -1 ) {
+                add( d );
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void clearFilter( ) {
+        for( Department d : baseList ) {
+            add( d );
+        }
+        notifyDataSetChanged();
     }
 
     /**
