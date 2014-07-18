@@ -856,8 +856,10 @@ public class DataProviderService extends Service {
                     // TODO for now just making sure this runs at most once per half hour.
                     // In the future it should ask for any records modified since last sync
                     // every time.
-
-
+                    int loggedInContactId = prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 );
+                    if( loggedInContactId > 0 ) {
+                        loggedInUser = getContact(loggedInContactId);
+                    }
                     initialized = true;
                     localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
 
