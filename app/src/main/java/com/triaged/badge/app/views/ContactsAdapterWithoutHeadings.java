@@ -175,6 +175,7 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
     }
 
     public void refresh( Cursor cursor ) {
+        contactCache.evictAll();
         changeCursor( cursor );
         notifyDataSetChanged();
     }
