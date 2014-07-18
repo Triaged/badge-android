@@ -24,7 +24,7 @@ import android.widget.Toast;
  *
  * Created by Will on 7/10/14.
  */
-public class SettingsActivity extends BadgeActivity {
+public class SettingsActivity extends BackButtonActivity {
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
@@ -37,13 +37,8 @@ public class SettingsActivity extends BadgeActivity {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( this );
 
         setContentView(R.layout.activity_settings);
-        TextView backButton = (TextView) findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        backButton.setText("Settings");
+
         Button editProfileButton = (Button) findViewById(R.id.edit_profile_button);
         editProfileButton.setOnClickListener(new View.OnClickListener() {
             @Override

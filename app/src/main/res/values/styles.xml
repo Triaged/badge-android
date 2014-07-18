@@ -17,6 +17,16 @@
         <item name="android:actionBarDivider">@null</item>
     </style>
 
+    <style name="BackTheme" parent="AppTheme">
+        <item name="android:windowNoTitle">false</item>
+        <item name="android:actionBarStyle">@style/BackThemeBG</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <style name="BackThemeBG" parent="android:Widget.ActionBar">
+        <item name="android:background">@color/light_divider</item>
+    </style>
+
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
         <item name="android:background">@drawable/tab_bg</item>
     </style>

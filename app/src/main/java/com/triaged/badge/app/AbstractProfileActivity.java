@@ -74,7 +74,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
         setContentViewLayout();
 
-
         profileName = (TextView) findViewById(R.id.profile_name);
         profileTitle = (TextView) findViewById(R.id.profile_title);
         departmentView = (ButtonWithFont) findViewById(R.id.profile_department);

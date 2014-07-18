@@ -43,7 +43,7 @@ import java.util.Locale;
  *
  * Created by Will on 7/14/14.
  */
-public class OnboardingMapActivity extends BadgeActivity implements
+public class OnboardingMapActivity extends BackButtonActivity implements
         AdapterView.OnItemClickListener,
         LocationListener,
         GooglePlayServicesClient.ConnectionCallbacks,
@@ -84,13 +84,7 @@ public class OnboardingMapActivity extends BadgeActivity implements
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         addressToAdd = null;
         setContentView(R.layout.activity_onboarding_map);
-        TextView backButton = (TextView) findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        backButton.setText("Add New Office");
 
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 

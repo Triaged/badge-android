@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="@drawable/profile_row_background"
+    >
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:gravity="center_vertical"
+        custom:font="Roboto-Regular.ttf"
+        android:textColor="@color/main_orange"
+        android:textSize="18sp"
+        android:drawableLeft="@drawable/ic_action_previous_item"
+        android:drawablePadding="2dp"
+        android:text="@string/edit_profile_back"
+        />
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/save_button"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@null"
+        android:gravity="center_vertical"
+        custom:font="Roboto-Regular.ttf"
+        android:textColor="@color/main_orange"
+        android:textSize="18sp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="16dp"
+        android:text="@string/save_and_exit"
+        />
+
+</RelativeLayout>

@@ -1,5 +1,6 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.ComponentName;
@@ -20,6 +21,7 @@ import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Base64;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -105,9 +107,14 @@ public class EditProfileActivity extends BadgeActivity {
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
-        setContentView(R.layout.activity_edit_profile);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
 
-        TextView backButton = (TextView) findViewById(R.id.back_button);
+        LayoutInflater inflater = LayoutInflater.from(this);
+        ActionBar.LayoutParams layoutParams = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
+        View backButtonBar = inflater.inflate(R.layout.actionbar_save, null);
+        TextView backButton = (TextView) backButtonBar.findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -115,7 +122,7 @@ public class EditProfileActivity extends BadgeActivity {
             }
         });
 
-        TextView saveButton = (TextView) findViewById(R.id.save_button);
+        TextView saveButton = (TextView) backButtonBar.findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -135,6 +142,11 @@ public class EditProfileActivity extends BadgeActivity {
                 );
             }
         });
+
+        actionBar.setCustomView(backButtonBar, layoutParams);
+        actionBar.setDisplayShowCustomEnabled(true);
+
+        setContentView(R.layout.activity_edit_profile);
 
         Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
 

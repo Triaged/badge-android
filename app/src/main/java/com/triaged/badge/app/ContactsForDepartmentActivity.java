@@ -1,8 +1,10 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -16,7 +18,7 @@ import com.triaged.badge.app.views.ProfileManagesAdapter;
  *
  * Created by Will on 7/17/14.
  */
-public class ContactsForDepartmentActivity extends BadgeActivity {
+public class ContactsForDepartmentActivity extends BackButtonActivity {
 
     private ListView contactsForDepartmentList;
     private ProfileManagesAdapter adapter;
@@ -26,19 +28,10 @@ public class ContactsForDepartmentActivity extends BadgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_contacts_for_department);
-
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
-        TextView backButton;
-        backButton = (TextView) findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        setContentView(R.layout.activity_contacts_for_department);
 
         contactsForDepartmentList = (ListView) findViewById(R.id.contacts_for_department_list);
         contactsForDepartmentList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
