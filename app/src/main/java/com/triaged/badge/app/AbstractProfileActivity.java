@@ -121,12 +121,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             Contact contact = new Contact();
             contact = ContactsAdapter.getCachedContact(reportsCursor);
             newView.setupView(contact);
+            newView.noPhotoThumb.setText(contact.initials);
+            newView.noPhotoThumb.setVisibility(View.VISIBLE);
+
             if( contact.avatarUrl != null ) {
-                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage);
-                newView.noPhotoThumb.setVisibility(View.GONE);
-            } else {
-                newView.noPhotoThumb.setText(contact.initials);
-                newView.noPhotoThumb.setVisibility(View.VISIBLE);
+                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
+
             }
             final int contactId = newView.profileId;
             newView.setOnClickListener(new View.OnClickListener() {

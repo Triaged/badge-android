@@ -74,4 +74,9 @@ public class ContactsForDepartmentActivity extends BadgeActivity {
     }
 
 
+    @Override
+    protected void onDestroy() {
+        adapter.destroy();
+        super.onDestroy();
+    }
 }

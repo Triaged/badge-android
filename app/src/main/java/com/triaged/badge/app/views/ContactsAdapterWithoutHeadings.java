@@ -174,7 +174,10 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
         } while( c.moveToNext() );
     }
 
-
+    public void refresh( Cursor cursor ) {
+        changeCursor( cursor );
+        notifyDataSetChanged();
+    }
 
     public void destroy() {
         getCursor().close();

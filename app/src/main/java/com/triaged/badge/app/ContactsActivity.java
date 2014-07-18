@@ -31,6 +31,7 @@ import android.widget.TabWidget;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ContactsAdapter;
+import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
@@ -50,6 +51,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
+    private ContactsAdapterWithoutHeadings searchResultsAdapter = null;
 
     private Button contactsTabButton = null;
     private Button departmentsTabButton = null;
@@ -138,6 +140,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 String text = searchBar.getText().toString();
                 if (text.length() > 0) {
                     clearButton.setVisibility(View.VISIBLE);
+                    searchResultsAdapter.setFilter( text );
+                    searchResultsAdapter.notifyDataSetChanged();
                     searchResultsList.setVisibility(View.VISIBLE);
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     contactsListView.setVisibility(View.GONE);
@@ -256,6 +260,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( departmentsAdapter != null ) {
             departmentsAdapter.destroy();
         }
+        if( searchResultsAdapter != null ) {
+            searchResultsAdapter.destroy();
+        }
         localBroadcastManager.unregisterReceiver(receiver);
     }
 
@@ -319,6 +326,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         else {
             departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
             departmentsListView.setAdapter( departmentsAdapter );
+        }
+        if( searchResultsAdapter != null ) {
+            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursor() );
+        }
+        else {
+            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursor(), dataProviderServiceBinding );
+            searchResultsList.setAdapter( searchResultsAdapter );
         }
     }
 
