@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="@color/off_white"
+    android:focusableInTouchMode="true"
+    android:focusable="true"
+    >
+
+    <ImageView
+        android:id="@+id/search_icon"
+        android:layout_width="32dp"
+        android:layout_height="48dp"
+        android:layout_marginLeft="16dp"
+        android:src="@drawable/ic_action_search"
+        android:contentDescription="@string/content_description_my_settings"
+        android:background="@null"
+        android:gravity="center"
+        android:layout_centerVertical="true"
+        />
+
+    <EditText
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="@string/search_hint"
+        android:background="@null"
+        android:textSize="15sp"
+        android:textColor="@color/main_text_black"
+        android:textColorHint="@color/light_text_gray"
+        android:paddingLeft="56dp"
+        android:layout_marginRight="48dp"
+        android:layout_marginLeft="0dp"
+        android:nextFocusUp="@id/search_bar"
+        android:nextFocusLeft="@id/search_bar"
+        />
+
+    <ImageButton
+        android:id="@+id/clear_search"
+        android:layout_width="52dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_action_remove"
+        android:contentDescription="@string/content_description_my_settings"
+        android:background="@null"
+        android:gravity="center"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        />
+
+</RelativeLayout>

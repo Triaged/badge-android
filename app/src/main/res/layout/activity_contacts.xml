@@ -1,47 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.triaged.badge.app.ContactsActivity">
+    tools:context="com.triaged.badge.app.ContactsActivity"
+    android:id="@+id/activity_root"
+    >
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="0dp"
-        >
-
-        <com.triaged.badge.app.views.ButtonWithFont
-            android:id="@+id/contacts_tab"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight=".50"
-            android:gravity="center"
-            android:layout_margin="0dp"
-            android:text="@string/contacts_tab_contacts"
-            android:background="@color/off_white"
-            android:textSize="15sp"
-            android:textAllCaps="true"
-            android:textColor="@drawable/contacts_tab_text"
-            custom:font="Roboto-Medium.ttf"
-            />
-
-        <com.triaged.badge.app.views.ButtonWithFont
-            android:id="@+id/departments_tab"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight=".50"
-            android:gravity="center"
-            android:layout_margin="0dp"
-            android:text="@string/contacts_tab_departments"
-            android:background="@color/off_white"
-            android:textSize="15sp"
-            android:textAllCaps="true"
-            android:textColor="@drawable/contacts_tab_text"
-            custom:font="Roboto-Regular.ttf"
-            />
-
-    </LinearLayout>
+    <include layout="@layout/include_search" />
 
     <se.emilsjolander.stickylistheaders.StickyListHeadersListView
         android:id="@+id/contacts_list"
@@ -49,7 +17,8 @@
         android:layout_height="match_parent"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="40dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
@@ -65,7 +34,8 @@
         android:visibility="invisible"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:layout_marginTop="56dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginBottom="40dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
@@ -73,5 +43,61 @@
         android:divider="@null"
         android:dividerHeight="0dp"
         />
+
+    <ListView
+        android:id="@+id/search_results_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="40dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/contacts_departments_tab"
+        >
+
+        <com.triaged.badge.app.views.ButtonWithFont
+            android:id="@+id/contacts_tab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight=".50"
+            android:gravity="center"
+            android:layout_margin="0dp"
+            android:text="@string/contacts_tab_contacts"
+            android:background="@color/main_orange"
+            android:textSize="15sp"
+            android:textAllCaps="true"
+            android:textColor="@drawable/contacts_tab_text"
+            custom:font="Roboto-Medium.ttf"
+            />
+
+        <com.triaged.badge.app.views.ButtonWithFont
+            android:id="@+id/departments_tab"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight=".50"
+            android:gravity="center"
+            android:layout_margin="0dp"
+            android:text="@string/contacts_tab_departments"
+            android:background="@color/main_orange"
+            android:textSize="15sp"
+            android:textAllCaps="true"
+            android:textColor="@drawable/contacts_tab_text"
+            custom:font="Roboto-Regular.ttf"
+            />
+
+    </LinearLayout>
 
 </RelativeLayout>
