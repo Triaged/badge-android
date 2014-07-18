@@ -969,6 +969,7 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         setContactDBValesFromJSON( account, values );
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
