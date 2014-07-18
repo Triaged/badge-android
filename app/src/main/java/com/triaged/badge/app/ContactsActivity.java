@@ -140,12 +140,16 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     clearButton.setVisibility(View.VISIBLE);
                     searchResultsList.setVisibility(View.VISIBLE);
                     contactsDepartmentsTab.setVisibility(View.GONE);
-                    contactsListView.setVisibility(View.GONE);
+                    if (contactsTabButton.isSelected()) {
+                        contactsListView.setVisibility(View.GONE);
+                    }
                 } else {
                     clearButton.setVisibility(View.GONE);
                     searchResultsList.setVisibility(View.GONE);
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
-                    contactsListView.setVisibility(View.VISIBLE);
+                    if (contactsTabButton.isSelected()) {
+                        contactsListView.setVisibility(View.VISIBLE);
+                    }
                 }
             }
 
