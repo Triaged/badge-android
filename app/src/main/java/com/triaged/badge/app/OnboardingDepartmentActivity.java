@@ -49,7 +49,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(OnboardingDepartmentActivity.this, OnboardingPositionActivity.class);
-                Department cachedDept = departmentsAdapter.getCachedDepartment(position);
+                Department cachedDept = departmentsAdapter.getItem(position);
                 intent.putExtra( DEPT_NAME_EXTRA, cachedDept.name);
                 setResult( cachedDept.id, intent );
                 finish();
@@ -104,7 +104,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         });
 
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_no_count, false );
+        departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_no_count, dataProviderServiceBinding, false );
         departmentsListView.setAdapter( departmentsAdapter );
     }
 

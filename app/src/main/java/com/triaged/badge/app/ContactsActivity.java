@@ -146,9 +146,11 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     if (contactsTabButton.isSelected()) {
                         searchResultsAdapter.setFilter( text );
-                        searchResultsAdapter.notifyDataSetChanged();
                         searchResultsList.setVisibility(View.VISIBLE);
                         contactsListView.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentsAdapter.setFilter( text );
                     }
                 } else {
                     clearButton.setVisibility(View.GONE);
@@ -156,6 +158,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     if (contactsTabButton.isSelected()) {
                         contactsListView.setVisibility(View.VISIBLE);
                         searchResultsList.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentsAdapter.clearFilter();
                     }
                 }
             }
@@ -217,8 +222,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(ContactsActivity.this, ContactsForDepartmentActivity.class);
-                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getCachedDepartment(position).id);
-                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getCachedDepartment(position).name);
+                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getItem(position).id);
+                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getItem(position).name);
                 startActivity(intent);
             }
         });
@@ -318,7 +323,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter.refresh();
         }
         else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
+            departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_with_count, dataProviderServiceBinding, true );
             departmentsListView.setAdapter( departmentsAdapter );
         }
         if( searchResultsAdapter != null ) {
