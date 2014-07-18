@@ -32,6 +32,7 @@ import android.widget.RelativeLayout;
 import android.widget.TabWidget;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;

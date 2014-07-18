@@ -12,6 +12,8 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.crashlytics.android.Crashlytics;
+
 /**
  * Custom implementation of the Android Application class that sets up global services and
  * plugins such as Google Analytics and Crashlytics.
@@ -28,8 +30,7 @@ public class BadgeApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
-
+        Crashlytics.start(this);
 
         dataProviderServiceConnnection = new ServiceConnection() {
             @Override
