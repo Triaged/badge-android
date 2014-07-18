@@ -16,7 +16,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  *
  * Created by Will on 7/14/14.
  */
-public class OnboardingReportingToActivity extends BadgeActivity {
+public class OnboardingReportingToActivity extends BackButtonActivity {
 
     public static final String MGR_NAME_EXTRA = "mgrName";
     private StickyListHeadersListView contactsListView = null;
@@ -27,13 +27,7 @@ public class OnboardingReportingToActivity extends BadgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_reporting_to);
-        TextView backButton = (TextView) findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        backButton.setText("Reporting To");
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

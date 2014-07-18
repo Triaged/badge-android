@@ -91,7 +91,10 @@
     <string name="edit_profile_office_location">Office</string>
     <string name="edit_profile_start_date">Start Date</string>
     <string name="edit_profile_birth_date">Birthday</string>
+
+    <!-- SEARCH -->
     <string name="search_hint">Search</string>
+    <string name="back_button_default_value">Back</string>
 
 
 </resources>

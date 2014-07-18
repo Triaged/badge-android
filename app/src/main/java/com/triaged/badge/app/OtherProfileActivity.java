@@ -1,10 +1,15 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Layout;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,13 +27,25 @@ public class OtherProfileActivity extends AbstractProfileActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        backButton = (TextView) findViewById(R.id.back_button);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        ActionBar.LayoutParams layoutParams = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
+        View backButtonBar = inflater.inflate(R.layout.back_button_bar, null);
+        backButton = (TextView) backButtonBar.findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
             }
         });
+
+        actionBar.setCustomView(backButtonBar, layoutParams);
+        actionBar.setDisplayShowCustomEnabled(true);
+
         ImageButton newMessageButton = (ImageButton) findViewById(R.id.new_message_button);
         newMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
