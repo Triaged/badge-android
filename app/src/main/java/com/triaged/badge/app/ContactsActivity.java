@@ -127,6 +127,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             public void onReceive(Context context, Intent intent) {
                 if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
+                    dataProviderServiceBinding = app.dataProviderServiceBinding;
                     databaseReadyCallback();
                 }
                 else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
@@ -222,7 +223,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             databaseReady = true;
 
             // SETUP CONTACTS
-            dataProviderServiceBinding = app.dataProviderServiceBinding;
             lazyDeviceRegistration();
             loadContactsAndDepartments();
         }
@@ -248,14 +248,20 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     /**
      * Every time we get to the contacts screen, do a quick check to see if we've registered the device yet.
-     * If not, do it!
+     * If not, do it assuming the user is logged in!
      */
     private void lazyDeviceRegistration() {
-        if( shouldRegister) {
+        if( shouldRegister && dataProviderServiceBinding.getLoggedInUser() != null ) {
+            if( getRegistrationId( this ).isEmpty() ) {
+                // This will async generate a new reg id and
+                // send it up to the cloud
+                ensureGcmRegistration();
+            }
+            else {
+                // Re-register device
+                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
+            }
             shouldRegister = false;
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            // Kick off async post to /devices api
-            ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
         }
     }
 
