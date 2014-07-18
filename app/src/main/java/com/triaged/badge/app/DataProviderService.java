@@ -464,17 +464,23 @@ public class DataProviderService extends Service {
      * If not in the disk cache, as a last resort, the image is downloaded in the BG and
      * placed in to the disk and memory caches.
      *
+     * If a placeholder view is specified, it will be hidden
+     *
      * @param c contact
-     * @param thumbImageView
+     * @param thumbImageView the view to set the image on.
+     * @param placeholderView null or a view that should be hidden once the image has been set.
      */
-    protected void setSmallContactImage( Contact c, View thumbImageView ) {
+    protected void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
         Bitmap b = thumbCache.get( c.avatarUrl );
         if( b != null ) {
             // Hooray!
             assignBitmapToView( b, thumbImageView );
+            if( placeholderView != null ) {
+                placeholderView.setVisibility( View.GONE );
+            }
         }
         else {
-            new DownloadImageTask( c.avatarUrl, thumbImageView, thumbCache ).execute();
+            new DownloadImageTask( c.avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
         }
     }
 
@@ -487,7 +493,7 @@ public class DataProviderService extends Service {
      * @param imageView
      */
     protected void setLargeContactImage( Contact c, ImageView imageView ) {
-        new DownloadImageTask( c.avatarUrl, imageView ).execute();
+        new DownloadImageTask( c.avatarUrl, imageView, null ).execute();
     }
 
     /**
@@ -1434,10 +1440,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View)
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View, android.view.View )
          */
-        public void setSmallContactImage( Contact c, View thumbImageView ) {
-            DataProviderService.this.setSmallContactImage(c, thumbImageView);
+        public void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
+            DataProviderService.this.setSmallContactImage(c, thumbImageView, placeholderView );
         }
 
         /**
@@ -1576,6 +1582,7 @@ public class DataProviderService extends Service {
     private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
         private String urlStr = null;
         private View thumbView = null;
+        private View placeholderView;
         private LruCache<String, Bitmap> memoryCache = null;
 
 
@@ -1585,21 +1592,23 @@ public class DataProviderService extends Service {
          * @param url
          * @param thumbView
          */
-        protected DownloadImageTask( String url, View thumbView  ) {
-            this( url, thumbView, null );
+        protected DownloadImageTask( String url, View thumbView, View placeholderView  ) {
+            this( url, thumbView, placeholderView, null );
         }
 
         /**
          * Task will save images in a memory cache.
          *
-         * @param url
-         * @param thumbView
+         * @param url img url.
+         * @param thumbView view on which to set the bitmap once downloaded.
+         * @param placeholderView view to hide if we successfully download the image and set it on the view.
          * @param memoryCache cache to put image in to after downloading.
          */
-        protected DownloadImageTask( String url, View thumbView, LruCache<String, Bitmap> memoryCache ) {
+        protected DownloadImageTask( String url, View thumbView, View placeholderView, LruCache<String, Bitmap> memoryCache ) {
             this.urlStr = url;
             this.thumbView = thumbView;
             this.memoryCache = memoryCache;
+            this.placeholderView = placeholderView;
         }
 
         @Override
@@ -1623,6 +1632,9 @@ public class DataProviderService extends Service {
                                 @Override
                                 public void run() {
                                     assignBitmapToView( bitmap, thumbView );
+                                    if( placeholderView != null ) {
+                                        placeholderView.setVisibility(View.GONE);
+                                    }
                                 }
                             } );
 
