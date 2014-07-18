@@ -66,7 +66,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     private LocalBroadcastManager localBroadcastManager;
 
-    private boolean keyboardOpen = false;
     private EditText searchBar;
     private ImageButton clearButton;
     private LinearLayout contactsDepartmentsTab = null;
@@ -140,19 +139,19 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 String text = searchBar.getText().toString();
                 if (text.length() > 0) {
                     clearButton.setVisibility(View.VISIBLE);
-                    searchResultsAdapter.setFilter( text );
-                    searchResultsAdapter.notifyDataSetChanged();
-                    searchResultsList.setVisibility(View.VISIBLE);
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     if (contactsTabButton.isSelected()) {
+                        searchResultsAdapter.setFilter( text );
+                        searchResultsAdapter.notifyDataSetChanged();
+                        searchResultsList.setVisibility(View.VISIBLE);
                         contactsListView.setVisibility(View.GONE);
                     }
                 } else {
                     clearButton.setVisibility(View.GONE);
-                    searchResultsList.setVisibility(View.GONE);
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
                     if (contactsTabButton.isSelected()) {
                         contactsListView.setVisibility(View.VISIBLE);
+                        searchResultsList.setVisibility(View.GONE);
                     }
                 }
             }
@@ -174,19 +173,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
         contactsDepartmentsTab = (LinearLayout) findViewById(R.id.contacts_departments_tab);
-//
-//        final View activityRootView = findViewById(R.id.activity_root);
-//        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @Override
-//            public void onGlobalLayout() {
-//                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
-//                if (heightDiff > 100) { // if more than 100 pixels, its probably a keyboard...
-//                    keyboardOpen = true;
-//                } else {
-//                    keyboardOpen = false;
-//                }
-//            }
-//        });
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
