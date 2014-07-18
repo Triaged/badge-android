@@ -17,8 +17,10 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -126,6 +128,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 //        contactsListView.addHeaderView(searchBarView);
 
         searchResultsList = (ListView) findViewById(R.id.search_results_list);
+
+        ListView.LayoutParams defaultDepartmentListParams = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
         searchBar = (EditText) findViewById(R.id.search_bar);
         TextWatcher tw = new TextWatcher() {

@@ -52,7 +52,6 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:layout_marginTop="48dp"
-        android:layout_marginBottom="40dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
