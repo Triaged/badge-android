@@ -4,12 +4,31 @@
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
+    <include layout="@layout/include_search" />
+
     <se.emilsjolander.stickylistheaders.StickyListHeadersListView
         android:id="@+id/contacts_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
+        android:layout_marginTop="48dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        />
+
+    <ListView
+        android:id="@+id/search_results_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_marginTop="48dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"

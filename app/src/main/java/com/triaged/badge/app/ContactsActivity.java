@@ -68,8 +68,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     private LocalBroadcastManager localBroadcastManager;
 
-    private EditText searchBar;
-    private ImageButton clearButton;
+    private EditText searchBar = null;
+    private ImageButton clearButton = null;
     private LinearLayout contactsDepartmentsTab = null;
     private ListView searchResultsList = null;
     private RelativeLayout.LayoutParams departmentListViewParams;
@@ -208,8 +208,25 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 intent.putExtra("PROFILE_ID", clickedId);
                 startActivity(intent);
             }
-
         });
+
+        searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = searchResultsAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                }
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", clickedId);
+                startActivity(intent);
+            }
+        });
+
 
         databaseReady = false;
         receiver = new BroadcastReceiver() {

@@ -37,10 +37,12 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private float densityMultiplier = 1;
 
-
-
     public ContactsAdapterWithoutHeadings(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
-        super( context, cursor, false );
+        this(context, cursor, dataProviderServiceBinding, true);
+    }
+
+    public ContactsAdapterWithoutHeadings(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding, boolean includeMe) {
+        super( context, includeMe ? dataProviderServiceBinding.getContactsCursor() : dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), false);
         inflater = LayoutInflater.from(context);
         contactCache = new LruCache<Integer, Contact>( 100 );
         this.dataProviderServiceBinding = dataProviderServiceBinding;
