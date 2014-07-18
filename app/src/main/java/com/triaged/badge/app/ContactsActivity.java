@@ -142,9 +142,11 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     if (contactsTabButton.isSelected()) {
                         searchResultsAdapter.setFilter( text );
-                        searchResultsAdapter.notifyDataSetChanged();
                         searchResultsList.setVisibility(View.VISIBLE);
                         contactsListView.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentsAdapter.setFilter( text );
                     }
                 } else {
                     clearButton.setVisibility(View.GONE);
@@ -152,6 +154,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     if (contactsTabButton.isSelected()) {
                         contactsListView.setVisibility(View.VISIBLE);
                         searchResultsList.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentsAdapter.clearFilter();
                     }
                 }
             }

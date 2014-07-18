@@ -172,6 +172,7 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
                 filteredList.add( getCachedContact( c ) );
             }
         } while( c.moveToNext() );
+        notifyDataSetChanged();
     }
 
     public void refresh( Cursor cursor ) {
