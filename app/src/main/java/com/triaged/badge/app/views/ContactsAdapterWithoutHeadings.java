@@ -56,9 +56,8 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
     }
 
     public View newView( Context context, Contact c, ViewGroup parent ) {
-
         ViewHolder holder = new ViewHolder();
-        View newView =  inflater.inflate(R.layout.item_manages_contact, parent, false);
+        View newView =  inflater.inflate(R.layout.item_contact_without_heading, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
         holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );

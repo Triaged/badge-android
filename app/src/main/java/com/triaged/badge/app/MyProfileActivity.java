@@ -30,8 +30,6 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this), false);
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_selected).setTabListener(this), true);
 
-
-
         settingsButton = (ImageButton) findViewById(R.id.settings_button);
 
         settingsButton.setOnClickListener(new View.OnClickListener() {
