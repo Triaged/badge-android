@@ -119,29 +119,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
             Contact contact = new Contact();
             contact = ContactsAdapter.getCachedContact(reportsCursor);
+            newView.userId = userId;
             newView.setupView(contact);
             newView.noPhotoThumb.setText(contact.initials);
             newView.noPhotoThumb.setVisibility(View.VISIBLE);
-
             if( contact.avatarUrl != null ) {
                 dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
 
             }
-            final int contactId = newView.profileId;
-            newView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent;
-                    if (userId == contactId) {
-                        intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
-                    } else {
-                        intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-                    }
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("PROFILE_ID", contactId);
-                    startActivity(intent);
-                }
-            });
             viewHolder.addView(newView, indexOfHeader + iterator);
             iterator++;
         }
@@ -160,15 +145,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected abstract void setContentViewLayout();
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        contact = dataProviderServiceBinding.getContact(contactId);
-        setupProfile();
-        Cursor reportsCursor = getNewManagesContactsCursor();
-        replaceAndCreateManagedContacts(reportsCursor);
-    }
-
-    @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         contactId = intent.getIntExtra("PROFILE_ID", 0);
@@ -179,6 +155,10 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected void onResume() {
         super.onResume();
         overridePendingTransition(0,0);
+        contact = dataProviderServiceBinding.getContact(contactId);
+        setupProfile();
+        Cursor reportsCursor = getNewManagesContactsCursor();
+        replaceAndCreateManagedContacts(reportsCursor);
     }
 
     @Override
