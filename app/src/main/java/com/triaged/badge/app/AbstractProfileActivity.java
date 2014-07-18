@@ -55,6 +55,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView departmentHeader = null;
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
+    private int contactId = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +66,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
 
 
         final Intent intent = getIntent();
-        int id = intent.getIntExtra("PROFILE_ID", 0);
-        contact = dataProviderServiceBinding.getContact(id);
-        if( dataProviderServiceBinding.getLoggedInUser().id == contact.id ) {
+        contactId = intent.getIntExtra("PROFILE_ID", 0);
+
+        if( dataProviderServiceBinding.getLoggedInUser().id == contactId ) {
             requestWindowFeature(Window.FEATURE_ACTION_BAR);
         }
 
@@ -89,8 +90,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
         departmentHeader = (TextView) findViewById(R.id.department_header);
 
-
-
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -102,9 +101,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         });
 
         inflater = LayoutInflater.from(this);
-
-        Cursor reportsCursor = getNewManagesContactsCursor();
-        replaceAndCreateManagedContacts(reportsCursor);
 
     }
 
@@ -175,17 +171,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     @Override
     protected void onStart() {
         super.onStart();
+        contact = dataProviderServiceBinding.getContact(contactId);
         setupProfile();
+        Cursor reportsCursor = getNewManagesContactsCursor();
+        replaceAndCreateManagedContacts(reportsCursor);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        int id = intent.getIntExtra("PROFILE_ID", 0);
-        contact = dataProviderServiceBinding.getContact(id);
-        setupProfile();
-        Cursor reportsCursor = getNewManagesContactsCursor();
-        replaceAndCreateManagedContacts(reportsCursor);
+        contactId = intent.getIntExtra("PROFILE_ID", 0);
 
     }
 
