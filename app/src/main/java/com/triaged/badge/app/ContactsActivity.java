@@ -11,12 +11,22 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TabWidget;
 import android.widget.Toast;
 
@@ -53,6 +63,12 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected BadgeApplication app;
 
     private LocalBroadcastManager localBroadcastManager;
+
+    private boolean keyboardOpen = false;
+    private EditText searchBar;
+    private ImageButton clearButton;
+    private LinearLayout contactsDepartmentsTab = null;
+    private ListView searchResultsList = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +119,66 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
+
+//        LayoutInflater inflater = LayoutInflater.from(this);
+//        RelativeLayout searchBarView = (RelativeLayout) inflater.inflate(R.layout.include_search, null);
+//        contactsListView.addHeaderView(searchBarView);
+
+        searchResultsList = (ListView) findViewById(R.id.search_results_list);
+
+        searchBar = (EditText) findViewById(R.id.search_bar);
+        TextWatcher tw = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String text = searchBar.getText().toString();
+                if (text.length() > 0) {
+                    clearButton.setVisibility(View.VISIBLE);
+                    searchResultsList.setVisibility(View.VISIBLE);
+                    contactsDepartmentsTab.setVisibility(View.GONE);
+                    contactsListView.setVisibility(View.GONE);
+                } else {
+                    clearButton.setVisibility(View.GONE);
+                    searchResultsList.setVisibility(View.GONE);
+                    contactsDepartmentsTab.setVisibility(View.VISIBLE);
+                    contactsListView.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        };
+        searchBar.addTextChangedListener(tw);
+
+        clearButton = (ImageButton) findViewById(R.id.clear_search);
+
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchBar.setText("");
+            }
+        });
+
+        contactsDepartmentsTab = (LinearLayout) findViewById(R.id.contacts_departments_tab);
+//
+//        final View activityRootView = findViewById(R.id.activity_root);
+//        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+//            @Override
+//            public void onGlobalLayout() {
+//                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
+//                if (heightDiff > 100) { // if more than 100 pixels, its probably a keyboard...
+//                    keyboardOpen = true;
+//                } else {
+//                    keyboardOpen = false;
+//                }
+//            }
+//        });
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
