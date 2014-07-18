@@ -131,7 +131,12 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
     }
 
     public Contact getCachedContact( int position ) {
-        return getCachedContact( (Cursor)getItem( position ) );
+        if( filtering ) {
+         return (Contact)getItem( position );
+        }
+        else {
+            return getCachedContact((Cursor) getItem(position));
+        }
     }
 
     public void clearFilter() {
