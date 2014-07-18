@@ -141,11 +141,10 @@ public class EditProfileActivity extends BadgeActivity {
         profileImageView = (ImageView) findViewById(R.id.contact_thumb);
         profileImageMissingView = (TextView) findViewById(R.id.no_photo_thumb);
 
+        profileImageMissingView.setText(loggedInUser.initials);
+        profileImageMissingView.setVisibility(View.VISIBLE);
         if (loggedInUser.avatarUrl != null) {
-            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView);
-        } else {
-            profileImageMissingView.setText(loggedInUser.initials);
-            profileImageMissingView.setVisibility(View.VISIBLE);
+            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView );
         }
 
         firstName = (EditProfileInfoView) findViewById(R.id.edit_first_name);

@@ -4,28 +4,20 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.gms.internal.id;
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.app.views.ProfileCurrentLocationView;
-import com.triaged.badge.app.views.ProfileManagesAdapter;
 import com.triaged.badge.app.views.ProfileManagesUserView;
-import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
-
-import org.w3c.dom.Text;
 
 /**
  * Generic abstract class for my own profile and other profiles
@@ -129,12 +121,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             Contact contact = new Contact();
             contact = ContactsAdapter.getCachedContact(reportsCursor);
             newView.setupView(contact);
+            newView.noPhotoThumb.setText(contact.initials);
+            newView.noPhotoThumb.setVisibility(View.VISIBLE);
+
             if( contact.avatarUrl != null ) {
-                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage);
-                newView.noPhotoThumb.setVisibility(View.GONE);
-            } else {
-                newView.noPhotoThumb.setText(contact.initials);
-                newView.noPhotoThumb.setVisibility(View.VISIBLE);
+                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
+
             }
             final int contactId = newView.profileId;
             newView.setOnClickListener(new View.OnClickListener() {
