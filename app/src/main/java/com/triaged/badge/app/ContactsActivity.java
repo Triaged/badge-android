@@ -72,6 +72,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private ImageButton clearButton;
     private LinearLayout contactsDepartmentsTab = null;
     private ListView searchResultsList = null;
+    private RelativeLayout.LayoutParams departmentListViewParams;
+    private int departmentListTopMargin = 0;
+    private int departmentListBottomMargin = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,7 +132,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         searchResultsList = (ListView) findViewById(R.id.search_results_list);
 
-        ListView.LayoutParams defaultDepartmentListParams = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        departmentListViewParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+        float densityMultiplier = getResources().getDisplayMetrics().density;
+        departmentListTopMargin = (int) (64 * densityMultiplier);
+        departmentListBottomMargin = (int) (40 * densityMultiplier);
 
         searchBar = (EditText) findViewById(R.id.search_bar);
         TextWatcher tw = new TextWatcher() {
@@ -150,6 +156,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         contactsListView.setVisibility(View.GONE);
                     }
                     else {
+                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
+                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.setFilter( text );
                     }
                 } else {
@@ -160,6 +168,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         searchResultsList.setVisibility(View.GONE);
                     }
                     else {
+                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
+                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.clearFilter();
                     }
                 }
