@@ -13,6 +13,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Profile Activity for other users (not the logged-in-user)
  *
@@ -51,6 +54,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(OtherProfileActivity.this, "New Message", Toast.LENGTH_SHORT).show();
+                trackProfileButtonEvent("message");
             }
         });
 
@@ -59,6 +63,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 if (contact != null && contact.email != null) {
+                    trackProfileButtonEvent("email");
                     Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
 
                     emailIntent.setType("plain/text");
@@ -76,6 +81,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 if (contact != null && contact.cellPhone != null) {
+                    trackProfileButtonEvent("phone");
                     Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + contact.cellPhone));
                     startActivity(intent);
                 }
@@ -104,5 +110,17 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             newEmailButton.setVisibility(View.VISIBLE);
         }
 
+    }
+
+    private void trackProfileButtonEvent(String eventType) {
+        JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+        if (props != null) {
+            try {
+                props.put("button", eventType);
+                mixpanel.track("profile_button_touched", props);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

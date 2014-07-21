@@ -19,6 +19,7 @@ import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.Contact;
 
 import java.lang.reflect.Field;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -29,6 +30,8 @@ import java.util.Locale;
  * @author Created by Will on 7/10/14.
  */
 public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.OnDateSetListener {
+
+    private static final String LOG_TAG = WelcomeActivity.class.getName();
 
     private EditText firstName = null;
     private EditText lastName = null;
@@ -80,7 +83,10 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
             @Override
             public void onClick(View v) {
                 birthdayCalendar.setTimeZone( Contact.GMT );
-                dataProviderServiceBinding.saveBasicProfileDataAsync( firstName.getText().toString(), lastName.getText().toString(), birthdayCalendar.getTime().toString(), cellNumber.getText().toString(), saveCallback );
+                SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
+                iso8601Format.setTimeZone( Contact.GMT );
+                String birthDateValue = iso8601Format.format(birthdayCalendar.getTime());
+                dataProviderServiceBinding.saveBasicProfileDataAsync( firstName.getText().toString(), lastName.getText().toString(), birthDateValue, cellNumber.getText().toString(), saveCallback );
             }
         });
 
@@ -88,6 +94,17 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         birthdayCalendar.set( Calendar.YEAR, 1 );
 
         birthdayFormat = new SimpleDateFormat( Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
+
+        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+
+        if (loggedInUser.birthDateString != null && !loggedInUser.birthDateString.equals("")) {
+            try {
+                birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
+                birthday.setText(loggedInUser.birthDateString);
+            } catch (ParseException e) {
+                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
+            }
+        }
 
         datePickerDialog = new DatePickerDialogNoYear(this, this, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 

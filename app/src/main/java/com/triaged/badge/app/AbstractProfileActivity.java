@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.triaged.badge.app.views.ButtonWithFont;
@@ -17,7 +18,12 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.app.views.ProfileCurrentLocationView;
 import com.triaged.badge.app.views.ProfileManagesUserView;
+import com.triaged.badge.app.views.ProfileReportsToView;
 import com.triaged.badge.data.Contact;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 /**
  * Generic abstract class for my own profile and other profiles
@@ -43,7 +49,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private ProfileContactInfoView primaryOfficeView = null;
     private ProfileContactInfoView startDateView = null;
     private ProfileCurrentLocationView currentLocationView = null;
+    private ProfileReportsToView bossView = null;
     private TextView managesHeader = null;
+    private TextView bossHeader = null;
     private TextView departmentHeader = null;
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
@@ -80,6 +88,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         missingProfileImage = (TextView) findViewById(R.id.missing_profile_image);
         managesHeader = (TextView) findViewById(R.id.profile_heading_manages);
         departmentHeader = (TextView) findViewById(R.id.department_header);
+        bossHeader = (TextView) findViewById(R.id.profile_heading_reports_to);
+        bossView = (ProfileReportsToView) findViewById(R.id.boss_view);
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,8 +106,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     }
 
     private void replaceAndCreateManagedContacts(Cursor reportsCursor) {
-
-        Log.d(AbstractProfileActivity.class.getName(), "CURSOR LENGTH " + reportsCursor.getCount());
 
         LinearLayout viewHolder = (LinearLayout) findViewById(R.id.view_holder);
 
@@ -116,13 +124,37 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         int iterator = 0;
         final int userId = dataProviderServiceBinding.getLoggedInUser().id;
         while (reportsCursor.moveToNext()) {
-            ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
+            final ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
             Contact contact = new Contact();
             contact = ContactsAdapter.getCachedContact(reportsCursor);
             newView.userId = userId;
             newView.setupView(contact);
             newView.noPhotoThumb.setText(contact.initials);
             newView.noPhotoThumb.setVisibility(View.VISIBLE);
+            newView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                    if (props != null) {
+                        try {
+                            props.put("subordinate_id", String.valueOf(newView.profileId));
+                            mixpanel.track("subordinate_tapped", props);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    Intent intent;
+                    if (userId == newView.profileId) {
+                        intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", newView.profileId);
+                    startActivity(intent);
+                }
+            });
             if( contact.avatarUrl != null ) {
                 dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
 
@@ -265,6 +297,60 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             }
             else {
                 primaryOfficeView.setVisibility(View.GONE);
+            }
+            if (isNotBlank(contact.managerName)) {
+                bossHeader.setVisibility(View.VISIBLE);
+
+                final Contact boss = dataProviderServiceBinding.getContact(contact.managerId);
+                bossView.userId = dataProviderServiceBinding.getLoggedInUser().id;
+                bossView.setupView(boss);
+                bossView.noPhotoThumb.setText(boss.initials);
+                bossView.noPhotoThumb.setVisibility(View.VISIBLE);
+
+                bossView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                        if (props != null) {
+                            try {
+                                props.put("manager_id", String.valueOf(bossView.profileId));
+                                mixpanel.track("manager_tapped", props);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        Intent intent;
+                        if (bossView.userId == bossView.profileId) {
+                            intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                        } else {
+                            intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                        }
+                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        intent.putExtra("PROFILE_ID", bossView.profileId);
+                        startActivity(intent);
+                    }
+                });
+                if( contact.avatarUrl != null ) {
+                    dataProviderServiceBinding.setSmallContactImage(boss, bossView.thumbImage, bossView.noPhotoThumb);
+
+                }
+
+                bossView.setVisibility(View.VISIBLE);
+
+            } else {
+                bossHeader.setVisibility(View.GONE);
+                bossView.setVisibility(View.GONE);
+            }
+
+            JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+            if (props != null) {
+                try {
+                    props.put("user_id", String.valueOf(contact.id));
+                    mixpanel.track("profile_viewed", props);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

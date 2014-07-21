@@ -13,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
 
 /**
  * Custom implementation of the Android Application class that sets up global services and
@@ -23,6 +24,7 @@ import com.crashlytics.android.Crashlytics;
 public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
+    public static final String MIXPANEL_TOKEN = "b9c753b3560536492eba971a53213f5f";
 
     public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
