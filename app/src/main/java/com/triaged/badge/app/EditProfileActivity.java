@@ -41,6 +41,7 @@ import com.triaged.badge.data.Contact;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -356,7 +357,9 @@ public class EditProfileActivity extends BadgeActivity {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
-                birthDate.valueToSave = birthdayCalendar.getTime().toGMTString();
+                SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
+                iso8601Format.setTimeZone( Contact.GMT );
+                birthDate.valueToSave = iso8601Format.format( birthdayCalendar.getTime() );
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
@@ -372,7 +375,7 @@ public class EditProfileActivity extends BadgeActivity {
                 startDateCalendar.setTime(startDateFormat.parse(loggedInUser.startDateString));
             }
             catch (ParseException e) {
-                Log.w( LOG_TAG, "Value got saved for start date format that is no bueno", e );
+                Log.w(LOG_TAG, "Value got saved for start date format that is no bueno", e);
             }
         }
         startDateCalendar.set( Calendar.HOUR, 0 );
@@ -386,7 +389,9 @@ public class EditProfileActivity extends BadgeActivity {
                 startDateCalendar.set(Calendar.MONTH, monthOfYear);
                 startDateCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 startDate.secondaryValue = startDateFormat.format(startDateCalendar.getTime());
-                startDate.valueToSave = startDateFormat.format(startDateCalendar.getTime());
+                SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
+                iso8601Format.setTimeZone( Contact.GMT );
+                startDate.valueToSave = iso8601Format.format(startDateCalendar.getTime());
                 startDate.invalidate();
             }
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
