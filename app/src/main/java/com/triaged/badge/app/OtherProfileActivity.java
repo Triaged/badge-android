@@ -109,7 +109,8 @@ public class OtherProfileActivity extends AbstractProfileActivity {
         } else {
             newEmailButton.setVisibility(View.VISIBLE);
         }
-
+        // Try to refresh contact
+        //dataProviderServiceBinding.
     }
 
     private void trackProfileButtonEvent(String eventType) {

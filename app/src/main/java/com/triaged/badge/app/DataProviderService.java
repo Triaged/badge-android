@@ -668,7 +668,7 @@ public class DataProviderService extends Service {
                 remove( API_TOKEN_PREFS_KEY).
                 remove( LOGGED_IN_USER_ID_PREFS_KEY ).
                 remove( LAST_SYNCED_PREFS_KEY ).
-                remove( LoginActivity.PROPERTY_REG_ID ).
+                remove(LoginActivity.PROPERTY_REG_ID).
                 remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
                 remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
         stopService( new Intent( this, LocationTrackingService.class ) );
@@ -848,6 +848,45 @@ public class DataProviderService extends Service {
                 }
             }
         });
+    }
+
+    /**
+     * Updates a contact's info via the api and broadcasts
+     * {@link #DB_UPDATED_ACTION} locally if successful.
+     *
+     * @param contactId
+     */
+    protected void refreshContact( final int contactId ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.getContact( contactId );
+                    int statusCode = response.getStatusLine().getStatusCode();
+
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        try {
+                            JSONObject contact = parseJSONResponse(response.getEntity());
+                            ContentValues values = new ContentValues();
+                            setContactDBValesFromJSON( contact, values );
+                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contactId) } );
+                            localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
+                        }
+                        catch( JSONException e ) {
+                            Log.w( LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e );
+                        }
+                    }
+                    else  if( response.getEntity() != null ) {
+                        Log.w( LOG_TAG, "Response from /users/id was " + response.getStatusLine().getReasonPhrase() );
+                        response.getEntity().consumeContent();
+                    }
+
+                }
+                catch( IOException e ) {
+                    Log.w( LOG_TAG, "Couldn't refresh contact due to network issue." );
+                }
+            }
+        } );
     }
 
     /**
@@ -1277,7 +1316,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count") );
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count"));
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
@@ -1689,6 +1728,10 @@ public class DataProviderService extends Service {
         public JSONObject getBasicMixpanelData() {
             return DataProviderService.this.getBasicMixpanelData();
         }
+
+        public void refreshContact( int contactId ) {
+            DataProviderService.this.refreshContact( contactId );
+        }
     }
 
     /**
@@ -1845,6 +1888,7 @@ public class DataProviderService extends Service {
     protected static JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
         ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
         entity.writeTo( jsonBuffer );
+        jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONObject( json );
     }
