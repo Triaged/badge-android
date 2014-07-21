@@ -149,13 +149,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 @Override
                 public void onClick(View v) {
                     JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
-                    if (props != null) {
-                        try {
-                            props.put("subordinate_id", String.valueOf(newView.profileId));
-                            mixpanel.track("subordinate_tapped", props);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+                    try {
+                        props.put("subordinate_id", String.valueOf(newView.profileId));
+                        mixpanel.track("subordinate_tapped", props);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
 
                     Intent intent;
@@ -353,15 +351,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                     @Override
                     public void onClick(View v) {
                         JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
-                        if (props != null) {
-                            try {
-                                props.put("manager_id", String.valueOf(bossView.profileId));
-                                mixpanel.track("manager_tapped", props);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                        try {
+                            props.put("manager_id", String.valueOf(bossView.profileId));
+                            mixpanel.track("manager_tapped", props);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-
                         Intent intent;
                         if (bossView.userId == bossView.profileId) {
                             intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
@@ -387,13 +382,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             }
 
             JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
-            if (props != null) {
-                try {
-                    props.put("user_id", String.valueOf(contact.id));
-                    mixpanel.track("profile_viewed", props);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            try {
+                props.put("user_id", String.valueOf(contact.id));
+                mixpanel.track("profile_viewed", props);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
     }
