@@ -6,6 +6,7 @@ import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
@@ -17,28 +18,63 @@ import com.triaged.badge.data.Department;
 
 import org.w3c.dom.Text;
 
-/**
- * Created by Will on 7/9/14.
- */
-public class DepartmentsAdapter extends CursorAdapter {
+import java.util.LinkedList;
+import java.util.List;
 
-    protected static LruCache<Integer, Department > departmentCache = new LruCache<Integer, Department>(30);
+/**
+ * This is a simple array adapter of {@link com.triaged.badge.data.Department} pojos.
+ *
+ * @author Created by Will on 7/9/14.
+ */
+public class DepartmentsAdapter extends ArrayAdapter<Department> {
+
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private Context context;
     private LayoutInflater inflater;
     private int resourceId;
     private boolean onlyNonEmptyDepartments;
+    private List<Department> baseList;
 
-    public DepartmentsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding , int resourceId, boolean onlyNonEmptyDepartments) {
-        super(context, dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments ), false );
-        this.dataProviderServiceBinding = dataProviderServiceBinding;
+    public DepartmentsAdapter(Context context, int resourceId, DataProviderService.LocalBinding dataProviderServiceBinding, boolean onlyNonEmptyDepartments) {
+        super(context, resourceId);
+        this.context = context;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
         this.onlyNonEmptyDepartments = onlyNonEmptyDepartments;
+        this.dataProviderServiceBinding = dataProviderServiceBinding;
+        baseList = new LinkedList<Department>();
+        addDepartments();
+    }
+
+    private void addDepartments() {
+        clear();
+        baseList.clear();
+        Cursor c = dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments );
+        while( c.moveToNext() ) {
+            Department dept = new Department();
+            dept.fromCursor(c);
+            add( dept );
+            baseList.add( dept );
+        }
+
+        c.close();
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View v;
+        Department d = getItem( position );
+        if( convertView != null ) {
+            v = convertView;
+        }
+        else {
+            v = newView( parent );
+        }
+        bindView( v, d);
+        return v;
+    }
+
+    private View newView( ViewGroup parent ) {
 
         ViewHolder holder = new ViewHolder();
 
@@ -46,60 +82,40 @@ public class DepartmentsAdapter extends CursorAdapter {
         holder.deptNameView = (TextView) newView.findViewById(R.id.dept_name);
         holder.deptCountView = (TextView) newView.findViewById(R.id.dept_count);
         newView.setTag(holder);
-        Department d = getCachedDepartment(cursor);
-
-        holder.deptNameView.setText(d.name);
-        if (holder.deptCountView != null) {
-            holder.deptCountView.setText(String.valueOf(d.numContacts));
-        }
         return newView;
     }
 
-    @Override
-    public void bindView(View view, Context context, Cursor cursor) {
+    private void bindView(View view, Department d ) {
         ViewHolder holder = (ViewHolder) view.getTag();
-        Department d = getCachedDepartment( cursor );
         holder.deptNameView.setText(d.name);
         if (holder.deptCountView != null) {
             holder.deptCountView.setText(String.valueOf(d.numContacts));
         }
     }
 
-    /**
-     * Get the department pojo at a specific position in the db.
-     * Moves the cursor to the correct position then gets the
-     * department at that position.
-     *
-     * @param position the zero indexed position
-     * @return either a new department or a previously cached version.
-     */
-
-    public Department getCachedDepartment( int position ) {
-        return getCachedDepartment( (Cursor)getItem( position ) );
+    public void setFilter( String filter ) {
+        filter = filter.toLowerCase();
+        clear();
+        for( Department d : baseList ) {
+            if( d.name.toLowerCase().indexOf( filter ) > -1 ) {
+                add( d );
+            }
+        }
+        notifyDataSetChanged();
     }
 
-    /**
-     * Get the department pojo for a cursor pre-moved to the correct position.
-     *
-     * @param c the db cursor
-     * @return either a new department or a previously cached version.
-     */
-    public Department getCachedDepartment( Cursor c ) {
-        int id = Contact.getIntSafelyFromCursor( c, CompanySQLiteHelper.COLUMN_DEPARTMENT_ID );
-        Department dept = departmentCache.get( id );
-        if( dept == null ) {
-            dept = new Department();
-            dept.fromCursor( c );
-            departmentCache.put( id, dept );
+    public void clearFilter( ) {
+        for( Department d : baseList ) {
+            add( d );
         }
-        return dept;
+        notifyDataSetChanged();
     }
 
     /**
      * Call when adapter is going away for good (listview or containing activity being destroyed)
      */
     public void destroy() {
-        getCursor().close();
+        //getCursor().close();
     }
 
     /**
@@ -107,8 +123,7 @@ public class DepartmentsAdapter extends CursorAdapter {
      * from the db because it changed locally.
      */
     public void refresh() {
-        departmentCache.evictAll();
-        changeCursor(dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments ));
+        addDepartments();
         notifyDataSetChanged();
     }
 

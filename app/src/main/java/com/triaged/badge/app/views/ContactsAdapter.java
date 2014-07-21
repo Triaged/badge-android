@@ -76,42 +76,25 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     @Override
     public View newView(final Context context, Cursor cursor, ViewGroup parent) {
-        ViewHolder holder = new ViewHolder();
+        final ViewHolder holder = new ViewHolder();
         View newView =  inflater.inflate(contactResourceId, parent, false);
         holder.nameTextView = (TextView) newView.findViewById(R.id.contact_name);
         holder.titleTextView = (TextView) newView.findViewById(R.id.contact_title);
         holder.thumbImage = (ImageView) newView.findViewById(R.id.contact_thumb );
         holder.noPhotoThumb = (TextView) newView.findViewById(R.id.no_photo_thumb );
-        newView.setTag(holder);
-        final Contact c = getCachedContact( cursor );
-        holder.nameTextView.setText(c.name);
-        holder.titleTextView.setText(c.jobTitle);
         holder.messageButton = (ImageButton) newView.findViewById(R.id.message_contact);
         if (holder.messageButton !=null) {
             holder.messageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(context, MessageShowActivity.class);
-                    intent.putExtra("CONTACT_ID", c.id);
+                    intent.putExtra("CONTACT_ID", ((Contact)holder.messageButton.getTag()).id);
                     context.startActivity(intent);
                 }
             });
         }
-        if (c.jobTitle == null || c.jobTitle.equals("")) {
-            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
-            layoutParams.setMargins(0, (int) (19 * densityMultiplier),0,0);
-            holder.nameTextView.setLayoutParams(layoutParams);
-        } else {
-            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
-            layoutParams.setMargins(0, (int) (10 * densityMultiplier),0,0);
-            holder.nameTextView.setLayoutParams(layoutParams);
-        }
-        if( c.avatarUrl != null ) {
-            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
-        } else {
-            holder.noPhotoThumb.setText(c.initials);
-            holder.noPhotoThumb.setVisibility(View.VISIBLE);
-        }
+
+        newView.setTag(holder);
         return newView;
     }
 
@@ -119,6 +102,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
         Contact c = getCachedContact( cursor );
+        holder.contact = c;
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
         if (c.jobTitle == null || c.jobTitle.equals("")) {
@@ -131,12 +115,15 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             holder.nameTextView.setLayoutParams(layoutParams);
         }
         holder.thumbImage.setImageBitmap( null );
+        holder.noPhotoThumb.setText(c.initials);
+        holder.noPhotoThumb.setVisibility(View.VISIBLE);
         if( c.avatarUrl != null ) {
-            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage);
-            holder.noPhotoThumb.setVisibility(View.GONE);
-        } else {
-            holder.noPhotoThumb.setText(c.initials);
-            holder.noPhotoThumb.setVisibility(View.VISIBLE);
+
+            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb);
+//            holder.noPhotoThumb.setVisibility(View.GONE);
+        }
+        if( holder.messageButton != null ) {
+            holder.messageButton.setTag( c );
         }
     }
 
@@ -202,6 +189,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         ImageView thumbImage;
         ImageButton messageButton;
         TextView noPhotoThumb;
+        Contact contact;
     }
 
 }

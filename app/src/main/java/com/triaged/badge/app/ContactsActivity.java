@@ -11,16 +11,30 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TabWidget;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.triaged.badge.app.views.ContactsAdapter;
+import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
@@ -40,6 +54,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
+    private ContactsAdapterWithoutHeadings searchResultsAdapter = null;
 
     private Button contactsTabButton = null;
     private Button departmentsTabButton = null;
@@ -53,6 +68,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected BadgeApplication app;
 
     private LocalBroadcastManager localBroadcastManager;
+
+    private EditText searchBar = null;
+    private ImageButton clearButton = null;
+    private LinearLayout contactsDepartmentsTab = null;
+    private ListView searchResultsList = null;
+    private RelativeLayout.LayoutParams departmentListViewParams;
+    private int departmentListTopMargin = 0;
+    private int departmentListBottomMargin = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +127,73 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
 
+//        LayoutInflater inflater = LayoutInflater.from(this);
+//        RelativeLayout searchBarView = (RelativeLayout) inflater.inflate(R.layout.include_search, null);
+//        contactsListView.addHeaderView(searchBarView);
+
+        searchResultsList = (ListView) findViewById(R.id.search_results_list);
+
+        departmentListViewParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+        float densityMultiplier = getResources().getDisplayMetrics().density;
+        departmentListTopMargin = (int) (64 * densityMultiplier);
+        departmentListBottomMargin = (int) (40 * densityMultiplier);
+
+        searchBar = (EditText) findViewById(R.id.search_bar);
+        TextWatcher tw = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String text = searchBar.getText().toString();
+                if (text.length() > 0) {
+                    clearButton.setVisibility(View.VISIBLE);
+                    contactsDepartmentsTab.setVisibility(View.GONE);
+                    if (contactsTabButton.isSelected()) {
+                        searchResultsAdapter.setFilter( text );
+                        searchResultsList.setVisibility(View.VISIBLE);
+                        contactsListView.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
+                        departmentsListView.setLayoutParams(departmentListViewParams);
+                        departmentsAdapter.setFilter( text );
+                    }
+                } else {
+                    clearButton.setVisibility(View.GONE);
+                    contactsDepartmentsTab.setVisibility(View.VISIBLE);
+                    if (contactsTabButton.isSelected()) {
+                        contactsListView.setVisibility(View.VISIBLE);
+                        searchResultsList.setVisibility(View.GONE);
+                    }
+                    else {
+                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
+                        departmentsListView.setLayoutParams(departmentListViewParams);
+                        departmentsAdapter.clearFilter();
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        };
+        searchBar.addTextChangedListener(tw);
+
+        clearButton = (ImageButton) findViewById(R.id.clear_search);
+
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                searchBar.setText("");
+            }
+        });
+
+        contactsDepartmentsTab = (LinearLayout) findViewById(R.id.contacts_departments_tab);
+
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -119,8 +209,25 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 intent.putExtra("PROFILE_ID", clickedId);
                 startActivity(intent);
             }
-
         });
+
+        searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                int clickedId = searchResultsAdapter.getCachedContact(position).id;
+                Intent intent;
+                if (userId == clickedId) {
+                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                } else {
+                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                }
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", clickedId);
+                startActivity(intent);
+            }
+        });
+
 
         databaseReady = false;
         receiver = new BroadcastReceiver() {
@@ -143,8 +250,8 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(ContactsActivity.this, ContactsForDepartmentActivity.class);
-                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getCachedDepartment(position).id);
-                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getCachedDepartment(position).name);
+                intent.putExtra("DEPARTMENT_ID", departmentsAdapter.getItem(position).id);
+                intent.putExtra("DEPARTMENT_NAME", departmentsAdapter.getItem(position).name);
                 startActivity(intent);
             }
         });
@@ -179,6 +286,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         }
         if( departmentsAdapter != null ) {
             departmentsAdapter.destroy();
+        }
+        if( searchResultsAdapter != null ) {
+            searchResultsAdapter.destroy();
         }
         localBroadcastManager.unregisterReceiver(receiver);
     }
@@ -241,8 +351,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsAdapter.refresh();
         }
         else {
-            departmentsAdapter = new DepartmentsAdapter( this, dataProviderServiceBinding, R.layout.item_department_with_count, true );
+            departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_with_count, dataProviderServiceBinding, true );
             departmentsListView.setAdapter( departmentsAdapter );
+        }
+        if( searchResultsAdapter != null ) {
+            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursor() );
+        }
+        else {
+            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursor(), dataProviderServiceBinding );
+            searchResultsList.setAdapter( searchResultsAdapter );
         }
     }
 

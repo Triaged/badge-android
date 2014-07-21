@@ -9,9 +9,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.triaged.badge.app.views.ProfileManagesAdapter;
+import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 
 /**
  * Contacts for a given department
@@ -21,7 +20,7 @@ import com.triaged.badge.app.views.ProfileManagesAdapter;
 public class ContactsForDepartmentActivity extends BackButtonActivity {
 
     private ListView contactsForDepartmentList;
-    private ProfileManagesAdapter adapter;
+    private ContactsAdapterWithoutHeadings adapter;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     @Override
@@ -56,7 +55,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
         String departmentName = intent.getStringExtra("DEPARTMENT_NAME");
         backButton.setText(departmentName);
         Cursor deptCursor = dataProviderServiceBinding.getContactsByDepartmentCursor(departmentId);
-        adapter = new ProfileManagesAdapter(this, deptCursor, dataProviderServiceBinding);
+        adapter = new ContactsAdapterWithoutHeadings(this, deptCursor, dataProviderServiceBinding);
         contactsForDepartmentList.setAdapter(adapter);
 
     }
@@ -68,4 +67,9 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
     }
 
 
+    @Override
+    protected void onDestroy() {
+        adapter.destroy();
+        super.onDestroy();
+    }
 }

@@ -159,4 +159,14 @@ public class Contact {
         return String.format( "Name: %s %s, avatar: %s, id: %d", firstName, lastName, avatarUrl, id );
     }
 
+    /**
+     * Assesses whether this contact matches a filter
+     *
+     * @param partialName filter string
+     * @return true if partialName occurs anywhere in the contact's full name.
+     */
+    public boolean matchesFilter( String partialName ) {
+        return name.toLowerCase().indexOf( partialName.toLowerCase() ) > -1;
+    }
+
 }
