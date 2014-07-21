@@ -160,6 +160,10 @@ public class Contact {
         if( !employeeInfo.isNull( "birth_date" ) ) {
             birthDateString = convertBirthDateString(employeeInfo.getString("birth_date"));
         }
+        if( !contactJson.isNull( "email" ) ) {
+            email = contactJson.getString( "email" );
+        }
+
         constructName();
     }
 

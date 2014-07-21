@@ -45,7 +45,7 @@ public class BadgeApplication extends Application
             @Override
             public void onBecameForeground() {
                 MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(BadgeApplication.this, MIXPANEL_TOKEN);
-                JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                JSONObject props = new JSONObject();
                 mixpanelAPI.track("appForeground", props);
                 mixpanelAPI.flush();
             }

@@ -27,6 +27,7 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -376,9 +377,6 @@ public class DataProviderService extends Service {
                         }
                     }
 
-                    prefs.edit().putString( COMPANY_NAME_PREFS_KEY, companyObj.getString( "name" ) ).
-                                putInt( COMPANY_ID_PREFS_KEY, companyObj.getInt("id") ).commit();
-
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
 
                 }
@@ -685,6 +683,8 @@ public class DataProviderService extends Service {
         startActivity( intent );
 
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
+        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+        mixpanelAPI.clearSuperProperties();
     }
 
     protected void changePassword( final String currentPassword, final String newPassword, final String newPasswordConfirmation, final AsyncSaveCallback saveCallback ) {
@@ -858,7 +858,14 @@ public class DataProviderService extends Service {
                             apiClient.apiToken = account.getString("authentication_token");
                             loggedInUser = new Contact();
                             loggedInUser.fromJSON(account.getJSONObject("current_user"));
-                            prefs.edit().putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
+                            prefs.edit().putInt( COMPANY_ID_PREFS_KEY, account.getInt( "company_id" ) ).
+                                    putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).
+                                    putString( COMPANY_NAME_PREFS_KEY, account.getString( "company_name" ) ).
+                                    putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
+
+                            JSONObject props = constructMixpanelSuperProperties();
+                            MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+                            mixpanelAPI.registerSuperProperties(props);
 
                             if (loginCallback != null) {
                                 handler.post(new Runnable() {
@@ -1161,7 +1168,7 @@ public class DataProviderService extends Service {
                         JSONObject account = parseJSONResponse( response.getEntity() );
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON( account.getJSONObject( "current_user" ), values );
+                        setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
 
 
                         // OK now send avatar if there was a new one specified
@@ -1251,7 +1258,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.patchAccountRequest(user);
-                    ensureNotUnauthorized( response );
+                    ensureNotUnauthorized(response);
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
@@ -1613,7 +1620,11 @@ public class DataProviderService extends Service {
     /**
      * Construct JSONObject of user data to send with Mixpanel event tracking
      * */
-    private JSONObject getBasicMixpanelData() {
+    protected JSONObject getBasicMixpanelData() {
+        return new JSONObject();
+    }
+
+    protected JSONObject constructMixpanelSuperProperties() {
         JSONObject mixpanelData = new JSONObject();
         try {
             mixpanelData.put("firstName", loggedInUser.firstName);
@@ -1622,12 +1633,12 @@ public class DataProviderService extends Service {
             mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
             mixpanelData.put("company.identifier", prefs.getString(COMPANY_ID_PREFS_KEY, ""));
             return mixpanelData;
-        } catch (JSONException e) {
-            e.printStackTrace();
+        }
+        catch (JSONException e) {
+            Log.w( LOG_TAG, "Couldn't construct mix panel super property json" );
         }
         return null;
     }
-
 
     /**
      * Local, non rpc interface for this service.
@@ -1806,7 +1817,7 @@ public class DataProviderService extends Service {
          * @see com.triaged.badge.app.DataProviderService#changePassword(String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void changePassword( String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.changePassword( oldPassword, newPassword, newPasswordConfirmation, saveCallback );
+            DataProviderService.this.changePassword(oldPassword, newPassword, newPasswordConfirmation, saveCallback);
         }
 
         /**
