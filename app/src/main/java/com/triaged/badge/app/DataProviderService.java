@@ -64,6 +64,8 @@ public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
     public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
+    public static final String COMPANY_NAME_PREFS_KEY = "companyName";
+    public static final String COMPANY_ID_PREFS_KEY = "companyId";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
@@ -372,6 +374,9 @@ public class DataProviderService extends Service {
                             values.clear();
                         }
                     }
+
+                    prefs.edit().putString( COMPANY_NAME_PREFS_KEY, companyObj.getString( "name" ) ).
+                                putInt( COMPANY_ID_PREFS_KEY, companyObj.getInt("id") ).commit();
 
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                 } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
@@ -1588,7 +1593,7 @@ public class DataProviderService extends Service {
 
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, byte[], com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
             DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFile, saveCallback);
