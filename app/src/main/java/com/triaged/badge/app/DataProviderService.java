@@ -15,6 +15,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -28,6 +29,7 @@ import android.widget.ImageView;
 
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
+import com.triaged.badge.data.DiskLruCache;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -40,9 +42,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -64,6 +69,7 @@ public class DataProviderService extends Service {
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
+
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
@@ -163,13 +169,59 @@ public class DataProviderService extends Service {
     protected ArrayList<Contact> contactList;
     protected Handler handler;
     protected volatile boolean initialized;
-    protected LruCache<String, Bitmap> thumbCache;
+
     protected HttpClient httpClient;
     protected MimeTypeMap mimeTypeMap;
 
     private LocalBinding localBinding;
     private LocalBroadcastManager localBroadcastManager;
 
+    // Img cache related stuffs
+
+    private DiskLruCache mDiskLruCache;
+    private final Object mDiskCacheLock = new Object();
+    private boolean mDiskCacheStarting = true;
+    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
+    private static final String DISK_CACHE_SUBDIR = "thumbnails";
+    protected LruCache<String, Bitmap> thumbCache;
+
+
+
+    class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
+        @Override
+        protected Void doInBackground(File... params) {
+            synchronized (mDiskCacheLock) {
+                try {
+                    File cacheDir = params[0];
+                    mDiskLruCache = DiskLruCache.open(cacheDir, 1, 1, DISK_CACHE_SIZE);
+                    mDiskCacheStarting = false; // Finished initialization
+                    mDiskCacheLock.notifyAll(); // Wake any waiting threads
+                }
+                catch( IOException e ) {
+                    Log.w( LOG_TAG, "Couldn't open disk image cache.", e );
+                }
+            }
+            return null;
+        }
+    }
+
+
+    /**
+     *
+     * @param context
+     * @param uniqueName
+     * @return
+     */
+    protected File getDiskCacheDir(Context context, String uniqueName) {
+        // Check if media is mounted or storage is built-in, if so, try and use external cache dir
+        // otherwise use internal cache dir
+        final String cachePath =
+                Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
+                        !Environment.isExternalStorageRemovable() ? getExternalCacheDir().getPath() :
+                        context.getCacheDir().getPath();
+
+        return new File(cachePath + File.separator + uniqueName);
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -209,6 +261,10 @@ public class DataProviderService extends Service {
         };
 
         httpClient = new DefaultHttpClient();
+
+        // Initialize disk cache on background thread
+        File cacheDir = getDiskCacheDir(this, DISK_CACHE_SUBDIR);
+        new InitDiskCacheTask().execute(cacheDir);
     }
 
     @Override
@@ -218,6 +274,14 @@ public class DataProviderService extends Service {
         databaseHelper.close();
         apiClient.getConnectionManager().shutdown();
         httpClient.getConnectionManager().shutdown();
+        if( !mDiskCacheStarting && mDiskLruCache != null ) {
+            try {
+                mDiskLruCache.close();
+            }
+            catch( IOException e ) {
+                Log.w( LOG_TAG, "IOException closing disk cache", e );
+            }
+        }
         database = null;
     }
 
@@ -484,7 +548,7 @@ public class DataProviderService extends Service {
             }
         }
         else {
-            new DownloadImageTask( c.avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
+            new LoadImageAsyncTask( c.avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
         }
     }
 
@@ -497,7 +561,7 @@ public class DataProviderService extends Service {
      * @param imageView
      */
     protected void setLargeContactImage( Contact c, ImageView imageView ) {
-        new DownloadImageTask( c.avatarUrl, imageView, null ).execute();
+        new LoadImageAsyncTask( c.avatarUrl, imageView, null ).execute();
     }
 
     /**
@@ -977,7 +1041,7 @@ public class DataProviderService extends Service {
                         JSONObject account = parseJSONResponse( response.getEntity() );
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON( account, values );
+                        setContactDBValesFromJSON( account.getJSONObject( "current_user" ), values );
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
@@ -1581,10 +1645,11 @@ public class DataProviderService extends Service {
 
 
     /**
-     * Background task to fetch an image from the server, set it as the resource
-     * for an image view, and optionally cache the image for future use.
+     * Background task to fetch an image first from a disk cache,
+     * and if not there yet, the server, set it as the resource
+     * for an image view, and keep it in disk and mem cache for the future
      */
-    private class DownloadImageTask extends AsyncTask<Void, Void, Void> {
+    private class LoadImageAsyncTask extends AsyncTask<Void, Void, Void> {
         private String urlStr = null;
         private View thumbView = null;
         private View placeholderView;
@@ -1597,7 +1662,7 @@ public class DataProviderService extends Service {
          * @param url
          * @param thumbView
          */
-        protected DownloadImageTask( String url, View thumbView, View placeholderView  ) {
+        protected LoadImageAsyncTask(String url, View thumbView, View placeholderView) {
             this( url, thumbView, placeholderView, null );
         }
 
@@ -1609,62 +1674,115 @@ public class DataProviderService extends Service {
          * @param placeholderView view to hide if we successfully download the image and set it on the view.
          * @param memoryCache cache to put image in to after downloading.
          */
-        protected DownloadImageTask( String url, View thumbView, View placeholderView, LruCache<String, Bitmap> memoryCache ) {
+        protected LoadImageAsyncTask(String url, View thumbView, View placeholderView, LruCache<String, Bitmap> memoryCache) {
             this.urlStr = url;
             this.thumbView = thumbView;
             this.memoryCache = memoryCache;
             this.placeholderView = placeholderView;
         }
 
-        @Override
-        protected Void doInBackground(Void... params) {
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE );
-            NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-            if( info != null && info.isConnected() ) {
+        protected String getUrlHash() {
+            return String.valueOf( urlStr.hashCode() );
+        }
 
-                try {
-                    URI uri = new URI(urlStr);
-                    HttpGet imageGet = new HttpGet( uri );
-                    HttpHost host = new HttpHost( uri.getHost() );
-                    HttpResponse response = httpClient.execute(host, imageGet);
-                    if( response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ) {
-                        InputStream imgStream = response.getEntity().getContent();
-                        final Bitmap bitmap = BitmapFactory.decodeStream( imgStream );
-                        imgStream.close();
-                        if( bitmap != null ) {
-                            //final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
-                            handler.post( new Runnable() {
-                                @Override
-                                public void run() {
-                                    assignBitmapToView( bitmap, thumbView );
-                                    if( placeholderView != null ) {
-                                        placeholderView.setVisibility(View.GONE);
-                                    }
-                                }
-                            } );
-
-                            if( memoryCache != null ) {
-                                memoryCache.put(urlStr, bitmap);
-                            }
-                        }
-                        else {
-                            Log.w( LOG_TAG, "Decoded bitmap from " + urlStr + " was null. Bad image data?" );
+        protected Bitmap loadBitmapFromDisk( ) {
+            try {
+                synchronized (mDiskCacheLock) {
+                    // Wait while disk cache is started from background thread
+                    while (mDiskCacheStarting) {
+                        try {
+                            mDiskCacheLock.wait();
+                        } catch (InterruptedException e) {
+                            return null;
                         }
                     }
-                    else {
-                        if( response.getEntity() != null ) {
-                            response.getEntity().consumeContent();
+                    if (mDiskLruCache != null) {
+                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(getUrlHash());
+                        if( snapshot != null ) {
+                            BufferedInputStream stream = new BufferedInputStream(snapshot.getInputStream(0));
+                            Bitmap bitmap = BitmapFactory.decodeStream(stream);
+                            stream.close();
+                            return bitmap;
                         }
                     }
-                }
-                catch (URISyntaxException e) {
-                    // Womp womp
-                    Log.e(LOG_TAG, "Either we got a bad URL from the api or we did something stupid", e);
-                }
-                catch( IOException e ) {
-                    Log.w( LOG_TAG, "Network issue reading image data" );
                 }
             }
+            catch( IOException e ) {
+                // OK... ?
+                Log.e( LOG_TAG, "Error reading from disk cache", e );
+            }
+            return null;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // Is it in disk cache?
+
+            Bitmap bitmap = loadBitmapFromDisk();
+
+
+
+            if( bitmap == null ) {
+                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+                if (info != null && info.isConnected()) {
+
+                    try {
+                        URI uri = new URI(urlStr);
+                        HttpGet imageGet = new HttpGet(uri);
+                        HttpHost host = new HttpHost(uri.getHost());
+                        HttpResponse response = httpClient.execute(host, imageGet);
+                        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                            // Add full sized img to disk cache.
+                            synchronized (mDiskCacheLock) {
+                                if (mDiskLruCache != null && !mDiskCacheStarting ) {
+                                    DiskLruCache.Editor editor = mDiskLruCache.edit(getUrlHash());
+                                    OutputStream out = editor.newOutputStream(0);
+                                    if( out != null ) {
+                                        response.getEntity().writeTo(out);
+                                        out.close();
+                                        editor.commit();
+                                        bitmap = loadBitmapFromDisk();
+                                    }
+                                }
+                            }
+                        } else {
+                            if (response.getEntity() != null) {
+                                response.getEntity().consumeContent();
+                            }
+                        }
+                    } catch (URISyntaxException e) {
+                        // Womp womp
+                        Log.e(LOG_TAG, "Either we got a bad URL from the api or we did something stupid", e);
+                    } catch (IOException e) {
+                        Log.w(LOG_TAG, "Network issue reading image data", e);
+                    }
+                }
+            }
+
+            if( bitmap != null ) {
+                final Bitmap scaledBitmap = thumbView.getWidth() > 0 ? Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false) : bitmap;
+
+                if( memoryCache != null ) {
+                    memoryCache.put(urlStr, scaledBitmap);
+                }
+
+                handler.post( new Runnable() {
+                    @Override
+                    public void run() {
+                        assignBitmapToView(scaledBitmap, thumbView);
+                        if( placeholderView != null ) {
+                            placeholderView.setVisibility( View.GONE );
+                        }
+
+                    }
+                });
+
+            }
+            else {
+                Log.w( LOG_TAG, "Bitmap from " + urlStr + " was null. No network? Bad image data?" );
+            }
+
             return null;
         }
     }
