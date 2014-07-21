@@ -40,11 +40,13 @@ import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -77,7 +79,7 @@ public class EditProfileActivity extends BadgeActivity {
     private EditProfileInfoView startDate = null;
     private EditProfileInfoView birthDate = null;
 
-    private Uri outputFileUri;
+    private String currentPhotoPath;
 
     private DatePickerDialogNoYear birthdayDialog = null;
     protected Calendar birthdayCalendar = null;
@@ -298,38 +300,38 @@ public class EditProfileActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 // Determine Uri of camera image to save.
-                final File root = new File(Environment.getExternalStorageDirectory() + File.separator + "Badge" + File.separator);
-                root.mkdirs();
-                final String fname = "img_" + System.currentTimeMillis() + ".jpg";
-                final File sdImageMainDirectory = new File(root, fname);
-                outputFileUri = Uri.fromFile(sdImageMainDirectory);
+                try {
+                    File photoFile = createImageFile();
 
-                // Camera.
-                final List<Intent> cameraIntents = new ArrayList<Intent>();
-                final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                final PackageManager packageManager = getPackageManager();
-                final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
-                for(ResolveInfo res : listCam) {
-                    final String packageName = res.activityInfo.packageName;
-                    final Intent intent = new Intent(captureIntent);
-                    intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
-                    intent.setPackage(packageName);
-                    intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-                    cameraIntents.add(intent);
+                    // Camera.
+                    final List<Intent> cameraIntents = new ArrayList<Intent>();
+                    final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    final PackageManager packageManager = getPackageManager();
+                    final List<ResolveInfo> listCam = packageManager.queryIntentActivities(captureIntent, 0);
+                    for(ResolveInfo res : listCam) {
+                        final String packageName = res.activityInfo.packageName;
+                        final Intent intent = new Intent(captureIntent);
+                        intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
+                        intent.setPackage(packageName);
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                        cameraIntents.add(intent);
+                    }
+
+                    // Filesystem.
+                    final Intent galleryIntent = new Intent();
+                    galleryIntent.setType("image/*");
+                    galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+                    // Chooser of filesystem options.
+                    final Intent chooserIntent = Intent.createChooser(galleryIntent, "Select Source");
+
+                    // Add the camera options.
+                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
+
+                    startActivityForResult(chooserIntent, PICTURE_REQUEST_CODE);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-                // Filesystem.
-                final Intent galleryIntent = new Intent();
-                galleryIntent.setType("image/*");
-                galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-
-                // Chooser of filesystem options.
-                final Intent chooserIntent = Intent.createChooser(galleryIntent, "Select Source");
-
-                // Add the camera options.
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
-
-                startActivityForResult(chooserIntent, PICTURE_REQUEST_CODE);
             }
         });
 
@@ -404,24 +406,27 @@ public class EditProfileActivity extends BadgeActivity {
         if( resultCode != RESULT_CANCELED ) {
             switch (requestCode) {
                 case PICTURE_REQUEST_CODE:
-                    if (data != null) {
-                        // GET FROM GALLERY
-                        boolean isCamera = MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
-                        Bitmap photo;
-                        if (isCamera) {
-                            photo = (Bitmap) data.getExtras().get("data");
+                    // GET FROM GALLERY
+                    boolean isCamera = data == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
+                    Bitmap photo;
+                    if (isCamera) {
+                        if (data == null) {
+                            photo = BitmapFactory.decodeFile(currentPhotoPath);
                         } else {
-                            photo = getBitmapFromCameraData(data, EditProfileActivity.this);
+                            photo = (Bitmap) data.getExtras().get("data");
                         }
-                        photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
-                        profileImageView.setImageBitmap(photo);
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                        byte[] byteArray = byteArrayOutputStream.toByteArray();
-                        encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                        if (profileImageMissingView.getVisibility() == View.VISIBLE) {
-                            profileImageMissingView.setVisibility(View.GONE);
-                        }
+
+                    } else {
+                        photo = getBitmapFromCameraData(data, EditProfileActivity.this);
+                    }
+                    photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
+                    profileImageView.setImageBitmap(photo);
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                    byte[] byteArray = byteArrayOutputStream.toByteArray();
+                    encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                    if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                        profileImageMissingView.setVisibility(View.GONE);
                     }
                     break;
                 case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:
@@ -477,10 +482,10 @@ public class EditProfileActivity extends BadgeActivity {
     }
 
     /**
-    * Use for decoding camera response data.
-    *
-    * @param data * @param context * @return
-    */
+     * Use for decoding camera response data.
+     *
+     * @param *data  @param context * @return
+     */
     public static Bitmap getBitmapFromCameraData(Intent data, Context context){
         Uri selectedImage = data.getData();
         String[] filePathColumn = { MediaStore.Images.Media.DATA };
@@ -492,4 +497,19 @@ public class EditProfileActivity extends BadgeActivity {
         return BitmapFactory.decodeFile(picturePath);
     }
 
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
 }
