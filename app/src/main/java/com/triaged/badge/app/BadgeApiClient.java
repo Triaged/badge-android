@@ -43,6 +43,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
     private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
+    private static final String CHANGE_PASSWORD_URI = String.format( "%s://%s/v1/account/update_password", API_PROTOCOL, API_HOST );
     private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
     private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/entered";
     private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
@@ -174,6 +175,9 @@ public class BadgeApiClient extends DefaultHttpClient {
     /**
      * PUTS to /offices/:id/entered to check in to an office
      *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
      * @param officeId office to check in to
      * @return
      */
@@ -186,6 +190,9 @@ public class BadgeApiClient extends DefaultHttpClient {
     /**
      * PUTS to /offices/:id/exited to check out of an office
      *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
      * @param officeId office to check out of
      * @return
      */
@@ -195,8 +202,23 @@ public class BadgeApiClient extends DefaultHttpClient {
         return execute( httpHost, put );
     }
 
-
-
+    /**
+     * PUTS to /account/update_password
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param postBody
+     * @return
+     */
+    public HttpResponse changePasswordRequest( JSONObject postBody ) throws IOException {
+        HttpPut put = new HttpPut( CHANGE_PASSWORD_URI );
+        put.setHeader( "Authorization", apiToken );
+        StringEntity body = new StringEntity( postBody.toString(), "UTF-8" );
+        body.setContentType( MIME_TYPE_JSON );
+        put.setEntity( body );
+        return execute( httpHost, put );
+    }
 
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {

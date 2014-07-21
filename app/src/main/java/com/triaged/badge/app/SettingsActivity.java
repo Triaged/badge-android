@@ -63,10 +63,21 @@ public class SettingsActivity extends BackButtonActivity {
                 alertDialog.setPositiveButton("Save", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(SettingsActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
+                        // Toast.makeText(SettingsActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                         imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
 
+                        dataProviderServiceBinding.changePassword( input.getText().toString(), new DataProviderService.AsyncSaveCallback() {
+                            @Override
+                            public void saveSuccess(int newId) {
+                                Toast.makeText( SettingsActivity.this, "Your password has been updated", Toast.LENGTH_SHORT ).show();
+                            }
+
+                            @Override
+                            public void saveFailed(String reason) {
+                                Toast.makeText( SettingsActivity.this, reason, Toast.LENGTH_SHORT ).show();
+                            }
+                        } );
                     }
                 });
                 alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

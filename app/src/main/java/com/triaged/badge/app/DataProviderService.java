@@ -318,6 +318,7 @@ public class DataProviderService extends Service {
             db.execSQL(CLEAR_DEPARTMENTS_SQL);
             db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
             HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
+            ensureNotUnauthorized( response );
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
@@ -374,9 +375,9 @@ public class DataProviderService extends Service {
                     }
 
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
-                } else if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                    loggedOut();
-                } else {
+
+                }
+                else {
                     Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");
                 }
             }
@@ -403,6 +404,7 @@ public class DataProviderService extends Service {
         }
 
     }
+
 
     private void setContactDBValesFromJSON( JSONObject json, ContentValues values ) throws JSONException {
         values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, json.getInt("id"));
@@ -678,6 +680,52 @@ public class DataProviderService extends Service {
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
     }
 
+    protected void changePassword( final String currentPassword, final String newPassword, final String newPasswordConfirmation, final AsyncSaveCallback saveCallback ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                JSONObject postBody = new JSONObject();
+                try {
+                    JSONObject user = new JSONObject();
+                    postBody.put( "user", user );
+                    user.put( "current_password", currentPassword );
+                    user.put( "password", newPassword );
+                    user.put( "password_confirmation", newPasswordConfirmation );
+                }
+                catch( JSONException e ) {
+                    Log.e(LOG_TAG, "JSON exception creating post body for change password", e);
+                    fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                }
+
+                try {
+                    HttpResponse response = apiClient.changePasswordRequest( postBody );
+                    ensureNotUnauthorized( response );
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( response.getEntity() != null ) {
+                        response.getEntity().consumeContent();
+                    }
+                    if( statusCode == HttpStatus.SC_OK  ) {
+                        if( saveCallback != null ) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    saveCallback.saveSuccess( -1 );
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        fail( "Got unexpected response from server. Please contact Badge HQ.", saveCallback );
+                    }
+                }
+                catch( IOException e ) {
+                    fail("There was a network issue changing password, please check your connection and try again.", saveCallback);
+                }
+
+            }
+        });
+    }
+
     /**
      * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
      * and on success wipes local data on the phone and removes tokens.
@@ -694,6 +742,7 @@ public class DataProviderService extends Service {
                     loggedOut();
                     if( deviceId != -1 ) {
                         HttpResponse response = apiClient.unregisterDeviceRequest( deviceId );
+                        ensureNotUnauthorized( response );
                         if( response.getEntity() != null ) {
                             response.getEntity().consumeContent();
                         }
@@ -735,7 +784,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.registerDeviceRequest(postData);
-
+                    ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED) {
                         // Get new department id
@@ -843,6 +892,20 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Every time we hit the API, we should make sure the status code
+     * returned wasn't unauthorized. If it was, we assume
+     * the user has been logged out or termed or something and we reset
+     * to logged out state.
+     *
+     * @param response
+     */
+    protected void ensureNotUnauthorized( HttpResponse response ) {
+        if( response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+            loggedOut();
+        }
+    }
+
+    /**
      * Changes current user's office to this office id, when location svcs determine
      * they are there. If a current office is already set, does nothing.
      *
@@ -856,6 +919,7 @@ public class DataProviderService extends Service {
 
                     try {
                         HttpResponse response = apiClient.checkinRequest( officeId );
+                        ensureNotUnauthorized( response );
                         int status = response.getStatusLine().getStatusCode();
                         if( response.getEntity() != null ) {
                             response.getEntity().consumeContent();
@@ -886,32 +950,31 @@ public class DataProviderService extends Service {
      */
     protected void checkOutOfOffice(final int officeId) {
         if (loggedInUser.currentOfficeLocationId == officeId) {
-            sqlThread.submit( new Runnable() {
+            sqlThread.submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         HttpResponse response = apiClient.checkoutRequest(officeId);
+                        ensureNotUnauthorized(response);
                         int status = response.getStatusLine().getStatusCode();
-                        if( response.getEntity() != null ) {
+                        if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
                         }
-                        if(  status == HttpStatus.SC_OK ) {
+                        if (status == HttpStatus.SC_OK) {
                             ContentValues values = new ContentValues();
-                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
-                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
+                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
+                            database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                             loggedInUser.currentOfficeLocationId = -1;
+                        } else {
+                            Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
                         }
-                        else {
-                            Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
-                        }
-                    }
-                    catch( IOException e ) {
-                        Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
+                    } catch (IOException e) {
+                        Log.w(LOG_TAG, "Couldn't check out of office due to IOException " + officeId);
                         // Rats. Next time?
                     }
 
                 }
-            } );
+            });
         }
     }
 
@@ -1035,6 +1098,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.patchAccountRequest(user);
+                    ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
                         JSONObject account = parseJSONResponse( response.getEntity() );
@@ -1113,6 +1177,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.patchAccountRequest(user);
+                    ensureNotUnauthorized( response );
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
@@ -1157,7 +1222,7 @@ public class DataProviderService extends Service {
      * @param primaryLocation
      * @param saveCallback
      */
-    protected void savePrimaryLocationASync( final int primaryLocation, final AsyncSaveCallback saveCallback ) {
+    protected void savePrimaryLocationAsync(final int primaryLocation, final AsyncSaveCallback saveCallback) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -1179,6 +1244,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.patchAccountRequest(postData);
+                    ensureNotUnauthorized( response );
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
@@ -1242,7 +1308,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.createDepartmentRequest(postData);
-
+                    ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
                         // Get new department id
@@ -1323,7 +1389,7 @@ public class DataProviderService extends Service {
 
                 try {
                     HttpResponse response = apiClient.createLocationRequest(postData);
-
+                    ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED ) {
                         // Get new department id
@@ -1415,6 +1481,7 @@ public class DataProviderService extends Service {
                 try {
 
                     HttpResponse response = apiClient.patchAccountRequest(user);
+                    ensureNotUnauthorized( response );
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
                     }
@@ -1566,10 +1633,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationASync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationAsync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
         public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
-            DataProviderService.this.savePrimaryLocationASync(primaryLocation, saveCallback);
+            DataProviderService.this.savePrimaryLocationAsync(primaryLocation, saveCallback);
         }
 
 
