@@ -12,6 +12,8 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
@@ -361,7 +363,7 @@ public class EditProfileActivity extends BadgeActivity {
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
                 SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
                 iso8601Format.setTimeZone( Contact.GMT );
-                birthDate.valueToSave = iso8601Format.format( birthdayCalendar.getTime() );
+                birthDate.valueToSave = iso8601Format.format(birthdayCalendar.getTime());
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
@@ -416,7 +418,7 @@ public class EditProfileActivity extends BadgeActivity {
                     Bitmap photo;
                     if (isCamera) {
                         if (data == null) {
-                            photo = BitmapFactory.decodeFile(currentPhotoPath);
+                            photo = getPhotoFromFileSystem();
                         } else {
                             photo = (Bitmap) data.getExtras().get("data");
                         }
@@ -452,6 +454,30 @@ public class EditProfileActivity extends BadgeActivity {
                     break;
             }
         }
+    }
+
+    private Bitmap getPhotoFromFileSystem() {
+        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+        try {
+            ExifInterface exif = new ExifInterface(currentPhotoPath);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+            Matrix matrix = new Matrix();
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                matrix.postRotate(90);
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                matrix.postRotate(180);
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                matrix.postRotate(270);
+            }
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+        }
+        catch (Exception e) {
+            Log.d(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
+        }
+        
+        return bitmap;
     }
 
     class DatePickerDialogNoYear extends DatePickerDialog {
