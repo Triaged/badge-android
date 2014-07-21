@@ -1037,7 +1037,7 @@ public class DataProviderService extends Service {
                         JSONObject account = parseJSONResponse( response.getEntity() );
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON( account, values );
+                        setContactDBValesFromJSON( account.getJSONObject( "current_user" ), values );
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
