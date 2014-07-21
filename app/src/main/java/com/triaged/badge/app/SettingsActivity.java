@@ -65,16 +65,16 @@ public class SettingsActivity extends BackButtonActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         Toast.makeText(SettingsActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
 
                     }
                 });
                 alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(input.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+                        dialog.cancel();
                     }
                 });
                 alertDialog.show();
@@ -102,6 +102,7 @@ public class SettingsActivity extends BackButtonActivity {
         newMessageNotificationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // TODO: WHAT CHANGES HERE???
                 Toast.makeText(SettingsActivity.this, "New Message Notification Switch Changed", Toast.LENGTH_SHORT).show();
             }
         });
