@@ -40,4 +40,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.crashlytics.android:crashlytics:1.+'
     compile "com.mixpanel.android:mixpanel-android:4.2.1@aar"
+    compile 'org.apache.james:apache-mime4j-core:0.7.2'
 }

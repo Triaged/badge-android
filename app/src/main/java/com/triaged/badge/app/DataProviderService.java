@@ -1016,9 +1016,6 @@ public class DataProviderService extends Service {
                     data.put( "department_id", departmentId );
                     data.put( "manager_id", managerId );
                     data.put( "primary_office_location_id", primaryOfficeId );
-                    if( newAvatarFileBase64Str != null ) {
-                        data.put( "avatar", newAvatarFileBase64Str );
-                    }
 
                     employeeInfo.put( "birth_date", birthDateString );
                     employeeInfo.put( "cell_phone", cellPhone );
@@ -1041,6 +1038,15 @@ public class DataProviderService extends Service {
                         // Update local data.
                         ContentValues values = new ContentValues();
                         setContactDBValesFromJSON( account.getJSONObject( "current_user" ), values );
+
+
+                        // OK now send avatar if there was a new one specified
+                        if( newAvatarFileBase64Str != null ) {
+                            HttpResponse response = apiClient.uploadNewAvatar( newAvatarFileBase64Str );
+                            int avatarStatusCode = response.getStatusLine().getStatusCode();
+                            if( response.getStatusLine().getStatusCode() )
+                        }
+
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {

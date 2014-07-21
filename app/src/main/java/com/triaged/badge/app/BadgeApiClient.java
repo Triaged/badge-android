@@ -102,6 +102,21 @@ public class BadgeApiClient extends DefaultHttpClient {
     }
 
     /**
+     * Uploads avatar data in a multipart form request.
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param base64Png image data as base 64 encoded png
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse uploadNewAvatar( String base64Png ) throws IOException {
+       //Builder
+        // MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+    }
+
+    /**
      * Make an api POST request to /sessions to log in.
      *
      * The caller should make sure that it consumes all the entity content
