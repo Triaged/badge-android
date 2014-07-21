@@ -95,6 +95,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                contact = dataProviderServiceBinding.getContact( contact.id );
                 setupProfile();
             }
         };
