@@ -19,6 +19,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 /**
  * User settings view
  *
@@ -86,6 +88,10 @@ public class SettingsActivity extends BackButtonActivity {
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                mixpanel.track("logout", props);
+
                 dataProviderServiceBinding.logout();
             }
         });
