@@ -1677,6 +1677,10 @@ public class DataProviderService extends Service {
             this.placeholderView = placeholderView;
         }
 
+        protected String getUrlHash() {
+            return String.valueOf( urlStr.hashCode() );
+        }
+
         protected Bitmap loadBitmapFromDisk( ) {
             try {
                 synchronized (mDiskCacheLock) {
@@ -1689,7 +1693,7 @@ public class DataProviderService extends Service {
                         }
                     }
                     if (mDiskLruCache != null) {
-                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(urlStr);
+                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(getUrlHash());
                         if( snapshot != null ) {
                             BufferedInputStream stream = new BufferedInputStream(snapshot.getInputStream(0));
                             Bitmap bitmap = BitmapFactory.decodeStream(stream);
@@ -1728,12 +1732,14 @@ public class DataProviderService extends Service {
                             // Add full sized img to disk cache.
                             synchronized (mDiskCacheLock) {
                                 if (mDiskLruCache != null && !mDiskCacheStarting ) {
-                                    DiskLruCache.Editor editor = mDiskLruCache.edit(urlStr);
+                                    DiskLruCache.Editor editor = mDiskLruCache.edit(getUrlHash());
                                     OutputStream out = editor.newOutputStream(0);
-                                    response.getEntity().writeTo( out );
-                                    out.close();
-                                    editor.commit();
-                                    bitmap = loadBitmapFromDisk();
+                                    if( out != null ) {
+                                        response.getEntity().writeTo(out);
+                                        out.close();
+                                        editor.commit();
+                                        bitmap = loadBitmapFromDisk();
+                                    }
                                 }
                             }
                         } else {
@@ -1745,13 +1751,13 @@ public class DataProviderService extends Service {
                         // Womp womp
                         Log.e(LOG_TAG, "Either we got a bad URL from the api or we did something stupid", e);
                     } catch (IOException e) {
-                        Log.w(LOG_TAG, "Network issue reading image data");
+                        Log.w(LOG_TAG, "Network issue reading image data", e);
                     }
                 }
             }
 
             if( bitmap != null ) {
-                final Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false);
+                final Bitmap scaledBitmap = thumbView.getWidth() > 0 ? Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false) : bitmap;
 
                 if( memoryCache != null ) {
                     memoryCache.put(urlStr, scaledBitmap);
