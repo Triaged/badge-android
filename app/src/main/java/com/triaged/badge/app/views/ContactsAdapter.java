@@ -38,6 +38,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 public class ContactsAdapter extends CursorAdapter implements StickyListHeadersAdapter {
 
     protected static final LruCache<Integer, Contact> contactCache = new LruCache<Integer, Contact>( 100 );
+
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
     private DataProviderService.LocalBinding dataProviderServiceBinding = null;
