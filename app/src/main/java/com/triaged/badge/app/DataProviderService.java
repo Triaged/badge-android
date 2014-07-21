@@ -668,6 +668,8 @@ public class DataProviderService extends Service {
                 remove( API_TOKEN_PREFS_KEY).
                 remove( LOGGED_IN_USER_ID_PREFS_KEY ).
                 remove( LAST_SYNCED_PREFS_KEY ).
+                remove( COMPANY_ID_PREFS_KEY ).
+                remove( COMPANY_NAME_PREFS_KEY ).
                 remove( LoginActivity.PROPERTY_REG_ID ).
                 remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
                 remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
