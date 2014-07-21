@@ -138,13 +138,11 @@ public class OtherProfileActivity extends AbstractProfileActivity {
 
     private void trackProfileButtonEvent(String eventType) {
         JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
-        if (props != null) {
-            try {
-                props.put("button", eventType);
-                mixpanel.track("profile_button_touched", props);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        try {
+            props.put("button", eventType);
+            mixpanel.track("profile_button_touched", props);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }

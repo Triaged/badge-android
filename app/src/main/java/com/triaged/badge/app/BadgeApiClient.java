@@ -247,7 +247,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse changePasswordRequest( JSONObject postBody ) throws IOException {
         HttpPut put = new HttpPut( CHANGE_PASSWORD_URI );
-        put.setHeader( "Authorization", apiToken );
+        put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         StringEntity body = new StringEntity( postBody.toString(), "UTF-8" );
         body.setContentType( MIME_TYPE_JSON );
         put.setEntity( body );
