@@ -515,7 +515,7 @@ public class EditProfileActivity extends BadgeActivity {
         String picturePath = cursor.getString(columnIndex);
         cursor.close();
         currentPhotoPath = picturePath;
-        return BitmapFactory.decodeFile(picturePath);
+        return getPhotoFromFileSystem();
     }
 
     private File createImageFile() throws IOException {

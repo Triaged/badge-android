@@ -1,17 +1,23 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
@@ -24,6 +30,9 @@ import com.triaged.badge.data.Contact;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Generic abstract class for my own profile and other profiles
@@ -57,6 +66,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
 
+    private ArrayList<Integer> backStackIds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +75,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
-
         final Intent intent = getIntent();
         contactId = intent.getIntExtra("PROFILE_ID", 0);
+        backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
+        if (backStackIds == null) {
+            backStackIds= new ArrayList<Integer>();
+        }
 
         if( dataProviderServiceBinding.getLoggedInUser().id == contactId ) {
             requestWindowFeature(Window.FEATURE_ACTION_BAR);
@@ -126,11 +139,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         final int userId = dataProviderServiceBinding.getLoggedInUser().id;
         while (reportsCursor.moveToNext()) {
             final ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
-            Contact contact = new Contact();
-            contact = ContactsAdapter.getCachedContact(reportsCursor);
+            Contact newContact = new Contact();
+            newContact = ContactsAdapter.getCachedContact(reportsCursor);
             newView.userId = userId;
-            newView.setupView(contact);
-            newView.noPhotoThumb.setText(contact.initials);
+            newView.setupView(newContact);
+            newView.noPhotoThumb.setText(newContact.initials);
             newView.noPhotoThumb.setVisibility(View.VISIBLE);
             newView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -153,11 +166,13 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                     }
                     intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("PROFILE_ID", newView.profileId);
+                    backStackIds.add(contact.id);
+                    intent.putExtra("BACK_STACK_IDS", backStackIds);
                     startActivity(intent);
                 }
             });
-            if( contact.avatarUrl != null ) {
-                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
+            if( newContact.avatarUrl != null ) {
+                dataProviderServiceBinding.setSmallContactImage(newContact, newView.thumbImage, newView.noPhotoThumb);
             }
             viewHolder.addView(newView, indexOfHeader + iterator);
             iterator++;
@@ -180,7 +195,10 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         contactId = intent.getIntExtra("PROFILE_ID", 0);
-
+        backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
+        if (backStackIds == null) {
+            backStackIds = new ArrayList<Integer>();
+        }
     }
 
     @Override
@@ -191,6 +209,30 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         setupProfile();
         Cursor reportsCursor = getNewManagesContactsCursor();
         replaceAndCreateManagedContacts(reportsCursor);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (backStackIds.size() > 0) {
+            int profileId = backStackIds.get(backStackIds.size() - 1);
+            Intent intent;
+            if (profileId == dataProviderServiceBinding.getLoggedInUser().id) {
+                intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+            } else {
+                intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+            }
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.putExtra("PROFILE_ID", profileId);
+            backStackIds.remove(backStackIds.size() - 1);
+            intent.putExtra("BACK_STACK_IDS", backStackIds);
+            startActivity(intent);
+            if (this instanceof MyProfileActivity && !backStackIds.contains(profileId)) {
+                finish();
+            }
+
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -328,12 +370,13 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                         }
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         intent.putExtra("PROFILE_ID", bossView.profileId);
+                        backStackIds.add(contact.id);
+                        intent.putExtra("BACK_STACK_IDS", backStackIds);
                         startActivity(intent);
                     }
                 });
-                if( contact.avatarUrl != null ) {
+                if( boss.avatarUrl != null ) {
                     dataProviderServiceBinding.setSmallContactImage(boss, bossView.thumbImage, bossView.noPhotoThumb);
-
                 }
 
                 bossView.setVisibility(View.VISIBLE);
@@ -358,4 +401,5 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private static boolean isNotBlank( String str ) {
         return str != null && !str.isEmpty();
     }
+
 }
