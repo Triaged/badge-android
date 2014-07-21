@@ -54,7 +54,6 @@ public class SettingsActivity extends BackButtonActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent( SettingsActivity.this, ChangePasswordActivity.class );
-                intent.setFlags(ACTIV)
                 startActivity( intent );
             }
         });
