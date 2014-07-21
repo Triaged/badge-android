@@ -702,11 +702,11 @@ public class DataProviderService extends Service {
                 catch( JSONException e ) {
                     Log.e(LOG_TAG, "JSON exception creating post body for change password", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+                    return;
                 }
 
                 try {
                     HttpResponse response = apiClient.changePasswordRequest( postBody );
-                    ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( response.getEntity() != null ) {
                         response.getEntity().consumeContent();
@@ -1631,13 +1631,13 @@ public class DataProviderService extends Service {
             mixpanelData.put("lastName", loggedInUser.lastName);
             mixpanelData.put("email", loggedInUser.email);
             mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
-            mixpanelData.put("company.identifier", prefs.getString(COMPANY_ID_PREFS_KEY, ""));
+            mixpanelData.put("company.identifier", prefs.getInt(COMPANY_ID_PREFS_KEY, -1));
             return mixpanelData;
         }
         catch (JSONException e) {
             Log.w( LOG_TAG, "Couldn't construct mix panel super property json" );
         }
-        return null;
+        return new JSONObject();
     }
 
     /**
