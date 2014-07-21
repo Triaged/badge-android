@@ -1129,6 +1129,7 @@ public class DataProviderService extends Service {
                         values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
                         //values.put( CompanySQLiteHelper.COL)
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1192,6 +1193,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation );
                         //values.put( CompanySQLiteHelper.COL)
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1429,6 +1431,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId );
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
