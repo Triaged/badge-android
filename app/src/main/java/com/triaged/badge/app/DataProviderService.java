@@ -46,7 +46,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -422,16 +421,16 @@ public class DataProviderService extends Service {
         if (json.has("employee_info")) {
             JSONObject employeeInfo = json.getJSONObject("employee_info");
             setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
             setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
             // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
             String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
             if( birthDateStr != null ) {
-                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertDateString(birthDateStr) );
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateStr) );
             }
             String startDateStr = values.getAsString(CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
             if( startDateStr != null ) {
-                values.put( CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, Contact.convertDateString(startDateStr) );
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, Contact.convertStartDateString(startDateStr) );
             }
             setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
             setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);

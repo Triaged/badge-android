@@ -57,7 +57,6 @@ public class EditProfileActivity extends BadgeActivity {
     private static final int PICTURE_REQUEST_CODE = 1888;
     private static final int EDIT_MY_LOCATION_REQUEST_CODE = 20;
 
-    public static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
     protected static final String LOG_TAG = EditProfileActivity.class.getName();
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -325,7 +324,7 @@ public class EditProfileActivity extends BadgeActivity {
 
         // BIRTHDAY CALENDAR AND DIALOG
         birthdayCalendar = Calendar.getInstance();
-        birthdayFormat = new SimpleDateFormat(WelcomeActivity.BIRTHDAY_FORMAT_STRING, Locale.US);
+        birthdayFormat = new SimpleDateFormat(Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
         birthdayFormat.setTimeZone( Contact.GMT );
         if (loggedInUser.birthDateString != null) {
             try {
@@ -352,10 +351,21 @@ public class EditProfileActivity extends BadgeActivity {
 
         // START DATE CALENDAR AND DIALOG
         startDateCalendar = Calendar.getInstance();
+        startDateCalendar.setTimeZone( Contact.GMT );
+        startDateFormat = new SimpleDateFormat( Contact.START_DATE_FORMAT_STRING, Locale.US);
+        startDateFormat.setTimeZone( Contact.GMT );
         if (loggedInUser.startDateString != null) {
             // assign startDate to calendar
+            try {
+                startDateCalendar.setTime(startDateFormat.parse(loggedInUser.startDateString));
+            } catch (ParseException e) {
+                Log.w( LOG_TAG, "Value got saved for start date format that is no bueno", e );
+            }
         }
-        startDateFormat = new SimpleDateFormat(START_DATE_FORMAT_STRING, Locale.US);
+        startDateCalendar.set( Calendar.HOUR, 0 );
+        startDateCalendar.set( Calendar.MINUTE, 0 );
+        startDateCalendar.set( Calendar.SECOND, 0 );
+
         startDateDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {

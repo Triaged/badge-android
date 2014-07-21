@@ -30,8 +30,6 @@ import java.util.Locale;
  */
 public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.OnDateSetListener {
 
-    public static final String BIRTHDAY_FORMAT_STRING = "MMMM d";
-
     private EditText firstName = null;
     private EditText lastName = null;
     private EditText cellNumber = null;
@@ -89,7 +87,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         birthdayCalendar = Calendar.getInstance();
         birthdayCalendar.set( Calendar.YEAR, 1 );
 
-        birthdayFormat = new SimpleDateFormat(BIRTHDAY_FORMAT_STRING, Locale.US);
+        birthdayFormat = new SimpleDateFormat( Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
 
         datePickerDialog = new DatePickerDialogNoYear(this, this, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 

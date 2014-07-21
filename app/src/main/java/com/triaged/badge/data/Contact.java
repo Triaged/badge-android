@@ -21,6 +21,8 @@ import java.util.TimeZone;
  */
 public class Contact {
     public static final TimeZone GMT = TimeZone.getTimeZone( "GMT" );
+    public static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
+    public static final String BIRTHDAY_FORMAT_STRING = "MMMM d";
 
     private static final String LOG_TAG = Contact.class.getName();
 
@@ -70,11 +72,11 @@ public class Contact {
      * @param bday string representing date in iso 8601 format a la rails
      * @return "August 3"
      */
-    public static String convertDateString(String bday) {
+    public static String convertBirthDateString(String bday) {
         try {
             DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
             Date birthDate = iso8601.parse(bday.replace( "+00:00", "+0000" ) );
-            SimpleDateFormat ui = new SimpleDateFormat( WelcomeActivity.BIRTHDAY_FORMAT_STRING );
+            SimpleDateFormat ui = new SimpleDateFormat( BIRTHDAY_FORMAT_STRING );
             ui.setTimeZone( GMT );
             return( ui.format( birthDate ) );
         }
@@ -82,6 +84,21 @@ public class Contact {
             Log.w(LOG_TAG, "Error parsing date from server as iso 8601 " + bday, e );
         }
         return null;
+    }
+
+    public static String convertStartDateString( String startDateString ) {
+        try {
+            DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+            Date birthDate = iso8601.parse( startDateString.replace( "+00:00", "+0000" ) );
+            SimpleDateFormat ui = new SimpleDateFormat( START_DATE_FORMAT_STRING );
+            ui.setTimeZone( GMT );
+            return( ui.format( birthDate ) );
+        }
+        catch( ParseException e ) {
+            Log.w(LOG_TAG, "Error parsing date from server as iso 8601 " + startDateString, e );
+        }
+        return null;
+
     }
 
     public Contact() {
@@ -141,7 +158,7 @@ public class Contact {
             cellPhone = employeeInfo.getString( "cell_phone" );
         }
         if( !employeeInfo.isNull( "birth_date" ) ) {
-            birthDateString = convertDateString(employeeInfo.getString("birth_date"));
+            birthDateString = convertBirthDateString(employeeInfo.getString("birth_date"));
         }
         constructName();
     }
