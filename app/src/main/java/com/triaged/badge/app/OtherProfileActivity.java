@@ -1,7 +1,10 @@
 package com.triaged.badge.app;
 
 import android.app.ActionBar;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Layout;
@@ -13,6 +16,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Profile Activity for other users (not the logged-in-user)
  *
@@ -23,6 +29,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
     private TextView backButton = null;
     private ImageButton makeCallButton = null;
     private ImageButton newEmailButton = null;
+    private BroadcastReceiver refreshReceiver = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +58,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 Toast.makeText(OtherProfileActivity.this, "New Message", Toast.LENGTH_SHORT).show();
+                trackProfileButtonEvent("message");
             }
         });
 
@@ -59,6 +67,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 if (contact != null && contact.email != null) {
+                    trackProfileButtonEvent("email");
                     Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
 
                     emailIntent.setType("plain/text");
@@ -76,12 +85,34 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             @Override
             public void onClick(View v) {
                 if (contact != null && contact.cellPhone != null) {
+                    trackProfileButtonEvent("phone");
                     Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + contact.cellPhone));
                     startActivity(intent);
                 }
             }
         });
 
+        refreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                contact = dataProviderServiceBinding.getContact( contact.id );
+                setupProfile();
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Try to refresh contact
+        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.DB_UPDATED_ACTION ));
+        dataProviderServiceBinding.refreshContact( contact.id );
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        localBroadcastManager.unregisterReceiver( refreshReceiver );
     }
 
     @Override
@@ -103,6 +134,17 @@ public class OtherProfileActivity extends AbstractProfileActivity {
         } else {
             newEmailButton.setVisibility(View.VISIBLE);
         }
+    }
 
+    private void trackProfileButtonEvent(String eventType) {
+        JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+        if (props != null) {
+            try {
+                props.put("button", eventType);
+                mixpanel.track("profile_button_touched", props);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

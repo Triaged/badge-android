@@ -12,14 +12,14 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.text.InputType;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,14 +35,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.EditProfileInfoView;
-import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,7 +48,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Allow user to modify info after they've already gone through onboarding flow.
@@ -94,7 +91,7 @@ public class EditProfileActivity extends BadgeActivity {
     protected int managerId = 0;
     protected int departmentId = 0;
     protected int officeId = 0;
-    protected String encodedProfilePhoto;
+    protected byte[] newProfilePhotoData;
 
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
@@ -145,7 +142,7 @@ public class EditProfileActivity extends BadgeActivity {
                         officeId,
                         startDate.valueToSave,
                         birthDate.valueToSave,
-                        encodedProfilePhoto,
+                        newProfilePhotoData,
                         saveCallback
                 );
             }
@@ -361,7 +358,7 @@ public class EditProfileActivity extends BadgeActivity {
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
                 SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
                 iso8601Format.setTimeZone( Contact.GMT );
-                birthDate.valueToSave = iso8601Format.format( birthdayCalendar.getTime() );
+                birthDate.valueToSave = iso8601Format.format(birthdayCalendar.getTime());
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
@@ -415,21 +412,15 @@ public class EditProfileActivity extends BadgeActivity {
                     boolean isCamera = data == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
                     Bitmap photo;
                     if (isCamera) {
-                        if (data == null) {
-                            photo = BitmapFactory.decodeFile(currentPhotoPath);
-                        } else {
-                            photo = (Bitmap) data.getExtras().get("data");
-                        }
-
+                        photo = getPhotoFromFileSystem();
                     } else {
-                        photo = getBitmapFromCameraData(data, EditProfileActivity.this);
+                        photo = getBitmapFromGallery(data, EditProfileActivity.this);
                     }
                     photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
                     profileImageView.setImageBitmap(photo);
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                    byte[] byteArray = byteArrayOutputStream.toByteArray();
-                    encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                    newProfilePhotoData = byteArrayOutputStream.toByteArray();
                     if (profileImageMissingView.getVisibility() == View.VISIBLE) {
                         profileImageMissingView.setVisibility(View.GONE);
                     }
@@ -452,6 +443,30 @@ public class EditProfileActivity extends BadgeActivity {
                     break;
             }
         }
+    }
+
+    private Bitmap getPhotoFromFileSystem() {
+        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
+        try {
+            ExifInterface exif = new ExifInterface(currentPhotoPath);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+            Matrix matrix = new Matrix();
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                matrix.postRotate(90);
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                matrix.postRotate(180);
+            }
+            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                matrix.postRotate(270);
+            }
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+        }
+        catch (Exception e) {
+            Log.d(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
+        }
+
+        return bitmap;
     }
 
     class DatePickerDialogNoYear extends DatePickerDialog {
@@ -491,7 +506,7 @@ public class EditProfileActivity extends BadgeActivity {
      *
      * @param *data  @param context * @return
      */
-    public static Bitmap getBitmapFromCameraData(Intent data, Context context){
+    public Bitmap getBitmapFromGallery(Intent data, Context context){
         Uri selectedImage = data.getData();
         String[] filePathColumn = { MediaStore.Images.Media.DATA };
         Cursor cursor = context.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
@@ -499,6 +514,7 @@ public class EditProfileActivity extends BadgeActivity {
         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
         String picturePath = cursor.getString(columnIndex);
         cursor.close();
+        currentPhotoPath = picturePath;
         return BitmapFactory.decodeFile(picturePath);
     }
 

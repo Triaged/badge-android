@@ -26,6 +26,9 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
@@ -328,27 +331,26 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
     protected void loadContactsAndDepartments() {
-        if( contactsAdapter != null ) {
-            contactsAdapter.refresh();
-        }
-        else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_with_msg);
-            contactsListView.setAdapter(contactsAdapter);
-        }
+        if( dataProviderServiceBinding.getLoggedInUser() != null ) {
+            if (contactsAdapter != null) {
+                contactsAdapter.refresh();
+            } else {
+                contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_with_msg);
+                contactsListView.setAdapter(contactsAdapter);
+            }
 
-        if( departmentsAdapter != null ) {
-            departmentsAdapter.refresh();
-        }
-        else {
-            departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_with_count, dataProviderServiceBinding, true );
-            departmentsListView.setAdapter( departmentsAdapter );
-        }
-        if( searchResultsAdapter != null ) {
-            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
-        }
-        else {
-            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
-            searchResultsList.setAdapter( searchResultsAdapter );
+            if (departmentsAdapter != null) {
+                departmentsAdapter.refresh();
+            } else {
+                departmentsAdapter = new DepartmentsAdapter(this, R.layout.item_department_with_count, dataProviderServiceBinding, true);
+                departmentsListView.setAdapter(departmentsAdapter);
+            }
+            if (searchResultsAdapter != null) {
+                searchResultsAdapter.refresh(dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser());
+            } else {
+                searchResultsAdapter = new ContactsAdapterWithoutHeadings(this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false);
+                searchResultsList.setAdapter(searchResultsAdapter);
+            }
         }
     }
 

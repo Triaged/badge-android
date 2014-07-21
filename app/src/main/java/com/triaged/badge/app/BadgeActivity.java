@@ -19,6 +19,7 @@ import android.view.MenuItem;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
 
 import java.io.IOException;
 
@@ -42,11 +43,12 @@ public abstract class BadgeActivity extends Activity {
      */
     private static final String SENDER_ID = "XXX";
 
-
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
     protected LocalBroadcastManager localBroadcastManager;
     private BroadcastReceiver logoutListener;
+
+    protected MixpanelAPI mixpanel = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +62,16 @@ public abstract class BadgeActivity extends Activity {
             }
         };
         localBroadcastManager.registerReceiver( logoutListener, intentFilter );
+        mixpanel = MixpanelAPI.getInstance(this, BadgeApplication.MIXPANEL_TOKEN);
+
         super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        mixpanel.flush();
         localBroadcastManager.unregisterReceiver( logoutListener );
+        super.onDestroy();
     }
 
     /**

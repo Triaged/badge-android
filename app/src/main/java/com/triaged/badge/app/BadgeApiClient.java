@@ -12,11 +12,20 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.FormBodyPart;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -36,8 +45,11 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String PROD_API_HOST = "api.badge.co";
     private static final String STAGING_API_HOST = "api.badge-staging.com";
     private static final String API_HOST = STAGING_API_HOST;
+    private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
+    private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
+    //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
     private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
@@ -47,6 +59,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
     private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/entered";
     private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
+    private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
 
     private HttpHost httpHost;
     String apiToken;
@@ -68,7 +81,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException, JSONException {
         HttpGet getCompany = new HttpGet( GET_COMPANY_URI );
-        getCompany.setHeader( "Authorization", apiToken );
+        getCompany.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, getCompany );
     }
 
@@ -94,12 +107,33 @@ public class BadgeApiClient extends DefaultHttpClient {
             StringEntity body = new StringEntity( data.toString(), "UTF-8" );
             body.setContentType( MIME_TYPE_JSON );
             patch.setEntity( body );
-            patch.setHeader( "Authorization", apiToken );
+            patch.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
             return execute( httpHost, patch );
         }
         catch( URISyntaxException e ) {
             throw new IllegalStateException( "Couldn't parse what should be a constant URL, bombing out.", e );
         }
+    }
+
+    /**
+     * Uploads avatar data in a multipart form request as  POST to /account
+     *
+     * The caller should make sure that it consumes all the entity content
+     * and/or closes the stream for the response.
+     *
+     * @param png image data in memory
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse uploadNewAvatar( byte[] png ) throws IOException {
+        //Builder
+        MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+        ByteArrayBody imgBody = new ByteArrayBody( png, "image/png", "avatar.png" );
+        reqEntity.addPart("user[avatar]", imgBody);
+        HttpPost post = new HttpPost( POST_AVATAR_URI );
+        post.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
+        post.setEntity( reqEntity );
+        return execute( post );
     }
 
     /**
@@ -168,7 +202,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse unregisterDeviceRequest( int deviceId ) throws IOException {
         HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_PROTOCOL, API_HOST, deviceId ) );
-        delete.setHeader("Authorization", apiToken);
+        delete.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         return execute(httpHost, delete);
     }
 
@@ -183,7 +217,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse checkinRequest(int officeId) throws IOException {
         HttpPut put = new HttpPut( String.format( ENTER_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
-        put.setHeader( "Authorization", apiToken );
+        put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
 
@@ -198,7 +232,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse checkoutRequest(int officeId) throws IOException {
         HttpPut put = new HttpPut( String.format( EXIT_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
-        put.setHeader( "Authorization", apiToken );
+        put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
 
@@ -220,6 +254,19 @@ public class BadgeApiClient extends DefaultHttpClient {
         return execute( httpHost, put );
     }
 
+    /**
+     * GETS /users/:id
+     *
+     * @param contactId
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse getContact( int contactId ) throws IOException {
+        HttpGet get = new HttpGet( String.format( GET_CONTACT_URI_PATTERN, API_PROTOCOL, API_HOST, contactId ) );
+        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
+        return execute( get );
+    }
+
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {
         HttpPost post = new HttpPost( uri );
@@ -227,7 +274,7 @@ public class BadgeApiClient extends DefaultHttpClient {
         body.setContentType( MIME_TYPE_JSON );
         post.setEntity( body );
         if( apiToken != null && !apiToken.isEmpty() ) {
-            post.setHeader("Authorization", apiToken);
+            post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         }
         return execute( httpHost, post );
     }

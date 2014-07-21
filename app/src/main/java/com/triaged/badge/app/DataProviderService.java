@@ -64,6 +64,8 @@ public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
     public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
+    public static final String COMPANY_NAME_PREFS_KEY = "companyName";
+    public static final String COMPANY_ID_PREFS_KEY = "companyId";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
@@ -374,6 +376,9 @@ public class DataProviderService extends Service {
                         }
                     }
 
+                    prefs.edit().putString( COMPANY_NAME_PREFS_KEY, companyObj.getString( "name" ) ).
+                                putInt( COMPANY_ID_PREFS_KEY, companyObj.getInt("id") ).commit();
+
                     loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
 
                 }
@@ -657,13 +662,15 @@ public class DataProviderService extends Service {
     protected void loggedOut() {
         if( loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
             // User initiated logout, make sure they don't get "stuck"
-            checkOutOfOffice( loggedInUser.currentOfficeLocationId );
+            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
         }
         loggedInUser = null;
         prefs.edit().
                 remove( API_TOKEN_PREFS_KEY).
                 remove( LOGGED_IN_USER_ID_PREFS_KEY ).
                 remove( LAST_SYNCED_PREFS_KEY ).
+                remove( COMPANY_ID_PREFS_KEY ).
+                remove( COMPANY_NAME_PREFS_KEY ).
                 remove( LoginActivity.PROPERTY_REG_ID ).
                 remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
                 remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
@@ -861,6 +868,7 @@ public class DataProviderService extends Service {
                                     }
                                 });
                             }
+
                             syncCompany(database);
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, "JSON exception parsing login success.", e);
@@ -876,6 +884,7 @@ public class DataProviderService extends Service {
                 } catch (IOException e) {
                     fail("We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again.");
                 }
+
             }
 
             private void fail(final String reason) {
@@ -900,9 +909,48 @@ public class DataProviderService extends Service {
      * @param response
      */
     protected void ensureNotUnauthorized( HttpResponse response ) {
-        if( response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ) {
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
             loggedOut();
         }
+    }
+
+    /**
+     * Updates a contact's info via the api and broadcasts
+     * {@link #DB_UPDATED_ACTION} locally if successful.
+     *
+     * @param contactId
+     */
+    protected void refreshContact( final int contactId ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.getContact( contactId );
+                    int statusCode = response.getStatusLine().getStatusCode();
+
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        try {
+                            JSONObject contact = parseJSONResponse(response.getEntity());
+                            ContentValues values = new ContentValues();
+                            setContactDBValesFromJSON( contact, values );
+                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contactId) } );
+                            localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
+                        }
+                        catch( JSONException e ) {
+                            Log.w( LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e );
+                        }
+                    }
+                    else  if( response.getEntity() != null ) {
+                        Log.w( LOG_TAG, "Response from /users/id was " + response.getStatusLine().getReasonPhrase() );
+                        response.getEntity().consumeContent();
+                    }
+
+                }
+                catch( IOException e ) {
+                    Log.w( LOG_TAG, "Couldn't refresh contact due to network issue." );
+                }
+            }
+        } );
     }
 
     /**
@@ -944,37 +992,49 @@ public class DataProviderService extends Service {
         }
     }
 
+
     /**
-     * If the user is currently "checked in" to this office,
-     * clear that status because they are no longer close to it.
+     * Async wrapper for {@link #checkOutOfOfficeSynchronously(int)}
+     * for when called from the UI.
+     *
+     * @param officeId
      */
-    protected void checkOutOfOffice(final int officeId) {
+    protected void checkOutOfOfficeAsync(final int officeId) {
         if (loggedInUser.currentOfficeLocationId == officeId) {
             sqlThread.submit(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        HttpResponse response = apiClient.checkoutRequest(officeId);
-                        ensureNotUnauthorized(response);
-                        int status = response.getStatusLine().getStatusCode();
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        if (status == HttpStatus.SC_OK) {
-                            ContentValues values = new ContentValues();
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
-                            database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
-                            loggedInUser.currentOfficeLocationId = -1;
-                        } else {
-                            Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
-                        }
-                    } catch (IOException e) {
-                        Log.w(LOG_TAG, "Couldn't check out of office due to IOException " + officeId);
-                        // Rats. Next time?
-                    }
-
+                    checkOutOfOfficeSynchronously( officeId );
                 }
             });
+        }
+    }
+
+    /**
+     * If the user is currently "checked in" to this office,
+     * clear that status because they are no longer close to it.
+     *
+     * @param officeId
+     */
+    protected void checkOutOfOfficeSynchronously(int officeId ) {
+        try {
+            HttpResponse response = apiClient.checkoutRequest(officeId);
+            ensureNotUnauthorized(response);
+            int status = response.getStatusLine().getStatusCode();
+            if (response.getEntity() != null) {
+                response.getEntity().consumeContent();
+            }
+            if (status == HttpStatus.SC_OK) {
+                ContentValues values = new ContentValues();
+                values.put(CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
+                database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                loggedInUser.currentOfficeLocationId = -1;
+            } else {
+                Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
+            }
+        } catch (IOException e) {
+            Log.w(LOG_TAG, "Couldn't check out of office due to IOException " + officeId);
+            // Rats. Next time?
         }
     }
 
@@ -1042,7 +1102,7 @@ public class DataProviderService extends Service {
      * @param primaryOfficeId
      * @param startDateString
      * @param birthDateString
-     * @param newAvatarFileBase64Str
+     * @param newAvatarFile
      * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
      */
     protected void saveAllProfileDataAsync(
@@ -1056,7 +1116,7 @@ public class DataProviderService extends Service {
             final int primaryOfficeId,
             final String startDateString,
             final String birthDateString,
-            final String newAvatarFileBase64Str,
+            final byte[] newAvatarFile,
             final AsyncSaveCallback saveCallback
     ) {
         sqlThread.submit( new Runnable() {
@@ -1079,9 +1139,6 @@ public class DataProviderService extends Service {
                     data.put( "department_id", departmentId );
                     data.put( "manager_id", managerId );
                     data.put( "primary_office_location_id", primaryOfficeId );
-                    if( newAvatarFileBase64Str != null ) {
-                        data.put( "avatar", newAvatarFileBase64Str );
-                    }
 
                     employeeInfo.put( "birth_date", birthDateString );
                     employeeInfo.put( "cell_phone", cellPhone );
@@ -1105,6 +1162,23 @@ public class DataProviderService extends Service {
                         // Update local data.
                         ContentValues values = new ContentValues();
                         setContactDBValesFromJSON( account.getJSONObject( "current_user" ), values );
+
+
+                        // OK now send avatar if there was a new one specified
+                        if( newAvatarFile != null ) {
+                            HttpResponse avatarResponse = apiClient.uploadNewAvatar( newAvatarFile );
+                            int avatarStatusCode = avatarResponse.getStatusLine().getStatusCode();
+                            if( avatarResponse.getEntity() != null ) {
+                                avatarResponse.getEntity().consumeContent();
+                            }
+                            if( avatarStatusCode == HttpStatus.SC_OK  ) {
+
+                            }
+                            else {
+                                fail("Save avatar response was '" + avatarResponse.getStatusLine().getReasonPhrase() + "'", saveCallback);
+                            }
+                        }
+
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
@@ -1191,6 +1265,7 @@ public class DataProviderService extends Service {
                         values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
                         //values.put( CompanySQLiteHelper.COL)
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1255,6 +1330,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation );
                         //values.put( CompanySQLiteHelper.COL)
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1319,7 +1395,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count") );
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count"));
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
@@ -1493,6 +1569,7 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId );
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1533,6 +1610,23 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * Construct JSONObject of user data to send with Mixpanel event tracking
+     * */
+    private JSONObject getBasicMixpanelData() {
+        JSONObject mixpanelData = new JSONObject();
+        try {
+            mixpanelData.put("firstName", loggedInUser.firstName);
+            mixpanelData.put("lastName", loggedInUser.lastName);
+            mixpanelData.put("email", loggedInUser.email);
+            mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
+            mixpanelData.put("company.identifier", prefs.getString(COMPANY_ID_PREFS_KEY, ""));
+            return mixpanelData;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 
     /**
@@ -1641,10 +1735,10 @@ public class DataProviderService extends Service {
 
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, byte[], com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, String newAvatarFileBase64Str, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFileBase64Str, saveCallback);
+        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFile, saveCallback);
         }
 
         /**
@@ -1702,10 +1796,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#checkOutOfOffice(int)
+         * @see com.triaged.badge.app.DataProviderService#checkOutOfOfficeAsync(int)
          */
         public void checkOutOfOffice( int officeId ) {
-            DataProviderService.this.checkOutOfOffice(officeId);
+            DataProviderService.this.checkOutOfOfficeAsync(officeId);
         }
 
         /**
@@ -1714,8 +1808,18 @@ public class DataProviderService extends Service {
         public void changePassword( String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback ) {
             DataProviderService.this.changePassword( oldPassword, newPassword, newPasswordConfirmation, saveCallback );
         }
-    }
 
+        /**
+         * @see DataProviderService#getBasicMixpanelData() (int)
+         */
+        public JSONObject getBasicMixpanelData() {
+            return DataProviderService.this.getBasicMixpanelData();
+        }
+
+        public void refreshContact( int contactId ) {
+            DataProviderService.this.refreshContact( contactId );
+        }
+    }
 
     /**
      * Background task to fetch an image first from a disk cache,
@@ -1871,6 +1975,7 @@ public class DataProviderService extends Service {
     protected static JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
         ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
         entity.writeTo( jsonBuffer );
+        jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONObject( json );
     }
