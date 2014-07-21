@@ -324,6 +324,7 @@ public class EditProfileActivity extends BadgeActivity {
 
         // BIRTHDAY CALENDAR AND DIALOG
         birthdayCalendar = Calendar.getInstance();
+        birthdayCalendar.setTimeZone(Contact.GMT);
         birthdayFormat = new SimpleDateFormat(Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
         birthdayFormat.setTimeZone( Contact.GMT );
         if (loggedInUser.birthDateString != null) {
@@ -334,7 +335,6 @@ public class EditProfileActivity extends BadgeActivity {
             }
         }
         birthdayCalendar.set( Calendar.YEAR, 1 );
-        birthdayCalendar.setTimeZone(Contact.GMT);
         birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.HOUR, 0 );
         birthdayCalendar.set( Calendar.SECOND, 0 );
@@ -358,7 +358,8 @@ public class EditProfileActivity extends BadgeActivity {
             // assign startDate to calendar
             try {
                 startDateCalendar.setTime(startDateFormat.parse(loggedInUser.startDateString));
-            } catch (ParseException e) {
+            }
+            catch (ParseException e) {
                 Log.w( LOG_TAG, "Value got saved for start date format that is no bueno", e );
             }
         }
