@@ -26,6 +26,9 @@ import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**

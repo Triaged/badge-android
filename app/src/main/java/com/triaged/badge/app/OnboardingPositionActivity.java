@@ -64,12 +64,15 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
         jobTitleField = (EditText)findViewById( R.id.your_job_title );
 
+        if (loggedInUser.jobTitle != null && !loggedInUser.departmentName.equals("")) {
+            jobTitleField.setText(loggedInUser.jobTitle);
+        }
+
         continueButton = (Button) findViewById(R.id.continue_button);
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // CHECK FOR EMPTY VALUES
-
                 dataProviderServiceBinding.savePositionProfileDataAsync( String.valueOf( jobTitleField.getText() ), deptartmentId, managerId, saveCallback );
             }
         });

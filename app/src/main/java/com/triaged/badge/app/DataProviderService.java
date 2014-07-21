@@ -27,6 +27,7 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -812,6 +813,7 @@ public class DataProviderService extends Service {
                                     }
                                 });
                             }
+
                             syncCompany(database);
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, "JSON exception parsing login success.", e);
@@ -827,6 +829,7 @@ public class DataProviderService extends Service {
                 } catch (IOException e) {
                     fail("We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again.");
                 }
+
             }
 
             private void fail(final String reason) {
@@ -1466,6 +1469,23 @@ public class DataProviderService extends Service {
         }
     }
 
+    /**
+     * Construct JSONObject of user data to send with Mixpanel event tracking
+     * */
+    private JSONObject getBasicMixpanelData() {
+        JSONObject mixpanelData = new JSONObject();
+        try {
+            mixpanelData.put("firstName", loggedInUser.firstName);
+            mixpanelData.put("lastName", loggedInUser.lastName);
+            mixpanelData.put("email", loggedInUser.email);
+            mixpanelData.put("company.name", "");
+            mixpanelData.put("company.identifier", "");
+            return mixpanelData;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 
     /**
@@ -1640,8 +1660,14 @@ public class DataProviderService extends Service {
         public void checkOutOfOffice( int officeId ) {
             DataProviderService.this.checkOutOfOffice(officeId);
         }
-    }
 
+        /**
+         * @see DataProviderService#getBasicMixpanelData() (int)
+         */
+        public JSONObject getBasicMixpanelData() {
+            return DataProviderService.this.getBasicMixpanelData();
+        }
+    }
 
     /**
      * Background task to fetch an image first from a disk cache,

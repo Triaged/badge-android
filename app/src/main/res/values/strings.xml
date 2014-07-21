@@ -95,6 +95,7 @@
     <!-- SEARCH -->
     <string name="search_hint">Search</string>
     <string name="back_button_default_value">Back</string>
+    <string name="profile_heading_reports_to">Reports To</string>
 
 
 </resources>

@@ -476,7 +476,7 @@ public class EditProfileActivity extends BadgeActivity {
         catch (Exception e) {
             Log.d(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
         }
-        
+
         return bitmap;
     }
 

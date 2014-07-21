@@ -18,7 +18,10 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.data.Contact;
+
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -56,6 +59,12 @@ public class LoginActivity extends BadgeActivity {
             public void loginSuccess( Contact user ) {
                 // Now seems like a good time to make sure we have a GCM id since
                 // we know the network was working at least well enough to log the user in.
+
+//                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+//                JSONObject props = getBasicMixpanelData();
+//                mixpanelAPI.track("login", props);
+//                mixpanelAPI.flush();
+
                 ensureGcmRegistration();
                 startService( new Intent( LoginActivity.this, LocationTrackingService.class ) );
                 Intent activityIntent = new Intent( LoginActivity.this, WelcomeActivity.class );
