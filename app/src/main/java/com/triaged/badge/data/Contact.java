@@ -23,7 +23,7 @@ public class Contact {
     public static final TimeZone GMT = TimeZone.getTimeZone( "GMT" );
     public static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
     public static final String BIRTHDAY_FORMAT_STRING = "MMMM d";
-
+    public static final String ISO_8601_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss.000Z";
     private static final String LOG_TAG = Contact.class.getName();
 
 
@@ -74,7 +74,7 @@ public class Contact {
      */
     public static String convertBirthDateString(String bday) {
         try {
-            DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+            DateFormat iso8601 = new SimpleDateFormat(ISO_8601_FORMAT_STRING);
             Date birthDate = iso8601.parse(bday.replace( "+00:00", "+0000" ) );
             SimpleDateFormat ui = new SimpleDateFormat( BIRTHDAY_FORMAT_STRING );
             ui.setTimeZone( GMT );
@@ -88,7 +88,7 @@ public class Contact {
 
     public static String convertStartDateString( String startDateString ) {
         try {
-            DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
+            DateFormat iso8601 = new SimpleDateFormat(ISO_8601_FORMAT_STRING);
             Date birthDate = iso8601.parse( startDateString.replace( "+00:00", "+0000" ) );
             SimpleDateFormat ui = new SimpleDateFormat( START_DATE_FORMAT_STRING );
             ui.setTimeZone( GMT );
