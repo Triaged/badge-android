@@ -6,4 +6,4 @@
 .idea
 build/
 .keystore.idea
-
+com_crashlytics_export_strings.xml
