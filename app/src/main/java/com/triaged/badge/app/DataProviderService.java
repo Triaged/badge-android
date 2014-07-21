@@ -979,7 +979,7 @@ public class DataProviderService extends Service {
      * @param primaryOfficeId
      * @param startDateString
      * @param birthDateString
-     * @param newAvatarFileBase64Str
+     * @param newAvatarFile
      * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
      */
     protected void saveAllProfileDataAsync(
@@ -993,7 +993,7 @@ public class DataProviderService extends Service {
             final int primaryOfficeId,
             final String startDateString,
             final String birthDateString,
-            final String newAvatarFileBase64Str,
+            final byte[] newAvatarFile,
             final AsyncSaveCallback saveCallback
     ) {
         sqlThread.submit( new Runnable() {
@@ -1041,10 +1041,18 @@ public class DataProviderService extends Service {
 
 
                         // OK now send avatar if there was a new one specified
-                        if( newAvatarFileBase64Str != null ) {
-                            HttpResponse response = apiClient.uploadNewAvatar( newAvatarFileBase64Str );
-                            int avatarStatusCode = response.getStatusLine().getStatusCode();
-                            if( response.getStatusLine().getStatusCode() )
+                        if( newAvatarFile != null ) {
+                            HttpResponse avatarResponse = apiClient.uploadNewAvatar( newAvatarFile );
+                            int avatarStatusCode = avatarResponse.getStatusLine().getStatusCode();
+                            if( avatarResponse.getEntity() != null ) {
+                                avatarResponse.getEntity().consumeContent();
+                            }
+                            if( avatarStatusCode == HttpStatus.SC_OK  ) {
+
+                            }
+                            else {
+                                fail("Save avatar response was '" + avatarResponse.getStatusLine().getReasonPhrase() + "'", saveCallback);
+                            }
                         }
 
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
@@ -1582,8 +1590,8 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, String newAvatarFileBase64Str, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFileBase64Str, saveCallback);
+        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFile, saveCallback);
         }
 
         /**

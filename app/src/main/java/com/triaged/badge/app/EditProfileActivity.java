@@ -14,14 +14,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.text.InputType;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -37,14 +35,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.EditProfileInfoView;
-import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,7 +48,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Allow user to modify info after they've already gone through onboarding flow.
@@ -96,7 +91,7 @@ public class EditProfileActivity extends BadgeActivity {
     protected int managerId = 0;
     protected int departmentId = 0;
     protected int officeId = 0;
-    protected String encodedProfilePhoto;
+    protected byte[] newProfilePhotoData;
 
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
@@ -147,7 +142,7 @@ public class EditProfileActivity extends BadgeActivity {
                         officeId,
                         startDate.valueToSave,
                         birthDate.valueToSave,
-                        encodedProfilePhoto,
+                        newProfilePhotoData,
                         saveCallback
                 );
             }
@@ -417,21 +412,15 @@ public class EditProfileActivity extends BadgeActivity {
                     boolean isCamera = data == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
                     Bitmap photo;
                     if (isCamera) {
-                        if (data == null) {
-                            photo = getPhotoFromFileSystem();
-                        } else {
-                            photo = (Bitmap) data.getExtras().get("data");
-                        }
-
+                        photo = getPhotoFromFileSystem();
                     } else {
-                        photo = getBitmapFromCameraData(data, EditProfileActivity.this);
+                        photo = getBitmapFromGallery(data, EditProfileActivity.this);
                     }
                     photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
                     profileImageView.setImageBitmap(photo);
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                    byte[] byteArray = byteArrayOutputStream.toByteArray();
-                    encodedProfilePhoto = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                    newProfilePhotoData = byteArrayOutputStream.toByteArray();
                     if (profileImageMissingView.getVisibility() == View.VISIBLE) {
                         profileImageMissingView.setVisibility(View.GONE);
                     }
@@ -517,7 +506,7 @@ public class EditProfileActivity extends BadgeActivity {
      *
      * @param *data  @param context * @return
      */
-    public static Bitmap getBitmapFromCameraData(Intent data, Context context){
+    public Bitmap getBitmapFromGallery(Intent data, Context context){
         Uri selectedImage = data.getData();
         String[] filePathColumn = { MediaStore.Images.Media.DATA };
         Cursor cursor = context.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
@@ -525,6 +514,7 @@ public class EditProfileActivity extends BadgeActivity {
         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
         String picturePath = cursor.getString(columnIndex);
         cursor.close();
+        currentPhotoPath = picturePath;
         return BitmapFactory.decodeFile(picturePath);
     }
 
