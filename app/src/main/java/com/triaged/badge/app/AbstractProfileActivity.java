@@ -37,6 +37,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private ServiceConnection dataProviderServiceConnnection = null;
     protected Contact contact = null;
+    private int contactId = 0;
     private TextView profileName = null;
     private TextView profileTitle = null;
     private ImageView profileImage = null;
@@ -55,7 +56,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView departmentHeader = null;
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
-    private int contactId = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,7 +158,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             });
             if( contact.avatarUrl != null ) {
                 dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
-
             }
             viewHolder.addView(newView, indexOfHeader + iterator);
             iterator++;

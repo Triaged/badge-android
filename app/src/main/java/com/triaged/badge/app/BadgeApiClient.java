@@ -45,6 +45,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String PROD_API_HOST = "api.badge.co";
     private static final String STAGING_API_HOST = "api.badge-staging.com";
     private static final String API_HOST = STAGING_API_HOST;
+    private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
     private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
@@ -57,6 +58,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
     private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/entered";
     private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
+    private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
 
     private HttpHost httpHost;
     String apiToken;
@@ -78,7 +80,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException, JSONException {
         HttpGet getCompany = new HttpGet( GET_COMPANY_URI );
-        getCompany.setHeader( "Authorization", apiToken );
+        getCompany.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, getCompany );
     }
 
@@ -104,7 +106,7 @@ public class BadgeApiClient extends DefaultHttpClient {
             StringEntity body = new StringEntity( data.toString(), "UTF-8" );
             body.setContentType( MIME_TYPE_JSON );
             patch.setEntity( body );
-            patch.setHeader( "Authorization", apiToken );
+            patch.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
             return execute( httpHost, patch );
         }
         catch( URISyntaxException e ) {
@@ -128,7 +130,7 @@ public class BadgeApiClient extends DefaultHttpClient {
         ByteArrayBody imgBody = new ByteArrayBody( png, "image/png", "avatar.png" );
         reqEntity.addPart("user[avatar]", imgBody);
         HttpPost post = new HttpPost( POST_AVATAR_URI );
-        post.setHeader( "Authorization", apiToken );
+        post.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         post.setEntity( reqEntity );
         return execute( post );
     }
@@ -199,7 +201,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse unregisterDeviceRequest( int deviceId ) throws IOException {
         HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_PROTOCOL, API_HOST, deviceId ) );
-        delete.setHeader("Authorization", apiToken);
+        delete.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         return execute(httpHost, delete);
     }
 
@@ -211,7 +213,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse checkinRequest(int officeId) throws IOException {
         HttpPut put = new HttpPut( String.format( ENTER_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
-        put.setHeader( "Authorization", apiToken );
+        put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
 
@@ -223,10 +225,22 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse checkoutRequest(int officeId) throws IOException {
         HttpPut put = new HttpPut( String.format( EXIT_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
-        put.setHeader( "Authorization", apiToken );
+        put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
 
+    /**
+     * GETS /users/:id
+     *
+     * @param contactId
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse getContact( int contactId ) throws IOException {
+        HttpGet get = new HttpGet( String.format( GET_CONTACT_URI_PATTERN, API_PROTOCOL, API_HOST, contactId ) );
+        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
+        return execute( get );
+    }
 
 
 
@@ -237,7 +251,7 @@ public class BadgeApiClient extends DefaultHttpClient {
         body.setContentType( MIME_TYPE_JSON );
         post.setEntity( body );
         if( apiToken != null && !apiToken.isEmpty() ) {
-            post.setHeader("Authorization", apiToken);
+            post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         }
         return execute( httpHost, post );
     }

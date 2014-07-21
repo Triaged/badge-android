@@ -27,7 +27,6 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
-import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -661,7 +660,7 @@ public class DataProviderService extends Service {
     protected void loggedOut() {
         if( loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
             // User initiated logout, make sure they don't get "stuck"
-            checkOutOfOffice( loggedInUser.currentOfficeLocationId );
+            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
         }
         loggedInUser = null;
         prefs.edit().
@@ -853,6 +852,45 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Updates a contact's info via the api and broadcasts
+     * {@link #DB_UPDATED_ACTION} locally if successful.
+     *
+     * @param contactId
+     */
+    protected void refreshContact( final int contactId ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.getContact( contactId );
+                    int statusCode = response.getStatusLine().getStatusCode();
+
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        try {
+                            JSONObject contact = parseJSONResponse(response.getEntity());
+                            ContentValues values = new ContentValues();
+                            setContactDBValesFromJSON( contact, values );
+                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( contactId) } );
+                            localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
+                        }
+                        catch( JSONException e ) {
+                            Log.w( LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e );
+                        }
+                    }
+                    else  if( response.getEntity() != null ) {
+                        Log.w( LOG_TAG, "Response from /users/id was " + response.getStatusLine().getReasonPhrase() );
+                        response.getEntity().consumeContent();
+                    }
+
+                }
+                catch( IOException e ) {
+                    Log.w( LOG_TAG, "Couldn't refresh contact due to network issue." );
+                }
+            }
+        } );
+    }
+
+    /**
      * Changes current user's office to this office id, when location svcs determine
      * they are there. If a current office is already set, does nothing.
      *
@@ -890,39 +928,52 @@ public class DataProviderService extends Service {
         }
     }
 
+
     /**
-     * If the user is currently "checked in" to this office,
-     * clear that status because they are no longer close to it.
+     * Async wrapper for {@link #checkOutOfOfficeSynchronously(int)}
+     * for when called from the UI.
+     *
+     * @param officeId
      */
-    protected void checkOutOfOffice(final int officeId) {
+    protected void checkOutOfOfficeAsync(final int officeId) {
         if (loggedInUser.currentOfficeLocationId == officeId) {
             sqlThread.submit( new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        HttpResponse response = apiClient.checkoutRequest(officeId);
-                        int status = response.getStatusLine().getStatusCode();
-                        if( response.getEntity() != null ) {
-                            response.getEntity().consumeContent();
-                        }
-                        if(  status == HttpStatus.SC_OK ) {
-                            ContentValues values = new ContentValues();
-                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
-                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
-                            loggedInUser.currentOfficeLocationId = -1;
-                        }
-                        else {
-                            Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
-                        }
-                    }
-                    catch( IOException e ) {
-                        Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
-                        // Rats. Next time?
-                    }
-
+                    checkOutOfOfficeSynchronously( officeId );
                 }
             } );
         }
+    }
+
+    /**
+     * If the user is currently "checked in" to this office,
+     * clear that status because they are no longer close to it.
+     *
+     * @param officeId
+     */
+    protected void checkOutOfOfficeSynchronously(int officeId ) {
+        try {
+            HttpResponse response = apiClient.checkoutRequest(officeId);
+            int status = response.getStatusLine().getStatusCode();
+            if( response.getEntity() != null ) {
+                response.getEntity().consumeContent();
+            }
+            if(  status == HttpStatus.SC_OK ) {
+                ContentValues values = new ContentValues();
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
+                database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
+                loggedInUser.currentOfficeLocationId = -1;
+            }
+            else {
+                Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
+            }
+        }
+        catch( IOException e ) {
+            Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
+            // Rats. Next time?
+        }
+
     }
 
     /**
@@ -1279,7 +1330,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count") );
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count"));
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
@@ -1502,8 +1553,8 @@ public class DataProviderService extends Service {
             mixpanelData.put("firstName", loggedInUser.firstName);
             mixpanelData.put("lastName", loggedInUser.lastName);
             mixpanelData.put("email", loggedInUser.email);
-            mixpanelData.put("company.name", "");
-            mixpanelData.put("company.identifier", "");
+            mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
+            mixpanelData.put("company.identifier", prefs.getString(COMPANY_ID_PREFS_KEY, ""));
             return mixpanelData;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -1679,10 +1730,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#checkOutOfOffice(int)
+         * @see com.triaged.badge.app.DataProviderService#checkOutOfOfficeAsync(int)
          */
         public void checkOutOfOffice( int officeId ) {
-            DataProviderService.this.checkOutOfOffice(officeId);
+            DataProviderService.this.checkOutOfOfficeAsync(officeId);
         }
 
         /**
@@ -1690,6 +1741,10 @@ public class DataProviderService extends Service {
          */
         public JSONObject getBasicMixpanelData() {
             return DataProviderService.this.getBasicMixpanelData();
+        }
+
+        public void refreshContact( int contactId ) {
+            DataProviderService.this.refreshContact( contactId );
         }
     }
 
@@ -1847,6 +1902,7 @@ public class DataProviderService extends Service {
     protected static JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
         ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
         entity.writeTo( jsonBuffer );
+        jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONObject( json );
     }
