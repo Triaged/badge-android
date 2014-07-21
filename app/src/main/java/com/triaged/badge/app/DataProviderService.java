@@ -1707,6 +1707,13 @@ public class DataProviderService extends Service {
         public void checkOutOfOffice( int officeId ) {
             DataProviderService.this.checkOutOfOffice(officeId);
         }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#changePassword(String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void changePassword( String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback ) {
+            DataProviderService.this.changePassword( oldPassword, newPassword, newPasswordConfirmation, saveCallback );
+        }
     }
 
 
