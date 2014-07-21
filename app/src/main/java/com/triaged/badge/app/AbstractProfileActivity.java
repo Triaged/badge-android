@@ -196,6 +196,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         super.onNewIntent(intent);
         contactId = intent.getIntExtra("PROFILE_ID", 0);
         backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
+        if (backStackIds == null) {
+            backStackIds = new ArrayList<Integer>();
+        }
     }
 
     @Override
