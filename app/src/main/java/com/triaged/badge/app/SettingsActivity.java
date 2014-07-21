@@ -67,7 +67,8 @@ public class SettingsActivity extends BackButtonActivity {
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                         imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
 
-                        dataProviderServiceBinding.changePassword( input.getText().toString(), new DataProviderService.AsyncSaveCallback() {
+                        // TODO get old and confirm password fields
+                        dataProviderServiceBinding.changePassword( input.getText().toString(), null, null, new DataProviderService.AsyncSaveCallback() {
                             @Override
                             public void saveSuccess(int newId) {
                                 Toast.makeText( SettingsActivity.this, "Your password has been updated", Toast.LENGTH_SHORT ).show();
