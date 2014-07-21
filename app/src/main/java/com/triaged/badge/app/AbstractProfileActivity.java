@@ -25,6 +25,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Text;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Generic abstract class for my own profile and other profiles
  *
@@ -57,6 +60,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private int numberManagedByPrevious = 0;
     private int contactId = 0;
 
+    private ArrayList<Integer> backStackIds;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +69,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
+        backStackIds = new ArrayList<Integer>();
 
         final Intent intent = getIntent();
         contactId = intent.getIntExtra("PROFILE_ID", 0);
@@ -125,11 +131,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         final int userId = dataProviderServiceBinding.getLoggedInUser().id;
         while (reportsCursor.moveToNext()) {
             final ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
-            Contact contact = new Contact();
-            contact = ContactsAdapter.getCachedContact(reportsCursor);
+            Contact newContact = new Contact();
+            newContact = ContactsAdapter.getCachedContact(reportsCursor);
             newView.userId = userId;
-            newView.setupView(contact);
-            newView.noPhotoThumb.setText(contact.initials);
+            newView.setupView(newContact);
+            newView.noPhotoThumb.setText(newContact.initials);
             newView.noPhotoThumb.setVisibility(View.VISIBLE);
             newView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -152,11 +158,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                     }
                     intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("PROFILE_ID", newView.profileId);
+                    backStackIds.add(contact.id);
                     startActivity(intent);
                 }
             });
-            if( contact.avatarUrl != null ) {
-                dataProviderServiceBinding.setSmallContactImage(contact, newView.thumbImage, newView.noPhotoThumb);
+            if( newContact.avatarUrl != null ) {
+                dataProviderServiceBinding.setSmallContactImage(newContact, newView.thumbImage, newView.noPhotoThumb);
 
             }
             viewHolder.addView(newView, indexOfHeader + iterator);
@@ -180,7 +187,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         contactId = intent.getIntExtra("PROFILE_ID", 0);
-
     }
 
     @Override
@@ -191,6 +197,27 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         setupProfile();
         Cursor reportsCursor = getNewManagesContactsCursor();
         replaceAndCreateManagedContacts(reportsCursor);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (backStackIds.size() > 0) {
+            int profileId = backStackIds.get(backStackIds.size() - 1);
+            Intent intent;
+            if (profileId == dataProviderServiceBinding.getLoggedInUser().id) {
+                intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+            } else {
+                intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+            }
+
+            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.putExtra("PROFILE_ID", profileId);
+            backStackIds.remove(backStackIds.size() - 1);
+            startActivity(intent);
+        } else {
+            super.onBackPressed();
+        }
+
     }
 
     @Override
@@ -328,12 +355,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                         }
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         intent.putExtra("PROFILE_ID", bossView.profileId);
+                        backStackIds.add(contact.id);
                         startActivity(intent);
                     }
                 });
-                if( contact.avatarUrl != null ) {
+                if( boss.avatarUrl != null ) {
                     dataProviderServiceBinding.setSmallContactImage(boss, bossView.thumbImage, bossView.noPhotoThumb);
-
                 }
 
                 bossView.setVisibility(View.VISIBLE);

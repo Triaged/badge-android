@@ -70,7 +70,7 @@ public class LoginActivity extends BadgeActivity {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( LoginActivity.this );
 
                     props.put("company.name", prefs.getString(DataProviderService.COMPANY_NAME_PREFS_KEY, ""));
-                    props.put("company.identifier", prefs.getString(DataProviderService.COMPANY_ID_PREFS_KEY, ""));
+                    props.put("company.identifier", prefs.getInt(DataProviderService.COMPANY_ID_PREFS_KEY, 0));
                     mixpanel.track("login", props);
                 } catch (JSONException e) {
                     e.printStackTrace();

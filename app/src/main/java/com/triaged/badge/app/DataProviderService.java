@@ -1501,7 +1501,7 @@ public class DataProviderService extends Service {
             mixpanelData.put("lastName", loggedInUser.lastName);
             mixpanelData.put("email", loggedInUser.email);
             mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
-            mixpanelData.put("company.identifier", prefs.getString(COMPANY_ID_PREFS_KEY, ""));
+            mixpanelData.put("company.identifier", prefs.getInt(COMPANY_ID_PREFS_KEY, 0));
             return mixpanelData;
         } catch (JSONException e) {
             e.printStackTrace();
