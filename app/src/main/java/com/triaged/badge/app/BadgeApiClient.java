@@ -12,8 +12,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -22,6 +25,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +48,7 @@ public class BadgeApiClient extends DefaultHttpClient {
 
     private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
     private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
+    //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
     private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
@@ -120,10 +125,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     public HttpResponse uploadNewAvatar( byte[] png ) throws IOException {
         //Builder
         MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-        reqEntity.addPart("user[avatar]",
-                new InputStreamBody(
-                        new ByteArrayInputStream( png ),
-                        "image/png") );
+        ByteArrayBody imgBody = new ByteArrayBody( png, "image/png", "avatar.png" );
+        reqEntity.addPart("user[avatar]", imgBody);
         HttpPost post = new HttpPost( POST_AVATAR_URI );
         post.setHeader( "Authorization", apiToken );
         post.setEntity( reqEntity );
