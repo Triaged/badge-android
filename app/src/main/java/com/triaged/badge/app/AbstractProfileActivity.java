@@ -1,17 +1,23 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
@@ -60,7 +66,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
 
-
     private ArrayList<Integer> backStackIds;
 
     @Override
@@ -70,10 +75,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
-        backStackIds = new ArrayList<Integer>();
-
         final Intent intent = getIntent();
         contactId = intent.getIntExtra("PROFILE_ID", 0);
+        backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
+        if (backStackIds == null) {
+            backStackIds= new ArrayList<Integer>();
+        }
 
         if( dataProviderServiceBinding.getLoggedInUser().id == contactId ) {
             requestWindowFeature(Window.FEATURE_ACTION_BAR);
@@ -160,6 +167,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                     intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                     intent.putExtra("PROFILE_ID", newView.profileId);
                     backStackIds.add(contact.id);
+                    intent.putExtra("BACK_STACK_IDS", backStackIds);
                     startActivity(intent);
                 }
             });
@@ -187,6 +195,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         contactId = intent.getIntExtra("PROFILE_ID", 0);
+        backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
     }
 
     @Override
@@ -209,15 +218,18 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             } else {
                 intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
             }
-
             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             intent.putExtra("PROFILE_ID", profileId);
             backStackIds.remove(backStackIds.size() - 1);
+            intent.putExtra("BACK_STACK_IDS", backStackIds);
             startActivity(intent);
+            if (this instanceof MyProfileActivity && !backStackIds.contains(profileId)) {
+                finish();
+            }
+
         } else {
             super.onBackPressed();
         }
-
     }
 
     @Override
@@ -356,6 +368,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         intent.putExtra("PROFILE_ID", bossView.profileId);
                         backStackIds.add(contact.id);
+                        intent.putExtra("BACK_STACK_IDS", backStackIds);
                         startActivity(intent);
                     }
                 });
@@ -385,4 +398,5 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private static boolean isNotBlank( String str ) {
         return str != null && !str.isEmpty();
     }
+
 }
