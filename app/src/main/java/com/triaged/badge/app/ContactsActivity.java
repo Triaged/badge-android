@@ -355,10 +355,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             departmentsListView.setAdapter( departmentsAdapter );
         }
         if( searchResultsAdapter != null ) {
-            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursor() );
+            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
         }
         else {
-            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursor(), dataProviderServiceBinding );
+            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
             searchResultsList.setAdapter( searchResultsAdapter );
         }
     }
