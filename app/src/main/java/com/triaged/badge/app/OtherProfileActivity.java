@@ -1,7 +1,10 @@
 package com.triaged.badge.app;
 
 import android.app.ActionBar;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Layout;
@@ -26,6 +29,7 @@ public class OtherProfileActivity extends AbstractProfileActivity {
     private TextView backButton = null;
     private ImageButton makeCallButton = null;
     private ImageButton newEmailButton = null;
+    private BroadcastReceiver refreshReceiver = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +92,27 @@ public class OtherProfileActivity extends AbstractProfileActivity {
             }
         });
 
+        refreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                contact = dataProviderServiceBinding.getContact( contact.id );
+                setupProfile();
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Try to refresh contact
+        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.DB_UPDATED_ACTION ));
+        dataProviderServiceBinding.refreshContact( contact.id );
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        localBroadcastManager.unregisterReceiver( refreshReceiver );
     }
 
     @Override
@@ -109,7 +134,6 @@ public class OtherProfileActivity extends AbstractProfileActivity {
         } else {
             newEmailButton.setVisibility(View.VISIBLE);
         }
-
     }
 
     private void trackProfileButtonEvent(String eventType) {
