@@ -116,7 +116,7 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
             contactsAdapter.refresh();
         }
         else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg, false);
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
             contactsListView.setAdapter(contactsAdapter);
         }
         if( searchResultsAdapter != null ) {

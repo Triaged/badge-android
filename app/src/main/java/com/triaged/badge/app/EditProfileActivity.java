@@ -267,21 +267,21 @@ public class EditProfileActivity extends BadgeActivity {
                                         editView.valueToSave = input.getText().toString();
                                         editView.invalidate();
                                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                                        imm.hideSoftInputFromWindow(editView.getWindowToken(), 0);
+                                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+                                        dialog.cancel();
                                     }
                                 });
                                 alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
                                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                                        imm.hideSoftInputFromWindow(editView.getWindowToken(), 0);
+                                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+                                        dialog.cancel();
                                     }
                                 });
                                 alertDialog.show();
                                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                                 imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-                                break;
                         }
                     }
                 });
