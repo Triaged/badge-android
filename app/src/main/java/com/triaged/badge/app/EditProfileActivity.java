@@ -16,6 +16,7 @@ import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.InputType;
@@ -38,6 +39,7 @@ import com.triaged.badge.app.views.ProfileContactInfoView;
 import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -74,6 +76,8 @@ public class EditProfileActivity extends BadgeActivity {
     private EditProfileInfoView officeLocation = null;
     private EditProfileInfoView startDate = null;
     private EditProfileInfoView birthDate = null;
+
+    private Uri outputFileUri;
 
     private DatePickerDialogNoYear birthdayDialog = null;
     protected Calendar birthdayCalendar = null;
@@ -293,6 +297,13 @@ public class EditProfileActivity extends BadgeActivity {
         editProfilePhotoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // Determine Uri of camera image to save.
+                final File root = new File(Environment.getExternalStorageDirectory() + File.separator + "Badge" + File.separator);
+                root.mkdirs();
+                final String fname = "img_" + System.currentTimeMillis() + ".jpg";
+                final File sdImageMainDirectory = new File(root, fname);
+                outputFileUri = Uri.fromFile(sdImageMainDirectory);
+
                 // Camera.
                 final List<Intent> cameraIntents = new ArrayList<Intent>();
                 final Intent captureIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
@@ -303,7 +314,7 @@ public class EditProfileActivity extends BadgeActivity {
                     final Intent intent = new Intent(captureIntent);
                     intent.setComponent(new ComponentName(res.activityInfo.packageName, res.activityInfo.name));
                     intent.setPackage(packageName);
-                    // intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
                     cameraIntents.add(intent);
                 }
 
