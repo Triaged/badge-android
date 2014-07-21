@@ -327,8 +327,8 @@ public class EditProfileActivity extends BadgeActivity {
         birthdayCalendar.setTimeZone(Contact.GMT);
         birthdayCalendar.set( Calendar.YEAR, 1 );
         birthdayFormat = new SimpleDateFormat(Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
-
         birthdayFormat.setTimeZone( Contact.GMT );
+
         if (loggedInUser.birthDateString != null) {
             try {
                 birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
@@ -337,18 +337,15 @@ public class EditProfileActivity extends BadgeActivity {
             }
         }
 
-        birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.HOUR, 0 );
+        birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.SECOND, 0 );
 
         birthdayDialog = new DatePickerDialogNoYear(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                birthdayCalendar.set(Calendar.YEAR, year);
-                birthdayCalendar.set(Calendar.MONTH, monthOfYear);
-                birthdayCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
-                birthDate.valueToSave = birthdayCalendar.getTime().toString();
+                birthDate.valueToSave = birthdayCalendar.getTime().toGMTString();
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
