@@ -363,7 +363,11 @@ public class DataProviderService extends Service {
             // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
             String birthDateStr = values.getAsString( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE );
             if( birthDateStr != null ) {
-                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthdayString( birthDateStr ) );
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertDateString(birthDateStr) );
+            }
+            String startDateStr = values.getAsString(CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+            if( startDateStr != null ) {
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, Contact.convertDateString(startDateStr) );
             }
             setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
             setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);

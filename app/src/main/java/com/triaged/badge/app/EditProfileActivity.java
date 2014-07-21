@@ -39,11 +39,13 @@ import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Field;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Allow user to modify info after they've already gone through onboarding flow.
@@ -55,8 +57,8 @@ public class EditProfileActivity extends BadgeActivity {
     private static final int PICTURE_REQUEST_CODE = 1888;
     private static final int EDIT_MY_LOCATION_REQUEST_CODE = 20;
 
-    private static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
-    private static final String LOG_TAG = EditProfileActivity.class.getName();
+    public static final String START_DATE_FORMAT_STRING = "MMMM d, yyyy";
+    protected static final String LOG_TAG = EditProfileActivity.class.getName();
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
@@ -156,7 +158,7 @@ public class EditProfileActivity extends BadgeActivity {
         profileImageMissingView.setText(loggedInUser.initials);
         profileImageMissingView.setVisibility(View.VISIBLE);
         if (loggedInUser.avatarUrl != null) {
-            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView );
+            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView);
         }
 
         firstName = (EditProfileInfoView) findViewById(R.id.edit_first_name);
@@ -323,16 +325,27 @@ public class EditProfileActivity extends BadgeActivity {
 
         // BIRTHDAY CALENDAR AND DIALOG
         birthdayCalendar = Calendar.getInstance();
-        birthdayCalendar.set( Calendar.YEAR, 1 );
-        if (loggedInUser.birthDateString != null) {
-            // assign birthDate to calendar
-        }
         birthdayFormat = new SimpleDateFormat(WelcomeActivity.BIRTHDAY_FORMAT_STRING, Locale.US);
+        birthdayFormat.setTimeZone( Contact.GMT );
+        if (loggedInUser.birthDateString != null) {
+            try {
+                birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
+            } catch (ParseException e) {
+                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
+            }
+        }
+        birthdayCalendar.set( Calendar.YEAR, 1 );
+        birthdayCalendar.setTimeZone(Contact.GMT);
+        birthdayCalendar.set( Calendar.MINUTE, 0 );
+        birthdayCalendar.set( Calendar.HOUR, 0 );
+        birthdayCalendar.set( Calendar.SECOND, 0 );
+
+
         birthdayDialog = new DatePickerDialogNoYear(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
-                birthDate.valueToSave = birthdayFormat.format(birthdayCalendar.getTime());
+                birthDate.valueToSave = birthdayCalendar.getTime().toString();
                 birthDate.invalidate();
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));

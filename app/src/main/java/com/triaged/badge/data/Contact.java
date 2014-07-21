@@ -70,7 +70,7 @@ public class Contact {
      * @param bday string representing date in iso 8601 format a la rails
      * @return "August 3"
      */
-    public static String convertBirthdayString( String bday ) {
+    public static String convertDateString(String bday) {
         try {
             DateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000Z");
             Date birthDate = iso8601.parse(bday.replace( "+00:00", "+0000" ) );
@@ -141,7 +141,7 @@ public class Contact {
             cellPhone = employeeInfo.getString( "cell_phone" );
         }
         if( !employeeInfo.isNull( "birth_date" ) ) {
-            birthDateString = convertBirthdayString( employeeInfo.getString("birth_date") );
+            birthDateString = convertDateString(employeeInfo.getString("birth_date"));
         }
         constructName();
     }
