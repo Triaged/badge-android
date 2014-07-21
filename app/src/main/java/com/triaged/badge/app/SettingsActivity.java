@@ -53,47 +53,9 @@ public class SettingsActivity extends BackButtonActivity {
         changePasswordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(SettingsActivity.this);
-                alertDialog.setTitle("Change Password");
-                final EditText input = new EditText(SettingsActivity.this);
-                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.MATCH_PARENT);
-                input.setLayoutParams(lp);
-                alertDialog.setView(input);
-                alertDialog.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Toast.makeText(SettingsActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
-                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-
-                        // TODO get old and confirm password fields
-                        dataProviderServiceBinding.changePassword( input.getText().toString(), null, null, new DataProviderService.AsyncSaveCallback() {
-                            @Override
-                            public void saveSuccess(int newId) {
-                                Toast.makeText( SettingsActivity.this, "Your password has been updated", Toast.LENGTH_SHORT ).show();
-                            }
-
-                            @Override
-                            public void saveFailed(String reason) {
-                                Toast.makeText( SettingsActivity.this, reason, Toast.LENGTH_SHORT ).show();
-                            }
-                        } );
-                    }
-                });
-                alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-                        dialog.cancel();
-                    }
-                });
-                alertDialog.show();
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                Intent intent = new Intent( SettingsActivity.this, ChangePasswordActivity.class );
+                intent.setFlags(ACTIV)
+                startActivity( intent );
             }
         });
         Button logoutButton = (Button) findViewById(R.id.logout_button);

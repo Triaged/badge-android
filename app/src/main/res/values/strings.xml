@@ -43,6 +43,7 @@
     <string name="your_department">Choose Department</string>
     <string name="reporting_to">Reporting to</string>
 
+
     <!-- SETTINGS -->
     <string name="settings_button">Settings</string>
     <string name="settings_account">Account</string>
@@ -59,6 +60,10 @@
     <string name="edit_profile_back">Edit Profile</string>
     <string name="edit_profile_your">Your Profile</string>
     <string name="save_and_exit">Save and Exit</string>
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="change_password">Change</string>
 
     <!-- ONBOARDING DEPARTMENT -->
     <string name="select_department">Select Department</string>
