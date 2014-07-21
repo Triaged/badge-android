@@ -27,7 +27,6 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
-import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -661,7 +660,7 @@ public class DataProviderService extends Service {
     protected void loggedOut() {
         if( loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals( apiClient.apiToken ) ) {
             // User initiated logout, make sure they don't get "stuck"
-            checkOutOfOffice( loggedInUser.currentOfficeLocationId );
+            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
         }
         loggedInUser = null;
         prefs.edit().
@@ -927,39 +926,52 @@ public class DataProviderService extends Service {
         }
     }
 
+
     /**
-     * If the user is currently "checked in" to this office,
-     * clear that status because they are no longer close to it.
+     * Async wrapper for {@link #checkOutOfOfficeSynchronously(int)}
+     * for when called from the UI.
+     *
+     * @param officeId
      */
-    protected void checkOutOfOffice(final int officeId) {
+    protected void checkOutOfOfficeAsync(final int officeId) {
         if (loggedInUser.currentOfficeLocationId == officeId) {
             sqlThread.submit( new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        HttpResponse response = apiClient.checkoutRequest(officeId);
-                        int status = response.getStatusLine().getStatusCode();
-                        if( response.getEntity() != null ) {
-                            response.getEntity().consumeContent();
-                        }
-                        if(  status == HttpStatus.SC_OK ) {
-                            ContentValues values = new ContentValues();
-                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
-                            database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
-                            loggedInUser.currentOfficeLocationId = -1;
-                        }
-                        else {
-                            Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
-                        }
-                    }
-                    catch( IOException e ) {
-                        Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
-                        // Rats. Next time?
-                    }
-
+                    checkOutOfOfficeSynchronously( officeId );
                 }
             } );
         }
+    }
+
+    /**
+     * If the user is currently "checked in" to this office,
+     * clear that status because they are no longer close to it.
+     *
+     * @param officeId
+     */
+    protected void checkOutOfOfficeSynchronously(int officeId ) {
+        try {
+            HttpResponse response = apiClient.checkoutRequest(officeId);
+            int status = response.getStatusLine().getStatusCode();
+            if( response.getEntity() != null ) {
+                response.getEntity().consumeContent();
+            }
+            if(  status == HttpStatus.SC_OK ) {
+                ContentValues values = new ContentValues();
+                values.put( CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1 );
+                database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { String.valueOf( loggedInUser.id ) }  );
+                loggedInUser.currentOfficeLocationId = -1;
+            }
+            else {
+                Log.w( LOG_TAG, "Server responded with " + status + " trying to check out of location." );
+            }
+        }
+        catch( IOException e ) {
+            Log.w( LOG_TAG, "Couldn't check out of office due to IOException " + officeId );
+            // Rats. Next time?
+        }
+
     }
 
     /**
@@ -1716,10 +1728,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#checkOutOfOffice(int)
+         * @see com.triaged.badge.app.DataProviderService#checkOutOfOfficeAsync(int)
          */
         public void checkOutOfOffice( int officeId ) {
-            DataProviderService.this.checkOutOfOffice(officeId);
+            DataProviderService.this.checkOutOfOfficeAsync(officeId);
         }
 
         /**
