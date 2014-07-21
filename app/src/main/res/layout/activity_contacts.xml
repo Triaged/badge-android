@@ -11,6 +11,13 @@
 
     <include layout="@layout/include_search" />
 
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true"
+        />
+
     <se.emilsjolander.stickylistheaders.StickyListHeadersListView
         android:id="@+id/contacts_list"
         android:layout_width="match_parent"

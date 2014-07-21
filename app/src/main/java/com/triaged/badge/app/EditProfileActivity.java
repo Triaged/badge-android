@@ -325,7 +325,9 @@ public class EditProfileActivity extends BadgeActivity {
         // BIRTHDAY CALENDAR AND DIALOG
         birthdayCalendar = Calendar.getInstance();
         birthdayCalendar.setTimeZone(Contact.GMT);
+        birthdayCalendar.set( Calendar.YEAR, 1 );
         birthdayFormat = new SimpleDateFormat(Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
+
         birthdayFormat.setTimeZone( Contact.GMT );
         if (loggedInUser.birthDateString != null) {
             try {
@@ -334,15 +336,17 @@ public class EditProfileActivity extends BadgeActivity {
                 Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
             }
         }
-        birthdayCalendar.set( Calendar.YEAR, 1 );
+
         birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.HOUR, 0 );
         birthdayCalendar.set( Calendar.SECOND, 0 );
 
-
         birthdayDialog = new DatePickerDialogNoYear(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                birthdayCalendar.set(Calendar.YEAR, year);
+                birthdayCalendar.set(Calendar.MONTH, monthOfYear);
+                birthdayCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
                 birthDate.secondaryValue = birthdayFormat.format(birthdayCalendar.getTime());
                 birthDate.valueToSave = birthdayCalendar.getTime().toString();
                 birthDate.invalidate();
