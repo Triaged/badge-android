@@ -1277,6 +1277,10 @@ public class DataProviderService extends Service {
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, lastName );
                         values.put( CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, cellPhone );
                         values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
+
+                        if( birthDateString != null ) {
+                            values.put( CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateString) );
+                        }
                         //values.put( CompanySQLiteHelper.COL)
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
