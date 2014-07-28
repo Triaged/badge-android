@@ -41,7 +41,7 @@ public abstract class BadgeActivity extends Activity {
      * Badge Sender ID. This is the project number you got
      * from the API Console, as described in "Getting Started."
      */
-    private static final String SENDER_ID = "XXX";
+    private static final String SENDER_ID = "466421541427";
 
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
