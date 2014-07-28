@@ -4,25 +4,16 @@ import android.app.Application;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.common.eventbus.Subscribe;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 
-import org.codeweaver.faye.BusProvider;
-import org.codeweaver.faye.Client;
-import org.codeweaver.faye.event.ConnectedEvent;
 import org.json.JSONObject;
 
 /**
- * Custom implementation of the Android Application class that sets up global services and
+ * Custom implementation of the Anroid Application class that sets up global services and
  * plugins such as Google Analytics and Crashlytics.
  *
  * Created by Will on 7/7/14.
@@ -43,7 +34,6 @@ public class BadgeApplication extends Application {
     public void onCreate() {
         super.onCreate();
         Crashlytics.start(this);
-        BusProvider.getInstance().register(this);
 
         final Intent fayeServiceIntent = new Intent( getApplicationContext(), FayeService.class );
         appForeground = Foreground.get(this);

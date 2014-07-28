@@ -100,6 +100,7 @@ public class WebSocketClient {
                     out.print("Connection: Upgrade\r\n");
                     out.print("Sec-WebSocket-Key: " + secret + "\r\n");
                     out.print("Sec-WebSocket-Version: 13\r\n");
+                    //out.print("Sec-WebSocket-Accept: \r\n");
                     out.print("Origin: " + origin.toString() + "\r\n");
 
                     if (mExtraHeaders != null) {
@@ -131,7 +132,7 @@ public class WebSocketClient {
 
                         Header header = parseHeader(line);
 
-                        if (header.getName().equals("Sec-WebSocket-Accept")) {
+                        if (header.getName().toLowerCase().equals("sec-websocket-accept" )) {
 
                             String expected = createSecretValidation(secret);
                             String actual = header.getValue().trim();

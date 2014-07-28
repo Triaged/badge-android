@@ -3,6 +3,7 @@ package com.triaged.badge.app;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -26,26 +27,28 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     protected static final String LOG_TAG = FayeService.class.getName();
 
-    protected static final String FAYE_HOST = "wss://badge-messaging.herokuapp.com:443/";
+    protected static final String FAYE_HOST = "ws://badge-messaging-staging.herokuapp.com/streaming";
     //protected Fa faye;
     protected SharedPreferences prefs;
     protected boolean fayeConnected = false;
     protected FayeClient faye;
-    protected String loggedInUserId;
+    protected int loggedInUserId;
     protected String authToken;
+    private LocalBinding localBinding;
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return localBinding;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        localBinding = new LocalBinding();
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
-        loggedInUserId = prefs.getString( DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, "" );
-        authToken = prefs.getString( DataProviderService.API_TOKEN_PREFS_KEY, "" );
-        if( "".equals( loggedInUserId ) ) {
+        loggedInUserId = prefs.getInt(DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, -1);
+        authToken = prefs.getString(DataProviderService.API_TOKEN_PREFS_KEY, "");
+        if( loggedInUserId <= 0 ) {
             stopSelf();
         }
         else {
@@ -57,12 +60,13 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if( !"".equals( loggedInUserId ) ) {
+        if( loggedInUserId > 0 ) {
             JSONObject extension = new JSONObject();
             try {
                 extension.put( "user_id", loggedInUserId );
                 extension.put( "auth_token", authToken );
                 // Looks like this is async so it's safe here.
+                faye.setFayeListener( this );
                 faye.connectToServer(extension);
             }
             catch( JSONException e ) {
@@ -107,5 +111,13 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void messageReceived(JSONObject json) {
         // Do actual work.
         Log.d( LOG_TAG, "Message: " + json.toString() );
+    }
+
+    public class LocalBinding extends Binder {
+        public void sendMessage( JSONObject msg ) {
+            if( fayeConnected ) {
+                //faye.publish( "" )
+            }
+        }
     }
 }

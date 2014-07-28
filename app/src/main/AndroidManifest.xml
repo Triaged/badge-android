@@ -133,6 +133,7 @@
         <!-- SERVICES -->
         <service android:name=".DataProviderService" android:enabled="true" />
         <service android:name=".LocationTrackingService" android:enabled="true" />
+        <service android:name=".FayeService" android:enabled="true" />
 
 
         <!-- GOOGLE MAPS API KEY AND GMS VERSION -->

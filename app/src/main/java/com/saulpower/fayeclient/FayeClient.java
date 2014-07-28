@@ -341,6 +341,10 @@ public class FayeClient implements Listener {
         }
     }
 
+    public void publish( JSONObject message, JSONObject extension ) {
+        publish( null, message, extension );
+    }
+
     /**
      * Publish events on a channel by sending an event message
      *
@@ -352,6 +356,8 @@ public class FayeClient implements Listener {
      *         KEY_ID:        "some unique message id"
      * }
      *
+     * @param channel
+     *            Channel to publish message to.
      * @param message
      *            JSON object containing message to be sent to server
      *
@@ -359,9 +365,11 @@ public class FayeClient implements Listener {
      *            Bayeux extension authentication that exchanges authentication
      *            credentials and tokens within Bayeux messages ext fields
      */
-    public void publish(JSONObject message, JSONObject extension) {
+    public void publish( String channel, JSONObject message, JSONObject extension) {
 
-        String channel        = mActiveSubChannel;
+        if( channel == null ) {
+            channel = mActiveSubChannel;
+        }
         long number            = (new Date()).getTime();
         String messageId    = String.format("msg_%d_%d", number, 1);
 
