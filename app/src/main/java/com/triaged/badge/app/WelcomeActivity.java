@@ -106,6 +106,10 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
             }
         }
 
+        birthdayCalendar.set( Calendar.HOUR, 0 );
+        birthdayCalendar.set( Calendar.MINUTE, 0 );
+        birthdayCalendar.set( Calendar.SECOND, 0 );
+
         datePickerDialog = new DatePickerDialogNoYear(this, this, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 
         birthday.setOnTouchListener(new View.OnTouchListener() {
