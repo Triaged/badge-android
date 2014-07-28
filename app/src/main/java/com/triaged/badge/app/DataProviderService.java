@@ -1165,26 +1165,33 @@ public class DataProviderService extends Service {
                     ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
-                        JSONObject account = parseJSONResponse( response.getEntity() );
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
+                        JSONObject account = null;
 
 
                         // OK now send avatar if there was a new one specified
                         if( newAvatarFile != null ) {
                             HttpResponse avatarResponse = apiClient.uploadNewAvatar( newAvatarFile );
                             int avatarStatusCode = avatarResponse.getStatusLine().getStatusCode();
-                            if( avatarResponse.getEntity() != null ) {
-                                avatarResponse.getEntity().consumeContent();
-                            }
                             if( avatarStatusCode == HttpStatus.SC_OK  ) {
-
+                                // avatar response should have both profile changes and avatar change.
+                                account = parseJSONResponse( avatarResponse.getEntity() );
                             }
                             else {
+                                if( avatarResponse.getEntity() != null ) {
+                                    avatarResponse.getEntity().consumeContent();
+                                }
+
                                 fail("Save avatar response was '" + avatarResponse.getStatusLine().getReasonPhrase() + "'", saveCallback);
                             }
                         }
+
+                        if( account == null ) {
+                            account = parseJSONResponse( response.getEntity() );
+                        }
+                        // Update local data.
+                        ContentValues values = new ContentValues();
+                        setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
+
 
                         database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact( prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 ) );
