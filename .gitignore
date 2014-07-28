@@ -8,3 +8,4 @@ build/
 .keystore.idea
 com_crashlytics_export_strings.xml
 src/main/assets/crashlytics-build.properties
+crashlytics-build.properties

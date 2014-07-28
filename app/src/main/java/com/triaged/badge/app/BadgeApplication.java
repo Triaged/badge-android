@@ -13,8 +13,12 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.common.eventbus.Subscribe;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 
+import org.codeweaver.faye.BusProvider;
+import org.codeweaver.faye.Client;
+import org.codeweaver.faye.event.ConnectedEvent;
 import org.json.JSONObject;
 
 /**
@@ -23,8 +27,7 @@ import org.json.JSONObject;
  *
  * Created by Will on 7/7/14.
  */
-public class BadgeApplication extends Application
-{
+public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
     public static final String MIXPANEL_TOKEN = "b9c753b3560536492eba971a53213f5f";
@@ -35,11 +38,14 @@ public class BadgeApplication extends Application
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
 
+
     @Override
     public void onCreate() {
         super.onCreate();
         Crashlytics.start(this);
+        BusProvider.getInstance().register(this);
 
+        final Intent fayeServiceIntent = new Intent( getApplicationContext(), FayeService.class );
         appForeground = Foreground.get(this);
         foregroundListener = new Foreground.Listener() {
             @Override
@@ -48,11 +54,12 @@ public class BadgeApplication extends Application
                 JSONObject props = new JSONObject();
                 mixpanelAPI.track("appForeground", props);
                 mixpanelAPI.flush();
+                startService( fayeServiceIntent );
             }
 
             @Override
             public void onBecameBackground() {
-
+                stopService( fayeServiceIntent );
             }
         };
         appForeground.addListener(foregroundListener);

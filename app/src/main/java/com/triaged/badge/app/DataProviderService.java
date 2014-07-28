@@ -681,7 +681,8 @@ public class DataProviderService extends Service {
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
-
+        Intent fayeIntent = new Intent( this, FayeService.class );
+        stopService( fayeIntent );
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
         MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
         mixpanelAPI.clearSuperProperties();
@@ -877,6 +878,7 @@ public class DataProviderService extends Service {
                             }
 
                             syncCompany(database);
+                            startService( new Intent( DataProviderService.this, FayeService.class ) );
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, "JSON exception parsing login success.", e);
                             fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
