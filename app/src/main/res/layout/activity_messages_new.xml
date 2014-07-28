@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/profile_row_background"
+        android:id="@+id/to_box"
+        >
+
+        <com.triaged.badge.app.views.TextViewWithFont
+            android:id="@+id/to_users"
+            android:text="@string/to_users"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:src="@drawable/ic_action_search"
+            android:layout_centerVertical="true"
+            android:textSize="15sp"
+            android:textColor="@color/light_text_gray"
+            />
+
+        <EditText
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="@string/search_hint"
+            android:background="@null"
+            android:textSize="15sp"
+            android:textColor="@color/main_text_black"
+            android:textColorHint="@color/light_text_gray"
+            android:paddingLeft="48dp"
+            android:layout_marginRight="48dp"
+            android:layout_marginLeft="0dp"
+            android:nextFocusUp="@id/search_bar"
+            android:nextFocusLeft="@id/search_bar"
+            />
+
+        <ImageButton
+            android:id="@+id/clear_search"
+            android:layout_width="52dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_action_remove"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@null"
+            android:gravity="center"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"
+            android:visibility="gone"
+            />
+
+    </RelativeLayout>
+
+    <se.emilsjolander.stickylistheaders.StickyListHeadersListView
+        android:id="@+id/contacts_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_marginTop="48dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        />
+
+    <ListView
+        android:id="@+id/search_results_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_marginTop="48dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"
+        android:overScrollMode="never"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        />
+
+</RelativeLayout>

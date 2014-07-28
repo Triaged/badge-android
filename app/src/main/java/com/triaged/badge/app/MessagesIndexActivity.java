@@ -8,6 +8,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -37,8 +39,8 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_unselected).setTabListener(this), true);
-        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_selected).setTabListener(this), false);
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.messages_selected).setTabListener(this), true);
+        actionBar.addTab(actionBar.newTab().setIcon(R.drawable.contacts_unselected).setTabListener(this), false);
         actionBar.addTab(actionBar.newTab().setIcon(R.drawable.profile_unselected).setTabListener(this), false);
 
         setContentView(R.layout.activity_messages_index);
@@ -64,6 +66,15 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MessagesIndexActivity.this, MessageShowActivity.class);
                 intent.putExtra("MESSAGE_ID", 0);
+                startActivity(intent);
+            }
+        });
+
+        ImageButton composeButton = (ImageButton) findViewById(R.id.compose_button);
+        composeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MessagesIndexActivity.this, MessageNewActivity.class);
                 startActivity(intent);
             }
         });
