@@ -25,10 +25,10 @@ import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
 import android.webkit.MimeTypeMap;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
-import com.mixpanel.android.util.StringUtils;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -143,14 +143,28 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+    protected static final String QUERY_THREADS_SQL =
+            String.format( "SELECT * from %s WHERE %s = 1 order by %s DESC",
+                    CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+            );
+    protected static final String QUERY_MESSAGES_SQL =
+            String.format( "SELECT * from %s WHERE %s = ? order by %s DESC",
+                    CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+            );
+
 
     protected static final String QUERY_MESSAGE_SQL =
-            String.format( "SELECT id FROM %s WHERE %s = ?", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
+            String.format( "SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
+    protected static final String CLEAR_MESSAGES_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_MESSAGES );
     protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format( "SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
 
@@ -408,7 +422,7 @@ public class DataProviderService extends Service {
         finally {
             db.endTransaction();
         }
-        if( updated ) {
+        if( updated && initialized ) {
             localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
         }
 
@@ -523,6 +537,7 @@ public class DataProviderService extends Service {
                     contact.fromCursor(cursor);
                     return contact;
                 }
+                return null;
             } finally {
                 cursor.close();
             }
@@ -544,12 +559,12 @@ public class DataProviderService extends Service {
      *
      * If a placeholder view is specified, it will be hidden
      *
-     * @param c contact
+     * @param avatarUrl url of avatar img
      * @param thumbImageView the view to set the image on.
      * @param placeholderView null or a view that should be hidden once the image has been set.
      */
-    protected void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
-        Bitmap b = thumbCache.get( c.avatarUrl );
+    protected void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
+        Bitmap b = thumbCache.get( avatarUrl );
         if( b != null ) {
             // Hooray!
             assignBitmapToView( b, thumbImageView );
@@ -558,7 +573,7 @@ public class DataProviderService extends Service {
             }
         }
         else {
-            new LoadImageAsyncTask( c.avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
+            new LoadImageAsyncTask( avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
         }
     }
 
@@ -669,21 +684,14 @@ public class DataProviderService extends Service {
             checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
         }
         loggedInUser = null;
-        prefs.edit().
-                remove( API_TOKEN_PREFS_KEY).
-                remove( LOGGED_IN_USER_ID_PREFS_KEY ).
-                remove( LAST_SYNCED_PREFS_KEY ).
-                remove( COMPANY_ID_PREFS_KEY ).
-                remove( COMPANY_NAME_PREFS_KEY ).
-                remove( LoginActivity.PROPERTY_REG_ID ).
-                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
-                remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
+        prefs.edit().clear().commit();
         stopService( new Intent( this, LocationTrackingService.class ) );
 
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
         database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
+        database.execSQL(CLEAR_MESSAGES_SQL);
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
@@ -1071,11 +1079,22 @@ public class DataProviderService extends Service {
                     if( loggedInContactId > 0 ) {
                         loggedInUser = getContact(loggedInContactId);
                     }
-                    initialized = true;
-                    localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
+
+                    if( loggedInUser != null ) {
+                        initialized = true;
+                        localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                    }
 
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+
+                        if( loggedInContactId > 0 ) {
+                            loggedInUser = getContact(loggedInContactId);
+                            if( !initialized ) {
+                                initialized = true;
+                                localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                            }
+                        }
 
                         // Check if this is the first boot of a new install
                         // If it is, since we're logged in, if the user hasnt
@@ -1626,21 +1645,26 @@ public class DataProviderService extends Service {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
-                int threadId;
+                String threadId;
+                database.beginTransaction();
                 try {
                     JSONObject thread = threadWrapper.getJSONObject( "message_thread" );
-                    threadId = thread.getInt( "id" );
+                    threadId = thread.getString( "id" );
                     JSONArray userIds = thread.getJSONArray( "user_ids" );
-                    // Persist/overwrite thread id/user id mapping
-                    prefs.edit().putInt( userIdArrayToKey( userIds ), threadId ).commit();
 
+                    prefs.edit().putString( userIdArrayToKey( userIds ), threadId ).commit();
 
                     JSONArray msgArray = thread.getJSONArray( "messages" );
                     int numMessages = msgArray.length();
                     ContentValues msgValues = new ContentValues();
+
+                    msgValues.clear();
                     for( int i = 0; i < numMessages; i++ ) {
+                        if( i == numMessages - 1 ) {
+
+                        }
                         JSONObject msg = msgArray.getJSONObject( i );
-                        String[] messageSelector = new String[] { String.valueOf( msg.getInt( "id" ) ) };
+                        String[] messageSelector = new String[] { msg.getString( "id" ) };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                         if( msgCursor.getCount() == 1 ) {
                             msgCursor.moveToFirst();
@@ -1657,21 +1681,86 @@ public class DataProviderService extends Service {
                         }
                         msgValues.clear();
                     }
+                    // Get id of most recent msg.
+                    Cursor messages = getMessages( threadId );
+                    if( messages.moveToFirst() ) {
+                        String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+                        messages.close();
+                        // Unset thread head on all thread messages.
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0 );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String)null );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String)null );
+                        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, "", EMPTY_STRING_ARRAY );
+                        msgValues.clear();
+
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
+                        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ), new String[] { mostRecentId } );
+                    }
+                    else {
+                        messages.close();
+                    }
+                    database.setTransactionSuccessful();
                 }
                 catch( JSONException e ) {
                     Log.e( LOG_TAG, "Malformed JSON back from faye." );
+                }
+                finally {
+                    database.endTransaction();
                 }
 
             }
         });
     }
 
-    private static void setMessageContentValuesFromJSON( int threadId, JSONObject msg, ContentValues msgValues, boolean acknowledged ) throws JSONException {
+    /**
+     * Get a cursor to the list of active thread ids with most
+     * recent thread first.
+     *
+     * @return
+     */
+    protected Cursor getThreads() {
+        if( database != null  ) {
+            return database.rawQuery( QUERY_THREADS_SQL, EMPTY_STRING_ARRAY );
+        }
+        throw new IllegalStateException( "getThreads() called before database available." );
+    }
+
+    protected Cursor getMessages( String threadId ) {
+        if( database != null  ) {
+            return database.rawQuery( QUERY_MESSAGES_SQL, new String[] { threadId } );
+        }
+        throw new IllegalStateException( "getMessages() called before database available." );
+
+    }
+
+    private static void setMessageContentValuesFromJSON( String threadId, JSONObject msg, ContentValues msgValues, boolean acknowledged ) throws JSONException {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
-        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getInt( "id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
+    }
+
+    /**
+     * Get the avatar url for the first user id in the list that's not mine.
+     *
+     * @param userIdArr
+     * @return
+     * @throws JSONException
+     */
+    private String userIdArrayToAvatarUrl( JSONArray userIdArr ) throws JSONException {
+        int numUsers = userIdArr.length();
+        for( int i = 0; i < numUsers; i++ ) {
+            int userId = userIdArr.getInt(i);
+            if (userId != loggedInUser.id) {
+                Contact c = getContact(userId);
+                return c.avatarUrl;
+            }
+        }
+        return null;
     }
 
     /**
@@ -1684,7 +1773,7 @@ public class DataProviderService extends Service {
         int size = userIdArr.length();
         ArrayList<Integer> userIdList = new ArrayList<Integer>( size );
         for( int i = 0; i < size; i++ ) {
-            userIdList.add( userIdArr.getInt( 0 ) );
+            userIdList.add( userIdArr.getInt( i ) );
         }
         Collections.sort(userIdList);
         StringBuilder delimString = new StringBuilder();
@@ -1694,6 +1783,30 @@ public class DataProviderService extends Service {
             delim = ",";
         }
         return delimString.toString();
+    }
+
+    /**
+     * Look up the contact corresponding to each id and join
+     * their names in a comma separated list, excluding the logged
+     * in user's own name
+     *
+     * @param userIdArr  json array of user ids
+     * @return a comma delimited string of unsorted contact names
+     * @throws JSONException
+     */
+    private String userIdArrayToNames( JSONArray userIdArr ) throws JSONException {
+        StringBuilder names = new StringBuilder();
+        String delim = "";
+        int numUsers = userIdArr.length();
+        for( int i = 0; i < numUsers; i++ ) {
+            int userId = userIdArr.getInt( i );
+            if( userId != loggedInUser.id ) {
+                Contact c = getContact( userId );
+                names.append( delim ).append( c.name );
+                delim = ", ";
+            }
+        }
+        return names.toString();
     }
 
     /**
@@ -1779,10 +1892,17 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View, android.view.View )
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
          */
         public void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
-            DataProviderService.this.setSmallContactImage(c, thumbImageView, placeholderView );
+            DataProviderService.this.setSmallContactImage(c.avatarUrl, thumbImageView, placeholderView );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
+         */
+        public void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
+            DataProviderService.this.setSmallContactImage( avatarUrl, thumbImageView, placeholderView );
         }
 
         /**
@@ -1930,8 +2050,18 @@ public class DataProviderService extends Service {
             DataProviderService.this.refreshContact( contactId );
         }
 
+        /**
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject)
+         */
         public void upsertThreadAndMessages( JSONObject thread ) {
-            DataProviderService.this.upsertThreadAndMessages( thread );
+            DataProviderService.this.upsertThreadAndMessages(thread);
+        }
+
+        /**
+         * @see DataProviderService#getThreads()
+         */
+        public Cursor getThreads( ) {
+            return DataProviderService.this.getThreads();
         }
     }
 

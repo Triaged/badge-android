@@ -25,6 +25,8 @@ import com.triaged.badge.data.Contact;
  */
 public class MessageShowActivity extends BadgeActivity {
 
+    public static final String THREAD_ID_EXTRA = "threadId";
+
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     private ListView threadList;

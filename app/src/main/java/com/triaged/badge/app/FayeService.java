@@ -16,6 +16,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -35,7 +40,9 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     protected FayeClient faye;
     protected int loggedInUserId;
     protected String authToken;
+    protected ScheduledExecutorService heartbeatThread;
     private LocalBinding localBinding;
+    private ScheduledFuture<?> heartbeatFuture;
     private DataProviderService.LocalBinding dataProviderServiceBinding;
 
     @Override
@@ -47,6 +54,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void onCreate() {
         super.onCreate();
         localBinding = new LocalBinding();
+        heartbeatThread = Executors.newSingleThreadScheduledExecutor();
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
         loggedInUserId = prefs.getInt(DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, -1);
         authToken = prefs.getString(DataProviderService.API_TOKEN_PREFS_KEY, "");
@@ -80,9 +88,11 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void onDestroy() {
+        heartbeatFuture.cancel(true);
         if( fayeConnected ) {
             faye.disconnectFromServer();
         }
+        heartbeatThread.shutdownNow();
         super.onDestroy();
     }
 
@@ -90,17 +100,40 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void connectedToServer() {
         fayeConnected = true;
         Log.d( LOG_TAG, "Faye connected to server!" );
+        // Start heartbeat
+        heartbeatFuture = heartbeatThread.scheduleAtFixedRate(new Runnable() {
+            JSONObject message;
+            String heartbeatChannel;
+
+            {
+                message = new JSONObject();
+                try {
+                    message.put( "ping", "pong" );
+                }
+                catch( JSONException e ) {
+                    // Not an operation that can fail.
+                }
+                heartbeatChannel  = String.format( "/users/heartbeat/%s", loggedInUserId );
+            }
+
+            @Override
+            public void run() {
+                faye.publish( heartbeatChannel, message );
+            }
+        }, 250, 250, TimeUnit.MILLISECONDS );
+
     }
 
     @Override
     public void disconnectedFromServer() {
         fayeConnected = false;
-        Log.d( LOG_TAG, "Faye disconnected to server, frown emoji" );
+        heartbeatFuture.cancel(true);
+        Log.d( LOG_TAG, "Faye disconnected from server, frown emoji" );
     }
 
     @Override
     public void subscribedToChannel(String subscription) {
-        Log.d( LOG_TAG, "Faye subscribed to channel!" );
+        Log.d(LOG_TAG, "Faye subscribed to channel!");
     }
 
     @Override
@@ -115,6 +148,9 @@ public class FayeService extends Service implements FayeClient.FayeListener {
      */
     @Override
     public void messageReceived( final JSONObject json) {
+        if( json.has( "ping" ) ) {
+            return;
+        }
         ensureDataServiceBinding();
         dataProviderServiceBinding.upsertThreadAndMessages( json );
         // Do actual work.

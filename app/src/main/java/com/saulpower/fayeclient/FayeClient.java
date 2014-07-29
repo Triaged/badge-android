@@ -341,6 +341,10 @@ public class FayeClient implements Listener {
         }
     }
 
+    public void publish( String channel, JSONObject message ) {
+        publish( channel, message, mConnectionExtension );
+    }
+
     public void publish( JSONObject message, JSONObject extension ) {
         publish( null, message, extension );
     }
