@@ -76,15 +76,6 @@ public class SettingsActivity extends BackButtonActivity {
                 startActivity(browserIntent);
             }
         });
-        Switch newMessageNotificationSwitch = (Switch) findViewById(R.id.new_message_switch);
-        newMessageNotificationSwitch.setChecked(true);
-        newMessageNotificationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // TODO: WHAT CHANGES HERE???
-                Toast.makeText(SettingsActivity.this, "New Message Notification Switch Changed", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         Switch broadcastOfficeLocationSwitch = (Switch) findViewById(R.id.office_location_switch);
         broadcastOfficeLocationSwitch.setChecked( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ) );

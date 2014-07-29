@@ -36,7 +36,7 @@
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:paddingTop="10dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             >
 
             <ImageView
@@ -88,7 +88,7 @@
             android:id="@+id/edit_first_name"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_first_name"
             />
 
@@ -96,7 +96,7 @@
             android:id="@+id/edit_last_name"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_last_name"
             />
 
@@ -120,7 +120,7 @@
             android:id="@+id/edit_cell_phone"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_cell_phone"
             />
 
@@ -128,7 +128,7 @@
             android:id="@+id/edit_office_phone"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_office_phone"
             />
 
@@ -152,7 +152,7 @@
             android:id="@+id/edit_job_title"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_job_title"
             />
 
@@ -160,7 +160,7 @@
             android:id="@+id/edit_department"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_department"
             />
 
@@ -168,7 +168,7 @@
             android:id="@+id/edit_reporting_to"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_reporting_to"
             />
 
@@ -176,7 +176,7 @@
             android:id="@+id/edit_office_location"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_office_location"
             />
 
@@ -184,7 +184,7 @@
             android:id="@+id/edit_start_date"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_start_date"
             />
 
@@ -208,7 +208,7 @@
             android:id="@+id/edit_birth_date"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@drawable/profile_row_background"
+            android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_birth_date"
             />
 

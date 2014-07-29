@@ -5,6 +5,12 @@
         <!-- Customize your theme here. -->
         <item name="android:windowBackground">@color/white</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="android:listViewStyle">@style/ListView</item>
+    </style>
+
+    <!-- list view -->
+    <style name="ListView" parent="@android:style/Widget.ListView">
+        <item name="android:listSelector">@drawable/padded_listview_row_bg</item>
     </style>
 
     <style name="Tabbed" parent="AppTheme">

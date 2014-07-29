@@ -2,14 +2,25 @@ package com.triaged.badge.app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.triaged.badge.app.views.MessageThreadAdapter;
 import com.triaged.badge.data.Contact;
 
 /**
+ * Activity for a message thread.
+ *
  * Created by Will on 7/15/14.
  */
 public class MessageShowActivity extends BadgeActivity {
@@ -18,6 +29,11 @@ public class MessageShowActivity extends BadgeActivity {
 
     private ListView threadList;
     private MessageThreadAdapter adapter;
+    private EditText postBox;
+    private RelativeLayout postBoxWrapper;
+    private float densityMultiplier = 1;
+    private boolean expanded = false;
+    private Contact counterPart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +49,17 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 onBackPressed();
+            }
+        });
+
+        ImageButton profileButton = (ImageButton) findViewById(R.id.thread_members_button);
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", counterPart.id);
+                startActivity(intent);
             }
         });
 
@@ -55,15 +82,55 @@ public class MessageShowActivity extends BadgeActivity {
 
         adapter = new MessageThreadAdapter(this, values);
         threadList.setAdapter(adapter);
+        threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (getCurrentFocus() != null) {
+                    getCurrentFocus().clearFocus();
+                }
+            }
+        });
 
         Intent intent = getIntent();
-        int userId = intent.getIntExtra("CONTACT_ID", 0);
+        int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
         if (userId != 0) {
-            Contact counterPart = dataProviderServiceBinding.getContact(userId);
+            counterPart = dataProviderServiceBinding.getContact(userId);
             backButton.setText(counterPart.name);
         } else {
             backButton.setText("Back");
         }
+
+        postBox = (EditText) findViewById(R.id.input_box);
+
+        postBoxWrapper = (RelativeLayout) findViewById(R.id.post_box_wrapper);
+
+        densityMultiplier = getResources().getDisplayMetrics().density;
+
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (postBox.getLineCount() > 2 && !expanded) {
+                    expand(postBoxWrapper);
+                    expanded = true;
+                } else if (postBox.getLineCount() < 3 && expanded) {
+                    collapse(postBoxWrapper);
+                    expanded = false;
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        };
+
+        postBox.addTextChangedListener(textWatcher);
+
     }
 
     @Override
@@ -71,4 +138,51 @@ public class MessageShowActivity extends BadgeActivity {
         super.onResume();
         overridePendingTransition(0,0);
     }
+
+
+    public void expand(final View v) {
+        v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        final int targetHeight = (int) (64 * densityMultiplier);
+
+        v.getLayoutParams().height = 0;
+        Animation a = new Animation()
+        {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                v.getLayoutParams().height = targetHeight;
+                v.requestLayout();
+            }
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // 1dp/ms
+        a.setDuration((int)(targetHeight / densityMultiplier));
+        v.startAnimation(a);
+    }
+
+    public void collapse(final View v) {
+        final int initialHeight = (int) (48 * densityMultiplier);
+
+        Animation a = new Animation()
+        {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                v.getLayoutParams().height = initialHeight;
+                v.requestLayout();
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // 1dp/ms
+        a.setDuration((int)(initialHeight / densityMultiplier));
+        v.startAnimation(a);
+    }
+
 }

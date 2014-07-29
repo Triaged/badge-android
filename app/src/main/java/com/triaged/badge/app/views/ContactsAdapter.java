@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
+import com.triaged.badge.app.MessageNewActivity;
 import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -85,7 +86,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(context, MessageShowActivity.class);
-                    intent.putExtra("CONTACT_ID", ((Contact)holder.messageButton.getTag()).id);
+                    intent.putExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, ((Contact)holder.messageButton.getTag()).id);
                     context.startActivity(intent);
                 }
             });
