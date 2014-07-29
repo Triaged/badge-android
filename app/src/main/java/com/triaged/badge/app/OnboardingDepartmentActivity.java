@@ -116,10 +116,4 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         departmentsListView.setAdapter( departmentsAdapter );
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
-    }
-
 }

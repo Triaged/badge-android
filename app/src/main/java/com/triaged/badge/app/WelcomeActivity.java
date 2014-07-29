@@ -53,6 +53,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         public void saveSuccess( int newId ) {
             Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         }
 
         @Override
@@ -148,7 +149,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     @Override
     protected void onResume() {
         super.onResume();
-        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
     }
 
     @Override
@@ -193,4 +193,5 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         }
         return null;
     }
+
 }

@@ -68,6 +68,7 @@ public class LoginActivity extends BadgeActivity {
                 Intent activityIntent = new Intent( LoginActivity.this, WelcomeActivity.class );
                 activityIntent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
                 startActivity(activityIntent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                 finish();
             }
         };

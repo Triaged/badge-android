@@ -129,12 +129,6 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
-    }
-
-    @Override
     protected void onDestroy() {
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.destroy();

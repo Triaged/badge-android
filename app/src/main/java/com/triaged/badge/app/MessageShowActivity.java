@@ -133,13 +133,6 @@ public class MessageShowActivity extends BadgeActivity {
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
-    }
-
-
     public void expand(final View v) {
         v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         final int targetHeight = (int) (64 * densityMultiplier);

@@ -47,6 +47,7 @@ public class SettingsActivity extends BackButtonActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(SettingsActivity.this, EditProfileActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
         Button changePasswordButton = (Button) findViewById(R.id.change_password_button);
@@ -55,6 +56,7 @@ public class SettingsActivity extends BackButtonActivity {
             public void onClick(View v) {
                 Intent intent = new Intent( SettingsActivity.this, ChangePasswordActivity.class );
                 startActivity( intent );
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
         Button logoutButton = (Button) findViewById(R.id.logout_button);
@@ -95,9 +97,9 @@ public class SettingsActivity extends BackButtonActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 
 }

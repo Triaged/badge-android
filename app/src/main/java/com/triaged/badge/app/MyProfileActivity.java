@@ -37,6 +37,7 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
             public void onClick(View v) {
                 Intent intent = new Intent(MyProfileActivity.this, SettingsActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
 
@@ -62,10 +63,12 @@ public class MyProfileActivity extends AbstractProfileActivity implements Action
             tab.setIcon(R.drawable.messages_selected);
             Intent intent = new Intent(this, MessagesIndexActivity.class);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         } else if (tab.getPosition() == 1) {
             tab.setIcon(R.drawable.contacts_selected);
             Intent intent = new Intent(MyProfileActivity.this, ContactsActivity.class);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         }
     }
 
