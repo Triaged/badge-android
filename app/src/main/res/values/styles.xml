@@ -34,7 +34,7 @@
     </style>
 
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
-        <item name="android:background">@drawable/tab_bg</item>
+        <item name="android:background">@drawable/custom_tab_bg</item>
     </style>
 
     <style name="CustomWindowTitleStyle">

@@ -10,6 +10,7 @@
     <color name="white">#FFFFFF</color>
     <color name="dark_divider">#4D000000</color>
     <color name="light_divider">#1A000000</color>
+    <color name="tab_divider">#E5E5E5</color>
     <color name="off_white">#F7F8FB</color>
     <color name="light_gray_background">#ededed</color>
     <color name="white_transparent">#AAFFFFFF</color>
