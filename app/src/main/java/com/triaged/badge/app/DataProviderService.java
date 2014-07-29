@@ -2063,6 +2063,13 @@ public class DataProviderService extends Service {
         public Cursor getThreads( ) {
             return DataProviderService.this.getThreads();
         }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#getMessages(String)
+         */
+        public Cursor getMessages( String threadId ) {
+            return DataProviderService.this.getMessages( threadId );
+        }
     }
 
 

@@ -1,74 +1,63 @@
 package com.triaged.badge.app.views;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
+import com.triaged.badge.data.CompanySQLiteHelper;
+
+import org.ocpsoft.prettytime.PrettyTime;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Will on 7/16/14.
  */
-public class MessageThreadAdapter extends BaseAdapter {
+public class MessageThreadAdapter extends CursorAdapter {
 
-    LayoutInflater inflater;
-    private String[] list;
+    private LayoutInflater inflater;
+    private DataProviderService.LocalBinding dataProviderServiceBinding;
+    private PrettyTime prettyTime;
+    private Date messageDate;
+    private String threadId;
 
-    public MessageThreadAdapter(Context context, String[] list) {
-        super();
+    public MessageThreadAdapter(Context context, String threadId, DataProviderService.LocalBinding dataProviderServiceBinding ) {
+        super( context,  dataProviderServiceBinding.getMessages( threadId ), false );
+        this.threadId = threadId;
         inflater = LayoutInflater.from(context);
-        this.list = list;
+        this.dataProviderServiceBinding = dataProviderServiceBinding;
+        this.prettyTime = new PrettyTime();
+        this.messageDate = new Date();
+    }
+
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        View v = inflater.inflate( getItemViewType( cursor ), parent, false);
+        MessageHolder holder = new MessageHolder();
+        holder.message = (TextView) v.findViewById(R.id.message_text);
+        holder.timestamp = (TextView) v.findViewById(R.id.timestamp);
+        v.setTag(holder);
+        return v;
     }
 
     @Override
-    public int getCount() {
-        return list.length;
-    }
-
-    @Override
-    public String getItem(int position) {
-        return list[position];
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        MessageHolder holder;
-        int resourceId;
-        String message;
-
-        if (getItemViewType(position) == 0) {
-            resourceId = R.layout.item_my_message;
-            message = "MY MESSAGE: ";
-        } else {
-            resourceId = R.layout.item_other_message;
-            message = "OTHER MESSAGE: ";
-        }
-        if (convertView == null) {
-            convertView = inflater.inflate(resourceId, parent, false);
-            holder = new MessageHolder();
-            holder.message = (TextView) convertView.findViewById(R.id.message_text);
-            holder.timestamp = (TextView) convertView.findViewById(R.id.timestamp);
-            convertView.setTag(holder);
-        } else {
-            holder = (MessageHolder) convertView.getTag();
-        }
-        message += list[position];
-        holder.message.setText(message);
-        holder.timestamp.setText("2:45 PM");
-
-        return convertView;
+    public void bindView(View view, Context context, Cursor cursor) {
+        MessageHolder holder = (MessageHolder)view.getTag();
+        holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
+        messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) );
+        holder.message.setText( prettyTime.format( messageDate ) );
     }
 
     /** This adapter uses 2 different types of views (my message and other message) */
@@ -80,17 +69,15 @@ public class MessageThreadAdapter extends BaseAdapter {
     /** Determine which view to use */
     @Override
     public int getItemViewType(int position) {
-        if (isMyMessage(position)) {
-            return 0;
-        } else {
-            return 1;
-        }
+        return getItemViewType( (Cursor) getItem( position ) );
     }
 
-    /** Lookup message to determine which view to use */
-    public boolean isMyMessage(int position) {
-        // TODO: REPLACE PLACEHOLDER
-        return position%2 == 0;
+    public int getItemViewType( Cursor messageCursor ) {
+        if ( messageCursor.getInt( messageCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
+            return R.layout.item_my_message;
+        } else {
+            return R.layout.item_other_message;
+        }
     }
 
     class MessageHolder {
@@ -98,7 +85,4 @@ public class MessageThreadAdapter extends BaseAdapter {
         TextView timestamp;
         ImageButton userPhoto;
     }
-
-
-
 }
