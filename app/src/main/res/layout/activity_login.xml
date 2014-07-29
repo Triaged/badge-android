@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
     >
 
-    <RelativeLayout
-        android:layout_width="match_parent" android:layout_height="match_parent"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        >
+<ScrollView
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:id="@+id/scroll_view"
+    >
 
         <com.triaged.badge.app.views.TextViewWithFont
             android:id="@+id/login_title"
@@ -37,6 +39,8 @@
             custom:font="Roboto-Regular.ttf"
             />
 
+</ScrollView>
+
         <com.triaged.badge.app.views.EditTextWithFont
             android:id="@+id/login_email"
             android:layout_width="match_parent"
@@ -44,7 +48,7 @@
             android:textColor="@color/main_text_black"
             android:textColorHint="@color/light_text_gray"
             android:hint="@string/login_email_hint"
-            android:layout_below="@id/login_info"
+            android:layout_below="@id/scroll_view"
             android:layout_marginTop="88dp"
             android:textSize="15sp"
             android:text="\@startupgiraffe.com"
@@ -79,7 +83,4 @@
             custom:font="Roboto-Regular.ttf"
             />
 
-
-    </RelativeLayout>
-
-</ScrollView>
+</RelativeLayout>
