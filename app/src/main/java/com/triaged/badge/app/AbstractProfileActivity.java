@@ -202,13 +202,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     @Override
     protected void onResume() {
         super.onResume();
+        overridePendingTransition(0, 0);
         contact = dataProviderServiceBinding.getContact(contactId);
         setupProfile();
         Cursor reportsCursor = getNewManagesContactsCursor();
         replaceAndCreateManagedContacts(reportsCursor);
-        if (backStackIds.size() > 0) {
-            overridePendingTransition(0, 0);
-        }
     }
 
     @Override

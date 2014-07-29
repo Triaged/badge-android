@@ -34,6 +34,7 @@ public class MessageShowActivity extends BadgeActivity {
     private float densityMultiplier = 1;
     private boolean expanded = false;
     private Contact counterPart;
+    private TextView backButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +44,6 @@ public class MessageShowActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_message_show);
 
-        TextView backButton;
         backButton = (TextView) findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,15 +90,6 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         });
-
-        Intent intent = getIntent();
-        int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
-        if (userId != 0) {
-            counterPart = dataProviderServiceBinding.getContact(userId);
-            backButton.setText(counterPart.name);
-        } else {
-            backButton.setText("Back");
-        }
 
         postBox = (EditText) findViewById(R.id.input_box);
 
@@ -178,4 +169,17 @@ public class MessageShowActivity extends BadgeActivity {
         v.startAnimation(a);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Intent intent = getIntent();
+        int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
+        if (userId != 0) {
+            counterPart = dataProviderServiceBinding.getContact(userId);
+            backButton.setText(counterPart.name);
+        } else {
+            backButton.setText("Back");
+        }
+    }
 }
