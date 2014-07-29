@@ -28,6 +28,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import com.mixpanel.android.util.StringUtils;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.DiskLruCache;
@@ -51,6 +52,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,7 +73,8 @@ public class DataProviderService extends Service {
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
-
+    public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
+    public static final String MSG_ACKNOWLEDGED_ACTION = "com.triage.badge.MSG_ACKNOWLEDGED";
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
@@ -140,6 +143,9 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+
+    protected static final String QUERY_MESSAGE_SQL =
+            String.format( "SELECT id FROM %s WHERE %s = ?", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
@@ -1611,6 +1617,86 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * If thread doesn't exist yet, save it, and any unsaved
+     * messages as well.
+     *
+     * @param threadWrapper faye message containing thread and messages
+     */
+    protected void upsertThreadAndMessages( final JSONObject threadWrapper ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                int threadId;
+                try {
+                    JSONObject thread = threadWrapper.getJSONObject( "message_thread" );
+                    threadId = thread.getInt( "id" );
+                    JSONArray userIds = thread.getJSONArray( "user_ids" );
+                    // Persist/overwrite thread id/user id mapping
+                    prefs.edit().putInt( userIdArrayToKey( userIds ), threadId ).commit();
+
+
+                    JSONArray msgArray = thread.getJSONArray( "messages" );
+                    int numMessages = msgArray.length();
+                    ContentValues msgValues = new ContentValues();
+                    for( int i = 0; i < numMessages; i++ ) {
+                        JSONObject msg = msgArray.getJSONObject( i );
+                        String[] messageSelector = new String[] { String.valueOf( msg.getInt( "id" ) ) };
+                        Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
+                        if( msgCursor.getCount() == 1 ) {
+                            msgCursor.moveToFirst();
+                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
+                                msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
+                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
+                                // Callback that msg is confirmed?
+                            }
+                        }
+                        else {
+                            setMessageContentValuesFromJSON( threadId, msg, msgValues, true );
+                            database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
+                            // New message callback.
+                        }
+                        msgValues.clear();
+                    }
+                }
+                catch( JSONException e ) {
+                    Log.e( LOG_TAG, "Malformed JSON back from faye." );
+                }
+
+            }
+        });
+    }
+
+    private static void setMessageContentValuesFromJSON( int threadId, JSONObject msg, ContentValues msgValues, boolean acknowledged ) throws JSONException {
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getInt( "id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
+    }
+
+    /**
+     * Sort the ids in the json array and join them with a comma.
+     *
+     * @param userIdArr json array of user ids
+     * @return a comma delimited string of sorted ids from userIdArr
+     */
+    private static String userIdArrayToKey( JSONArray userIdArr ) throws JSONException {
+        int size = userIdArr.length();
+        ArrayList<Integer> userIdList = new ArrayList<Integer>( size );
+        for( int i = 0; i < size; i++ ) {
+            userIdList.add( userIdArr.getInt( 0 ) );
+        }
+        Collections.sort(userIdList);
+        StringBuilder delimString = new StringBuilder();
+        String delim = "";
+        for( Integer userId : userIdList ) {
+            delimString.append( delim ).append( userId );
+            delim = ",";
+        }
+        return delimString.toString();
+    }
+
+    /**
      * Utility method for any async save operation to invoke the fail method
      * on the provided callback when things go awry.
      *
@@ -1843,7 +1929,12 @@ public class DataProviderService extends Service {
         public void refreshContact( int contactId ) {
             DataProviderService.this.refreshContact( contactId );
         }
+
+        public void upsertThreadAndMessages( JSONObject thread ) {
+            DataProviderService.this.upsertThreadAndMessages( thread );
+        }
     }
+
 
     /**
      * Background task to fetch an image first from a disk cache,

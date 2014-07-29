@@ -2,6 +2,7 @@ package com.triaged.badge.app;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
@@ -35,6 +36,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     protected int loggedInUserId;
     protected String authToken;
     private LocalBinding localBinding;
+    private DataProviderService.LocalBinding dataProviderServiceBinding;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -55,7 +57,6 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             URI fayeUri = URI.create( FAYE_HOST );
             faye = new FayeClient( new Handler(), fayeUri, String.format( "/users/messages/%s", loggedInUserId ) );
         }
-
     }
 
     @Override
@@ -107,8 +108,15 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         Log.e( LOG_TAG, "Couldn't subscribe: " + error );
     }
 
+    /**
+     * Message format: { “message_thread” : {“id”,  “user_ids” : [], “messages” : [] }
+     *
+     * @param json
+     */
     @Override
-    public void messageReceived(JSONObject json) {
+    public void messageReceived( final JSONObject json) {
+        ensureDataServiceBinding();
+        dataProviderServiceBinding.upsertThreadAndMessages( json );
         // Do actual work.
         Log.d( LOG_TAG, "Message: " + json.toString() );
     }
@@ -118,6 +126,12 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             if( fayeConnected ) {
                 //faye.publish( "" )
             }
+        }
+    }
+
+    protected void ensureDataServiceBinding() {
+        if( dataProviderServiceBinding == null ) {
+            dataProviderServiceBinding = ((BadgeApplication) getApplication()).dataProviderServiceBinding;
         }
     }
 }
