@@ -20,16 +20,13 @@
         >
         <ImageButton
             android:id="@+id/settings_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
             android:src="@drawable/lugnut"
             android:layout_alignParentRight="true"
             android:contentDescription="@string/content_description_my_settings"
-            android:background="@null"
-            android:paddingRight="16dp"
-            android:paddingLeft="16dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:background="@drawable/orange_button_bg"
             android:layout_centerVertical="true"
             />
     </RelativeLayout>

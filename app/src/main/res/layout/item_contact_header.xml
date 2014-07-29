@@ -4,7 +4,9 @@
     android:layout_width="match_parent" android:layout_height="48dp"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:descendantFocusability="blocksDescendants"
-    android:background="@drawable/section_header_background"
+    android:background="@drawable/section_header_background_padded"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     >
 
     <com.triaged.badge.app.views.TextViewWithFont

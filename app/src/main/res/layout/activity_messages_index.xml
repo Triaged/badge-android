@@ -15,6 +15,7 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
+        android:listSelector="@drawable/white_button_bg"
         />
 
     <ImageButton
@@ -24,7 +25,7 @@
         android:layout_height="48dp"
         android:src="@drawable/ic_action_chat_beige"
         android:contentDescription="@string/content_description_my_settings"
-        android:background="@color/main_orange"
+        android:background="@drawable/orange_button_bg"
         android:gravity="center"
         />
 

@@ -106,6 +106,7 @@
     <string name="to_users">To:</string>
     <string name="content_description_send_message">Send Message</string>
     <string name="write_message">Write a message...</string>
+    <string name="enter_recipients_hint">Enter Recipients</string>
 
 
 </resources>

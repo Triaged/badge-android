@@ -28,7 +28,7 @@
             android:id="@+id/search_bar"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:hint="@string/search_hint"
+            android:hint="@string/enter_recipients_hint"
             android:background="@null"
             android:textSize="15sp"
             android:textColor="@color/main_text_black"

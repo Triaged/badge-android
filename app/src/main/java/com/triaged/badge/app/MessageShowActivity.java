@@ -2,12 +2,15 @@ package com.triaged.badge.app;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -16,6 +19,8 @@ import com.triaged.badge.app.views.MessageThreadAdapter;
 import com.triaged.badge.data.Contact;
 
 /**
+ * Activity for a message thread.
+ *
  * Created by Will on 7/15/14.
  */
 public class MessageShowActivity extends BadgeActivity {
@@ -28,6 +33,7 @@ public class MessageShowActivity extends BadgeActivity {
     private RelativeLayout postBoxWrapper;
     private float densityMultiplier = 1;
     private boolean expanded = false;
+    private Contact counterPart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +49,17 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 onBackPressed();
+            }
+        });
+
+        ImageButton profileButton = (ImageButton) findViewById(R.id.thread_members_button);
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", counterPart.id);
+                startActivity(intent);
             }
         });
 
@@ -77,7 +94,7 @@ public class MessageShowActivity extends BadgeActivity {
         Intent intent = getIntent();
         int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
         if (userId != 0) {
-            Contact counterPart = dataProviderServiceBinding.getContact(userId);
+            counterPart = dataProviderServiceBinding.getContact(userId);
             backButton.setText(counterPart.name);
         } else {
             backButton.setText("Back");
@@ -89,18 +106,31 @@ public class MessageShowActivity extends BadgeActivity {
 
         densityMultiplier = getResources().getDisplayMetrics().density;
 
-        postBox.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        TextWatcher textWatcher = new TextWatcher() {
             @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (postBox.getLineCount() > 2 && !expanded) {
                     expand(postBoxWrapper);
                     expanded = true;
-                } else {
+                } else if (postBox.getLineCount() < 3 && expanded) {
                     collapse(postBoxWrapper);
                     expanded = false;
                 }
             }
-        });
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        };
+
+        postBox.addTextChangedListener(textWatcher);
+
     }
 
     @Override
@@ -112,10 +142,9 @@ public class MessageShowActivity extends BadgeActivity {
 
     public void expand(final View v) {
         v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        final int targetHeight = (int) (96 * densityMultiplier);
+        final int targetHeight = (int) (64 * densityMultiplier);
 
         v.getLayoutParams().height = 0;
-        v.setVisibility(View.VISIBLE);
         Animation a = new Animation()
         {
             @Override
