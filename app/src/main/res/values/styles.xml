@@ -20,7 +20,8 @@
         <item name="android:navigationMode">tabMode</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
-        <item name="android:actionBarDivider">@null</item>
+        <item name="android:actionBarTabBarStyle">@style/ActionBarStyle</item>
+        <item name="android:actionBarDivider">@drawable/tab_divider</item>
     </style>
 
     <style name="BackTheme" parent="AppTheme">
@@ -35,6 +36,10 @@
 
     <style name="ActionBarBG" parent="@android:style/Widget.Holo.Light.ActionBar.TabView">
         <item name="android:background">@drawable/custom_tab_bg</item>
+    </style>
+
+    <style name="ActionBarStyle" parent="android:style/Widget.Holo.Light.ActionBar.TabBar">
+        <item name="android:background">@color/white</item>
     </style>
 
     <style name="CustomWindowTitleStyle">
