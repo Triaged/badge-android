@@ -84,6 +84,7 @@ public class MessageThreadAdapter extends CursorAdapter {
         return getItemViewType( (Cursor) getItem( position ) );
     }
 
+    /** Determine which view to use based on whether it's my msg or not */
     public int getItemViewType( Cursor messageCursor ) {
         if ( messageCursor.getInt( messageCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
             return R.layout.item_my_message;

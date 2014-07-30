@@ -153,7 +153,7 @@ public class DataProviderService extends Service {
                     CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
             );
     protected static final String QUERY_MESSAGES_SQL =
-            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact ON message.%s = contact.%s WHERE message.%s = ? order by message.%s DESC",
+            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
                     CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL,
                     CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
                     CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,

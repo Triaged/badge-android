@@ -75,6 +75,7 @@ public class MessageShowActivity extends BadgeActivity {
         threadList = (ListView) findViewById(R.id.message_thread);
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
+        threadList.setSelection(adapter.getCount() - 1);
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -84,7 +85,6 @@ public class MessageShowActivity extends BadgeActivity {
             }
         });
 
-        // TODO listen for new messages to refresh array adapter.
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
