@@ -24,7 +24,7 @@
             android:textColor="@color/light_text_gray"
             />
 
-        <com.wefika.flowlayout.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <com.triaged.badge.app.views.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:flowlayout="http://schemas.android.com/apk/res/si.solarb.flowlayout"
             android:id="@+id/user_tags"
             android:layout_width="match_parent"
@@ -35,8 +35,7 @@
             android:gravity="start"
             android:visibility="gone"
             >
-
-        </com.wefika.flowlayout.FlowLayout>
+        </com.triaged.badge.app.views.FlowLayout>
 
         <EditText
             android:layout_below="@id/user_tags"
