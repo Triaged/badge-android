@@ -13,10 +13,14 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.MessagesListAdapter;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -32,6 +36,10 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
     protected ListView messagesList;
     protected MessagesListAdapter adapter;
     private BroadcastReceiver refreshReceiver;
+
+    private ImageView noMessagesImage;
+    private TextView noMessagesTitle;
+    private TextView noMessagesInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +89,10 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
                 startActivity(intent);
             }
         });
+
+        noMessagesImage = (ImageView) findViewById(R.id.no_messages_image);
+        noMessagesTitle = (TextView) findViewById(R.id.no_messages_title);
+        noMessagesInfo = (TextView) findViewById(R.id.no_messages_info);
     }
 
     @Override
@@ -91,6 +103,16 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         actionBar.getTabAt(0).setIcon(R.drawable.messages_selected).select();
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+        if (adapter.getCount() > 0) {
+            noMessagesImage.setVisibility(View.VISIBLE);
+            noMessagesTitle.setVisibility(View.VISIBLE);
+            noMessagesInfo.setVisibility(View.VISIBLE);
+        } else {
+            noMessagesImage.setVisibility(View.GONE);
+            noMessagesTitle.setVisibility(View.GONE);
+            noMessagesInfo.setVisibility(View.GONE);
+        }
+
     }
 
     @Override
@@ -106,12 +128,14 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             tab.setIcon(R.drawable.contacts_selected);
             Intent intent = new Intent(this, ContactsActivity.class);
             startActivity(intent);
+            overridePendingTransition(0,0);
         } else if (tab.getPosition() == 2) {
             tab.setIcon(R.drawable.profile_selected);
             Intent intent = new Intent( this, MyProfileActivity.class );
             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
             startActivity(intent);
+            overridePendingTransition(0,0);
         }
     }
 

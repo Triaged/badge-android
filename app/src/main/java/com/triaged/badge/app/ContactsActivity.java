@@ -263,7 +263,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     @Override
     protected void onResume() {
         super.onResume();
-        overridePendingTransition(0,0);
         ActionBar actionBar = getActionBar();
         actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
@@ -287,23 +286,23 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabSelected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v(TAG, String.format("onTabSelected, %d bizitch", tab.getPosition()));
         if ( tab.getPosition() == 0) {
             tab.setIcon(R.drawable.messages_selected);
             Intent intent = new Intent(this, MessagesIndexActivity.class);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         } else if (tab.getPosition() == 2) {
             tab.setIcon(R.drawable.profile_selected);
             Intent intent = new Intent( this, MyProfileActivity.class );
             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         }
     }
 
     @Override
     public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v(TAG, String.format("onTabUnselected, %d bizitch", tab.getPosition()));
         if ( tab.getPosition() == 1) {
             tab.setIcon(R.drawable.contacts_unselected);
         }
@@ -311,7 +310,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
-        Log.v( TAG , String.format( "onTabReselected, %d bizitch", tab.getPosition() ) );
+
     }
 
     /**

@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -23,6 +25,11 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         super.onCreate(savedInstanceState);
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
         onboardingDotsView.setVisibility(View.GONE);
+
+        ImageView cityscape = (ImageView) findViewById(R.id.cityscape);
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) cityscape.getLayoutParams();
+        lp.setMargins(0, 0, 0, 0);
+        cityscape.setLayoutParams(lp);
 
         Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
         if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {

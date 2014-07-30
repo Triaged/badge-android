@@ -4,10 +4,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +31,12 @@ public class OnboardingPositionActivity extends BadgeActivity {
     protected TextView yourDepartmentButton = null;
     protected TextView reportingToButton = null;
     protected EditText jobTitleField = null;
+
+    private float densityMultiplier = 1;
+    private boolean keyboardVisible = false;
+    private ImageView nametag = null;
+    private TextView tellUsMoreTitle = null;
+
     protected int managerId = 0;
     protected int deptartmentId = 0;
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -41,6 +52,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
         public void saveSuccess( int newId ) {
             Intent intent = new Intent(OnboardingPositionActivity.this, OnboardingLocationActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         }
 
         @Override
@@ -107,6 +119,37 @@ public class OnboardingPositionActivity extends BadgeActivity {
             }
         });
         localBroadcastManager.registerReceiver( onboardingFinishedReceiver, new IntentFilter( ONBOARDING_FINISHED_ACTION ) );
+
+        nametag = (ImageView) findViewById(R.id.nametag);
+        tellUsMoreTitle = (TextView) findViewById(R.id.tell_us_more_title);
+        densityMultiplier = getResources().getDisplayMetrics().density;
+        final View activityRootView = findViewById(R.id.activity_root);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int rootViewHeight = activityRootView.getRootView().getHeight();
+
+                Rect r = new Rect();
+                //r will be populated with the coordinates of your view that area still visible.
+                activityRootView.getWindowVisibleDisplayFrame(r);
+
+                int heightDiff = rootViewHeight - (r.bottom - r.top);
+                if (heightDiff > (densityMultiplier * 75) ) { // if more than 75 dp, its probably a keyboard...
+                    keyboardVisible = true;
+                    nametag.setVisibility(View.GONE);
+                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) tellUsMoreTitle.getLayoutParams();
+                    lp.setMargins(0, (int) (15*densityMultiplier), 0, (int) (15*densityMultiplier));
+                    tellUsMoreTitle.setLayoutParams(lp);
+                } else if (keyboardVisible) {
+                    keyboardVisible = false;
+                    nametag.setVisibility(View.VISIBLE);
+                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) tellUsMoreTitle.getLayoutParams();
+                    lp.setMargins(0, (int) (35*densityMultiplier), 0, (int) (55*densityMultiplier));
+                    tellUsMoreTitle.setLayoutParams(lp);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -135,9 +178,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 
 }

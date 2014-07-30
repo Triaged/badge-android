@@ -67,6 +67,7 @@ public class MessageNewActivity extends BadgeActivity {
                 Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
                 intent.putExtra( RECIPIENT_ID_EXTRA, contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
 
         });
@@ -79,6 +80,7 @@ public class MessageNewActivity extends BadgeActivity {
                 Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
                 intent.putExtra(RECIPIENT_ID_EXTRA, contactsAdapter.getCachedContact(position).id);
                 startActivity(intent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
             }
         });
 
@@ -125,12 +127,6 @@ public class MessageNewActivity extends BadgeActivity {
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         loadContacts();
 
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
     }
 
     @Override

@@ -146,12 +146,6 @@ public class OnboardingMapActivity extends BackButtonActivity implements
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
         mLocationClient.connect();

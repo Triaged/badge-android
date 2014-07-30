@@ -398,9 +398,9 @@ public class EditProfileActivity extends BadgeActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        overridePendingTransition(0,0);
+    public void onBackPressed() {
+        super.onBackPressed();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 
     @Override

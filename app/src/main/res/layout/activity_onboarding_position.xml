@@ -3,7 +3,9 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:id="@+id/activity_root"
+    >
 
     <ScrollView
         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -37,6 +39,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="35dp"
+                android:layout_marginBottom="55dp"
                 android:layout_below="@id/nametag"
                 android:text="@string/tell_us_more_title"
                 android:textColor="@color/accent_turquoise"
@@ -53,7 +56,6 @@
                 android:textColorHint="@color/light_text_gray"
                 android:hint="@string/your_job_title"
                 android:layout_below="@id/tell_us_more_title"
-                android:layout_marginTop="55dp"
                 android:textSize="15sp"
                 custom:font="Roboto-Regular.ttf"
                 android:layout_marginLeft="24dp"
