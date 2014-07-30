@@ -37,7 +37,7 @@
         android:paddingRight="16dp"
         android:paddingLeft="16dp"
         android:text="@string/message_next"
-        android:visibility="gone"
+        android:textAllCaps="true"
         />
 
 </RelativeLayout>
