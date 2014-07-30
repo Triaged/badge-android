@@ -5,14 +5,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
@@ -40,6 +44,13 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     private DatePickerDialogNoYear datePickerDialog = null;
     protected Calendar birthdayCalendar = null;
     protected SimpleDateFormat birthdayFormat;
+
+    private TextView welcomeTitle = null;
+    private TextView welcomeInfo = null;
+
+    private float densityMultiplier = 1;
+    private boolean keyboardVisible = false;
+
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
     protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
         @Override
@@ -144,6 +155,32 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
             }
         });
         localBroadcastManager.registerReceiver( onboardingFinishedReceiver, new IntentFilter( ONBOARDING_FINISHED_ACTION ) );
+
+        welcomeTitle = (TextView) findViewById(R.id.welcome_title);
+        welcomeInfo = (TextView) findViewById(R.id.welcome_info);
+        densityMultiplier = getResources().getDisplayMetrics().density;
+        final View activityRootView = findViewById(R.id.activity_root);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int rootViewHeight = activityRootView.getRootView().getHeight();
+
+                Rect r = new Rect();
+                //r will be populated with the coordinates of your view that area still visible.
+                activityRootView.getWindowVisibleDisplayFrame(r);
+
+                int heightDiff = rootViewHeight - (r.bottom - r.top);
+                if (heightDiff > (densityMultiplier * 75) ) { // if more than 75 dp, its probably a keyboard...
+                    keyboardVisible = true;
+                    welcomeInfo.setVisibility(View.GONE);
+                    welcomeTitle.setVisibility(View.GONE);
+                } else if (keyboardVisible) {
+                    keyboardVisible = false;
+                    welcomeInfo.setVisibility(View.VISIBLE);
+                    welcomeTitle.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     @Override

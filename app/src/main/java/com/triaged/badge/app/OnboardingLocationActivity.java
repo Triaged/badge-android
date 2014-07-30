@@ -50,15 +50,11 @@ public class OnboardingLocationActivity extends BadgeActivity {
         }
     };
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_location);
 
-        OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
-        onboardingDotsView.currentDotIndex = 2;
-        onboardingDotsView.invalidate();
         continueButton = (Button)findViewById( R.id.continue_button );
         continueButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,15 +67,24 @@ public class OnboardingLocationActivity extends BadgeActivity {
         officeLocationsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Cursor officeCursor = (Cursor)officeLocationsAdapter.getItem( position );
-                officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
-                officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor( officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
-                officeLocationsAdapter.notifyDataSetChanged();
-                noLocationCheck.setVisibility(View.GONE);
+                if (position != 0) {
+                    Cursor officeCursor = (Cursor) officeLocationsAdapter.getItem(position - 1);
+                    officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID);
+                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                    officeLocationsAdapter.notifyDataSetChanged();
+                    noLocationCheck.setVisibility(View.GONE);
+                }
             }
         });
 
         LayoutInflater inflater = LayoutInflater.from(this);
+
+        RelativeLayout locationHeader = (RelativeLayout) inflater.inflate(R.layout.include_onboarding_location_header, null);
+        OnboardingDotsView onboardingDotsView = (OnboardingDotsView) locationHeader.findViewById(R.id.onboarding_dots);
+        onboardingDotsView.currentDotIndex = 2;
+        onboardingDotsView.invalidate();
+        officeLocationsList.addHeaderView(locationHeader, null, false);
+
         RelativeLayout noLocationView = (RelativeLayout) inflater.inflate(R.layout.item_no_location, null);
         noLocationCheck = (ImageView) noLocationView.findViewById(R.id.selected_icon);
 
@@ -110,6 +115,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
 
         officeLocationsAdapter = new OfficeLocationsAdapter( this, dataProviderServiceBinding, R.layout.item_office_location);
         officeLocationsList.setAdapter( officeLocationsAdapter );
+
     }
 
     @Override
