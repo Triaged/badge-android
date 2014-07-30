@@ -1,6 +1,5 @@
 package com.triaged.badge.data;
 
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -14,6 +13,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String TABLE_CONTACTS = "contacts";
     public static final String TABLE_DEPARTMENTS = "departments";
     public static final String TABLE_OFFICE_LOCATIONS = "office_locations";
+    public static final String TABLE_MESSAGES = "messages";
 
     public static final String COLUMN_CONTACT_ID = "_id";
     public static final String COLUMN_CONTACT_LAST_NAME = "last_name";
@@ -50,8 +50,19 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_OFFICE_LOCATION_LAT = "latitude";
     public static final String COLUMN_OFFICE_LOCATION_LNG = "longitude";
 
+    public static final String COLUMN_MESSAGES_ID = "_id";
+    public static final String COLUMN_MESSAGES_BODY = "body";
+    public static final String COLUMN_MESSAGES_THREAD_ID = "thread_id";
+    public static final String COLUMN_MESSAGES_FROM_ID = "from_user_id";
+    public static final String COLUMN_MESSAGES_TIMESTAMP = "timestamp";
+    public static final String COLUMN_MESSAGES_THREAD_HEAD = "thread_head";
+    public static final String COLUMN_MESSAGES_THREAD_PARTICIPANTS = "thread_names";
+    public static final String COLUMN_MESSAGES_AVATAR_URL = "avatar_url";
+    public static final String COLUMN_MESSAGES_ACK = "message_acknowledged";
+
+
     protected static final String SQL_DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 1;
+    protected static final int DATABASE_VERSION = 11;
     private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
             TABLE_CONTACTS,
             COLUMN_CONTACT_ID,
@@ -91,9 +102,23 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_OFFICE_LOCATION_LNG
     );
 
+    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format( "create table %s (%s  string primary key, %s string, %s integer, %s text, %s integer, %s integer, %s integer, %s string, %s string);",
+            TABLE_MESSAGES,
+            COLUMN_MESSAGES_ID,
+            COLUMN_MESSAGES_THREAD_ID,
+            COLUMN_MESSAGES_FROM_ID,
+            COLUMN_MESSAGES_BODY,
+            COLUMN_MESSAGES_TIMESTAMP,
+            COLUMN_MESSAGES_ACK,
+            COLUMN_MESSAGES_THREAD_HEAD,
+            COLUMN_MESSAGES_THREAD_PARTICIPANTS,
+            COLUMN_MESSAGES_AVATAR_URL
+    );
+
     protected static final String DROP_CONTACTS_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_CONTACTS );
     protected static final String DROP_DEPARTMENTS_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_DEPARTMENTS );
     protected static final String DROP_OFFICE_LOCATIONS_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_OFFICE_LOCATIONS );
+    protected static final String DROP_MESSAGES_TABLE_SQL = String.format( "DROP TABLE IF EXISTS %s", TABLE_MESSAGES );
 
     private SQLiteDatabase openDatabase;
     private DataProviderService dataProviderService;
@@ -109,6 +134,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
         db.execSQL( CREATE_CONTACTS_TABLE_SQL );
         db.execSQL( CREATE_DEPARTMENTS_TABLE_SQL );
         db.execSQL( CREATE_OFFICE_LOCATIONS_TABLE_SQL );
+        db.execSQL( CREATE_MESSAGES_TABLE_SQL );
         dataProviderService.dataClearedCallback();
     }
 
@@ -117,6 +143,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
         db.execSQL( DROP_CONTACTS_TABLE_SQL );
         db.execSQL( DROP_DEPARTMENTS_TABLE_SQL );
         db.execSQL( DROP_OFFICE_LOCATIONS_TABLE_SQL );
+        db.execSQL( DROP_MESSAGES_TABLE_SQL );
         onCreate( db );
     }
 

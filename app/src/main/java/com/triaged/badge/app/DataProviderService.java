@@ -1,9 +1,11 @@
 package com.triaged.badge.app;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -25,6 +27,7 @@ import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
 import android.webkit.MimeTypeMap;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
@@ -51,6 +54,9 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,7 +77,11 @@ public class DataProviderService extends Service {
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
+    public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
+    public static final String MSG_ACKNOWLEDGED_ACTION = "com.triage.badge.MSG_ACKNOWLEDGED";
 
+    public static final String THREAD_ID_EXTRA = "threadId";
+    public static final String MESSAGE_ID_EXTRA = "messageId";
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
@@ -140,11 +150,34 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
+    protected static final String QUERY_THREADS_SQL =
+            String.format( "SELECT * from %s WHERE %s = 1 order by %s DESC",
+                    CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+            );
+    protected static final String QUERY_MESSAGES_SQL =
+            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
+                    CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL,
+                    CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
+                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
+                    CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.TABLE_CONTACTS,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID,
+                    CompanySQLiteHelper.COLUMN_CONTACT_ID,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+            );
+
+
+    protected static final String QUERY_MESSAGE_SQL =
+            String.format( "SELECT * FROM %s WHERE %s IN (?, ?)", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
+    protected static final String CLEAR_MESSAGES_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_MESSAGES );
     protected static final String QUERY_ALL_OFFICES_SQL = String.format( "SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format( "SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
 
@@ -233,6 +266,7 @@ public class DataProviderService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
@@ -402,7 +436,7 @@ public class DataProviderService extends Service {
         finally {
             db.endTransaction();
         }
-        if( updated ) {
+        if( updated && initialized ) {
             localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
         }
 
@@ -517,6 +551,7 @@ public class DataProviderService extends Service {
                     contact.fromCursor(cursor);
                     return contact;
                 }
+                return null;
             } finally {
                 cursor.close();
             }
@@ -538,12 +573,12 @@ public class DataProviderService extends Service {
      *
      * If a placeholder view is specified, it will be hidden
      *
-     * @param c contact
+     * @param avatarUrl url of avatar img
      * @param thumbImageView the view to set the image on.
      * @param placeholderView null or a view that should be hidden once the image has been set.
      */
-    protected void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
-        Bitmap b = thumbCache.get( c.avatarUrl );
+    protected void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
+        Bitmap b = thumbCache.get( avatarUrl );
         if( b != null ) {
             // Hooray!
             assignBitmapToView( b, thumbImageView );
@@ -552,7 +587,7 @@ public class DataProviderService extends Service {
             }
         }
         else {
-            new LoadImageAsyncTask( c.avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
+            new LoadImageAsyncTask( avatarUrl, thumbImageView, placeholderView, thumbCache ).execute();
         }
     }
 
@@ -663,25 +698,19 @@ public class DataProviderService extends Service {
             checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
         }
         loggedInUser = null;
-        prefs.edit().
-                remove( API_TOKEN_PREFS_KEY).
-                remove( LOGGED_IN_USER_ID_PREFS_KEY ).
-                remove( LAST_SYNCED_PREFS_KEY ).
-                remove( COMPANY_ID_PREFS_KEY ).
-                remove( COMPANY_NAME_PREFS_KEY ).
-                remove( LoginActivity.PROPERTY_REG_ID ).
-                remove( REGISTERED_DEVICE_ID_PREFS_KEY ).
-                remove( LocationTrackingService.TRACK_LOCATION_PREFS_KEY ).commit();
+        prefs.edit().clear().commit();
         stopService( new Intent( this, LocationTrackingService.class ) );
 
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
         database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
+        database.execSQL(CLEAR_MESSAGES_SQL);
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
-
+        Intent fayeIntent = new Intent( this, FayeService.class );
+        stopService( fayeIntent );
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
         MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
         mixpanelAPI.clearSuperProperties();
@@ -877,6 +906,7 @@ public class DataProviderService extends Service {
                             }
 
                             syncCompany(database);
+                            startService( new Intent( DataProviderService.this, FayeService.class ) );
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, "JSON exception parsing login success.", e);
                             fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
@@ -1063,11 +1093,22 @@ public class DataProviderService extends Service {
                     if( loggedInContactId > 0 ) {
                         loggedInUser = getContact(loggedInContactId);
                     }
-                    initialized = true;
-                    localBroadcastManager.sendBroadcast( new Intent(DB_AVAILABLE_ACTION) );
+
+                    if( loggedInUser != null ) {
+                        initialized = true;
+                        localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                    }
 
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+
+                        if( loggedInContactId > 0 ) {
+                            loggedInUser = getContact(loggedInContactId);
+                            if( !initialized ) {
+                                initialized = true;
+                                localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                            }
+                        }
 
                         // Check if this is the first boot of a new install
                         // If it is, since we're logged in, if the user hasnt
@@ -1608,6 +1649,266 @@ public class DataProviderService extends Service {
         } );
     }
 
+    protected void sendMessageAsync( final String threadId, final String message ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                ContentValues msgValues = new ContentValues();
+                database.beginTransaction();
+                try {
+                    clearThreadHead( threadId, msgValues );
+                    long timestamp = System.currentTimeMillis() * 1000 /* nano */;
+                    // GUID
+                    String guid = UUID.randomUUID().toString();
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, loggedInUser.avatarUrl );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
+                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                    database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
+                    database.setTransactionSuccessful();
+                    final JSONObject msgWrapper = new JSONObject();
+                    JSONObject msg = new JSONObject();
+                    msgWrapper.put( "message", msg );
+                    msg.put( "author_id", loggedInUser.id );
+                    msg.put( "body", message );
+                    msg.put( "timestamp", (float)timestamp / 1000000f);
+                    msgWrapper.put( "guid", guid );
+                    // Bind/unbind every time so that the service doesn't live past
+                    // stopService()
+                    ServiceConnection fayeServiceConnection = new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            FayeService.LocalBinding fayeServiceBinding = (FayeService.LocalBinding)service;
+                            fayeServiceBinding.sendMessage(threadId, msgWrapper);
+                            unbindService( this );
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+                            // Derp
+                        }
+                    };
+                    if( !bindService( new Intent( DataProviderService.this, FayeService.class ), fayeServiceConnection, BIND_AUTO_CREATE ) ) {
+                        unbindService(fayeServiceConnection);
+                    }
+
+                    // TODO schedule task to mark message as failed after timeout.
+                }
+                catch( JSONException e ) {
+                    // Realllllllly shouldn't happen.
+                    Log.e( LOG_TAG, "Severe bug, JSON exception parsing user id array from prefs", e );
+                    return;
+                }
+                finally {
+                    database.endTransaction();
+                }
+                Intent newMsgIntent = new Intent( NEW_MSG_ACTION );
+                newMsgIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                localBroadcastManager.sendBroadcast( newMsgIntent );
+            }
+        });
+    }
+
+    /**
+     * If thread doesn't exist yet, save it, and any unsaved
+     * messages as well.
+     *
+     * @param threadWrapper faye message containing thread and messages
+     */
+    protected void upsertThreadAndMessages( final JSONObject threadWrapper ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                String threadId;
+                database.beginTransaction();
+                try {
+                    JSONObject thread = threadWrapper.getJSONObject( "message_thread" );
+                    threadId = thread.getString( "id" );
+                    JSONArray userIds = thread.getJSONArray( "user_ids" );
+
+                    String userIdsList = userIdArrayToKey( userIds );
+
+                    prefs.edit().putString( userIdsList, threadId ).putString(threadId, userIds.toString()).commit();
+
+                    JSONArray msgArray = thread.getJSONArray( "messages" );
+                    int numMessages = msgArray.length();
+                    ContentValues msgValues = new ContentValues();
+                    boolean newMessages = false;
+                    msgValues.clear();
+                    for( int i = 0; i < numMessages; i++ ) {
+                        if( i == numMessages - 1 ) {
+
+                        }
+                        JSONObject msg = msgArray.getJSONObject( i );
+                        String messageId = msg.getString( "id" );
+                        String guid = "foo";
+                        if( threadWrapper.has( "guid" ) ) {
+                            guid = threadWrapper.getString( "guid" );
+                        }
+                        String[] messageSelector = new String[] { guid, messageId };
+                        Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
+                        if( msgCursor.getCount() == 1 ) {
+                            msgCursor.moveToFirst();
+                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
+
+                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
+                                // Callback that msg is confirmed?
+                                Intent ackIntent = new Intent( MSG_ACKNOWLEDGED_ACTION );
+                                ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
+                                localBroadcastManager.sendBroadcast( ackIntent );
+                            }
+                        }
+                        else {
+                            setMessageContentValuesFromJSON( threadId, msg, msgValues, true );
+                            database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
+                            newMessages = true;
+                        }
+                        msgValues.clear();
+                    }
+                    // Get id of most recent msg.
+                    Cursor messages = getMessages( threadId );
+                    if( messages.moveToLast() ) {
+                        String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+                        messages.close();
+                        // Unset thread head on all thread messages.
+                        clearThreadHead( threadId, msgValues );
+
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
+                        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ), new String[] { mostRecentId } );
+                    }
+                    else {
+                        messages.close();
+                    }
+                    if( newMessages ) {
+                        Intent newMessagesIntent = new Intent(NEW_MSG_ACTION);
+                        newMessagesIntent.putExtra(THREAD_ID_EXTRA, threadId);
+                        localBroadcastManager.sendBroadcast(newMessagesIntent);
+                    }
+                    database.setTransactionSuccessful();
+                }
+                catch( JSONException e ) {
+                    Log.e( LOG_TAG, "Malformed JSON back from faye." );
+                }
+                finally {
+                    database.endTransaction();
+                }
+
+            }
+        });
+    }
+
+    protected void clearThreadHead( String threadId, ContentValues msgValues ) {
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0 );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String)null );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String)null );
+        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID ), new String[] { threadId } );
+        msgValues.clear();
+    }
+
+    /**
+     * Get a cursor to the list of active thread ids with most
+     * recent thread first.
+     *
+     * @return
+     */
+    protected Cursor getThreads() {
+        if( database != null  ) {
+            return database.rawQuery( QUERY_THREADS_SQL, EMPTY_STRING_ARRAY );
+        }
+        throw new IllegalStateException( "getThreads() called before database available." );
+    }
+
+    protected Cursor getMessages( String threadId ) {
+        if( database != null  ) {
+            return database.rawQuery( QUERY_MESSAGES_SQL, new String[] { threadId } );
+        }
+        throw new IllegalStateException( "getMessages() called before database available." );
+
+    }
+
+    private static void setMessageContentValuesFromJSON( String threadId, JSONObject msg, ContentValues msgValues, boolean acknowledged ) throws JSONException {
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
+    }
+
+    /**
+     * Get the avatar url for the first user id in the list that's not mine.
+     *
+     * @param userIdArr
+     * @return
+     * @throws JSONException
+     */
+    private String userIdArrayToAvatarUrl( JSONArray userIdArr ) throws JSONException {
+        int numUsers = userIdArr.length();
+        for( int i = 0; i < numUsers; i++ ) {
+            int userId = userIdArr.getInt(i);
+            if (userId != loggedInUser.id) {
+                Contact c = getContact(userId);
+                return c.avatarUrl;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sort the ids in the json array and join them with a comma.
+     *
+     * @param userIdArr json array of user ids
+     * @return a comma delimited string of sorted ids from userIdArr
+     */
+    private static String userIdArrayToKey( JSONArray userIdArr ) throws JSONException {
+        int size = userIdArr.length();
+        ArrayList<Integer> userIdList = new ArrayList<Integer>( size );
+        for( int i = 0; i < size; i++ ) {
+            userIdList.add( userIdArr.getInt( i ) );
+        }
+        Collections.sort(userIdList);
+        StringBuilder delimString = new StringBuilder();
+        String delim = "";
+        for( Integer userId : userIdList ) {
+            delimString.append( delim ).append( userId );
+            delim = ",";
+        }
+        return delimString.toString();
+    }
+
+    /**
+     * Look up the contact corresponding to each id and join
+     * their names in a comma separated list, excluding the logged
+     * in user's own name
+     *
+     * @param userIdArr  json array of user ids
+     * @return a comma delimited string of unsorted contact names
+     * @throws JSONException
+     */
+    private String userIdArrayToNames( JSONArray userIdArr ) throws JSONException {
+        StringBuilder names = new StringBuilder();
+        String delim = "";
+        int numUsers = userIdArr.length();
+        for( int i = 0; i < numUsers; i++ ) {
+            int userId = userIdArr.getInt( i );
+            if( userId != loggedInUser.id ) {
+                Contact c = getContact( userId );
+                names.append( delim ).append( c.name );
+                delim = ", ";
+            }
+        }
+        return names.toString();
+    }
+
     /**
      * Utility method for any async save operation to invoke the fail method
      * on the provided callback when things go awry.
@@ -1691,10 +1992,17 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(com.triaged.badge.data.Contact, android.view.View, android.view.View )
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
          */
         public void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
-            DataProviderService.this.setSmallContactImage(c, thumbImageView, placeholderView );
+            DataProviderService.this.setSmallContactImage(c.avatarUrl, thumbImageView, placeholderView );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
+         */
+        public void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
+            DataProviderService.this.setSmallContactImage( avatarUrl, thumbImageView, placeholderView );
         }
 
         /**
@@ -1841,7 +2149,36 @@ public class DataProviderService extends Service {
         public void refreshContact( int contactId ) {
             DataProviderService.this.refreshContact( contactId );
         }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject)
+         */
+        public void upsertThreadAndMessages( JSONObject thread ) {
+            DataProviderService.this.upsertThreadAndMessages(thread);
+        }
+
+        /**
+         * @see DataProviderService#getThreads()
+         */
+        public Cursor getThreads( ) {
+            return DataProviderService.this.getThreads();
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#getMessages(String)
+         */
+        public Cursor getMessages( String threadId ) {
+            return DataProviderService.this.getMessages( threadId );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#sendMessageAsync(String, String)
+         */
+        public void sendMessageAsync( String threadId, String body ) {
+            DataProviderService.this.sendMessageAsync( threadId, body );
+        }
     }
+
 
     /**
      * Background task to fetch an image first from a disk cache,

@@ -1,6 +1,9 @@
 package com.triaged.badge.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,6 +28,8 @@ import com.triaged.badge.data.Contact;
  */
 public class MessageShowActivity extends BadgeActivity {
 
+    public static final String THREAD_ID_EXTRA = "threadId";
+
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     private ListView threadList;
@@ -34,6 +39,9 @@ public class MessageShowActivity extends BadgeActivity {
     private float densityMultiplier = 1;
     private boolean expanded = false;
     private Contact counterPart;
+    private BroadcastReceiver refreshReceiver;
+    protected ImageButton sendButton;
+    protected String threadId;
     private TextView backButton;
 
     @Override
@@ -63,25 +71,12 @@ public class MessageShowActivity extends BadgeActivity {
             }
         });
 
+        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+
         threadList = (ListView) findViewById(R.id.message_thread);
-
-        String[] values = new String[] {
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
-            "when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. ",
-            "It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-            "Where?",
-            "Contrary",
-            "It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage,",
-            "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
-            "when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. ",
-            "It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-            "Where does it come from?",
-            "Contrary to popular belief, Lorem Ipsum is not simply random text.",
-            "It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage,"
-        };
-
-        adapter = new MessageThreadAdapter(this, values);
+        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
+        threadList.setSelection(adapter.getCount() - 1);
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -90,6 +85,18 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         });
+
+
+        refreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if( threadId.equals( intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ) ) ) {
+                    adapter.changeCursor( dataProviderServiceBinding.getMessages(threadId) );
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        };
+        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
 
         postBox = (EditText) findViewById(R.id.input_box);
 
@@ -120,8 +127,26 @@ public class MessageShowActivity extends BadgeActivity {
             }
         };
 
+        sendButton = (ImageButton)findViewById( R.id.send_now_button );
+        sendButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String msg = postBox.getText().toString();
+                dataProviderServiceBinding.sendMessageAsync( threadId, msg );
+                postBox.setText( "" );
+            }
+
+        } );
+
         postBox.addTextChangedListener(textWatcher);
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        localBroadcastManager.unregisterReceiver( refreshReceiver );
+        adapter.destroy();
+        super.onDestroy();
     }
 
     public void expand(final View v) {

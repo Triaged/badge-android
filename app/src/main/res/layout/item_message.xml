@@ -8,26 +8,25 @@
     android:paddingTop="12dp"
     >
 
-    <ImageButton
+    <ImageView
         android:id="@+id/contact_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginRight="16dp"
         android:background="@null"
         android:contentDescription="@string/content_description_thumb"
-        />
+    />
 
-    <com.triaged.badge.app.views.ButtonWithFont
+    <ImageView
         android:id="@+id/no_photo_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginRight="16dp"
-        android:background="@drawable/no_photo_thumb_bg"
+        android:src="@drawable/contacts_selected"
+        android:background="@null"
         android:gravity="center"
-        android:textColor="@color/white"
         android:visibility="gone"
-        android:textSize="15sp"
-        />
+    />
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/contact_name"
