@@ -7,7 +7,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/profile_row_background"
         android:id="@+id/to_box"
         >
@@ -16,18 +16,33 @@
             android:id="@+id/to_users"
             android:text="@string/to_users"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="55dp"
             android:layout_marginLeft="16dp"
+            android:gravity="center_vertical"
             android:src="@drawable/ic_action_search"
-            android:layout_centerVertical="true"
             android:textSize="15sp"
             android:textColor="@color/light_text_gray"
             />
 
+        <com.wefika.flowlayout.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:flowlayout="http://schemas.android.com/apk/res/si.solarb.flowlayout"
+            android:id="@+id/user_tags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="48dp"
+            android:layout_marginRight="48dp"
+            android:layout_marginTop="10dp"
+            android:gravity="start"
+            android:visibility="gone"
+            >
+
+        </com.wefika.flowlayout.FlowLayout>
+
         <EditText
+            android:layout_below="@id/user_tags"
             android:id="@+id/search_bar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="55dp"
             android:hint="@string/enter_recipients_hint"
             android:background="@null"
             android:textSize="15sp"
@@ -43,12 +58,12 @@
         <ImageButton
             android:id="@+id/clear_search"
             android:layout_width="52dp"
-            android:layout_height="48dp"
+            android:layout_height="55dp"
             android:src="@drawable/ic_action_remove"
             android:contentDescription="@string/content_description_my_settings"
             android:background="@null"
             android:gravity="center"
-            android:layout_centerVertical="true"
+            android:layout_alignTop="@id/search_bar"
             android:layout_alignParentRight="true"
             android:visibility="gone"
             />
@@ -59,7 +74,7 @@
         android:id="@+id/contacts_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="48dp"
+        android:layout_below="@id/to_box"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"
@@ -71,9 +86,9 @@
     <ListView
         android:id="@+id/search_results_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:visibility="invisible"
-        android:layout_marginTop="48dp"
+        android:layout_below="@id/to_box"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
         android:fastScrollEnabled="true"

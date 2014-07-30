@@ -1,6 +1,8 @@
 package com.triaged.badge.app;
 
 import android.app.ActionBar;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,9 +14,16 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
+import com.wefika.flowlayout.FlowLayout;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
@@ -33,6 +42,9 @@ public class MessageNewActivity extends BadgeActivity {
     private EditText searchBar = null;
     private ImageButton clearButton = null;
     private ListView searchResultsList = null;
+    private List<HashMap<Integer, String>> recipients = null;
+
+    private FlowLayout userTagsWrapper = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,20 +66,35 @@ public class MessageNewActivity extends BadgeActivity {
             }
         });
 
+        TextView nextButton = (TextView) backButtonBar.findViewById(R.id.next_button);
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (recipients.size() > 0) {
+                    Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
+                    intent.putExtra(RECIPIENT_ID_EXTRA, recipients.get(0).get(0));
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                } else {
+                    Toast.makeText(MessageNewActivity.this, "Please select a recipient", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         actionBar.setCustomView(backButtonBar, layoutParams);
         actionBar.setDisplayShowCustomEnabled(true);
 
         setContentView(R.layout.activity_messages_new);
+
+        recipients = new ArrayList<HashMap<Integer, String>>();
+        userTagsWrapper = (FlowLayout) findViewById(R.id.user_tags);
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
-                intent.putExtra( RECIPIENT_ID_EXTRA, contactsAdapter.getCachedContact(position).id);
-                startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                addRecipient(contactsAdapter.getCachedContact(position).id, contactsAdapter.getCachedContact(position).name);
             }
 
         });
@@ -77,10 +104,7 @@ public class MessageNewActivity extends BadgeActivity {
         searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
-                intent.putExtra(RECIPIENT_ID_EXTRA, contactsAdapter.getCachedContact(position).id);
-                startActivity(intent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                addRecipient(searchResultsAdapter.getCachedContact(position).id, searchResultsAdapter.getCachedContact(position).name);
             }
         });
 
@@ -157,5 +181,45 @@ public class MessageNewActivity extends BadgeActivity {
         }
     }
 
+    private void addRecipient(final int contactId, final String contactName) {
+        if (!recipients.contains(contactId)) {
+            if (recipients.size() == 0) {
+                userTagsWrapper.setVisibility(View.VISIBLE);
+            }
+            final HashMap<Integer, String> userHash = new HashMap<Integer, String>();
+            userHash.put(contactId, contactName);
+            recipients.add(userHash);
+            LayoutInflater inflater = LayoutInflater.from(this);
+            final ButtonWithFont newButton = (ButtonWithFont) inflater.inflate(R.layout.button_user_tag, null);
+            newButton.setTag(contactId);
+            newButton.setText(contactName);
+            newButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new AlertDialog.Builder(MessageNewActivity.this)
+                            .setTitle("Remove " + contactName + "?")
+                            .setMessage("Are you sure you want to remove " + contactName + "?")
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    recipients.remove(userHash);
+                                    userTagsWrapper.removeView(newButton);
+                                    if (recipients.size() == 0) {
+                                        userTagsWrapper.setVisibility(View.GONE);
+                                    }
+                                    dialog.cancel();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+                }
+            });
+            userTagsWrapper.addView(newButton);
+        }
+    }
 
 }

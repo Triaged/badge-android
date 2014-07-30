@@ -46,4 +46,5 @@ dependencies {
     compile "com.mixpanel.android:mixpanel-android:4.2.1@aar"
     compile 'org.apache.james:apache-mime4j-core:0.7.2'
     compile 'org.apache.httpcomponents:httpmime:4.2.5'
+    compile "com.wefika:flowlayout:0.3.0"
 }
