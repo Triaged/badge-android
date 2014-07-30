@@ -100,7 +100,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         actionBar.getTabAt(0).setIcon(R.drawable.messages_selected).select();
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
-        if (adapter.getCount() > 0) {
+        if (adapter.getCount() == 0) {
             noMessagesImage.setVisibility(View.VISIBLE);
             noMessagesTitle.setVisibility(View.VISIBLE);
             noMessagesInfo.setVisibility(View.VISIBLE);
