@@ -76,6 +76,9 @@ public class DataProviderService extends Service {
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
     public static final String MSG_ACKNOWLEDGED_ACTION = "com.triage.badge.MSG_ACKNOWLEDGED";
 
+    public static final String THREAD_ID_EXTRA = "threadId";
+    public static final String MESSAGE_ID_EXTRA = "messageId";
+
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
@@ -150,8 +153,14 @@ public class DataProviderService extends Service {
                     CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
             );
     protected static final String QUERY_MESSAGES_SQL =
-            String.format( "SELECT * from %s WHERE %s = ? order by %s DESC",
+            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact ON message.%s = contact.%s WHERE message.%s = ? order by message.%s DESC",
+                    CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL,
+                    CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
+                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
                     CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.TABLE_CONTACTS,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID,
+                    CompanySQLiteHelper.COLUMN_CONTACT_ID,
                     CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID,
                     CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
             );
@@ -1657,14 +1666,15 @@ public class DataProviderService extends Service {
                     JSONArray msgArray = thread.getJSONArray( "messages" );
                     int numMessages = msgArray.length();
                     ContentValues msgValues = new ContentValues();
-
+                    boolean newMessages = false;
                     msgValues.clear();
                     for( int i = 0; i < numMessages; i++ ) {
                         if( i == numMessages - 1 ) {
 
                         }
                         JSONObject msg = msgArray.getJSONObject( i );
-                        String[] messageSelector = new String[] { msg.getString( "id" ) };
+                        String messageId = msg.getString( "id" );
+                        String[] messageSelector = new String[] { messageId };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                         if( msgCursor.getCount() == 1 ) {
                             msgCursor.moveToFirst();
@@ -1672,12 +1682,15 @@ public class DataProviderService extends Service {
                                 msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
                                 database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
                                 // Callback that msg is confirmed?
+                                Intent ackIntent = new Intent( MSG_ACKNOWLEDGED_ACTION );
+                                ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
+                                localBroadcastManager.sendBroadcast( ackIntent );
                             }
                         }
                         else {
                             setMessageContentValuesFromJSON( threadId, msg, msgValues, true );
                             database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
-                            // New message callback.
+                            newMessages = true;
                         }
                         msgValues.clear();
                     }
@@ -1700,6 +1713,11 @@ public class DataProviderService extends Service {
                     }
                     else {
                         messages.close();
+                    }
+                    if( newMessages ) {
+                        Intent newMessagesIntent = new Intent(NEW_MSG_ACTION);
+                        newMessagesIntent.putExtra(THREAD_ID_EXTRA, threadId);
+                        localBroadcastManager.sendBroadcast(newMessagesIntent);
                     }
                     database.setTransactionSuccessful();
                 }

@@ -96,6 +96,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
     @Override
     protected void onDestroy() {
         localBroadcastManager.unregisterReceiver( refreshReceiver );
+        adapter.destroy();
         super.onDestroy();
     }
 

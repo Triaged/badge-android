@@ -6,6 +6,31 @@
     android:paddingTop="16dp"
     >
 
+
+    <ImageView
+        android:id="@+id/contact_thumb"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="10dp"
+        android:background="@null"
+        android:contentDescription="@string/content_description_thumb"
+    />
+
+
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/no_photo_thumb"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/no_photo_thumb_bg"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:textSize="15sp"
+    />
+
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="match_parent"

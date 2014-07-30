@@ -82,4 +82,11 @@ public class MessagesListAdapter extends CursorAdapter {
         public ImageView profilePhoto;
         public ImageView missingProfilePhotoView;
     }
+
+    /**
+     * Call when no adapter no longer needed. Closes cursor.
+     */
+    public void destroy() {
+        getCursor().close();
+    }
 }

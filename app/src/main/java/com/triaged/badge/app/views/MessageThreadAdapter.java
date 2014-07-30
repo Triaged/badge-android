@@ -10,11 +10,13 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
+import com.triaged.badge.data.Contact;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -48,6 +50,8 @@ public class MessageThreadAdapter extends CursorAdapter {
         MessageHolder holder = new MessageHolder();
         holder.message = (TextView) v.findViewById(R.id.message_text);
         holder.timestamp = (TextView) v.findViewById(R.id.timestamp);
+        holder.userPhoto = (ImageView)v.findViewById( R.id.contact_thumb );
+        holder.photoPlaceholder = (TextView) v.findViewById( R.id.no_photo_thumb );
         v.setTag(holder);
         return v;
     }
@@ -57,7 +61,15 @@ public class MessageThreadAdapter extends CursorAdapter {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
         messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) );
-        holder.message.setText( prettyTime.format( messageDate ) );
+        // TODO this is probably not the right timestamp format.
+        holder.timestamp.setText( prettyTime.format( messageDate ) );
+        holder.userPhoto.setImageBitmap(null);
+        String first = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME ) );
+        String last = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME ) );
+        holder.photoPlaceholder.setText( Contact.constructInitials( first, last ) );
+        holder.photoPlaceholder.setVisibility(View.VISIBLE);
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL));
+        dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
     }
 
     /** This adapter uses 2 different types of views (my message and other message) */
@@ -75,14 +87,23 @@ public class MessageThreadAdapter extends CursorAdapter {
     public int getItemViewType( Cursor messageCursor ) {
         if ( messageCursor.getInt( messageCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
             return R.layout.item_my_message;
-        } else {
+        }
+        else {
             return R.layout.item_other_message;
         }
+    }
+
+    /**
+     * Call when no adapter no longer needed. Closes cursor.
+     */
+    public void destroy() {
+        getCursor().close();
     }
 
     class MessageHolder {
         TextView message;
         TextView timestamp;
-        ImageButton userPhoto;
+        ImageView userPhoto;
+        TextView photoPlaceholder;
     }
 }

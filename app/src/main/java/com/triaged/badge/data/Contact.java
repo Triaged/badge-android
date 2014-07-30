@@ -140,7 +140,7 @@ public class Contact {
 
         /** DYNAMIC FIELDS */
         constructName();
-        constructInitials();
+        initials = constructInitials( firstName, lastName );
         sharingOfficeLocation = sharingOfficeLocationInt == 1;
     }
 
@@ -171,8 +171,8 @@ public class Contact {
         name = String.format( "%s %s", firstName, lastName );
     }
 
-    private void constructInitials() {
-        initials = String.valueOf(firstName.substring(0,1) + lastName.substring(0,1)).toUpperCase();
+    public static String constructInitials( String firstName, String lastName ) {
+        return String.valueOf(firstName.substring(0,1) + lastName.substring(0,1)).toUpperCase();
     }
 
     @Override

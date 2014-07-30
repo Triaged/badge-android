@@ -1,6 +1,9 @@
 package com.triaged.badge.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -36,6 +39,8 @@ public class MessageShowActivity extends BadgeActivity {
     private float densityMultiplier = 1;
     private boolean expanded = false;
     private Contact counterPart;
+    private BroadcastReceiver refreshReceiver;
+    protected String threadId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +70,10 @@ public class MessageShowActivity extends BadgeActivity {
             }
         });
 
+        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+
         threadList = (ListView) findViewById(R.id.message_thread);
-        adapter = new MessageThreadAdapter(this, getIntent().getStringExtra( THREAD_ID_EXTRA ), dataProviderServiceBinding );
+        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -76,6 +83,19 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         });
+
+        // TODO listen for new messages to refresh array adapter.
+        refreshReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if( threadId.equals( intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ) ) ) {
+                    adapter.changeCursor( dataProviderServiceBinding.getMessages(threadId) );
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        };
+        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
+
 
         Intent intent = getIntent();
         int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
@@ -125,6 +145,12 @@ public class MessageShowActivity extends BadgeActivity {
         overridePendingTransition(0,0);
     }
 
+    @Override
+    protected void onDestroy() {
+        localBroadcastManager.unregisterReceiver( refreshReceiver );
+        adapter.destroy();
+        super.onDestroy();
+    }
 
     public void expand(final View v) {
         v.measure(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
