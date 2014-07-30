@@ -10,10 +10,14 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.MessagesListAdapter;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -26,6 +30,10 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
 
     private ListView messagesList;
     private MessagesListAdapter adapter;
+
+    private ImageView noMessagesImage;
+    private TextView noMessagesTitle;
+    private TextView noMessagesInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +86,10 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
                 startActivity(intent);
             }
         });
+
+        noMessagesImage = (ImageView) findViewById(R.id.no_messages_image);
+        noMessagesTitle = (TextView) findViewById(R.id.no_messages_title);
+        noMessagesInfo = (TextView) findViewById(R.id.no_messages_info);
     }
 
     @Override

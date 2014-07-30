@@ -107,6 +107,9 @@
     <string name="content_description_send_message">Send Message</string>
     <string name="write_message">Write a message...</string>
     <string name="enter_recipients_hint">Enter Recipients</string>
+    <string name="content_description_empty_chat_bubble">Empty Chat Bubble</string>
+    <string name="no_messages_title">No Messages Yet</string>
+    <string name="no_messages_info">Be friendly, start a conversation with your teammates</string>
 
 
 </resources>
