@@ -3,31 +3,22 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.triaged.badge.app.BadgeApplication;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.MessageNewActivity;
 import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
-
-import org.w3c.dom.Text;
-
-import java.util.List;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
@@ -86,7 +77,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(context, MessageShowActivity.class);
-                    intent.putExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, ((Contact)holder.messageButton.getTag()).id);
+                    intent.putExtra(MessageNewActivity.RECIPIENT_IDS_EXTRA, ((Contact)holder.messageButton.getTag()).id);
                     context.startActivity(intent);
                 }
             });

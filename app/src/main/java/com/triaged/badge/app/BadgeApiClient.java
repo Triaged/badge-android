@@ -44,6 +44,10 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String API_PROTOCOL = "http";
     private static final String PROD_API_HOST = "api.badge.co";
     private static final String STAGING_API_HOST = "api.badge-staging.com";
+    private static final String PROD_API_MESSAGING_HOST = "api.badge.co";
+    private static final String STAGING_API_MESSAGING_HOST = "badge-messaging-staging.herokuapp.com";
+    private static final String API_MESSAGING_HOST = STAGING_API_MESSAGING_HOST;
+
     private static final String API_HOST = STAGING_API_HOST;
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
@@ -53,6 +57,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
+    //private static final String CREATE_THREAD_URI = String.format( "%s://%s/api/v1/message_threads", API_PROTOCOL, API_MESSAGING_HOST );
+    private static final String CREATE_THREAD_URI = String.format( "%s://%s/api/v1/message_threads", API_PROTOCOL, ":9000" );
     private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
     private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
     private static final String CHANGE_PASSWORD_URI = String.format( "%s://%s/v1/account/update_password", API_PROTOCOL, API_HOST );
@@ -62,11 +68,13 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
 
     private HttpHost httpHost;
+    private HttpHost messagingHttpHost;
     String apiToken;
 
     public BadgeApiClient( String apiToken ) {
         super();
         httpHost = new HttpHost( API_HOST );
+        messagingHttpHost = new HttpHost( API_MESSAGING_HOST );
         this.apiToken = apiToken;
     }
 
@@ -267,8 +275,31 @@ public class BadgeApiClient extends DefaultHttpClient {
         return execute( get );
     }
 
+    /**
+     * POSTS to the messaging api host /api/v1/message_threads with
+     * a set of recipients
+     *
+     * @param postBody
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse createThreadRequest( JSONObject postBody, int userId ) throws IOException {
+        HttpPost post = new HttpPost( CREATE_THREAD_URI );
+        StringEntity body = new StringEntity( postBody.toString(), "UTF-8" );
+        body.setContentType( MIME_TYPE_JSON );
+        post.setEntity( body );
+        if( apiToken != null && !apiToken.isEmpty() ) {
+            post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
+        }
+        post.setHeader( "User-Id", String.valueOf( userId ) );
+        return execute( messagingHttpHost, post );
+    }
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {
+        return postHelper( postData, uri, httpHost );
+    }
+
+    private HttpResponse postHelper( JSONObject postData, String uri, HttpHost host ) throws IOException {
         HttpPost post = new HttpPost( uri );
         StringEntity body = new StringEntity( postData.toString(), "UTF-8" );
         body.setContentType( MIME_TYPE_JSON );
@@ -276,6 +307,6 @@ public class BadgeApiClient extends DefaultHttpClient {
         if( apiToken != null && !apiToken.isEmpty() ) {
             post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         }
-        return execute( httpHost, post );
+        return execute( host, post );
     }
 }

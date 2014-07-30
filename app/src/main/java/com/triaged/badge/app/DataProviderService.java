@@ -1806,6 +1806,44 @@ public class DataProviderService extends Service {
         });
     }
 
+    /**
+     * SYNCHRONOUSLY creates a thread using the REST badge api.
+     * <strong>ONLY CALL THIS FROM A BACKGROUND TASK</strong>
+     * @param recipientIds
+     * @return
+     */
+    protected String createThreadSync( final Integer[] recipientIds ) throws JSONException, IOException {
+        String threadKey;
+        JSONObject postBody = new JSONObject();
+        JSONObject messageThread = new JSONObject();
+        JSONArray userIds = new JSONArray();
+
+        postBody.put("message_thread", messageThread);
+        for (int i : recipientIds) {
+            userIds.put(i);
+        }
+        messageThread.put( "user_ids", userIds );
+        threadKey = userIdArrayToKey(userIds);
+
+        String existingThreadId = prefs.getString( threadKey, "" );
+        if( "".equals( existingThreadId ) ) {
+            HttpResponse response = apiClient.createThreadRequest(postBody, loggedInUser.id);
+            int status = response.getStatusLine().getStatusCode();
+            if (status == HttpStatus.SC_OK) {
+                JSONObject thread = parseJSONResponse(response.getEntity());
+                String threadId = thread.getString("id");
+                prefs.edit().putString(threadKey, threadId).putString(threadId, userIds.toString()).commit();
+                return threadId;
+            } else {
+                if (response.getEntity() != null) {
+                    response.getEntity().consumeContent();
+                }
+                // fail( "Unexpected response from the server.", saveCallback );
+            }
+        }
+        return null;
+    }
+
     protected void clearThreadHead( String threadId, ContentValues msgValues ) {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0 );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String)null );
@@ -1839,7 +1877,7 @@ public class DataProviderService extends Service {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
-        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
+        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
     }
@@ -2176,6 +2214,29 @@ public class DataProviderService extends Service {
          */
         public void sendMessageAsync( String threadId, String body ) {
             DataProviderService.this.sendMessageAsync( threadId, body );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#createThreadSync(Integer[])
+         */
+        public String createThreadSync( Integer[] userIds ) throws JSONException, IOException {
+            return DataProviderService.this.createThreadSync( userIds );
+        }
+
+        /**
+         * Provide a way to use {@link #userIdArrayToNames(org.json.JSONArray)}
+         * from the UI.
+         *
+         * @param threadId
+         * @return
+         */
+        public String getRecipientNames( String threadId ) {
+            try {
+                return userIdArrayToNames(new JSONArray(prefs.getString(threadId, "[]")));
+            }
+            catch( JSONException e ) {
+                return null;
+            }
         }
     }
 

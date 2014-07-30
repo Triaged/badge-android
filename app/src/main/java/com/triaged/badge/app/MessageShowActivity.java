@@ -43,10 +43,12 @@ public class MessageShowActivity extends BadgeActivity {
     protected ImageButton sendButton;
     protected String threadId;
     private TextView backButton;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        intent = getIntent();
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
@@ -197,14 +199,12 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        backButton.setText( dataProviderServiceBinding.getRecipientNames( threadId ) );
+    }
 
-        Intent intent = getIntent();
-        int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
-        if (userId != 0) {
-            counterPart = dataProviderServiceBinding.getContact(userId);
-            backButton.setText(counterPart.name);
-        } else {
-            backButton.setText("Back");
-        }
+    @Override
+    protected void onNewIntent(Intent intent) {
+        threadId = intent.getStringExtra( THREAD_ID_EXTRA );
+        super.onNewIntent(intent);
     }
 }
