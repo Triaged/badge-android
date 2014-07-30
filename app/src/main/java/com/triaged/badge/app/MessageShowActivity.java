@@ -40,6 +40,7 @@ public class MessageShowActivity extends BadgeActivity {
     private boolean expanded = false;
     private Contact counterPart;
     private BroadcastReceiver refreshReceiver;
+    protected ImageButton sendButton;
     protected String threadId;
 
     @Override
@@ -96,7 +97,6 @@ public class MessageShowActivity extends BadgeActivity {
         };
         localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
 
-
         Intent intent = getIntent();
         int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
         if (userId != 0) {
@@ -134,6 +134,17 @@ public class MessageShowActivity extends BadgeActivity {
 
             }
         };
+
+        sendButton = (ImageButton)findViewById( R.id.send_now_button );
+        sendButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String msg = postBox.getText().toString();
+                dataProviderServiceBinding.sendMessageAsync( threadId, msg );
+                postBox.setText( "" );
+            }
+
+        } );
 
         postBox.addTextChangedListener(textWatcher);
 

@@ -1,9 +1,11 @@
 package com.triaged.badge.app;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -53,6 +55,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -167,7 +171,7 @@ public class DataProviderService extends Service {
 
 
     protected static final String QUERY_MESSAGE_SQL =
-            String.format( "SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
+            String.format( "SELECT * FROM %s WHERE %s IN (?, ?)", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
@@ -262,6 +266,7 @@ public class DataProviderService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
         prefs = PreferenceManager.getDefaultSharedPreferences( this );
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
@@ -1644,6 +1649,71 @@ public class DataProviderService extends Service {
         } );
     }
 
+    protected void sendMessageAsync( final String threadId, final String message ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                ContentValues msgValues = new ContentValues();
+                database.beginTransaction();
+                try {
+                    clearThreadHead( threadId, msgValues );
+                    long timestamp = System.currentTimeMillis() * 1000 /* nano */;
+                    // GUID
+                    String guid = UUID.randomUUID().toString();
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, loggedInUser.avatarUrl );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
+                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                    database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
+                    database.setTransactionSuccessful();
+                    final JSONObject msgWrapper = new JSONObject();
+                    JSONObject msg = new JSONObject();
+                    msgWrapper.put( "message", msg );
+                    msg.put( "author_id", loggedInUser.id );
+                    msg.put( "body", message );
+                    msg.put( "timestamp", (float)timestamp / 1000000f);
+                    msgWrapper.put( "guid", guid );
+                    // Bind/unbind every time so that the service doesn't live past
+                    // stopService()
+                    ServiceConnection fayeServiceConnection = new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            FayeService.LocalBinding fayeServiceBinding = (FayeService.LocalBinding)service;
+                            fayeServiceBinding.sendMessage(threadId, msgWrapper);
+                            unbindService( this );
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+                            // Derp
+                        }
+                    };
+                    if( !bindService( new Intent( DataProviderService.this, FayeService.class ), fayeServiceConnection, BIND_AUTO_CREATE ) ) {
+                        unbindService(fayeServiceConnection);
+                    }
+
+                    // TODO schedule task to mark message as failed after timeout.
+                }
+                catch( JSONException e ) {
+                    // Realllllllly shouldn't happen.
+                    Log.e( LOG_TAG, "Severe bug, JSON exception parsing user id array from prefs", e );
+                    return;
+                }
+                finally {
+                    database.endTransaction();
+                }
+                Intent newMsgIntent = new Intent( NEW_MSG_ACTION );
+                newMsgIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                localBroadcastManager.sendBroadcast( newMsgIntent );
+            }
+        });
+    }
+
     /**
      * If thread doesn't exist yet, save it, and any unsaved
      * messages as well.
@@ -1661,7 +1731,9 @@ public class DataProviderService extends Service {
                     threadId = thread.getString( "id" );
                     JSONArray userIds = thread.getJSONArray( "user_ids" );
 
-                    prefs.edit().putString( userIdArrayToKey( userIds ), threadId ).commit();
+                    String userIdsList = userIdArrayToKey( userIds );
+
+                    prefs.edit().putString( userIdsList, threadId ).putString(threadId, userIds.toString()).commit();
 
                     JSONArray msgArray = thread.getJSONArray( "messages" );
                     int numMessages = msgArray.length();
@@ -1674,13 +1746,19 @@ public class DataProviderService extends Service {
                         }
                         JSONObject msg = msgArray.getJSONObject( i );
                         String messageId = msg.getString( "id" );
-                        String[] messageSelector = new String[] { messageId };
+                        String guid = "foo";
+                        if( threadWrapper.has( "guid" ) ) {
+                            guid = threadWrapper.getString( "guid" );
+                        }
+                        String[] messageSelector = new String[] { guid, messageId };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                         if( msgCursor.getCount() == 1 ) {
                             msgCursor.moveToFirst();
                             if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
-                                msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
-                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
+
+                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
                                 // Callback that msg is confirmed?
                                 Intent ackIntent = new Intent( MSG_ACKNOWLEDGED_ACTION );
                                 ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
@@ -1696,15 +1774,11 @@ public class DataProviderService extends Service {
                     }
                     // Get id of most recent msg.
                     Cursor messages = getMessages( threadId );
-                    if( messages.moveToFirst() ) {
+                    if( messages.moveToLast() ) {
                         String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
                         messages.close();
                         // Unset thread head on all thread messages.
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0 );
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String)null );
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String)null );
-                        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, "", EMPTY_STRING_ARRAY );
-                        msgValues.clear();
+                        clearThreadHead( threadId, msgValues );
 
                         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
                         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
@@ -1730,6 +1804,14 @@ public class DataProviderService extends Service {
 
             }
         });
+    }
+
+    protected void clearThreadHead( String threadId, ContentValues msgValues ) {
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0 );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String)null );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String)null );
+        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID ), new String[] { threadId } );
+        msgValues.clear();
     }
 
     /**
@@ -2087,6 +2169,13 @@ public class DataProviderService extends Service {
          */
         public Cursor getMessages( String threadId ) {
             return DataProviderService.this.getMessages( threadId );
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#sendMessageAsync(String, String)
+         */
+        public void sendMessageAsync( String threadId, String body ) {
+            DataProviderService.this.sendMessageAsync( threadId, body );
         }
     }
 

@@ -158,9 +158,9 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     }
 
     public class LocalBinding extends Binder {
-        public void sendMessage( JSONObject msg ) {
+        public void sendMessage( String threadId, JSONObject msg ) {
             if( fayeConnected ) {
-                //faye.publish( "" )
+                faye.publish( String.format( "/threads/messages/%s", threadId ), msg );
             }
         }
     }

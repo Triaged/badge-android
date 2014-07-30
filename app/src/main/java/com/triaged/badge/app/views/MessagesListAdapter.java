@@ -61,7 +61,7 @@ public class MessagesListAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder)view.getTag();
-        holder.threadId = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+        holder.threadId = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID ) );
         String names = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS ) );
         String avatarUrl = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL ) );
         String body = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) );

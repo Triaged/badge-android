@@ -46,7 +46,15 @@ public class MessageThreadAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        View v = inflater.inflate( getItemViewType( cursor ), parent, false);
+        int viewType = getItemViewType( cursor );
+        int resourceId;
+        if( viewType == 0 ) {
+            resourceId = R.layout.item_my_message;
+        }
+        else {
+            resourceId = R.layout.item_other_message;
+        }
+        View v = inflater.inflate( resourceId, parent, false);
         MessageHolder holder = new MessageHolder();
         holder.message = (TextView) v.findViewById(R.id.message_text);
         holder.timestamp = (TextView) v.findViewById(R.id.timestamp);
@@ -60,7 +68,7 @@ public class MessageThreadAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) );
+        messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
         // TODO this is probably not the right timestamp format.
         holder.timestamp.setText( prettyTime.format( messageDate ) );
         holder.userPhoto.setImageBitmap(null);
@@ -87,10 +95,10 @@ public class MessageThreadAdapter extends CursorAdapter {
     /** Determine which view to use based on whether it's my msg or not */
     public int getItemViewType( Cursor messageCursor ) {
         if ( messageCursor.getInt( messageCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
-            return R.layout.item_my_message;
+            return 0;
         }
         else {
-            return R.layout.item_other_message;
+            return 1;
         }
     }
 
