@@ -6,81 +6,75 @@
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:paddingLeft="24dp"
     android:paddingRight="24dp"
+    android:id="@+id/activity_root"
     >
 
-<ScrollView
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:id="@+id/scroll_view"
-    >
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/login_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:text="@string/login_title"
+        android:textColor="@color/accent_turquoise"
+        android:textSize="31sp"
+        custom:font="Roboto-Light.ttf"
+        />
 
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:id="@+id/login_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="100dp"
-            android:text="@string/login_title"
-            android:textColor="@color/accent_turquoise"
-            android:textSize="31sp"
-            custom:font="Roboto-Light.ttf"
-            />
+    <com.triaged.badge.app.views.TextViewWithFont
+        android:id="@+id/login_info"
+        android:layout_width="190dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="@string/login_info"
+        android:textColor="@color/sub_text_gray"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_below="@id/login_title"
+        custom:font="Roboto-Regular.ttf"
+        />
 
-        <com.triaged.badge.app.views.TextViewWithFont
-            android:id="@+id/login_info"
-            android:layout_width="190dp"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="30dp"
-            android:text="@string/login_info"
-            android:textColor="@color/sub_text_gray"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:layout_below="@id/login_title"
-            custom:font="Roboto-Regular.ttf"
-            />
+    <com.triaged.badge.app.views.EditTextWithFont
+        android:id="@+id/login_email"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/main_text_black"
+        android:textColorHint="@color/light_text_gray"
+        android:hint="@string/login_email_hint"
+        android:layout_below="@id/login_info"
+        android:layout_marginTop="88dp"
+        android:textSize="15sp"
+        android:text="\@startupgiraffe.com"
+        android:inputType="textNoSuggestions"
+        custom:font="Roboto-Regular.ttf"
+        />
 
-</ScrollView>
+    <com.triaged.badge.app.views.EditTextWithFont
+        android:id="@+id/login_password"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/main_text_black"
+        android:textColorHint="@color/light_text_gray"
+        android:hint="@string/login_password_hint"
+        android:layout_below="@id/login_email"
+        android:textSize="15sp"
+        android:inputType="textPassword"
+        custom:font="Roboto-Regular.ttf"
+        />
 
-        <com.triaged.badge.app.views.EditTextWithFont
-            android:id="@+id/login_email"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:textColor="@color/main_text_black"
-            android:textColorHint="@color/light_text_gray"
-            android:hint="@string/login_email_hint"
-            android:layout_below="@id/scroll_view"
-            android:layout_marginTop="88dp"
-            android:textSize="15sp"
-            android:text="\@startupgiraffe.com"
-            android:inputType="textNoSuggestions"
-            custom:font="Roboto-Regular.ttf"
-            />
-
-        <com.triaged.badge.app.views.EditTextWithFont
-            android:id="@+id/login_password"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:textColor="@color/main_text_black"
-            android:textColorHint="@color/light_text_gray"
-            android:hint="@string/login_password_hint"
-            android:layout_below="@id/login_email"
-            android:textSize="15sp"
-            android:inputType="textPassword"
-            custom:font="Roboto-Regular.ttf"
-            />
-
-        <com.triaged.badge.app.views.ButtonWithFont
-            android:id="@+id/login_button"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:textColor="@color/white"
-            android:text="@string/login_button"
-            android:gravity="center"
-            android:background="@drawable/rounded_button"
-            android:layout_below="@id/login_password"
-            android:layout_marginTop="35dp"
-            android:textSize="16sp"
-            custom:font="Roboto-Regular.ttf"
-            />
+    <com.triaged.badge.app.views.ButtonWithFont
+        android:id="@+id/login_button"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textColor="@color/white"
+        android:text="@string/login_button"
+        android:gravity="center"
+        android:background="@drawable/rounded_button"
+        android:layout_below="@id/login_password"
+        android:layout_marginTop="35dp"
+        android:textSize="16sp"
+        custom:font="Roboto-Regular.ttf"
+        />
 
 </RelativeLayout>

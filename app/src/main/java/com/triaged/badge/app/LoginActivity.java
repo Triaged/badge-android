@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -34,7 +35,7 @@ import java.io.IOException;
 public class LoginActivity extends BadgeActivity {
 
 
-
+    private static final String LOG_TAG = LoginActivity.class.getName();
     private BroadcastReceiver dataSyncedListener;
     private EditText loginEmail = null;
     private EditText loginPassword = null;
@@ -81,6 +82,17 @@ public class LoginActivity extends BadgeActivity {
                 String password = loginPassword.getText().toString();
                 ((BadgeApplication)getApplication()).dataProviderServiceBinding.loginAsync( email, password, loginCallback);
 //                Toast.makeText(LoginActivity.this, email, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        final View activityRootView = findViewById(R.id.activity_root);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
+                if (heightDiff > 100) { // if more than 100 pixels, its probably a keyboard...
+                    Log.d(LOG_TAG, "Keyboard did appear or disapper");
+                }
             }
         });
     }

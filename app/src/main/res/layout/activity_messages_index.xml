@@ -23,6 +23,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="40dp"
         android:text="@string/no_messages_title"
+        android:layout_below="@id/no_messages_image"
         android:textColor="@color/accent_turquoise"
         android:textSize="31sp"
         custom:font="Roboto-Light.ttf"
@@ -39,7 +40,7 @@
         android:textColor="@color/sub_text_gray"
         android:textSize="14sp"
         android:gravity="center"
-        android:layout_below="@id/welcome_title"
+        android:layout_below="@id/no_messages_title"
         custom:font="Roboto-Regular.ttf"
         android:visibility="gone"
         />
