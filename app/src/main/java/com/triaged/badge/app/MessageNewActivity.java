@@ -100,6 +100,7 @@ public class MessageNewActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 addRecipient(contactsAdapter.getCachedContact(position).id, contactsAdapter.getCachedContact(position).name);
+                searchBar.setText("");
             }
 
         });
@@ -110,6 +111,7 @@ public class MessageNewActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 addRecipient(searchResultsAdapter.getCachedContact(position).id, searchResultsAdapter.getCachedContact(position).name);
+                searchBar.setText("");
             }
         });
 
