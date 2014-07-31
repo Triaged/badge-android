@@ -43,10 +43,12 @@ public class MessageShowActivity extends BadgeActivity {
     protected ImageButton sendButton;
     protected String threadId;
     private TextView backButton;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        intent = getIntent();
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
@@ -72,6 +74,7 @@ public class MessageShowActivity extends BadgeActivity {
         });
 
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+        dataProviderServiceBinding.markAsRead( threadId );
 
         threadList = (ListView) findViewById(R.id.message_thread);
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
@@ -197,14 +200,18 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        backButton.setText( dataProviderServiceBinding.getRecipientNames( threadId ) );
+    }
 
-        Intent intent = getIntent();
-        int userId = intent.getIntExtra(MessageNewActivity.RECIPIENT_ID_EXTRA, 0);
-        if (userId != 0) {
-            counterPart = dataProviderServiceBinding.getContact(userId);
-            backButton.setText(counterPart.name);
-        } else {
-            backButton.setText("Back");
+    @Override
+    protected void onNewIntent(Intent intent) {
+        String oldThreadId = threadId;
+        threadId = intent.getStringExtra( THREAD_ID_EXTRA );
+        if( !oldThreadId.equals( threadId ) ) {
+            dataProviderServiceBinding.markAsRead( threadId );
+            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+            adapter.notifyDataSetChanged();
         }
+        super.onNewIntent(intent);
     }
 }
