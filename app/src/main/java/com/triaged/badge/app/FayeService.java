@@ -90,10 +90,11 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void onDestroy() {
-        heartbeatFuture.cancel(true);
-        if( fayeConnected ) {
-            faye.closeWebSocketConnection();
+        if( heartbeatFuture != null ) {
+            heartbeatFuture.cancel(true);
         }
+        faye.destroy();
+        faye = null;
         heartbeatThread.shutdownNow();
         super.onDestroy();
     }

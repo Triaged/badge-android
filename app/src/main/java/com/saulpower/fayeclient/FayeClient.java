@@ -78,6 +78,7 @@ public class FayeClient implements Listener {
 
     private boolean mRunning = false;
     private boolean mReconnecting = false;
+    private boolean destroyed= false;
 
     private Handler mHandler;
     private Runnable mConnectionMonitor = new Runnable() {
@@ -85,7 +86,7 @@ public class FayeClient implements Listener {
         @Override
         public void run() {
 
-            if (!mConnected) {
+            if (!mConnected && !destroyed) {
 
                 openWebSocketConnection();
 
@@ -251,6 +252,11 @@ public class FayeClient implements Listener {
         } catch (JSONException ex) {
             Log.e(TAG, "Handshake Failed", ex);
         }
+    }
+
+    public void destroy() {
+        destroyed = true;
+        disconnect();
     }
 
     /**
