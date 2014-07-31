@@ -258,6 +258,8 @@ public class MessageShowActivity extends BadgeActivity {
                     contactTitle.setText(c.jobTitle);
                     ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
                     TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                    noPhotoThumb.setText(c.initials);
+                    noPhotoThumb.setVisibility(View.VISIBLE);
                     if (c.avatarUrl != null) {
                         dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
                     }

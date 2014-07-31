@@ -23,7 +23,7 @@ import org.w3c.dom.Text;
 import java.util.Date;
 
 /**
- * TODO: IMPLEMENT ADAPTER
+ * Adapter for the list of threads.
  *
  * Created by Will on 7/16/14.
  */

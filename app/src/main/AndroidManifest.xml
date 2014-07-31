@@ -135,7 +135,6 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme"
-            android:windowSoftInputMode="stateHidden"
             >
         </activity>
 

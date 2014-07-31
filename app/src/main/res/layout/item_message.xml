@@ -34,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="56dp"
-        android:layout_marginRight="72dp"
+        android:layout_marginRight="88dp"
         android:textColor="@color/main_text_black"
         android:textSize="15sp"
         custom:font="Roboto-Regular.ttf"
@@ -60,7 +60,7 @@
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/timestamp"
-        android:layout_width="56dp"
+        android:layout_width="72dp"
         android:layout_height="wrap_content"
         android:textColor="@color/light_text_gray"
         android:gravity="right"
