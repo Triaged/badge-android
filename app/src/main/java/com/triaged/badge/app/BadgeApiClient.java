@@ -1,9 +1,5 @@
 package com.triaged.badge.app;
 
-import android.util.Log;
-
-import com.triaged.badge.data.CompanySQLiteHelper;
-
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -12,21 +8,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
-import org.apache.http.entity.mime.content.ContentBody;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -56,7 +45,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
     //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
     private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
-    private static final String GET_MSG_HISTORY_URI = String.format( "%s://%s/api/v1/user/history", API_PROTOCOL, API_MESSAGING_HOST );
+    private static final String GET_MSG_HISTORY_URI_FORMAT = "%s://%s/api/v1/user/messages?timestamp=%d";
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
     private static final String CREATE_THREAD_URI = String.format( "%s://%s/api/v1/message_threads", API_PROTOCOL, API_MESSAGING_HOST );
@@ -307,7 +296,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse getMessageHistory( long sinceTimeNano, int userId ) throws IOException {
-        HttpGet get = new HttpGet( GET_MSG_HISTORY_URI );
+        HttpGet get = new HttpGet( String.format(GET_MSG_HISTORY_URI_FORMAT, API_PROTOCOL, API_MESSAGING_HOST, sinceTimeNano / 1000000l )  );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         get.setHeader( "Accept", MIME_TYPE_JSON );
         get.setHeader( "User-Id", String.valueOf( userId ) );

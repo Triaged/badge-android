@@ -581,6 +581,9 @@ public class DataProviderService extends Service {
      * @param placeholderView null or a view that should be hidden once the image has been set.
      */
     protected void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
+        if( avatarUrl == null ) {
+            return;
+        }
         Bitmap b = thumbCache.get( avatarUrl );
         if( b != null ) {
             // Hooray!
@@ -1692,7 +1695,7 @@ public class DataProviderService extends Service {
                     msgWrapper.put( "message", msg );
                     msg.put( "author_id", loggedInUser.id );
                     msg.put( "body", message );
-                    msg.put( "timestamp", (float)timestamp / 1000000f);
+                    msg.put( "timestamp", timestamp );
                     msgWrapper.put( "guid", guid );
                     // Bind/unbind every time so that the service doesn't live past
                     // stopService()
@@ -1769,7 +1772,11 @@ public class DataProviderService extends Service {
                 int numThreads = msgResponse.length();
                 for( int i = 0; i < numThreads; i++ ) {
                     JSONObject thread = msgResponse.getJSONObject(i);
-                    upsertThreadAndMessages(thread, false );
+                    String guid = "foo";
+                    if( thread.has( "guid" ) ) {
+                        guid = thread.getString( "guid" );
+                    }
+                    upsertThreadAndMessages( thread, guid, false );
                 }
             }
             else {
@@ -1794,11 +1801,11 @@ public class DataProviderService extends Service {
      * messages, mark it as acknowledged, broadcast it, and sync
      * timestamp/id with server.
      *
-     * @param thread faye message containing thread and messages
+     * @param thread faye thread json object
      * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
      *                  assume they are historical
      */
-    protected void upsertThreadAndMessages( final JSONObject thread, final boolean broadcast ) {
+    protected void upsertThreadAndMessages( final JSONObject thread, final String guid, final boolean broadcast ) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
@@ -1825,10 +1832,6 @@ public class DataProviderService extends Service {
                             mostRecentMsgTimestamp = timestamp;
                         }
                         String messageId = msg.getString( "id" );
-                        String guid = "foo";
-                        if( thread.has( "guid" ) ) {
-                            guid = thread.getString( "guid" );
-                        }
                         String[] messageSelector = new String[] { guid, messageId };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                         if( msgCursor.getCount() == 1 ) {
@@ -1911,7 +1914,7 @@ public class DataProviderService extends Service {
         if( "".equals( existingThreadId ) ) {
             HttpResponse response = apiClient.createThreadRequest(postBody, loggedInUser.id);
             int status = response.getStatusLine().getStatusCode();
-            if (status == HttpStatus.SC_OK) {
+            if (status == HttpStatus.SC_OK || status == HttpStatus.SC_CREATED ) {
                 JSONObject thread = parseJSONResponse(response.getEntity());
                 String threadId = thread.getString("id");
                 prefs.edit().putString(threadKey, threadId).putString(threadId, userIds.toString()).commit();
@@ -2275,10 +2278,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, boolean )
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, String, boolean )
          */
-        public void upsertThreadAndMessages( JSONObject thread ) {
-            DataProviderService.this.upsertThreadAndMessages(thread, true );
+        public void upsertThreadAndMessages( JSONObject thread, String guid ) {
+            DataProviderService.this.upsertThreadAndMessages(thread, guid, true );
         }
 
         /**

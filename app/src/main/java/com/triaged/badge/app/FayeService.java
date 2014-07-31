@@ -90,7 +90,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void onDestroy() {
         heartbeatFuture.cancel(true);
         if( fayeConnected ) {
-            faye.disconnectFromServer();
+            faye.closeWebSocketConnection();
         }
         heartbeatThread.shutdownNow();
         super.onDestroy();
@@ -154,7 +154,16 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             return;
         }
         ensureDataServiceBinding();
-        dataProviderServiceBinding.upsertThreadAndMessages( json );
+        String guid = "foo";
+        try {
+            if (json.has("guid")) {
+                guid = json.getString("guid");
+            }
+        }
+        catch( JSONException e ) {
+            Log.w( LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e );
+        }
+        dataProviderServiceBinding.upsertThreadAndMessages( json, guid );
         // Do actual work.
         Log.d( LOG_TAG, "Message: " + json.toString() );
     }
