@@ -204,7 +204,12 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
+        String oldThreadId = threadId;
         threadId = intent.getStringExtra( THREAD_ID_EXTRA );
+        if( !oldThreadId.equals( threadId ) ) {
+            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+            adapter.notifyDataSetChanged();
+        }
         super.onNewIntent(intent);
     }
 }

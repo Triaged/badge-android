@@ -104,6 +104,7 @@ public class MessageNewActivity extends BadgeActivity {
                             if( threadId != null ) {
                                 Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
                                 intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                                intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
                                 startActivity(intent);
                                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
                             }
