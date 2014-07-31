@@ -159,12 +159,13 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             if (json.has("guid")) {
                 guid = json.getString("guid");
             }
+            dataProviderServiceBinding.upsertThreadAndMessages( json.getJSONObject( "message_thread" ), guid );
+            // Do actual work.
+
         }
         catch( JSONException e ) {
             Log.w( LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e );
         }
-        dataProviderServiceBinding.upsertThreadAndMessages( json, guid );
-        // Do actual work.
         Log.d( LOG_TAG, "Message: " + json.toString() );
     }
 
