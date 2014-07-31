@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Layout;
 import android.view.LayoutInflater;
@@ -16,8 +17,13 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.triaged.badge.data.Contact;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Profile Activity for other users (not the logged-in-user)
@@ -57,8 +63,34 @@ public class OtherProfileActivity extends AbstractProfileActivity {
         newMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(OtherProfileActivity.this, "New Message", Toast.LENGTH_SHORT).show();
                 trackProfileButtonEvent("message");
+                final Integer[] recipientIds = new Integer[] { contact.id, dataProviderServiceBinding.getLoggedInUser().id};
+                Arrays.sort(recipientIds);
+                new AsyncTask<Void, Void, String>() {
+                    @Override
+                    protected String doInBackground(Void... params) {
+                        try {
+                            return dataProviderServiceBinding.createThreadSync(recipientIds);
+                        }
+                        catch( JSONException e ) {
+                            Toast.makeText(OtherProfileActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                        }
+                        catch( IOException e ) {
+                            Toast.makeText( OtherProfileActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute( String threadId ) {
+                        if( threadId != null ) {
+                            Intent intent = new Intent(OtherProfileActivity.this, MessageShowActivity.class);
+                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                            intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+                            startActivity(intent);
+                        }
+                    }
+                }.execute();
             }
         });
 
