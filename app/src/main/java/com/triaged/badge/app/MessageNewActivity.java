@@ -206,19 +206,19 @@ public class MessageNewActivity extends BadgeActivity {
     }
 
     private void loadContacts() {
-        if( contactsAdapter != null ) {
-            contactsAdapter.refresh();
-        }
-        else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
-            contactsListView.setAdapter(contactsAdapter);
-        }
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
         }
         else {
             searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
             searchResultsList.setAdapter( searchResultsAdapter );
+        }
+        if( contactsAdapter != null ) {
+            contactsAdapter.refresh();
+        }
+        else {
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
+            contactsListView.setAdapter(contactsAdapter);
         }
     }
 

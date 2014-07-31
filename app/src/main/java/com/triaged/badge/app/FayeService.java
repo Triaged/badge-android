@@ -44,6 +44,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     private LocalBinding localBinding;
     private ScheduledFuture<?> heartbeatFuture;
     private DataProviderService.LocalBinding dataProviderServiceBinding;
+    protected int timesStarted = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -69,6 +70,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
         if( loggedInUserId > 0 ) {
             JSONObject extension = new JSONObject();
             try {
@@ -128,7 +130,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void disconnectedFromServer() {
         fayeConnected = false;
         heartbeatFuture.cancel(true);
-        Log.d( LOG_TAG, "Faye disconnected from server, frown emoji" );
+        Log.d(LOG_TAG, "Faye disconnected from server, frown emoji");
     }
 
     @Override

@@ -4,9 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -14,12 +18,18 @@ import android.view.animation.Transformation;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.views.MessageThreadAdapter;
 import com.triaged.badge.data.Contact;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 /**
  * Activity for a message thread.
@@ -29,6 +39,7 @@ import com.triaged.badge.data.Contact;
 public class MessageShowActivity extends BadgeActivity {
 
     public static final String THREAD_ID_EXTRA = "threadId";
+    private static final String LOG_TAG = MessageShowActivity.class.getName();
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
@@ -44,6 +55,12 @@ public class MessageShowActivity extends BadgeActivity {
     protected String threadId;
     private TextView backButton;
     private Intent intent;
+
+    private String userNamesList;
+    private LinearLayout threadMembersWrapper = null;
+    private LayoutInflater inflater;
+
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +160,10 @@ public class MessageShowActivity extends BadgeActivity {
 
         postBox.addTextChangedListener(textWatcher);
 
+        threadMembersWrapper = (LinearLayout) findViewById(R.id.thread_members);
+
+        inflater = LayoutInflater.from(this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
@@ -171,7 +192,7 @@ public class MessageShowActivity extends BadgeActivity {
         };
 
         // 1dp/ms
-        a.setDuration((int)(targetHeight / densityMultiplier));
+        a.setDuration((int) (targetHeight / densityMultiplier));
         v.startAnimation(a);
     }
 
@@ -200,7 +221,42 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        backButton.setText( dataProviderServiceBinding.getRecipientNames( threadId ) );
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
+    }
+
+    private void setupContactsMenu() {
+        threadMembersWrapper.removeAllViews();
+        String usersJsonString = prefs.getString(threadId, "[]");
+        try {
+            JSONArray users = new JSONArray(usersJsonString);
+            int count = users.length();
+            for (int i=0; i<count; i++) {
+                String user = (String) users.get(i);
+                int userId = Integer.parseInt(user);
+                Contact c = dataProviderServiceBinding.getContact(userId);
+                RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
+                TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
+                contactName.setText(c.name);
+                TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
+                contactTitle.setText(c.jobTitle);
+                ImageView thumbImage = (ImageView) findViewById(R.id.contact_thumb);
+                TextView noPhotoThumb = (TextView) findViewById(R.id.no_photo_thumb);
+                if( c.avatarUrl != null ) {
+                    dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
+                }
+                contactView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(MessageShowActivity.this, "CONTACT TAPPED", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                threadMembersWrapper.addView(contactView);
+            }
+            backButton.setText(userNamesList);
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Malformed users json");
+        }
     }
 
     @Override
