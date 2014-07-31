@@ -47,5 +47,4 @@ dependencies {
     compile 'org.apache.james:apache-mime4j-core:0.7.2'
     compile 'org.apache.httpcomponents:httpmime:4.2.5'
     compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
-    compile "com.wefika:flowlayout:0.3.0"
 }

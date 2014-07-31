@@ -10,17 +10,20 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
-import com.wefika.flowlayout.FlowLayout;
+import com.triaged.badge.app.views.CustomLayoutParams;
+import com.triaged.badge.app.views.FlowLayout;
 
 import org.json.JSONException;
 
@@ -49,6 +52,8 @@ public class MessageNewActivity extends BadgeActivity {
     private HashMap<Integer, String> recipients = null;
 
     private FlowLayout userTagsWrapper = null;
+    private CustomLayoutParams tagItemLayoutParams;
+    private float densityMultiplier = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +129,7 @@ public class MessageNewActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 addRecipient(contactsAdapter.getCachedContact(position).id, contactsAdapter.getCachedContact(position).name);
+                searchBar.setText("");
             }
 
         });
@@ -134,6 +140,7 @@ public class MessageNewActivity extends BadgeActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 addRecipient(searchResultsAdapter.getCachedContact(position).id, searchResultsAdapter.getCachedContact(position).name);
+                searchBar.setText("");
             }
         });
 
@@ -180,6 +187,10 @@ public class MessageNewActivity extends BadgeActivity {
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         loadContacts();
 
+        densityMultiplier = getResources().getDisplayMetrics().density;
+
+        tagItemLayoutParams = new CustomLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tagItemLayoutParams.setMargins(0, (int) (4 * densityMultiplier), (int) (4 * densityMultiplier), 0);
     }
 
     @Override
@@ -217,7 +228,9 @@ public class MessageNewActivity extends BadgeActivity {
             }
             recipients.put(contactId, contactName);
             LayoutInflater inflater = LayoutInflater.from(this);
+
             final ButtonWithFont newButton = (ButtonWithFont) inflater.inflate(R.layout.button_user_tag, null);
+            newButton.setLayoutParams(tagItemLayoutParams);
             newButton.setTag(contactId);
             newButton.setText(contactName);
             newButton.setOnClickListener(new View.OnClickListener() {
