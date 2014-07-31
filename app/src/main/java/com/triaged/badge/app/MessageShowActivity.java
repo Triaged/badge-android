@@ -56,8 +56,10 @@ public class MessageShowActivity extends BadgeActivity {
     protected String threadId;
     private TextView backButton;
     private Intent intent;
+    private BroadcastReceiver dataAvailableReceiver;
 
     private int userCount = 2;
+    private int soleCounterpartId = 0;
     private LinearLayout threadMembersWrapper = null;
     private LayoutInflater inflater;
 
@@ -67,8 +69,9 @@ public class MessageShowActivity extends BadgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         intent = getIntent();
-        BadgeApplication app = (BadgeApplication) getApplication();
+        final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
+        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -90,13 +93,18 @@ public class MessageShowActivity extends BadgeActivity {
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (userCount > 2) {
                     if (threadMembersWrapper.getVisibility() == View.VISIBLE) {
                         threadMembersWrapper.setVisibility(View.GONE);
                     } else {
                         threadMembersWrapper.setVisibility(View.VISIBLE);
                     }
-
+                } else {
+                    Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", soleCounterpartId);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -105,13 +113,8 @@ public class MessageShowActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_message_show);
 
-        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
-        dataProviderServiceBinding.markAsRead( threadId );
-
         threadList = (ListView) findViewById(R.id.message_thread);
-        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
-        threadList.setAdapter(adapter);
-        threadList.setSelection(adapter.getCount() - 1);
+
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -179,11 +182,38 @@ public class MessageShowActivity extends BadgeActivity {
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        dataAvailableReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                dataProviderServiceBinding = app.dataProviderServiceBinding;
+                showThread();
+            }
+        };
+        localBroadcastManager.registerReceiver( dataAvailableReceiver, new IntentFilter( DataProviderService.DB_AVAILABLE_ACTION) );
+
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+            showThread();
+        }
+
+    }
+
+    /**
+     * This needs to be abstracted because it may need to happen asynchronously if
+     * headed straight here from a push notification and database not set up yet.
+     */
+    protected void showThread() {
+        dataProviderServiceBinding.markAsRead( threadId );
+        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
+        threadList.setAdapter(adapter);
+        threadList.setSelection(adapter.getCount() - 1);
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
     }
 
     @Override
     protected void onDestroy() {
         localBroadcastManager.unregisterReceiver( refreshReceiver );
+        localBroadcastManager.unregisterReceiver(dataAvailableReceiver);
         adapter.destroy();
         super.onDestroy();
     }
@@ -233,13 +263,6 @@ public class MessageShowActivity extends BadgeActivity {
         v.startAnimation(a);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
-        setupContactsMenu();
-    }
-
     private void setupContactsMenu() {
         threadMembersWrapper.removeAllViews();
         String usersJsonString = prefs.getString(threadId, "[]");
@@ -251,28 +274,32 @@ public class MessageShowActivity extends BadgeActivity {
                 int userId = Integer.parseInt(user);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
-                    RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
-                    TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
-                    contactName.setText(c.name);
-                    TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
-                    contactTitle.setText(c.jobTitle);
-                    ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
-                    TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
-                    noPhotoThumb.setText(c.initials);
-                    noPhotoThumb.setVisibility(View.VISIBLE);
-                    if (c.avatarUrl != null) {
-                        dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
-                    }
-                    contactView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra("PROFILE_ID", c.id);
-                            startActivity(intent);
+                    if (userCount == 2) {
+                        soleCounterpartId = c.id;
+                    } else {
+                        RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
+                        TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
+                        contactName.setText(c.name);
+                        TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
+                        contactTitle.setText(c.jobTitle);
+                        ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
+                        TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                        noPhotoThumb.setText(c.initials);
+                        noPhotoThumb.setVisibility(View.VISIBLE);
+                        if (c.avatarUrl != null) {
+                            dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
                         }
-                    });
-                    threadMembersWrapper.addView(contactView);
+                        contactView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                                intent.putExtra("PROFILE_ID", c.id);
+                                startActivity(intent);
+                            }
+                        });
+                        threadMembersWrapper.addView(contactView);
+                    }
                 }
             }
         } catch (JSONException e) {
@@ -288,6 +315,8 @@ public class MessageShowActivity extends BadgeActivity {
             dataProviderServiceBinding.markAsRead( threadId );
             adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
             adapter.notifyDataSetChanged();
+            backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+            setupContactsMenu();
         }
         super.onNewIntent(intent);
     }
