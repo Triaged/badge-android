@@ -2028,9 +2028,13 @@ public class DataProviderService extends Service {
         for( int i = 0; i < numUsers; i++ ) {
             int userId = userIdArr.getInt( i );
             if( userId != loggedInUser.id ) {
-                Contact c = getContact( userId );
-                names.append( delim ).append( c.name );
-                delim = ", ";
+                Contact c = getContact(userId);
+                if (numUsers > 2) {
+                    names.append(delim).append(c.firstName);
+                    delim = ", ";
+                } else {
+                    names.append(delim).append(c.name);
+                }
             }
         }
         return names.toString();

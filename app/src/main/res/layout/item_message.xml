@@ -22,29 +22,32 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginRight="16dp"
-        android:src="@drawable/contacts_selected"
-        android:background="@null"
+        android:src="@drawable/contacts_unselected"
+        android:background="@drawable/group_message_icon_bg"
         android:gravity="center"
         android:visibility="gone"
+        android:padding="6dp"
     />
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/contact_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="72dp"
+        android:layout_marginLeft="56dp"
         android:layout_marginRight="72dp"
         android:textColor="@color/main_text_black"
         android:textSize="15sp"
         custom:font="Roboto-Regular.ttf"
         android:lineSpacingMultiplier="1.1"
+        android:ellipsize="end"
+        android:singleLine="true"
         />
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/message_preview_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="72dp"
+        android:layout_marginLeft="56dp"
         android:layout_marginRight="48dp"
         android:textColor="@color/light_text_gray"
         android:layout_below="@id/contact_name"
@@ -57,13 +60,16 @@
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/timestamp"
-        android:layout_width="match_parent"
+        android:layout_width="56dp"
         android:layout_height="wrap_content"
         android:textColor="@color/light_text_gray"
         android:gravity="right"
         android:textSize="12sp"
         android:layout_marginRight="16dp"
         custom:font="Roboto-Regular.ttf"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:layout_alignParentRight="true"
         />
 
     <View
@@ -72,7 +78,7 @@
         android:background="@color/light_divider"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginLeft="72dp"
+        android:layout_marginLeft="56dp"
         />
 
 </RelativeLayout>
