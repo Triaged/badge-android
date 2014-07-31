@@ -74,6 +74,7 @@ public class MessageShowActivity extends BadgeActivity {
         });
 
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+        dataProviderServiceBinding.markAsRead( threadId );
 
         threadList = (ListView) findViewById(R.id.message_thread);
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
@@ -207,6 +208,7 @@ public class MessageShowActivity extends BadgeActivity {
         String oldThreadId = threadId;
         threadId = intent.getStringExtra( THREAD_ID_EXTRA );
         if( !oldThreadId.equals( threadId ) ) {
+            dataProviderServiceBinding.markAsRead( threadId );
             adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
             adapter.notifyDataSetChanged();
         }

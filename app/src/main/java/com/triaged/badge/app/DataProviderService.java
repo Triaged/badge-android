@@ -1649,6 +1649,16 @@ public class DataProviderService extends Service {
         } );
     }
 
+    /**
+     * Create a message in the database and send it async to faye
+     * for sending over websocket.
+     *
+     * New messages become the thread head and are read by default.
+     * The lifecycle for message status is pending, sent, or error.
+     *
+     * @param threadId
+     * @param message
+     */
     protected void sendMessageAsync( final String threadId, final String message ) {
         sqlThread.submit( new Runnable() {
             @Override
@@ -1667,6 +1677,7 @@ public class DataProviderService extends Service {
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
                     JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
                     database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
@@ -1715,8 +1726,33 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Marks the head msg of this thread as read.
+     *
+     * @param threadId
+     */
+    protected void markAsRead( final String threadId ) {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                ContentValues values = new ContentValues();
+                values.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
+                database.update(
+                        CompanySQLiteHelper.TABLE_MESSAGES,
+                        values,
+                        String.format( "%s = ? AND %s = 1", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD ),
+                        new String[] { threadId }
+                );
+            }
+        });
+    }
+
+    /**
      * If thread doesn't exist yet, save it, and any unsaved
      * messages as well.
+     *
+     * If message that has been sent to us is one of our pending
+     * messages, mark it as acknowledged, broadcast it, and sync
+     * timestamp/id with server.
      *
      * @param threadWrapper faye message containing thread and messages
      */
@@ -1757,6 +1793,7 @@ public class DataProviderService extends Service {
                             if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, ((long)msg.getDouble( "timestamp" ) * 1000000d) /* nanos */ );
 
                                 database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
                                 // Callback that msg is confirmed?
@@ -1880,9 +1917,10 @@ public class DataProviderService extends Service {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 0 );
     }
 
     /**
@@ -2240,6 +2278,13 @@ public class DataProviderService extends Service {
             catch( JSONException e ) {
                 return null;
             }
+        }
+
+        /**
+         * @see com.triaged.badge.app.DataProviderService#markAsRead(String)
+         */
+        public void markAsRead( String threadId ) {
+            DataProviderService.this.markAsRead( threadId );
         }
     }
 
