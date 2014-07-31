@@ -1,5 +1,6 @@
 package com.triaged.badge.app;
 
+import android.app.ActionBar;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -57,6 +58,7 @@ public class MessageShowActivity extends BadgeActivity {
     private Intent intent;
 
     private String userNamesList;
+    private int userCount = 2;
     private LinearLayout threadMembersWrapper = null;
     private LayoutInflater inflater;
 
@@ -69,9 +71,15 @@ public class MessageShowActivity extends BadgeActivity {
         BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
-        setContentView(R.layout.activity_message_show);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
 
-        backButton = (TextView) findViewById(R.id.back_button);
+        inflater = LayoutInflater.from(this);
+        ActionBar.LayoutParams layoutParams = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
+        View backButtonBar = inflater.inflate(R.layout.actionbar_show_message, null);
+
+        backButton = (TextView) backButtonBar.findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,16 +87,24 @@ public class MessageShowActivity extends BadgeActivity {
             }
         });
 
-        ImageButton profileButton = (ImageButton) findViewById(R.id.thread_members_button);
+        ImageButton profileButton = (ImageButton) backButtonBar.findViewById(R.id.thread_members_button);
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", counterPart.id);
-                startActivity(intent);
+
+                    if (threadMembersWrapper.getVisibility() == View.VISIBLE) {
+                        threadMembersWrapper.setVisibility(View.GONE);
+                    } else {
+                        threadMembersWrapper.setVisibility(View.VISIBLE);
+                    }
+
             }
         });
+
+        actionBar.setCustomView(backButtonBar, layoutParams);
+        actionBar.setDisplayShowCustomEnabled(true);
+
+        setContentView(R.layout.activity_message_show);
 
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
         dataProviderServiceBinding.markAsRead( threadId );
@@ -162,8 +178,8 @@ public class MessageShowActivity extends BadgeActivity {
 
         threadMembersWrapper = (LinearLayout) findViewById(R.id.thread_members);
 
-        inflater = LayoutInflater.from(this);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
     }
 
     @Override
@@ -230,30 +246,34 @@ public class MessageShowActivity extends BadgeActivity {
         String usersJsonString = prefs.getString(threadId, "[]");
         try {
             JSONArray users = new JSONArray(usersJsonString);
-            int count = users.length();
-            for (int i=0; i<count; i++) {
+            userCount = users.length();
+            for (int i=0; i<userCount; i++) {
                 String user = (String) users.get(i);
                 int userId = Integer.parseInt(user);
-                Contact c = dataProviderServiceBinding.getContact(userId);
-                RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
-                TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
-                contactName.setText(c.name);
-                TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
-                contactTitle.setText(c.jobTitle);
-                ImageView thumbImage = (ImageView) findViewById(R.id.contact_thumb);
-                TextView noPhotoThumb = (TextView) findViewById(R.id.no_photo_thumb);
-                if( c.avatarUrl != null ) {
-                    dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
-                }
-                contactView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(MessageShowActivity.this, "CONTACT TAPPED", Toast.LENGTH_SHORT).show();
+                if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
+                    final Contact c = dataProviderServiceBinding.getContact(userId);
+                    RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
+                    TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
+                    contactName.setText(c.name);
+                    TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
+                    contactTitle.setText(c.jobTitle);
+                    ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
+                    TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                    if (c.avatarUrl != null) {
+                        dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
                     }
-                });
-                threadMembersWrapper.addView(contactView);
+                    contactView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            intent.putExtra("PROFILE_ID", c.id);
+                            startActivity(intent);
+                        }
+                    });
+                    threadMembersWrapper.addView(contactView);
+                }
             }
-            backButton.setText(userNamesList);
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Malformed users json");
         }
@@ -269,5 +289,15 @@ public class MessageShowActivity extends BadgeActivity {
             adapter.notifyDataSetChanged();
         }
         super.onNewIntent(intent);
+    }
+
+    protected void scrollMyListViewToBottom() {
+        threadList.post(new Runnable() {
+            @Override
+            public void run() {
+                // Select the last row so it will scroll into view...
+                threadList.setSelection(adapter.getCount() - 1);
+            }
+        });
     }
 }
