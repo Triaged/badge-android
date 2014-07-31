@@ -55,11 +55,15 @@
         android:divider="@null"
         />
 
-    <ListView
+    <LinearLayout
+        android:id="@+id/thread_members"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        >
 
-    />
+    </LinearLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
