@@ -1841,6 +1841,9 @@ public class DataProviderService extends Service {
                 // fail( "Unexpected response from the server.", saveCallback );
             }
         }
+        else {
+            return existingThreadId;
+        }
         return null;
     }
 
