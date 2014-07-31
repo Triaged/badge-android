@@ -57,7 +57,6 @@ public class MessageShowActivity extends BadgeActivity {
     private TextView backButton;
     private Intent intent;
 
-    private String userNamesList;
     private int userCount = 2;
     private LinearLayout threadMembersWrapper = null;
     private LayoutInflater inflater;
