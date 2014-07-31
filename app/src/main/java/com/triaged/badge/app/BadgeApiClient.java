@@ -56,6 +56,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
     //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
     private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
+    private static final String GET_MSG_HISTORY_URI = String.format( "%s://%s/api/v1/user/history", API_PROTOCOL, API_MESSAGING_HOST );
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
     private static final String CREATE_THREAD_URI = String.format( "%s://%s/api/v1/message_threads", API_PROTOCOL, API_MESSAGING_HOST );
@@ -294,7 +295,23 @@ public class BadgeApiClient extends DefaultHttpClient {
         }
         post.setHeader( "Accept", MIME_TYPE_JSON );
         post.setHeader( "User-Id", String.valueOf( userId ) );
-        return execute( messagingHttpHost, post );
+        return execute(messagingHttpHost, post);
+    }
+
+    /**
+     * GETS /api/v1/user/history from messaging api host
+     *
+     * @param sinceTimeNano retrieve only messages more recent than this timestamp in nanoseconds from epoch
+     * @param userId logged in user id.
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse getMessageHistory( long sinceTimeNano, int userId ) throws IOException {
+        HttpGet get = new HttpGet( GET_MSG_HISTORY_URI );
+        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
+        get.setHeader( "Accept", MIME_TYPE_JSON );
+        get.setHeader( "User-Id", String.valueOf( userId ) );
+        return execute( messagingHttpHost, get );
     }
 
     private HttpResponse postHelper( JSONObject postData, String uri ) throws IOException {

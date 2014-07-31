@@ -73,6 +73,7 @@ public class DataProviderService extends Service {
     public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
     public static final String COMPANY_NAME_PREFS_KEY = "companyName";
     public static final String COMPANY_ID_PREFS_KEY = "companyId";
+    public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
@@ -424,6 +425,8 @@ public class DataProviderService extends Service {
                     entity.consumeContent();
                 }
             }
+
+
             db.setTransactionSuccessful();
             updated = true;
         }
@@ -906,6 +909,7 @@ public class DataProviderService extends Service {
                             }
 
                             syncCompany(database);
+                            syncMessagesSync();
                             startService( new Intent( DataProviderService.this, FayeService.class ) );
                         } catch (JSONException e) {
                             Log.e(LOG_TAG, "JSON exception parsing login success.", e);
@@ -1101,6 +1105,7 @@ public class DataProviderService extends Service {
 
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
+                        syncMessagesSync();
 
                         if( loggedInContactId > 0 ) {
                             loggedInUser = getContact(loggedInContactId);
@@ -1735,15 +1740,50 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 ContentValues values = new ContentValues();
-                values.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
+                values.put(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1);
                 database.update(
                         CompanySQLiteHelper.TABLE_MESSAGES,
                         values,
-                        String.format( "%s = ? AND %s = 1", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD ),
-                        new String[] { threadId }
+                        String.format("%s = ? AND %s = 1", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD),
+                        new String[]{threadId}
                 );
             }
         });
+    }
+
+    protected void syncMessagesAsync() {
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                syncMessagesSync();
+            }
+        } );
+    }
+
+    protected void syncMessagesSync( ) {
+        try {
+            HttpResponse response = apiClient.getMessageHistory(prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ), loggedInUser.id );
+            int status = response.getStatusLine().getStatusCode();
+            if( status == HttpStatus.SC_OK ) {
+                JSONArray msgResponse = parseJSONArrayResponse( response.getEntity() );
+                int numThreads = msgResponse.length();
+                for( int i = 0; i < numThreads; i++ ) {
+                    JSONObject thread = msgResponse.getJSONObject(i);
+                    upsertThreadAndMessages(thread, false );
+                }
+            }
+            else {
+                if( response.getEntity() != null ) {
+                    response.getEntity().consumeContent();
+                }
+            }
+        }
+        catch( IOException e ) {
+            Log.w( LOG_TAG, "Can't sync message history at the moment." );
+        }
+        catch( JSONException e ) {
+            Log.e( LOG_TAG, "Severe issue, message history response unparseable.", e );
+        }
     }
 
     /**
@@ -1754,16 +1794,17 @@ public class DataProviderService extends Service {
      * messages, mark it as acknowledged, broadcast it, and sync
      * timestamp/id with server.
      *
-     * @param threadWrapper faye message containing thread and messages
+     * @param thread faye message containing thread and messages
+     * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
+     *                  assume they are historical
      */
-    protected void upsertThreadAndMessages( final JSONObject threadWrapper ) {
+    protected void upsertThreadAndMessages( final JSONObject thread, final boolean broadcast ) {
         sqlThread.submit( new Runnable() {
             @Override
             public void run() {
                 String threadId;
                 database.beginTransaction();
                 try {
-                    JSONObject thread = threadWrapper.getJSONObject( "message_thread" );
                     threadId = thread.getString( "id" );
                     JSONArray userIds = thread.getJSONArray( "user_ids" );
 
@@ -1776,15 +1817,17 @@ public class DataProviderService extends Service {
                     ContentValues msgValues = new ContentValues();
                     boolean newMessages = false;
                     msgValues.clear();
+                    long mostRecentMsgTimestamp = prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 );
                     for( int i = 0; i < numMessages; i++ ) {
-                        if( i == numMessages - 1 ) {
-
-                        }
                         JSONObject msg = msgArray.getJSONObject( i );
+                        long timestamp = (long)(msg.getDouble( "timestamp" ) * 1000000d) /* nanos */;
+                        if( timestamp > mostRecentMsgTimestamp ) {
+                            mostRecentMsgTimestamp = timestamp;
+                        }
                         String messageId = msg.getString( "id" );
                         String guid = "foo";
-                        if( threadWrapper.has( "guid" ) ) {
-                            guid = threadWrapper.getString( "guid" );
+                        if( thread.has( "guid" ) ) {
+                            guid = thread.getString( "guid" );
                         }
                         String[] messageSelector = new String[] { guid, messageId };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
@@ -1793,7 +1836,7 @@ public class DataProviderService extends Service {
                             if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
-                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, ((long)msg.getDouble( "timestamp" ) * 1000000d) /* nanos */ );
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
 
                                 database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
                                 // Callback that msg is confirmed?
@@ -1803,12 +1846,14 @@ public class DataProviderService extends Service {
                             }
                         }
                         else {
-                            setMessageContentValuesFromJSON( threadId, msg, msgValues, true );
+                            setMessageContentValuesFromJSON(threadId, msg, msgValues, true);
                             database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
                             newMessages = true;
                         }
                         msgValues.clear();
                     }
+                    prefs.edit().putLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp ).commit();
+
                     // Get id of most recent msg.
                     Cursor messages = getMessages( threadId );
                     if( messages.moveToLast() ) {
@@ -1825,7 +1870,7 @@ public class DataProviderService extends Service {
                     else {
                         messages.close();
                     }
-                    if( newMessages ) {
+                    if( newMessages && broadcast ) {
                         Intent newMessagesIntent = new Intent(NEW_MSG_ACTION);
                         newMessagesIntent.putExtra(THREAD_ID_EXTRA, threadId);
                         localBroadcastManager.sendBroadcast(newMessagesIntent);
@@ -2230,10 +2275,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject)
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, boolean )
          */
         public void upsertThreadAndMessages( JSONObject thread ) {
-            DataProviderService.this.upsertThreadAndMessages(thread);
+            DataProviderService.this.upsertThreadAndMessages(thread, true );
         }
 
         /**
@@ -2285,6 +2330,13 @@ public class DataProviderService extends Service {
          */
         public void markAsRead( String threadId ) {
             DataProviderService.this.markAsRead( threadId );
+        }
+
+        /**
+         * @see DataProviderService#syncMessagesAsync()
+         */
+        public void syncMessagesAsync() {
+            DataProviderService.this.syncMessagesAsync();
         }
     }
 
@@ -2446,6 +2498,22 @@ public class DataProviderService extends Service {
         jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONObject( json );
+    }
+
+    /**
+     * Given an http response entity, parse in to a json object.
+     *
+     * @param entity http response body
+     * @return parsed json object
+     * @throws IOException if network stream can't be read.
+     * @throws JSONException if there's an error parsing json.
+     */
+    protected static JSONArray parseJSONArrayResponse( HttpEntity entity ) throws IOException, JSONException {
+        ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
+        entity.writeTo( jsonBuffer );
+        jsonBuffer.close();
+        String json = jsonBuffer.toString("UTF-8");
+        return new JSONArray( json );
     }
 
     /**
