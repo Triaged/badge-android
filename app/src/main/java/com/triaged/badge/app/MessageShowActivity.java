@@ -59,6 +59,7 @@ public class MessageShowActivity extends BadgeActivity {
     private BroadcastReceiver dataAvailableReceiver;
 
     private int userCount = 2;
+    private int soleCounterpartId = 0;
     private LinearLayout threadMembersWrapper = null;
     private LayoutInflater inflater;
 
@@ -105,13 +106,18 @@ public class MessageShowActivity extends BadgeActivity {
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (userCount > 2) {
                     if (threadMembersWrapper.getVisibility() == View.VISIBLE) {
                         threadMembersWrapper.setVisibility(View.GONE);
                     } else {
                         threadMembersWrapper.setVisibility(View.VISIBLE);
                     }
-
+                } else {
+                    Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", soleCounterpartId);
+                    startActivity(intent);
+                }
             }
         });
 
@@ -268,26 +274,30 @@ public class MessageShowActivity extends BadgeActivity {
                 int userId = Integer.parseInt(user);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
-                    RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
-                    TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
-                    contactName.setText(c.name);
-                    TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
-                    contactTitle.setText(c.jobTitle);
-                    ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
-                    TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
-                    if (c.avatarUrl != null) {
-                        dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
-                    }
-                    contactView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra("PROFILE_ID", c.id);
-                            startActivity(intent);
+                    if (userCount == 2) {
+                        soleCounterpartId = c.id;
+                    } else {
+                        RelativeLayout contactView = (RelativeLayout) inflater.inflate(R.layout.item_contact_with_msg, null);
+                        TextView contactName = (TextView) contactView.findViewById(R.id.contact_name);
+                        contactName.setText(c.name);
+                        TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
+                        contactTitle.setText(c.jobTitle);
+                        ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
+                        TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                        if (c.avatarUrl != null) {
+                            dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
                         }
-                    });
-                    threadMembersWrapper.addView(contactView);
+                        contactView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                                intent.putExtra("PROFILE_ID", c.id);
+                                startActivity(intent);
+                            }
+                        });
+                        threadMembersWrapper.addView(contactView);
+                    }
                 }
             }
         } catch (JSONException e) {
