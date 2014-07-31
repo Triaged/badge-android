@@ -800,23 +800,24 @@ public class DataProviderService extends Service {
 
     /**
      * Posts to /devices to register upon login.
+     *
+     * @param pushToken GCM device registration
      */
-    protected void registerDevice() {
+    protected void registerDevice( final String pushToken ) {
 
         sqlThread.submit(new Runnable() {
             @Override
             public void run() {
-                String gcmRegId = prefs.getString(LoginActivity.PROPERTY_REG_ID, "");
                 int androidVersion = android.os.Build.VERSION.SDK_INT;
 
                 JSONObject postData = new JSONObject();
                 JSONObject deviceData = new JSONObject();
                 try {
                     postData.put( "device", deviceData);
-                    deviceData.put( "token", gcmRegId );
+                    deviceData.put( "token", pushToken );
                     deviceData.put( "os_version", androidVersion );
                     deviceData.put( "service", SERVICE_ANDROID );
-                    deviceData.put( "guid", Settings.Secure.getString( DataProviderService.this.getContentResolver(),
+                    deviceData.put( "application_id", Settings.Secure.getString( DataProviderService.this.getContentResolver(),
                             Settings.Secure.ANDROID_ID ) );
                 }
                 catch( JSONException e ) {
@@ -2243,10 +2244,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#registerDevice()
+         * @see DataProviderService#registerDevice( String )
          */
-        public void registerDevice() {
-            DataProviderService.this.registerDevice();
+        public void registerDevice( String pushToken ) {
+            DataProviderService.this.registerDevice( pushToken );
         }
 
         /**

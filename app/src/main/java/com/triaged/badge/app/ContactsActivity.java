@@ -359,14 +359,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
      */
     private void lazyDeviceRegistration() {
         if( shouldRegister && dataProviderServiceBinding.getLoggedInUser() != null ) {
-            if( getRegistrationId( this ).isEmpty() ) {
+            String regId = getRegistrationId( this );
+            if( regId.isEmpty() ) {
                 // This will async generate a new reg id and
                 // send it up to the cloud
                 ensureGcmRegistration();
             }
             else {
                 // Re-register device
-                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
+                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice( regId );
             }
             shouldRegister = false;
         }

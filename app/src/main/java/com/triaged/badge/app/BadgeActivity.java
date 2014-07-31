@@ -168,7 +168,7 @@ public abstract class BadgeActivity extends Activity {
                     // Persist the regID - no need to register again.
                     storeRegistrationId(BadgeActivity.this, regid);
                     // Send it up to the api.
-                    ((BadgeApplication)getApplication()).dataProviderServiceBinding.registerDevice();
+                    ((BadgeApplication)getApplication()).dataProviderServiceBinding.registerDevice(regid);
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.
