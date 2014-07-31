@@ -1,8 +1,11 @@
 package com.triaged.badge.app;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 
 /**
  * Push notifications are sent when the app
@@ -12,7 +15,9 @@ import android.content.Intent;
  */
 public class GCMReceiver extends BroadcastReceiver {
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive( final Context context, Intent intent) {
+        // Show notification
+
 
     }
 }

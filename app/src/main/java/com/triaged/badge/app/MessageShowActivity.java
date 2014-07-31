@@ -56,6 +56,7 @@ public class MessageShowActivity extends BadgeActivity {
     protected String threadId;
     private TextView backButton;
     private Intent intent;
+    private BroadcastReceiver dataAvailableReceiver;
 
     private String userNamesList;
     private int userCount = 2;
@@ -68,8 +69,22 @@ public class MessageShowActivity extends BadgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         intent = getIntent();
-        BadgeApplication app = (BadgeApplication) getApplication();
+        final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
+        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+        dataAvailableReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                dataProviderServiceBinding = app.dataProviderServiceBinding;
+                showThread();
+            }
+        };
+        localBroadcastManager.registerReceiver( dataAvailableReceiver, new IntentFilter( DataProviderService.DB_AVAILABLE_ACTION) );
+
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+            showThread();
+        }
+
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -106,13 +121,8 @@ public class MessageShowActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_message_show);
 
-        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
-        dataProviderServiceBinding.markAsRead( threadId );
 
         threadList = (ListView) findViewById(R.id.message_thread);
-        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
-        threadList.setAdapter(adapter);
-        threadList.setSelection(adapter.getCount() - 1);
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -182,9 +192,23 @@ public class MessageShowActivity extends BadgeActivity {
 
     }
 
+    /**
+     * This needs to be abstracted because it may need to happen asynchronously if
+     * headed straight here from a push notification and database not set up yet.
+     */
+    protected void showThread() {
+        dataProviderServiceBinding.markAsRead( threadId );
+        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
+        threadList.setAdapter(adapter);
+        threadList.setSelection(adapter.getCount() - 1);
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
+    }
+
     @Override
     protected void onDestroy() {
         localBroadcastManager.unregisterReceiver( refreshReceiver );
+        localBroadcastManager.unregisterReceiver( dataAvailableReceiver );
         adapter.destroy();
         super.onDestroy();
     }
@@ -234,13 +258,6 @@ public class MessageShowActivity extends BadgeActivity {
         v.startAnimation(a);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
-        setupContactsMenu();
-    }
-
     private void setupContactsMenu() {
         threadMembersWrapper.removeAllViews();
         String usersJsonString = prefs.getString(threadId, "[]");
@@ -287,6 +304,8 @@ public class MessageShowActivity extends BadgeActivity {
             dataProviderServiceBinding.markAsRead( threadId );
             adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
             adapter.notifyDataSetChanged();
+            backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+            setupContactsMenu();
         }
         super.onNewIntent(intent);
     }
