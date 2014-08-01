@@ -72,7 +72,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             }
         });
 
-        // TODO listen for new messages to refresh array adapter.
+        IntentFilter messageUpdateFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -80,7 +80,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
                 adapter.notifyDataSetChanged();
             }
         };
-        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
+        localBroadcastManager.registerReceiver( refreshReceiver, messageUpdateFilter );
 
         ImageButton composeButton = (ImageButton) findViewById(R.id.compose_button);
         composeButton.setOnClickListener(new View.OnClickListener() {
