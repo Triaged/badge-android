@@ -48,7 +48,7 @@ public class MessageThreadAdapter extends CursorAdapter {
 
 
     @Override
-    public View newView(final Context context, Cursor cursor, ViewGroup parent) {
+    public View newView(final Context context, final Cursor cursor, ViewGroup parent) {
         int viewType = getItemViewType( cursor );
         int resourceId;
         if( viewType == 0 ) {
@@ -69,7 +69,7 @@ public class MessageThreadAdapter extends CursorAdapter {
             holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(context, "Test", Toast.LENGTH_SHORT).show();
+                    dataProviderServiceBinding.retryMessageAsync( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) ) );
                 }
             });
         }
