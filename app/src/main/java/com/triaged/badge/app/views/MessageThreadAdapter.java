@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.triaged.badge.app.DataProviderService;
@@ -61,6 +62,7 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.timestamp = (TextView) v.findViewById(R.id.timestamp);
         holder.userPhoto = (ImageView)v.findViewById( R.id.contact_thumb );
         holder.photoPlaceholder = (TextView) v.findViewById( R.id.no_photo_thumb );
+        holder.progressBar = (ProgressBar) v.findViewById(R.id.pending_status);
         v.setTag(holder);
         return v;
     }
@@ -72,6 +74,7 @@ public class MessageThreadAdapter extends CursorAdapter {
         messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
         // TODO this is probably not the right timestamp format.
         holder.timestamp.setText( prettyTime.format( messageDate ) );
+        holder.userPhoto.setVisibility(View.VISIBLE);
         holder.userPhoto.setImageBitmap(null);
         String first = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME ) );
         String last = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME ) );
@@ -79,15 +82,20 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
         String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL));
         dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
-        int status = cursor.getInt( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) );
-        if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
-            Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        } else if( status == DataProviderService.MSG_STATUS_PENDING) {
-            // Pending
-            Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        }
-        else if( status == DataProviderService.MSG_STATUS_FAILED ) {
+        if ( cursor.getInt( cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
+            holder.progressBar.setVisibility(View.GONE);
+            int status = cursor.getInt(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK));
+            if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
+                Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
+            } else if (status == DataProviderService.MSG_STATUS_PENDING) {
+                // Pending
+                Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
+                holder.progressBar.setVisibility(View.VISIBLE);
+                holder.photoPlaceholder.setVisibility(View.GONE);
+                holder.userPhoto.setVisibility(View.GONE);
+            } else if (status == DataProviderService.MSG_STATUS_FAILED) {
 
+            }
         }
     }
 
@@ -125,5 +133,6 @@ public class MessageThreadAdapter extends CursorAdapter {
         TextView timestamp;
         ImageView userPhoto;
         TextView photoPlaceholder;
+        ProgressBar progressBar;
     }
 }
