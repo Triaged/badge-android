@@ -139,7 +139,10 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         };
-        localBroadcastManager.registerReceiver(refreshReceiver, new IntentFilter(DataProviderService.NEW_MSG_ACTION));
+        IntentFilter threadUpdateFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
+        threadUpdateFilter.addAction( DataProviderService.MSG_FAILED_ACTION );
+        threadUpdateFilter.addAction( DataProviderService.MSG_ACKNOWLEDGED_ACTION );
+        localBroadcastManager.registerReceiver(refreshReceiver, threadUpdateFilter);
 
         postBox = (EditText) findViewById(R.id.input_box);
 
@@ -202,10 +205,6 @@ public class MessageShowActivity extends BadgeActivity {
 
     }
 
-    /**
-     * This needs to be abstracted because it may need to happen asynchronously if
-     * headed straight here from a push notification and database not set up yet.
-     */
     protected void showThread() {
         dataProviderServiceBinding.markAsRead( threadId );
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
