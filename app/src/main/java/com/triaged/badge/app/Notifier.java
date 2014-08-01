@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import java.util.HashSet;
@@ -35,6 +37,8 @@ public class Notifier {
         Set<String> senderNames = prefs.getStringSet( MESSAGE_SENDERS_PREFS_KEY, new HashSet<String>() );
         senderNames.add( from );
         prefsEditor.putStringSet( MESSAGE_SENDERS_PREFS_KEY, senderNames );
+        //Define sound URI
+        Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         if( numMessages == 1 ) {
             Notification.Builder mBuilder =
                     new Notification.Builder(context)
@@ -42,6 +46,7 @@ public class Notifier {
                             .setSmallIcon(R.drawable.ic_action_person)
                             .setContentTitle("New message from " + from )
                             .setContentText(msg)
+                            .setSound( soundUri )
                             .setAutoCancel(true);
 
             // Creates an explicit intent for an Activity in your app
@@ -67,6 +72,7 @@ public class Notifier {
                             .setSmallIcon(R.drawable.ic_action_person)
                             .setContentTitle( String.format( "%d new messages", numMessages ) )
                             .setContentText( namesBuilder.toString() )
+                            .setSound( soundUri )
                             .setAutoCancel(true);
 
             // Creates an explicit intent for an Activity in your app
