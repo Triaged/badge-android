@@ -12,6 +12,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -27,7 +28,11 @@ import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 import com.triaged.badge.data.OfficeLocation;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.Provider;
+import java.util.Date;
 
 /**
  * Tracks location in the background if hte user has enabled.
@@ -57,6 +62,10 @@ public class LocationTrackingService extends Service implements LocationListener
 
     private PowerManager powerMgr;
     private PowerManager.WakeLock wakeLock;
+    protected Handler handler;
+
+    volatile boolean logLocations;
+    OutputStream locationLog;
 
     public static class WakeupReceiver extends BroadcastReceiver {
         @Override
@@ -69,7 +78,7 @@ public class LocationTrackingService extends Service implements LocationListener
         Intent alarmIntent = new Intent( LOCATION_ALARM_ACTION );
         PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast( context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT );
         AlarmManager alarmMgr = (AlarmManager) context.getSystemService( Context.ALARM_SERVICE );
-        alarmMgr.setRepeating( AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 120000, scheduledAlarmIntent );
+        alarmMgr.setRepeating( AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 60000, scheduledAlarmIntent );
 
     }
 
@@ -102,12 +111,11 @@ public class LocationTrackingService extends Service implements LocationListener
         // Create a new global location parameters object
         mLocationRequest = LocationRequest.create();
 
-        mLocationRequest.setInterval(5000);
+        mLocationRequest.setInterval(2000);
 
         // Consume limited power... cell and wifi
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        // Set the interval ceiling to two minutes
         mLocationRequest.setFastestInterval(1000);
 
         /*
@@ -118,6 +126,16 @@ public class LocationTrackingService extends Service implements LocationListener
 
         powerMgr = (PowerManager)getSystemService(Context.POWER_SERVICE);
         wakeLock = powerMgr.newWakeLock( PowerManager.PARTIAL_WAKE_LOCK, LocationTrackingService.class.getName() );
+
+        handler = new Handler();
+        logLocations = false;
+        try {
+            locationLog = new FileOutputStream("/sdcard/locations.txt", true );
+            logLocations = true;
+        }
+        catch( IOException e ) {
+            Log.w( LOG_TAG, "Couldn't open location debug log", e );
+        }
     }
 
     @Override
@@ -131,6 +149,15 @@ public class LocationTrackingService extends Service implements LocationListener
     public void onDestroy() {
         if( wakeLock != null && wakeLock.isHeld() ) {
             wakeLock.release();
+        }
+        if( logLocations ) {
+            logLocations = false;
+            try {
+                locationLog.close();
+            }
+            catch( IOException e ) {
+                Log.w( LOG_TAG, "Exception closing location log file.", e );
+            }
         }
         super.onDestroy();
         mLocationClient.removeLocationUpdates(this);
@@ -152,10 +179,21 @@ public class LocationTrackingService extends Service implements LocationListener
     public void onLocationChanged( final Location location) {
         Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
 
+        if( logLocations ) {
+            String line = new Date().toString() + ": New location: " + location.getLatitude() + "," + location.getLongitude() + " accuracy " + location.getAccuracy() + "\n";
+            try {
+                locationLog.write(line.getBytes());
+                locationLog.flush();
+            }
+            catch( IOException e ) {
+                // Oh stuff it.
+            }
+        }
+
         if( location.getAccuracy() > 300f ) {
             String msg = "Accuracy of " + location.getAccuracy() + " isn't going to cut it.";
             // TODO delete me
-            Toast.makeText( this, msg, Toast.LENGTH_LONG );
+            Toast.makeText( this, msg, Toast.LENGTH_LONG ).show();
             Log.d( LOG_TAG, msg );
             return;
         }
@@ -172,10 +210,21 @@ public class LocationTrackingService extends Service implements LocationListener
                         String latStr = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
                         String lngStr = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
                         int officeId = Contact.getIntSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID );
+                        String officeName = Contact.getStringSafelyFromCursor( officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
                         if( latStr != null && !"".equals( latStr ) ) {
                             officeLocation.setLatitude( Float.parseFloat( latStr ) );
                             officeLocation.setLongitude( Float.parseFloat( lngStr ) );
                             float distance = officeLocation.distanceTo( location );
+                            if( logLocations ) {
+                                String line = "Distance to " + officeName + " is " + distance + " meters\n";
+                                try {
+                                    locationLog.write(line.getBytes());
+                                    locationLog.flush();
+                                }
+                                catch( IOException e ) {
+                                    // Oh stuff it.
+                                }
+                            }
                             if( distance < OFFICE_DISTANCE_THRESHOLD_M ) {
                                 // CHECK IN!
                                 dataProviderServiceBinding.checkInToOffice( officeId );
@@ -185,9 +234,14 @@ public class LocationTrackingService extends Service implements LocationListener
                             }
                         }
                     }
-                    String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
+                    final String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
                     // TODO delete me
-                    Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG );
+                    handler.post( new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG ).show();
+                        }
+                    });
                     Log.i( LOG_TAG, msg );
                     stopSelf();
                     return null;
