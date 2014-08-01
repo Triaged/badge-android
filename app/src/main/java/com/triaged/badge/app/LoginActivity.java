@@ -75,7 +75,7 @@ public class LoginActivity extends BadgeActivity {
                 mixpanel.track("login", new JSONObject( ) );
 
                 ensureGcmRegistration();
-                startService( new Intent( LoginActivity.this, LocationTrackingService.class ) );
+                LocationTrackingService.scheduleAlarm( LoginActivity.this );
 
 
                 Intent activityIntent = new Intent( LoginActivity.this, WelcomeActivity.class );

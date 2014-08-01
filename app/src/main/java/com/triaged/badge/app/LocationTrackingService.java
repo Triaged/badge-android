@@ -1,6 +1,10 @@
 package com.triaged.badge.app;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
@@ -9,6 +13,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -39,6 +44,7 @@ public class LocationTrackingService extends Service implements LocationListener
     protected static final String LOG_TAG = LocationTrackingService.class.getName();
 
     public static final String TRACK_LOCATION_PREFS_KEY = "trackLocation";
+    public static final String LOCATION_ALARM_ACTION = "com.triaged.badge.app.LOCATION_WAKEUP";
 
     protected static final float OFFICE_DISTANCE_THRESHOLD_M = 150f;
 
@@ -48,6 +54,40 @@ public class LocationTrackingService extends Service implements LocationListener
     // Stores the current instantiation of the location client in this object
     private LocationClient mLocationClient;
 
+    private PowerManager powerMgr;
+    private PowerManager.WakeLock wakeLock;
+
+    public static class WakeupReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            context.startService( new Intent( context, LocationTrackingService.class ) );
+        }
+    }
+
+    public static void scheduleAlarm( Context context ) {
+        Intent alarmIntent = new Intent( LOCATION_ALARM_ACTION );
+        PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast( context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT );
+        AlarmManager alarmMgr = (AlarmManager) context.getSystemService( Context.ALARM_SERVICE );
+        alarmMgr.setRepeating( AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 120000, scheduledAlarmIntent );
+
+    }
+
+    public static void clearAlarm( DataProviderService.LocalBinding dataProviderServiceBinding, Context context ) {
+        Intent alarmIntent = new Intent( LOCATION_ALARM_ACTION );
+        PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast( context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT );
+        AlarmManager alarmMgr = (AlarmManager) context.getSystemService( Context.ALARM_SERVICE );
+        alarmMgr.cancel( scheduledAlarmIntent );
+
+        // In many cases (phone shutting down), toggling the share location preference,
+        // the user is still logged in and may be associated with an office.
+        // We try to clear that so that they don't end up "stuck" in that office forever.
+        if( dataProviderServiceBinding != null ) {
+            Contact user = dataProviderServiceBinding.getLoggedInUser();
+            if( user != null &&  user.currentOfficeLocationId > 0 )
+                dataProviderServiceBinding.checkOutOfOffice( user.currentOfficeLocationId );
+        }
+
+    }
 
 
     @Override
@@ -75,29 +115,25 @@ public class LocationTrackingService extends Service implements LocationListener
          * handle callbacks.
          */
         mLocationClient = new LocationClient(this, this, this);
+
+        powerMgr = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerMgr.newWakeLock( PowerManager.PARTIAL_WAKE_LOCK, LocationTrackingService.class.getName() );
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        wakeLock.acquire();
         mLocationClient.connect();
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
+        if( wakeLock != null && wakeLock.isHeld() ) {
+            wakeLock.release();
+        }
         super.onDestroy();
         mLocationClient.removeLocationUpdates(this);
-        DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication) getApplication()).dataProviderServiceBinding;
-
-        // In many cases (phone shutting down), toggling the share location preference,
-        // the user is still logged in and may be associated with an office.
-        // We try to clear that so that they don't end up "stuck" in that office forever.
-        if( dataProviderServiceBinding != null ) {
-            Contact user = dataProviderServiceBinding.getLoggedInUser();
-            if( user != null &&  user.currentOfficeLocationId > 0 )
-            dataProviderServiceBinding.checkOutOfOffice( user.currentOfficeLocationId );
-        }
     }
 
     @Override
@@ -116,7 +152,10 @@ public class LocationTrackingService extends Service implements LocationListener
     public void onLocationChanged( final Location location) {
         Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
 
-
+        if( location.getAccuracy() > 300f ) {
+            Log.d( LOG_TAG, "Accuracy of " + location.getAccuracy() + " isn't going to cut it." );
+            return;
+        }
 
         // Check against each office.
         final DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
@@ -143,6 +182,8 @@ public class LocationTrackingService extends Service implements LocationListener
                             }
                         }
                     }
+                    Log.i( LOG_TAG, "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude() );
+                    stopSelf();
                     return null;
                 }
             }.execute();

@@ -86,11 +86,11 @@ public class SettingsActivity extends BackButtonActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if( isChecked ) {
                     prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ).commit();
-                    startService(new Intent(SettingsActivity.this, LocationTrackingService.class ));
+                    LocationTrackingService.scheduleAlarm( SettingsActivity.this );
                 }
                 else {
                     prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ).commit();
-                    stopService(new Intent(SettingsActivity.this, LocationTrackingService.class ) );
+                    LocationTrackingService.clearAlarm( dataProviderServiceBinding, SettingsActivity.this );
                 }
             }
         });
