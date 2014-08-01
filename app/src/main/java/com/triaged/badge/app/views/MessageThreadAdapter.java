@@ -79,11 +79,15 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
         String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL));
         dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
-        int acknowledged = cursor.getInt( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) );
-        if (acknowledged == 1) {
+        int status = cursor.getInt( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) );
+        if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
             Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        } else {
+        } else if( status == DataProviderService.MSG_STATUS_PENDING) {
+            // Pending
             Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
+        }
+        else if( status == DataProviderService.MSG_STATUS_FAILED ) {
+
         }
     }
 

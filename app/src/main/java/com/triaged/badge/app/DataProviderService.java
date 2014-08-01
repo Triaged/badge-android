@@ -85,6 +85,10 @@ public class DataProviderService extends Service {
     public static final String MESSAGE_FROM_EXTRA = "messageFrom";
     public static final String IS_INCOMING_MSG_EXTRA = "isIncomingMessage";
 
+    public static final int MSG_STATUS_PENDING = 0;
+    public static final int MSG_STATUS_ACKNOWLEDGED = 1;
+    public static final int MSG_STATUS_FAILED = 2;
+
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
@@ -1760,6 +1764,12 @@ public class DataProviderService extends Service {
                     }
 
                     // TODO schedule task to mark message as failed after timeout.
+                    handler.postDelayed( new Runnable() {
+                        @Override
+                        public void run() {
+
+                        }
+                    }, 10000 );
                 }
                 catch( JSONException e ) {
                     // Realllllllly shouldn't happen.
