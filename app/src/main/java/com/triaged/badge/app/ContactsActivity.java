@@ -288,11 +288,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, 0);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(true);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, contactsListBottomMargin);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(false);
                 }
             }
         });
