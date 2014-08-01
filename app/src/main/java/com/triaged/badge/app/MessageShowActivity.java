@@ -139,7 +139,7 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         };
-        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
+        localBroadcastManager.registerReceiver(refreshReceiver, new IntentFilter(DataProviderService.NEW_MSG_ACTION));
 
         postBox = (EditText) findViewById(R.id.input_box);
 
@@ -194,7 +194,7 @@ public class MessageShowActivity extends BadgeActivity {
                 showThread();
             }
         };
-        localBroadcastManager.registerReceiver( dataAvailableReceiver, new IntentFilter( DataProviderService.DB_AVAILABLE_ACTION) );
+        localBroadcastManager.registerReceiver(dataAvailableReceiver, new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION));
 
         if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
             showThread();
@@ -217,7 +217,7 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onDestroy() {
-        localBroadcastManager.unregisterReceiver( refreshReceiver );
+        localBroadcastManager.unregisterReceiver(refreshReceiver);
         localBroadcastManager.unregisterReceiver(dataAvailableReceiver);
         adapter.destroy();
         super.onDestroy();
@@ -264,7 +264,7 @@ public class MessageShowActivity extends BadgeActivity {
         };
 
         // 1dp/ms
-        a.setDuration((int)(initialHeight / densityMultiplier));
+        a.setDuration((int) (initialHeight / densityMultiplier));
         v.startAnimation(a);
     }
 
@@ -358,6 +358,13 @@ public class MessageShowActivity extends BadgeActivity {
         super.onNewIntent(intent);
     }
 
+    @Override
+    protected void onStart() {
+        Notifier.clearNotifications( this );
+        super.onStart();
+
+    }
+
     protected void scrollMyListViewToBottom() {
         threadList.post(new Runnable() {
             @Override
@@ -366,5 +373,12 @@ public class MessageShowActivity extends BadgeActivity {
                 threadList.setSelection(adapter.getCount() - 1);
             }
         });
+    }
+
+    @Override
+    protected void notifyNewMessage(Intent intent) {
+        if( !intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ).equals( threadId ) ) {
+            super.notifyNewMessage(intent);
+        }
     }
 }
