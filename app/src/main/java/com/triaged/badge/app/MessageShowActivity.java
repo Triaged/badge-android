@@ -178,8 +178,10 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 String msg = postBox.getText().toString();
-                dataProviderServiceBinding.sendMessageAsync( threadId, msg );
-                postBox.setText( "" );
+                if (!msg.equals("")) {
+                    dataProviderServiceBinding.sendMessageAsync(threadId, msg);
+                    postBox.setText("");
+                }
             }
 
         } );
@@ -359,7 +361,7 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onStart() {
-        Notifier.clearNotifications( this );
+        Notifier.clearNotifications(this);
         super.onStart();
 
     }
