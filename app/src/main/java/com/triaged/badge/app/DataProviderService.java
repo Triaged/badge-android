@@ -57,6 +57,8 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This service abstracts access to contact and company
@@ -78,6 +80,7 @@ public class DataProviderService extends Service {
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
     public static final String MSG_ACKNOWLEDGED_ACTION = "com.triage.badge.MSG_ACKNOWLEDGED";
+    public static final String MSG_FAILED_ACTION = "com.triage.badge.MSG_FAILED";
 
     public static final String THREAD_ID_EXTRA = "threadId";
     public static final String MESSAGE_ID_EXTRA = "messageId";
@@ -201,7 +204,7 @@ public class DataProviderService extends Service {
 
 
     protected volatile Contact loggedInUser;
-    protected ExecutorService sqlThread;
+    protected ScheduledExecutorService sqlThread;
     protected CompanySQLiteHelper databaseHelper;
     protected SQLiteDatabase database = null;
     protected long lastSynced;
@@ -278,7 +281,7 @@ public class DataProviderService extends Service {
 
         String apiToken = prefs.getString( API_TOKEN_PREFS_KEY, "" );
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
-        sqlThread = Executors.newSingleThreadExecutor();
+        sqlThread = Executors.newSingleThreadScheduledExecutor();
         databaseHelper = new CompanySQLiteHelper( this );
         apiClient = new BadgeApiClient( apiToken );
         contactList = new ArrayList( 250 );
@@ -1723,7 +1726,7 @@ public class DataProviderService extends Service {
                     clearThreadHead( threadId, msgValues );
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
-                    String guid = UUID.randomUUID().toString();
+                    final String guid = UUID.randomUUID().toString();
                     JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
@@ -1734,6 +1737,7 @@ public class DataProviderService extends Service {
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING );
                     database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
                     database.setTransactionSuccessful();
                     final JSONObject msgWrapper = new JSONObject();
@@ -1764,12 +1768,28 @@ public class DataProviderService extends Service {
                     }
 
                     // TODO schedule task to mark message as failed after timeout.
-                    handler.postDelayed( new Runnable() {
+                    sqlThread.schedule( new Runnable() {
                         @Override
                         public void run() {
-
+                            Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, new String[] { "foo", guid } );
+                            if( msgCursor.moveToFirst() && msgCursor.getInt( msgCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) ) == MSG_STATUS_PENDING ) {
+                                ContentValues values = new ContentValues();
+                                values.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED );
+                                int rowsUpdated = database.update(
+                                        CompanySQLiteHelper.TABLE_MESSAGES,
+                                        values,
+                                        String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ),
+                                        new String[] { guid }
+                                );
+                                if( rowsUpdated == 1 ) {
+                                    Intent ackIntent = new Intent( MSG_FAILED_ACTION );
+                                    ackIntent.putExtra( MESSAGE_ID_EXTRA, guid );
+                                    ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                                    localBroadcastManager.sendBroadcast( ackIntent );
+                                }
+                            }
                         }
-                    }, 10000 );
+                    }, 10, TimeUnit.SECONDS );
                 }
                 catch( JSONException e ) {
                     // Realllllllly shouldn't happen.
@@ -1892,8 +1912,8 @@ public class DataProviderService extends Service {
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                         if( msgCursor.getCount() == 1 ) {
                             msgCursor.moveToFirst();
-                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == 0) {
-                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, 1);
+                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
+                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
 
@@ -1901,11 +1921,12 @@ public class DataProviderService extends Service {
                                 // Callback that msg is confirmed?
                                 Intent ackIntent = new Intent( MSG_ACKNOWLEDGED_ACTION );
                                 ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
+                                ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
                                 localBroadcastManager.sendBroadcast( ackIntent );
                             }
                         }
                         else {
-                            setMessageContentValuesFromJSON(threadId, msg, msgValues, true);
+                            setMessageContentValuesFromJSON(threadId, msg, msgValues );
                             database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
                             if( broadcast ) {
                                 Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
@@ -2027,8 +2048,8 @@ public class DataProviderService extends Service {
 
     }
 
-    private static void setMessageContentValuesFromJSON( String threadId, JSONObject msg, ContentValues msgValues, boolean acknowledged ) throws JSONException {
-        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, acknowledged ? 1 : 0 );
+    private static void setMessageContentValuesFromJSON( String threadId, JSONObject msg, ContentValues msgValues ) throws JSONException {
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
