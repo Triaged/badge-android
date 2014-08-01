@@ -15,7 +15,7 @@
         android:layout_marginBottom="48dp"
         android:scrollbarStyle="outsideOverlay"
         android:clipToPadding="false"
-        android:fastScrollEnabled="true"
+        android:fastScrollEnabled="false"
         android:overScrollMode="never"
         android:divider="@null"
         android:stackFromBottom="true"

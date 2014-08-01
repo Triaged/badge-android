@@ -14,6 +14,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -74,6 +75,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
+    private RelativeLayout.LayoutParams contactsListViewParams;
+    private int contactsListTopMargin = 0;
+    private int contactsListBottomMargin = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,6 +139,11 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         densityMultiplier = getResources().getDisplayMetrics().density;
         departmentListTopMargin = (int) (64 * densityMultiplier);
         departmentListBottomMargin = (int) (40 * densityMultiplier);
+
+        contactsListViewParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+
+        contactsListTopMargin = (int) (48 * densityMultiplier);
+        contactsListBottomMargin = (int) (40 * densityMultiplier);
 
         searchBar = (EditText) findViewById(R.id.search_bar);
         TextWatcher tw = new TextWatcher() {
@@ -277,10 +286,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 if (heightDiff > (densityMultiplier * 75) ) { // if more than 75 dp, its probably a keyboard...
                     keyboardVisible = true;
                     contactsDepartmentsTab.setVisibility(View.GONE);
-                    // contactsListView.setLayoutParams(departmentListViewParams);
+                    contactsListViewParams.setMargins(0, contactsListTopMargin, 0, 0);
+                    contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(true);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
+                    contactsListViewParams.setMargins(0, contactsListTopMargin, 0, contactsListBottomMargin);
+                    contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(false);
                 }
             }
         });

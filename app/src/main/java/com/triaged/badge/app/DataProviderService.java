@@ -56,7 +56,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -80,8 +79,7 @@ public class DataProviderService extends Service {
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
-    public static final String MSG_ACKNOWLEDGED_ACTION = "com.triage.badge.MSG_ACKNOWLEDGED";
-    public static final String MSG_FAILED_ACTION = "com.triage.badge.MSG_FAILED";
+    public static final String MSG_STATUS_CHANGED_ACTION = "com.triage.badge.MSG_STATUS_CHANGED";
 
     public static final String THREAD_ID_EXTRA = "threadId";
     public static final String MESSAGE_ID_EXTRA = "messageId";
@@ -1749,35 +1747,6 @@ public class DataProviderService extends Service {
                     database.setTransactionSuccessful();
                     sendMessageToFaye(timestamp, guid, threadId, message );
 
-                    // TODO schedule task to mark message as failed after timeout.
-                    sqlThread.schedule( new Runnable() {
-                        @Override
-                        public void run() {
-                            Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, new String[] { "foo", guid } );
-                            if( msgCursor.moveToFirst() && msgCursor.getInt( msgCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) ) == MSG_STATUS_PENDING ) {
-                                ContentValues values = new ContentValues();
-                                values.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED );
-                                int rowsUpdated = database.update(
-                                        CompanySQLiteHelper.TABLE_MESSAGES,
-                                        values,
-                                        String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ),
-                                        new String[] { guid }
-                                );
-                                if( rowsUpdated == 1 ) {
-                                    Intent ackIntent = new Intent( MSG_FAILED_ACTION );
-                                    ackIntent.putExtra( MESSAGE_ID_EXTRA, guid );
-                                    ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
-                                    localBroadcastManager.sendBroadcast( ackIntent );
-                                    handler.post( new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText( DataProviderService.this, "Message could not be sent.", Toast.LENGTH_LONG ).show();
-                                        }
-                                    } );
-                                }
-                            }
-                        }
-                    }, 4, TimeUnit.SECONDS );
                 }
                 catch( JSONException e ) {
                     // Realllllllly shouldn't happen.
@@ -1799,7 +1768,7 @@ public class DataProviderService extends Service {
         });
     }
 
-    protected void sendMessageToFaye(long timestamp, String guid, final String threadId, String message ) throws JSONException {
+    protected void sendMessageToFaye(long timestamp, final String guid, final String threadId, final String message ) throws JSONException {
         final JSONObject msgWrapper = new JSONObject();
         JSONObject msg = new JSONObject();
         msgWrapper.put( "message", msg );
@@ -1815,6 +1784,7 @@ public class DataProviderService extends Service {
             public void onServiceConnected(ComponentName name, IBinder service) {
                 FayeService.LocalBinding fayeServiceBinding = (FayeService.LocalBinding)service;
                 fayeServiceBinding.sendMessage(threadId, msgWrapper);
+
                 unbindService( this );
             }
 
@@ -1826,6 +1796,35 @@ public class DataProviderService extends Service {
         if( !bindService( new Intent( DataProviderService.this, FayeService.class ), fayeServiceConnection, BIND_AUTO_CREATE ) ) {
             unbindService(fayeServiceConnection);
         }
+        sqlThread.schedule( new Runnable() {
+            @Override
+            public void run() {
+                Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, new String[] { "foo", guid } );
+                if( msgCursor.moveToFirst() && msgCursor.getInt( msgCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) ) == MSG_STATUS_PENDING ) {
+                    ContentValues values = new ContentValues();
+                    values.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED );
+                    int rowsUpdated = database.update(
+                            CompanySQLiteHelper.TABLE_MESSAGES,
+                            values,
+                            String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID ),
+                            new String[] { guid }
+                    );
+                    if( rowsUpdated == 1 ) {
+                        Intent ackIntent = new Intent( MSG_STATUS_CHANGED_ACTION );
+                        ackIntent.putExtra( MESSAGE_ID_EXTRA, guid );
+                        ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                        localBroadcastManager.sendBroadcast( ackIntent );
+                        handler.post( new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText( DataProviderService.this, "Message could not be sent.", Toast.LENGTH_LONG ).show();
+                            }
+                        } );
+                    }
+                }
+            }
+        }, 4, TimeUnit.SECONDS );
+
     }
 
     /**
@@ -1834,15 +1833,25 @@ public class DataProviderService extends Service {
      * @param guid message guid
      */
     protected void retryMessageAsync( final String guid ) {
-        new AsyncTask<Void, Void, Void>() {
+        sqlThread.submit( new Runnable() {
             @Override
-            protected Void doInBackground(Void... params) {
+            public void run() {
                 Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, new String[] { "foo", guid } );
                 if( msgCursor.moveToFirst() ) {
+                    // Flip back to pending status.
+                    ContentValues msgValues = new ContentValues();
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING );
+                    database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID ), new String[] { guid } );
                     String threadId = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID));
                     String body = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
                     long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP));
                     msgCursor.close();
+
+                    Intent statusChangeIntent = new Intent( MSG_STATUS_CHANGED_ACTION );
+                    statusChangeIntent.putExtra( MESSAGE_ID_EXTRA, guid );
+                    statusChangeIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                    localBroadcastManager.sendBroadcast( statusChangeIntent );
+
                     try {
                         sendMessageToFaye(timestamp, guid, threadId, body);
                     } catch (JSONException e) {
@@ -1852,9 +1861,9 @@ public class DataProviderService extends Service {
                 else {
                     Log.w( LOG_TAG, "UI wanted to retry message with guid " + guid + " but that message can't be found." );
                 }
-                return null;
+
             }
-        }.execute();
+        });
     }
 
     /**
@@ -1967,7 +1976,7 @@ public class DataProviderService extends Service {
 
                                 database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
                                 // Callback that msg is confirmed?
-                                Intent ackIntent = new Intent( MSG_ACKNOWLEDGED_ACTION );
+                                Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
                                 ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
                                 ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
                                 localBroadcastManager.sendBroadcast(ackIntent);

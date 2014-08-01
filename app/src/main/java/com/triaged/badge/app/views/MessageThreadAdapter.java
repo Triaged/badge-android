@@ -48,7 +48,7 @@ public class MessageThreadAdapter extends CursorAdapter {
 
 
     @Override
-    public View newView(final Context context, final Cursor cursor, ViewGroup parent) {
+    public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         int viewType = getItemViewType( cursor );
         int resourceId;
         if( viewType == 0 ) {
@@ -70,7 +70,7 @@ public class MessageThreadAdapter extends CursorAdapter {
     }
 
     @Override
-    public void bindView(View view, Context context, final Cursor cursor) {
+    public void bindView(View view, Context context, Cursor cursor) {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
         messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
@@ -101,10 +101,11 @@ public class MessageThreadAdapter extends CursorAdapter {
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
             }
+            final String guid = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_GUID ) );
             holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    dataProviderServiceBinding.retryMessageAsync( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_GUID ) ) );
+                    dataProviderServiceBinding.retryMessageAsync( guid );
                 }
             });
         }
