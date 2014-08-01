@@ -115,7 +115,6 @@ public class MessagesListAdapter extends CursorAdapter {
         public TextView timestamp;
         public ImageView profilePhoto;
         public ImageView missingProfilePhotoView;
-        public boolean isRead = false;
     }
 
     /**

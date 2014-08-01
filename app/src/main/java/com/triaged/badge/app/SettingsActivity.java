@@ -74,8 +74,10 @@ public class SettingsActivity extends BackButtonActivity {
         aboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.badge.co"));
-                startActivity(browserIntent);
+                Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
+                emailIntent.setType("plain/text");
+                emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{"team@badge.co"});
+                SettingsActivity.this.startActivity(Intent.createChooser(emailIntent, "Send mail..."));
             }
         });
 

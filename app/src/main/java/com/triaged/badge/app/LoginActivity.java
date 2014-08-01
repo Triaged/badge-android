@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -49,6 +50,9 @@ public class LoginActivity extends BadgeActivity {
     private boolean keyboardVisible = false;
     private TextView loginTitle = null;
     private TextView loginInfo = null;
+
+    private TextView forgotPasswordButton = null;
+    private TextView signupForBeta = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,6 +143,23 @@ public class LoginActivity extends BadgeActivity {
                     lp2.setMargins(0, (int) (30*densityMultiplier), 0, (int) (88*densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
                 }
+            }
+        });
+
+        forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent resetPasswordIntent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+                startActivity(resetPasswordIntent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+            }
+        });
+
+        signupForBeta.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.badge.co"));
+                startActivity(browserIntent);
             }
         });
     }
