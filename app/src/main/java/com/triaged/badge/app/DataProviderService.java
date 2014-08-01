@@ -1832,15 +1832,19 @@ public class DataProviderService extends Service {
             @Override
             protected Void doInBackground(Void... params) {
                 Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, new String[] { "foo", guid } );
-                String threadId = msgCursor.getString( msgCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID ) );
-                String body = msgCursor.getString( msgCursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) );
-                long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP));
-                msgCursor.close();
-                try {
-                    sendMessageToFaye(timestamp, guid, threadId, body);
+                if( msgCursor.moveToFirst() ) {
+                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID));
+                    String body = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
+                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP));
+                    msgCursor.close();
+                    try {
+                        sendMessageToFaye(timestamp, guid, threadId, body);
+                    } catch (JSONException e) {
+                        Log.e(LOG_TAG, "JSON exception preparing message to send to faye", e);
+                    }
                 }
-                catch( JSONException e ) {
-                    Log.e( LOG_TAG, "JSON exception preparing message to send to faye", e );
+                else {
+                    Log.w( LOG_TAG, "UI wanted to retry message with guid " + guid + " but that message can't be found." );
                 }
                 return null;
             }
