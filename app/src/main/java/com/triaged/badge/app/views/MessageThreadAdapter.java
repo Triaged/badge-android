@@ -65,20 +65,12 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.photoPlaceholder = (TextView) v.findViewById( R.id.no_photo_thumb );
         holder.progressBar = (ProgressBar) v.findViewById(R.id.pending_status);
         holder.messageFailedButton = (ImageButton) v.findViewById(R.id.failed_status);
-        if (holder.messageFailedButton != null) {
-            holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dataProviderServiceBinding.retryMessageAsync( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) ) );
-                }
-            });
-        }
         v.setTag(holder);
         return v;
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
+    public void bindView(View view, Context context, final Cursor cursor) {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
         messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
@@ -109,6 +101,12 @@ public class MessageThreadAdapter extends CursorAdapter {
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
             }
+            holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dataProviderServiceBinding.retryMessageAsync( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_GUID ) ) );
+                }
+            });
         }
     }
 
