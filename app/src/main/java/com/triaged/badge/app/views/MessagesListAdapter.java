@@ -17,6 +17,8 @@ import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.ocpsoft.prettytime.PrettyTime;
 import org.w3c.dom.Text;
 
@@ -69,7 +71,15 @@ public class MessagesListAdapter extends CursorAdapter {
         holder.missingProfilePhotoView.setVisibility( View.VISIBLE );
         holder.name.setText( names );
         holder.messagePreview.setText(  body );
-        dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.profilePhoto, holder.missingProfilePhotoView );
+        String usersArrayString = prefs.getString(holder.threadId, "");
+        try {
+            JSONArray users = new JSONArray(usersArrayString);
+            if (users.length() == 2) {
+                dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.profilePhoto, holder.missingProfilePhotoView );
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         dateToFormat.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ))/ 1000l );
         holder.timestamp.setText( prettyTime.format(  dateToFormat) );
     }

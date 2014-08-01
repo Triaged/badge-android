@@ -93,7 +93,9 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         if( heartbeatFuture != null ) {
             heartbeatFuture.cancel(true);
         }
-        faye.destroy();
+        if (faye != null) {
+            faye.destroy();
+        }
         faye = null;
         heartbeatThread.shutdownNow();
         super.onDestroy();

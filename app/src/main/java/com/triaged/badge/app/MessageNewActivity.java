@@ -161,7 +161,6 @@ public class MessageNewActivity extends BadgeActivity {
                     searchResultsAdapter.setFilter( text );
                     searchResultsList.setVisibility(View.VISIBLE);
                     contactsListView.setVisibility(View.GONE);
-
                 } else {
                     clearButton.setVisibility(View.GONE);
                     contactsListView.setVisibility(View.VISIBLE);

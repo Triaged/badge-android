@@ -313,7 +313,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
             }
             else {
-                currentLocationView.primaryValue = "Unavailable";
+                currentLocationView.primaryValue = "Out of office";
                 currentLocationView.isOn = false;
             }
             currentLocationView.invalidate();
