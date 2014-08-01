@@ -1737,6 +1737,7 @@ public class DataProviderService extends Service {
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_GUID, guid );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING );
                     database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
