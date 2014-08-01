@@ -91,6 +91,7 @@ public class MessageShowActivity extends BadgeActivity {
             public void onClick(View v) {
                 Intent backToListIntent = new Intent(MessageShowActivity.this, MessagesIndexActivity.class);
                 startActivity(backToListIntent);
+                finish();
             }
         });
 
