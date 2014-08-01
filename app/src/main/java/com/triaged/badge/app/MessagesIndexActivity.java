@@ -67,11 +67,12 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MessagesIndexActivity.this, MessageShowActivity.class);
                 intent.putExtra( MessageShowActivity.THREAD_ID_EXTRA,  ((MessagesListAdapter.ViewHolder)view.getTag()).threadId );
+                intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
                 startActivity(intent);
             }
         });
 
-        // TODO listen for new messages to refresh array adapter.
+        IntentFilter messageUpdateFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -79,7 +80,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
                 adapter.notifyDataSetChanged();
             }
         };
-        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
+        localBroadcastManager.registerReceiver( refreshReceiver, messageUpdateFilter );
 
         ImageButton composeButton = (ImageButton) findViewById(R.id.compose_button);
         composeButton.setOnClickListener(new View.OnClickListener() {
@@ -98,6 +99,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
     @Override
     protected void onResume() {
         super.onResume();
+        Notifier.clearNotifications( this );
         overridePendingTransition(0,0);
         ActionBar actionBar = getActionBar();
         actionBar.getTabAt(0).setIcon(R.drawable.messages_selected).select();
@@ -149,5 +151,10 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
 
+    }
+
+    @Override
+    protected void notifyNewMessage(Intent intent) {
+        // Don't notify
     }
 }

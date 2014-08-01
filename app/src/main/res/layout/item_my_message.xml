@@ -14,6 +14,7 @@
         android:layout_alignTop="@+id/message_text"
         android:background="@null"
         android:contentDescription="@string/content_description_thumb"
+        android:layout_alignParentRight="true"
     />
 
     <com.triaged.badge.app.views.TextViewWithFont
@@ -27,7 +28,32 @@
         android:textColor="@color/white"
         android:visibility="gone"
         android:textSize="15sp"
+        android:layout_alignParentRight="true"
     />
+
+    <ProgressBar
+        android:id="@+id/pending_status"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="16dp"
+        android:layout_alignTop="@+id/message_text"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        />
+
+    <ImageButton
+        android:id="@+id/failed_status"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="16dp"
+        android:src="@drawable/ic_action_refresh"
+        android:layout_alignTop="@+id/message_text"
+        android:layout_alignParentRight="true"
+        android:visibility="gone"
+        android:background="@drawable/message_failed_bg"
+        android:contentDescription="@string/message_failed"
+        />
+
 
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/timestamp"

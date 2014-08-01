@@ -110,6 +110,13 @@
     <string name="content_description_empty_chat_bubble">Empty Chat Bubble</string>
     <string name="no_messages_title">No Messages Yet</string>
     <string name="no_messages_info">Be friendly, start a conversation with your teammates</string>
+    <string name="reset_email_hint">Email address</string>
+    <string name="reset_title">Reset Your Password</string>
+    <string name="reset_info">Enter your email address below and we\'ll send you a link to reset your password.</string>
+    <string name="forgot_password_question">Forgot your password?</string>
+    <string name="sign_up_for_account">Not yet registered? Sign up for Beta.</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="message_failed">Message Failed</string>
 
 
 </resources>

@@ -4,12 +4,15 @@ import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -24,9 +27,12 @@ import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.CustomLayoutParams;
 import com.triaged.badge.app.views.FlowLayout;
 
-import java.util.ArrayList;
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
@@ -35,7 +41,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  */
 public class MessageNewActivity extends BadgeActivity {
 
-    public static final String RECIPIENT_ID_EXTRA = "recipient_id";
+    public static final String RECIPIENT_IDS_EXTRA = "recipient_id";
 
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
@@ -45,11 +51,12 @@ public class MessageNewActivity extends BadgeActivity {
     private EditText searchBar = null;
     private ImageButton clearButton = null;
     private ListView searchResultsList = null;
-    private List<HashMap<Integer, String>> recipients = null;
+    private HashMap<Integer, String> recipients = null;
 
     private FlowLayout userTagsWrapper = null;
     private CustomLayoutParams tagItemLayoutParams;
     private float densityMultiplier = 1;
+    private boolean keyboardVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,10 +83,36 @@ public class MessageNewActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 if (recipients.size() > 0) {
-                    Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
-                    intent.putExtra(RECIPIENT_ID_EXTRA, recipients.get(0).get(0));
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                    HashSet<Integer> userIdSet = new HashSet<Integer>( recipients.keySet() );
+                    userIdSet.add( dataProviderServiceBinding.getLoggedInUser().id );
+                    final Integer[] recipientIds = userIdSet.toArray( new Integer[] {  } );
+                    Arrays.sort(recipientIds);
+                    new AsyncTask<Void, Void, String>() {
+                        @Override
+                        protected String doInBackground(Void... params) {
+                            try {
+                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                            }
+                            catch( JSONException e ) {
+                                Toast.makeText( MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT ).show();
+                            }
+                            catch( IOException e ) {
+                                Toast.makeText( MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute( String threadId ) {
+                            if( threadId != null ) {
+                                Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
+                                intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                                intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+                                startActivity(intent);
+                                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                            }
+                        }
+                    }.execute();
                 } else {
                     Toast.makeText(MessageNewActivity.this, "Please select a recipient", Toast.LENGTH_SHORT).show();
                 }
@@ -91,7 +124,7 @@ public class MessageNewActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_messages_new);
 
-        recipients = new ArrayList<HashMap<Integer, String>>();
+        recipients = new HashMap<Integer, String>();
         userTagsWrapper = (FlowLayout) findViewById(R.id.user_tags);
 
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
@@ -131,7 +164,6 @@ public class MessageNewActivity extends BadgeActivity {
                     searchResultsAdapter.setFilter( text );
                     searchResultsList.setVisibility(View.VISIBLE);
                     contactsListView.setVisibility(View.GONE);
-
                 } else {
                     clearButton.setVisibility(View.GONE);
                     contactsListView.setVisibility(View.VISIBLE);
@@ -159,6 +191,26 @@ public class MessageNewActivity extends BadgeActivity {
         loadContacts();
 
         densityMultiplier = getResources().getDisplayMetrics().density;
+        final View activityRootView = findViewById(R.id.activity_root);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int rootViewHeight = activityRootView.getRootView().getHeight();
+
+                Rect r = new Rect();
+                //r will be populated with the coordinates of your view that area still visible.
+                activityRootView.getWindowVisibleDisplayFrame(r);
+
+                int heightDiff = rootViewHeight - (r.bottom - r.top);
+                if (heightDiff > (densityMultiplier * 75) ) { // if more than 75 dp, its probably a keyboard...
+                    keyboardVisible = true;
+                    searchBar.setCursorVisible(true);
+                } else if (keyboardVisible) {
+                    keyboardVisible = false;
+                    searchBar.setCursorVisible(false);
+                }
+            }
+        });
 
         tagItemLayoutParams = new CustomLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tagItemLayoutParams.setMargins(0, (int) (4 * densityMultiplier), (int) (4 * densityMultiplier), 0);
@@ -176,13 +228,6 @@ public class MessageNewActivity extends BadgeActivity {
     }
 
     private void loadContacts() {
-        if( contactsAdapter != null ) {
-            contactsAdapter.refresh();
-        }
-        else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
-            contactsListView.setAdapter(contactsAdapter);
-        }
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
         }
@@ -190,16 +235,21 @@ public class MessageNewActivity extends BadgeActivity {
             searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
             searchResultsList.setAdapter( searchResultsAdapter );
         }
+        if( contactsAdapter != null ) {
+            contactsAdapter.refresh();
+        }
+        else {
+            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
+            contactsListView.setAdapter(contactsAdapter);
+        }
     }
 
     private void addRecipient(final int contactId, final String contactName) {
-        if (!recipients.contains(contactId)) {
+        if (!recipients.containsKey(contactId)) {
             if (recipients.size() == 0) {
                 userTagsWrapper.setVisibility(View.VISIBLE);
             }
-            final HashMap<Integer, String> userHash = new HashMap<Integer, String>();
-            userHash.put(contactId, contactName);
-            recipients.add(userHash);
+            recipients.put(contactId, contactName);
             LayoutInflater inflater = LayoutInflater.from(this);
 
             final ButtonWithFont newButton = (ButtonWithFont) inflater.inflate(R.layout.button_user_tag, null);
@@ -214,7 +264,7 @@ public class MessageNewActivity extends BadgeActivity {
                             .setMessage("Are you sure you want to remove " + contactName + "?")
                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int which) {
-                                    recipients.remove(userHash);
+                                    recipients.remove(contactId);
                                     userTagsWrapper.removeView(newButton);
                                     if (recipients.size() == 0) {
                                         userTagsWrapper.setVisibility(View.GONE);

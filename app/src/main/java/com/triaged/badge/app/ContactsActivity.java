@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -13,6 +14,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -21,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
@@ -68,6 +72,12 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private RelativeLayout.LayoutParams departmentListViewParams;
     private int departmentListTopMargin = 0;
     private int departmentListBottomMargin = 0;
+
+    private float densityMultiplier = 1;
+    private boolean keyboardVisible = false;
+    private RelativeLayout.LayoutParams contactsListViewParams;
+    private int contactsListTopMargin = 0;
+    private int contactsListBottomMargin = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,9 +136,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         searchResultsList = (ListView) findViewById(R.id.search_results_list);
 
         departmentListViewParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-        float densityMultiplier = getResources().getDisplayMetrics().density;
+        densityMultiplier = getResources().getDisplayMetrics().density;
         departmentListTopMargin = (int) (64 * densityMultiplier);
         departmentListBottomMargin = (int) (40 * densityMultiplier);
+
+        contactsListViewParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+
+        contactsListTopMargin = (int) (48 * densityMultiplier);
+        contactsListBottomMargin = (int) (40 * densityMultiplier);
 
         searchBar = (EditText) findViewById(R.id.search_bar);
         TextWatcher tw = new TextWatcher() {
@@ -142,7 +157,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 String text = searchBar.getText().toString();
                 if (text.length() > 0) {
                     clearButton.setVisibility(View.VISIBLE);
-                    contactsDepartmentsTab.setVisibility(View.GONE);
                     if (contactsTabButton.isSelected()) {
                         searchResultsAdapter.setFilter( text );
                         searchResultsList.setVisibility(View.VISIBLE);
@@ -155,7 +169,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     }
                 } else {
                     clearButton.setVisibility(View.GONE);
-                    contactsDepartmentsTab.setVisibility(View.VISIBLE);
                     if (contactsTabButton.isSelected()) {
                         contactsListView.setVisibility(View.VISIBLE);
                         searchResultsList.setVisibility(View.GONE);
@@ -258,6 +271,35 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
             databaseReadyCallback();
         }
+
+        final View activityRootView = findViewById(R.id.activity_root);
+        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int rootViewHeight = activityRootView.getRootView().getHeight();
+
+                Rect r = new Rect();
+                //r will be populated with the coordinates of your view that area still visible.
+                activityRootView.getWindowVisibleDisplayFrame(r);
+
+                int heightDiff = rootViewHeight - (r.bottom - r.top);
+                if (heightDiff > (densityMultiplier * 75) ) { // if more than 75 dp, its probably a keyboard...
+                    keyboardVisible = true;
+                    contactsDepartmentsTab.setVisibility(View.GONE);
+                    contactsListViewParams.setMargins(0, contactsListTopMargin, 0, 0);
+                    contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(true);
+                } else if (keyboardVisible) {
+                    keyboardVisible = false;
+                    contactsDepartmentsTab.setVisibility(View.VISIBLE);
+                    contactsListViewParams.setMargins(0, contactsListTopMargin, 0, contactsListBottomMargin);
+                    contactsListView.setLayoutParams(contactsListViewParams);
+                    searchBar.setCursorVisible(false);
+                }
+            }
+        });
+
+
     }
 
     @Override
@@ -359,14 +401,15 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
      */
     private void lazyDeviceRegistration() {
         if( shouldRegister && dataProviderServiceBinding.getLoggedInUser() != null ) {
-            if( getRegistrationId( this ).isEmpty() ) {
+            String regId = getRegistrationId( this );
+            if( regId.isEmpty() ) {
                 // This will async generate a new reg id and
                 // send it up to the cloud
                 ensureGcmRegistration();
             }
             else {
                 // Re-register device
-                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice();
+                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice( regId );
             }
             shouldRegister = false;
         }

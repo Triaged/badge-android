@@ -44,6 +44,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     private LocalBinding localBinding;
     private ScheduledFuture<?> heartbeatFuture;
     private DataProviderService.LocalBinding dataProviderServiceBinding;
+    protected int timesStarted = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -69,6 +70,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
         if( loggedInUserId > 0 ) {
             JSONObject extension = new JSONObject();
             try {
@@ -88,10 +90,13 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void onDestroy() {
-        heartbeatFuture.cancel(true);
-        if( fayeConnected ) {
-            faye.disconnectFromServer();
+        if( heartbeatFuture != null ) {
+            heartbeatFuture.cancel(true);
         }
+        if (faye != null) {
+            faye.destroy();
+        }
+        faye = null;
         heartbeatThread.shutdownNow();
         super.onDestroy();
     }
@@ -128,12 +133,14 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void disconnectedFromServer() {
         fayeConnected = false;
         heartbeatFuture.cancel(true);
-        Log.d( LOG_TAG, "Faye disconnected from server, frown emoji" );
+        Log.d(LOG_TAG, "Faye disconnected from server, frown emoji");
     }
 
     @Override
     public void subscribedToChannel(String subscription) {
         Log.d(LOG_TAG, "Faye subscribed to channel!");
+        ensureDataServiceBinding();
+        dataProviderServiceBinding.syncMessagesAsync();
     }
 
     @Override
@@ -152,8 +159,18 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             return;
         }
         ensureDataServiceBinding();
-        dataProviderServiceBinding.upsertThreadAndMessages( json );
-        // Do actual work.
+        String guid = "foo";
+        try {
+            if (json.has("guid")) {
+                guid = json.getString("guid");
+            }
+            dataProviderServiceBinding.upsertThreadAndMessages( json.getJSONObject( "message_thread" ), guid );
+            // Do actual work.
+
+        }
+        catch( JSONException e ) {
+            Log.w( LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e );
+        }
         Log.d( LOG_TAG, "Message: " + json.toString() );
     }
 

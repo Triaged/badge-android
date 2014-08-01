@@ -47,6 +47,8 @@ public abstract class BadgeActivity extends Activity {
 
     protected LocalBroadcastManager localBroadcastManager;
     private BroadcastReceiver logoutListener;
+    private BroadcastReceiver newMessageReceiver;
+    IntentFilter newMessageIntentFilter;
 
     protected MixpanelAPI mixpanel = null;
 
@@ -61,7 +63,17 @@ public abstract class BadgeActivity extends Activity {
                 logout();
             }
         };
+
         localBroadcastManager.registerReceiver( logoutListener, intentFilter );
+
+        newMessageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                notifyNewMessage( intent );
+            }
+        };
+        newMessageIntentFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
+
         mixpanel = MixpanelAPI.getInstance(this, BadgeApplication.MIXPANEL_TOKEN);
 
         super.onCreate(savedInstanceState);
@@ -72,6 +84,39 @@ public abstract class BadgeActivity extends Activity {
         mixpanel.flush();
         localBroadcastManager.unregisterReceiver( logoutListener );
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        localBroadcastManager.registerReceiver( newMessageReceiver, newMessageIntentFilter );
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        localBroadcastManager.unregisterReceiver( newMessageReceiver );
+    }
+
+    /**
+     * Override this function to change behavior when
+     * a message is received, default behavior is to notify
+     * in the status bar and play alert/vibrate.
+     *
+     * @param intent
+     */
+    protected void notifyNewMessage(Intent intent) {
+        if( intent.getBooleanExtra( DataProviderService.IS_INCOMING_MSG_EXTRA, false ) ) {
+            String threadId = intent.getStringExtra(DataProviderService.THREAD_ID_EXTRA);
+            String from = intent.getStringExtra(DataProviderService.MESSAGE_FROM_EXTRA);
+            String message = intent.getStringExtra(DataProviderService.MESSAGE_BODY_EXTRA);
+            Notifier.newNotification(this, from, message, threadId);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     /**
@@ -168,7 +213,7 @@ public abstract class BadgeActivity extends Activity {
                     // Persist the regID - no need to register again.
                     storeRegistrationId(BadgeActivity.this, regid);
                     // Send it up to the api.
-                    ((BadgeApplication)getApplication()).dataProviderServiceBinding.registerDevice();
+                    ((BadgeApplication)getApplication()).dataProviderServiceBinding.registerDevice(regid);
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.
