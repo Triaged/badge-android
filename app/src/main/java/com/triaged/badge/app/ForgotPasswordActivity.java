@@ -135,4 +135,8 @@ public class ForgotPasswordActivity extends BackButtonActivity {
         }
     }
 
+    @Override
+    protected void logout() {
+        // not logged in
+    }
 }
