@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +26,7 @@ public class GCMReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive( final Context context, Intent intent) {
+        Log.i(GCMReceiver.class.getName(), "New GCM message: " + intent.getExtras().toString());
         // Show notification
         String message = intent.getStringExtra( "message" );
         String threadId = intent.getStringExtra( "thread_id" );

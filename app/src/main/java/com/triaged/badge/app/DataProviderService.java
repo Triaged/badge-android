@@ -835,7 +835,7 @@ public class DataProviderService extends Service {
                         JSONObject newDevice = parseJSONResponse(response.getEntity());
 
                         SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
-                        prefsEditor.putInt(REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt("id"));
+                        prefsEditor.putInt(REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getJSONObject("device").getInt("id"));
                     } else {
                         if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
