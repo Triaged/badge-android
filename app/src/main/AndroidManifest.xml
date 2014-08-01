@@ -153,10 +153,9 @@
 
 
         <!-- GOOGLE MAPS API KEY AND GMS VERSION -->
-        <!-- TODO: THIS IS A DEBUG KEY!!! NEED TO GENERATE PRODUCTION ONE FROM BADGE'S GOOGLE CONSOLE ACCOUNT -->
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyDXVJZWlxl2EtpsirSW0ExgxALCYNnATK8"/>
+            android:value="AIzaSyBezYKwv8scCbYbsShwtLyJn9AWVtaV8Jo"/>
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
