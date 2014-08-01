@@ -20,6 +20,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +53,7 @@ public class LoginActivity extends BadgeActivity {
     private TextView loginInfo = null;
 
     private TextView signupForBeta = null;
+    private ScrollView loginScrollView = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +115,7 @@ public class LoginActivity extends BadgeActivity {
         densityMultiplier = getResources().getDisplayMetrics().density;
         loginTitle = (TextView) findViewById(R.id.login_title);
         loginInfo = (TextView) findViewById(R.id.login_info);
+        loginScrollView = (ScrollView) findViewById(R.id.login_scrollview);
 
         final View activityRootView = findViewById(R.id.activity_root);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -133,6 +136,9 @@ public class LoginActivity extends BadgeActivity {
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
                     lp2.setMargins(0, (int) (15*densityMultiplier), 0, (int) (15*densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
+                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) loginScrollView.getLayoutParams();
+                    scrollParams.setMargins(0,0,0,0);
+                    loginScrollView.setLayoutParams(scrollParams);
                     signupForBeta.setVisibility(View.GONE);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
@@ -140,8 +146,11 @@ public class LoginActivity extends BadgeActivity {
                     lp.setMargins(0, (int) (100*densityMultiplier), 0, 0);
                     loginTitle.setLayoutParams(lp);
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
-                    lp2.setMargins(0, (int) (30*densityMultiplier), 0, (int) (88*densityMultiplier));
+                    lp2.setMargins(0, (int) (30*densityMultiplier), 0, (int) (68*densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
+                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) loginScrollView.getLayoutParams();
+                    scrollParams.setMargins(0,0,0,(int) (40*densityMultiplier));
+                    loginScrollView.setLayoutParams(scrollParams);
                     signupForBeta.setVisibility(View.VISIBLE);
                 }
             }
