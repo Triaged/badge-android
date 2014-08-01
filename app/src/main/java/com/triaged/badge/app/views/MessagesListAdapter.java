@@ -3,7 +3,9 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Typeface;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +15,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.triaged.badge.app.ContactsActivity;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -37,6 +40,11 @@ public class MessagesListAdapter extends CursorAdapter {
     private PrettyTime prettyTime;
     private Date dateToFormat;
     private DataProviderService.LocalBinding dataProviderServiceBinding;
+    private int unreadTitleColor;
+    private int mainBlackColor;
+    private int lightGrayColor;
+    private Typeface medium;
+    private Typeface regular;
 
     public MessagesListAdapter(DataProviderService.LocalBinding dataProviderServiceBinding, Context context, Cursor c, boolean autoRequery) {
         super(context, c, autoRequery);
@@ -45,6 +53,12 @@ public class MessagesListAdapter extends CursorAdapter {
         prefs = PreferenceManager.getDefaultSharedPreferences( context );
         prettyTime = new PrettyTime();
         dateToFormat = new Date();
+        mainBlackColor = context.getResources().getColor(R.color.main_text_black);
+        lightGrayColor = context.getResources().getColor(R.color.light_text_gray);
+        unreadTitleColor = context.getResources().getColor(R.color.main_orange);
+        medium = Typeface.createFromAsset( context.getAssets(), "Roboto-Medium.ttf" );
+        regular = Typeface.createFromAsset( context.getAssets(), "Roboto-Regular.ttf" );
+
     }
 
     @Override
@@ -67,6 +81,16 @@ public class MessagesListAdapter extends CursorAdapter {
         String names = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS ) );
         String avatarUrl = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL ) );
         String body = cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) );
+        int isRead = cursor.getInt(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ));
+        if (isRead == 1) {
+            holder.name.setTextColor(mainBlackColor);
+            holder.name.setTypeface(regular);
+            holder.messagePreview.setTextColor(lightGrayColor);
+        } else {
+            holder.name.setTextColor(unreadTitleColor);
+            holder.name.setTypeface(medium);
+            holder.messagePreview.setTextColor(mainBlackColor);
+        }
         holder.profilePhoto.setImageBitmap( null );
         holder.missingProfilePhotoView.setVisibility( View.VISIBLE );
         holder.name.setText( names );
@@ -91,6 +115,7 @@ public class MessagesListAdapter extends CursorAdapter {
         public TextView timestamp;
         public ImageView profilePhoto;
         public ImageView missingProfilePhotoView;
+        public boolean isRead = false;
     }
 
     /**
