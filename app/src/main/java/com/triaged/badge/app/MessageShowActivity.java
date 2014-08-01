@@ -202,10 +202,6 @@ public class MessageShowActivity extends BadgeActivity {
 
     }
 
-    /**
-     * This needs to be abstracted because it may need to happen asynchronously if
-     * headed straight here from a push notification and database not set up yet.
-     */
     protected void showThread() {
         dataProviderServiceBinding.markAsRead( threadId );
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );

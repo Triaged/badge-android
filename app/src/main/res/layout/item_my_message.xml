@@ -31,6 +31,15 @@
         android:layout_alignParentRight="true"
     />
 
+    <ProgressBar
+        android:id="@+id/pending_status"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="16dp"
+        android:layout_alignTop="@+id/message_text"
+        android:layout_alignParentRight="true"
+        />
+
     <com.triaged.badge.app.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="match_parent"
