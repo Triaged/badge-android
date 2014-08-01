@@ -27,7 +27,6 @@ import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
 import android.webkit.MimeTypeMap;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
@@ -55,7 +54,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,6 +81,9 @@ public class DataProviderService extends Service {
 
     public static final String THREAD_ID_EXTRA = "threadId";
     public static final String MESSAGE_ID_EXTRA = "messageId";
+    public static final String MESSAGE_BODY_EXTRA = "messageBody";
+    public static final String MESSAGE_FROM_EXTRA = "messageFrom";
+    public static final String IS_INCOMING_MSG_EXTRA = "isIncomingMessage";
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
@@ -1729,6 +1730,9 @@ public class DataProviderService extends Service {
                 }
                 Intent newMsgIntent = new Intent( NEW_MSG_ACTION );
                 newMsgIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                newMsgIntent.putExtra( IS_INCOMING_MSG_EXTRA, false );
+                //newMsgIntent.putExtra( MESSAGE_ID_EXTRA, mess)
+                //newMsgIntent.putExtra( )
                 localBroadcastManager.sendBroadcast( newMsgIntent );
             }
         });
@@ -1852,7 +1856,21 @@ public class DataProviderService extends Service {
                         else {
                             setMessageContentValuesFromJSON(threadId, msg, msgValues, true);
                             database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
-                            newMessages = true;
+                            if( broadcast ) {
+                                Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
+                                Contact fromContact = getContact( msgValues.getAsInteger( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) );
+                                newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
+                                newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
+                                if( fromContact != null ) {
+                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, fromContact.firstName);
+                                }
+                                else {
+                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
+                                }
+                                newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
+                                localBroadcastManager.sendBroadcast(newMessageIntent);
+                            }
+
                         }
                         msgValues.clear();
                     }
@@ -1873,11 +1891,6 @@ public class DataProviderService extends Service {
                     }
                     else {
                         messages.close();
-                    }
-                    if( newMessages && broadcast ) {
-                        Intent newMessagesIntent = new Intent(NEW_MSG_ACTION);
-                        newMessagesIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                        localBroadcastManager.sendBroadcast(newMessagesIntent);
                     }
                     database.setTransactionSuccessful();
                 }

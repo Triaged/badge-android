@@ -28,22 +28,7 @@ public class GCMReceiver extends BroadcastReceiver {
         // Show notification
         String message = intent.getStringExtra( "message" );
         String threadId = intent.getStringExtra( "thread_id" );
-        Notification.Builder mBuilder =
-                new Notification.Builder( context )
-                        // TODO we need the real icon
-                        .setSmallIcon(R.drawable.ic_action_person)
-                        .setContentTitle( "New Badge message" )
-                        .setContentText( message )
-                        .setAutoCancel( true );
-
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(context, MessageShowActivity.class);
-        resultIntent.putExtra( MessageShowActivity.THREAD_ID_EXTRA, threadId );
-        PendingIntent resultPendingIntent = PendingIntent.getActivity( context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT );
-        mBuilder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        // mId allows you to update the notification later on.
-        mNotificationManager.notify(mId++, mBuilder.build());
+        String from = intent.getStringExtra( "author_name" );
+        Notifier.newNotification( context, from, message, threadId );
     }
 }
