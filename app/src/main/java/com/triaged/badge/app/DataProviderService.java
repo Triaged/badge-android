@@ -338,6 +338,7 @@ public class DataProviderService extends Service {
      */
     public void dataClearedCallback() {
         lastSynced = 0l;
+        prefs.edit().putLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ).commit();
     }
 
     /**
@@ -361,14 +362,15 @@ public class DataProviderService extends Service {
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
             db.beginTransaction();
-            db.execSQL(CLEAR_CONTACTS_SQL);
-            db.execSQL(CLEAR_DEPARTMENTS_SQL);
-            db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
             HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
             ensureNotUnauthorized( response );
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
+                    db.execSQL(CLEAR_CONTACTS_SQL);
+                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
+                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
+
 
                     ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream(256 * 1024 /* 256 k */);
                     response.getEntity().writeTo(jsonBuffer);
@@ -1158,10 +1160,12 @@ public class DataProviderService extends Service {
 
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
-                        syncMessagesSync();
 
                         if( loggedInContactId > 0 ) {
                             loggedInUser = getContact(loggedInContactId);
+                            syncMessagesSync();
+
+
                             if( !initialized ) {
                                 initialized = true;
                                 localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
