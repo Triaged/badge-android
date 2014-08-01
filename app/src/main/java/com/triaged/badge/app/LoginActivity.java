@@ -51,7 +51,6 @@ public class LoginActivity extends BadgeActivity {
     private TextView loginTitle = null;
     private TextView loginInfo = null;
 
-    private TextView forgotPasswordButton = null;
     private TextView signupForBeta = null;
 
     @Override
@@ -134,6 +133,7 @@ public class LoginActivity extends BadgeActivity {
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
                     lp2.setMargins(0, (int) (15*densityMultiplier), 0, (int) (15*densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
+                    signupForBeta.setVisibility(View.GONE);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) loginTitle.getLayoutParams();
@@ -142,9 +142,13 @@ public class LoginActivity extends BadgeActivity {
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
                     lp2.setMargins(0, (int) (30*densityMultiplier), 0, (int) (88*densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
+                    signupForBeta.setVisibility(View.VISIBLE);
                 }
             }
         });
+
+        TextView forgotPasswordButton = (TextView) findViewById(R.id.forgot_password_button);
+        signupForBeta = (TextView) findViewById(R.id.sign_up_for_account);
 
         forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
             @Override

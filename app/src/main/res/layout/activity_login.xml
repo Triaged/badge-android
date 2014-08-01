@@ -87,7 +87,7 @@
             android:layout_width="190dp"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="15dp"
             android:layout_marginBottom="88dp"
             android:text="@string/forgot_password_question"
             android:textColor="@color/light_text_gray"
@@ -107,7 +107,8 @@
             android:textColor="@color/accent_turquoise"
             android:textSize="18sp"
             android:gravity="center"
-            android:layout_below="@id/forgot_password_button"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
             custom:font="Roboto-Regular.ttf"
             android:background="@drawable/white_button_bg"
             />
