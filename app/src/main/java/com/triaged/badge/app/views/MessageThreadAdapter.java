@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
@@ -47,7 +48,7 @@ public class MessageThreadAdapter extends CursorAdapter {
 
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+    public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         int viewType = getItemViewType( cursor );
         int resourceId;
         if( viewType == 0 ) {
@@ -63,6 +64,15 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.userPhoto = (ImageView)v.findViewById( R.id.contact_thumb );
         holder.photoPlaceholder = (TextView) v.findViewById( R.id.no_photo_thumb );
         holder.progressBar = (ProgressBar) v.findViewById(R.id.pending_status);
+        holder.messageFailedButton = (ImageButton) v.findViewById(R.id.failed_status);
+        if (holder.messageFailedButton != null) {
+            holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(context, "Test", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         v.setTag(holder);
         return v;
     }
@@ -84,6 +94,7 @@ public class MessageThreadAdapter extends CursorAdapter {
         dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
         if ( cursor.getInt( cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
             holder.progressBar.setVisibility(View.GONE);
+            holder.messageFailedButton.setVisibility(View.GONE);
             int status = cursor.getInt(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK));
             if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
                 Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
@@ -94,7 +105,9 @@ public class MessageThreadAdapter extends CursorAdapter {
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
             } else if (status == DataProviderService.MSG_STATUS_FAILED) {
-
+                holder.messageFailedButton.setVisibility(View.VISIBLE);
+                holder.photoPlaceholder.setVisibility(View.GONE);
+                holder.userPhoto.setVisibility(View.GONE);
             }
         }
     }
@@ -134,5 +147,6 @@ public class MessageThreadAdapter extends CursorAdapter {
         ImageView userPhoto;
         TextView photoPlaceholder;
         ProgressBar progressBar;
+        ImageButton messageFailedButton;
     }
 }

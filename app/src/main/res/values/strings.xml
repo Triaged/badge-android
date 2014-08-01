@@ -116,6 +116,7 @@
     <string name="forgot_password_question">Forgot your password?</string>
     <string name="sign_up_for_account">Not yet registered? Sign up for Beta.</string>
     <string name="settings_feedback">Feedback</string>
+    <string name="message_failed">Message Failed</string>
 
 
 </resources>
