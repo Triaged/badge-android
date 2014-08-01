@@ -1680,15 +1680,15 @@ public class DataProviderService extends Service {
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     String guid = UUID.randomUUID().toString();
+                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message );
-                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, loggedInUser.avatarUrl );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds) );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
-                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
                     database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
                     database.setTransactionSuccessful();
@@ -1698,6 +1698,7 @@ public class DataProviderService extends Service {
                     msg.put( "author_id", loggedInUser.id );
                     msg.put( "body", message );
                     msg.put( "timestamp", timestamp );
+                    msg.put( "guid", guid );
                     msgWrapper.put( "guid", guid );
                     // Bind/unbind every time so that the service doesn't live past
                     // stopService()

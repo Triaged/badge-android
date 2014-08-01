@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
@@ -31,6 +32,9 @@ import com.triaged.badge.data.Contact;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Activity for a message thread.
@@ -85,7 +89,8 @@ public class MessageShowActivity extends BadgeActivity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onBackPressed();
+                Intent backToListIntent = new Intent(MessageShowActivity.this, MessagesIndexActivity.class);
+                startActivity(backToListIntent);
             }
         });
 
@@ -270,8 +275,7 @@ public class MessageShowActivity extends BadgeActivity {
             JSONArray users = new JSONArray(usersJsonString);
             userCount = users.length();
             for (int i=0; i<userCount; i++) {
-                String user = (String) users.get(i);
-                int userId = Integer.parseInt(user);
+                Integer userId = users.getInt(i);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
                     if (userCount == 2) {
@@ -296,6 +300,39 @@ public class MessageShowActivity extends BadgeActivity {
                                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                                 intent.putExtra("PROFILE_ID", c.id);
                                 startActivity(intent);
+                            }
+                        });
+                        ImageButton messageContactButton = (ImageButton) contactView.findViewById(R.id.message_contact);
+                        messageContactButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                final Integer[] recipientIds = new Integer[] { c.id, dataProviderServiceBinding.getLoggedInUser().id};
+                                Arrays.sort(recipientIds);
+                                new AsyncTask<Void, Void, String>() {
+                                    @Override
+                                    protected String doInBackground(Void... params) {
+                                        try {
+                                            return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                        }
+                                        catch( JSONException e ) {
+                                            Toast.makeText(MessageShowActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                                        }
+                                        catch( IOException e ) {
+                                            Toast.makeText( MessageShowActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                                        }
+                                        return null;
+                                    }
+
+                                    @Override
+                                    protected void onPostExecute( String threadId ) {
+                                        if( threadId != null ) {
+                                            Intent intent = new Intent(MessageShowActivity.this, MessageShowActivity.class);
+                                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                                            intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+                                            startActivity(intent);
+                                        }
+                                    }
+                                }.execute();
                             }
                         });
                         threadMembersWrapper.addView(contactView);
