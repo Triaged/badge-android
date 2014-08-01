@@ -35,6 +35,29 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+
+
+    // Releases only!
+    signingConfigs {
+        release {
+            storeFile file( ".keystore" )
+            storePassword String.valueOf( System.console().readPassword("\n\$ Enter keystore password: ") )
+            keyAlias System.console().readLine("\n\$ Enter key alias: ")
+            keyPassword String.valueOf( System.console().readPassword("\n\$ Enter key password: ") )
+        }
+    }
+    buildTypes {
+        release {
+            // We should remove this for real releases
+            lintOptions {
+                abortOnError false
+            }
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
+        }
+    }
+
 }
 
 dependencies {
