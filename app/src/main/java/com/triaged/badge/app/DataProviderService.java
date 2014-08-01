@@ -1696,6 +1696,7 @@ public class DataProviderService extends Service {
                     msg.put( "author_id", loggedInUser.id );
                     msg.put( "body", message );
                     msg.put( "timestamp", timestamp );
+                    msg.put( "guid", guid );
                     msgWrapper.put( "guid", guid );
                     // Bind/unbind every time so that the service doesn't live past
                     // stopService()
