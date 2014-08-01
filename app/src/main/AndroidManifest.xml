@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -182,6 +183,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".LocationTrackingService$WakeupReceiver" android:enabled="true">
+            <intent-filter>
+                <action android:name="com.triaged.badge.app.LOCATION_WAKEUP" />
+            </intent-filter>
+        </receiver>
+
         <meta-data android:name="com.crashlytics.ApiKey" android:value="2776a41715c04dde4ba5d15b716b66a51e353b0f"/>
     </application>
 
