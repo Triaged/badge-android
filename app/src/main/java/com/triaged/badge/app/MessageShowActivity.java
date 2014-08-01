@@ -139,7 +139,10 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         };
-        localBroadcastManager.registerReceiver(refreshReceiver, new IntentFilter(DataProviderService.NEW_MSG_ACTION));
+        IntentFilter threadUpdateFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
+        threadUpdateFilter.addAction( DataProviderService.MSG_FAILED_ACTION );
+        threadUpdateFilter.addAction( DataProviderService.MSG_ACKNOWLEDGED_ACTION );
+        localBroadcastManager.registerReceiver(refreshReceiver, threadUpdateFilter);
 
         postBox = (EditText) findViewById(R.id.input_box);
 
