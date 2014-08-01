@@ -140,8 +140,7 @@ public class MessageShowActivity extends BadgeActivity {
             }
         };
         IntentFilter threadUpdateFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
-        threadUpdateFilter.addAction( DataProviderService.MSG_FAILED_ACTION );
-        threadUpdateFilter.addAction( DataProviderService.MSG_ACKNOWLEDGED_ACTION );
+        threadUpdateFilter.addAction( DataProviderService.MSG_STATUS_CHANGED_ACTION);
         localBroadcastManager.registerReceiver(refreshReceiver, threadUpdateFilter);
 
         postBox = (EditText) findViewById(R.id.input_box);

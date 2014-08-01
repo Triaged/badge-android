@@ -73,7 +73,6 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         });
 
         IntentFilter messageUpdateFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
-        messageUpdateFilter.addAction( DataProviderService.MSG_FAILED_ACTION );
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
