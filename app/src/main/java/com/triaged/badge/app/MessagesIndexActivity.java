@@ -67,6 +67,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MessagesIndexActivity.this, MessageShowActivity.class);
                 intent.putExtra( MessageShowActivity.THREAD_ID_EXTRA,  ((MessagesListAdapter.ViewHolder)view.getTag()).threadId );
+                intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
                 startActivity(intent);
             }
         });

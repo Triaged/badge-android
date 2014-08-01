@@ -40,7 +40,7 @@ public class Notifier {
                     new Notification.Builder(context)
                             // TODO we need the real icon
                             .setSmallIcon(R.drawable.ic_action_person)
-                            .setContentTitle("New Badge message from " + from )
+                            .setContentTitle("New message from " + from )
                             .setContentText(msg)
                             .setAutoCancel(true);
 
@@ -65,7 +65,7 @@ public class Notifier {
                     new Notification.Builder(context)
                             // TODO we need the real icon
                             .setSmallIcon(R.drawable.ic_action_person)
-                            .setContentTitle( String.format( "%d new Badge messages", numMessages ) )
+                            .setContentTitle( String.format( "%d new messages", numMessages ) )
                             .setContentText( namesBuilder.toString() )
                             .setAutoCancel(true);
 

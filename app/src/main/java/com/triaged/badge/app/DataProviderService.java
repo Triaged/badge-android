@@ -1868,6 +1868,7 @@ public class DataProviderService extends Service {
                                 else {
                                     newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
                                 }
+
                                 newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
                                 localBroadcastManager.sendBroadcast(newMessageIntent);
                             }
