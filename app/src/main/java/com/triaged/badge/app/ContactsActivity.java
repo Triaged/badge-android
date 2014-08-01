@@ -112,6 +112,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setTypeface(regular);
                 departmentsListView.setVisibility( View.INVISIBLE );
                 contactsListView.setVisibility(View.VISIBLE);
+                setSearchBarHint();
             }
         });
 
@@ -124,6 +125,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setTypeface(medium);
                 contactsListView.setVisibility(View.INVISIBLE);
                 departmentsListView.setVisibility(View.VISIBLE);
+                setSearchBarHint();
             }
         });
 
@@ -163,8 +165,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         contactsListView.setVisibility(View.GONE);
                     }
                     else {
-                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
-                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.setFilter( text );
                     }
                 } else {
@@ -174,8 +174,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         searchResultsList.setVisibility(View.GONE);
                     }
                     else {
-                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
-                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.clearFilter();
                     }
                 }
@@ -288,12 +286,16 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, 0);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
+                    departmentsListView.setLayoutParams(departmentListViewParams);
                     searchBar.setCursorVisible(true);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, contactsListBottomMargin);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
+                    departmentsListView.setLayoutParams(departmentListViewParams);
                     searchBar.setCursorVisible(false);
                 }
             }
@@ -309,6 +311,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+        setSearchBarHint();
     }
 
     @Override
@@ -419,5 +422,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void logout() {
         shouldRegister = true;
         super.logout();
+    }
+
+    private void setSearchBarHint() {
+        if (contactsTabButton.isSelected()) {
+            searchBar.setHint("Search Contacts");
+        } else {
+            searchBar.setHint("Search Departments");
+        }
     }
 }
