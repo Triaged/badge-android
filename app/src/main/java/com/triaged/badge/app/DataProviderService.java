@@ -1100,6 +1100,9 @@ public class DataProviderService extends Service {
                     if( loggedInContactId > 0 ) {
                         loggedInUser = getContact(loggedInContactId);
                     }
+                    else {
+                        initialized = true;
+                    }
 
                     if( loggedInUser != null ) {
                         initialized = true;
