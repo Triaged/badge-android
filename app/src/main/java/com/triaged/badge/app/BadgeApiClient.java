@@ -58,6 +58,8 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
     private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
 
+    private static final String REQUEST_RESET_PASSWORD_URI = String.format( "%s://%s/v1/account/reset_password", API_PROTOCOL, API_HOST );
+
     private HttpHost httpHost;
     private HttpHost messagingHttpHost;
     String apiToken;
@@ -254,6 +256,22 @@ public class BadgeApiClient extends DefaultHttpClient {
     }
 
     /**
+     * POSTS to the reset password uri (v1/account/reset_password) with
+     * an email address
+     *
+     * @param postBody
+     * @return
+     * @throws IOException
+     */
+    public HttpResponse requestResetPasswordRequest( JSONObject postBody ) throws IOException {
+        HttpPost post = new HttpPost( REQUEST_RESET_PASSWORD_URI );
+        StringEntity body = new StringEntity( postBody.toString(), "UTF-8" );
+        body.setContentType( MIME_TYPE_JSON );
+        post.setEntity( body );
+        return execute(httpHost, post);
+    }
+
+    /**
      * GETS /users/:id
      *
      * @param contactId
@@ -317,4 +335,5 @@ public class BadgeApiClient extends DefaultHttpClient {
         }
         return execute( host, post );
     }
+
 }

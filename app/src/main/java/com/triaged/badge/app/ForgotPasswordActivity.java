@@ -1,7 +1,9 @@
 package com.triaged.badge.app;
 
 import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -12,17 +14,38 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
 /**
  * Created by Will on 8/1/14.
  */
 public class ForgotPasswordActivity extends BackButtonActivity {
 
+    private static final String LOG_TAG = ForgotPasswordActivity.class.getName();
     private EditText resetEmail = null;
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
     private TextView resetTitle = null;
     private TextView resetInfo = null;
     private Button resetButton = null;
+
+    private DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
+        @Override
+        public void saveSuccess(int newId) {
+            Toast.makeText(ForgotPasswordActivity.this, "Check your email to reset your password.", Toast.LENGTH_LONG).show();
+            onBackPressed();
+        }
+
+        @Override
+        public void saveFailed(String reason) {
+            Toast.makeText(ForgotPasswordActivity.this, reason, Toast.LENGTH_LONG).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +71,10 @@ public class ForgotPasswordActivity extends BackButtonActivity {
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(ForgotPasswordActivity.this, "Tapped", Toast.LENGTH_SHORT).show();
+                String email = resetEmail.getText().toString();
+                if (!email.equals("")) {
+                    new RequestResetPasswordTask().execute(email);
+                }
             }
         });
 
@@ -89,4 +115,14 @@ public class ForgotPasswordActivity extends BackButtonActivity {
         super.onBackPressed();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
+
+    private class RequestResetPasswordTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... params) {
+            ((BadgeApplication)getApplication()).dataProviderServiceBinding.requestResetPassword( params[0], saveCallback);
+            return null;
+        }
+    }
+
 }

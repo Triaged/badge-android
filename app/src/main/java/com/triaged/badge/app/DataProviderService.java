@@ -769,6 +769,43 @@ public class DataProviderService extends Service {
         });
     }
 
+    protected void requestResetPassword( final String email, final AsyncSaveCallback saveCallback  ) {
+        JSONObject postBody = new JSONObject();
+        try {
+            JSONObject user = new JSONObject();
+            postBody.put( "email", email );
+        }
+        catch( JSONException e ) {
+            Log.e(LOG_TAG, "JSON exception creating post body for forgot password", e);
+            fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+            return;
+        }
+
+        try {
+            HttpResponse response = apiClient.requestResetPasswordRequest( postBody );
+            int statusCode = response.getStatusLine().getStatusCode();
+            if( response.getEntity() != null ) {
+                response.getEntity().consumeContent();
+            }
+            if( statusCode == HttpStatus.SC_OK  ) {
+                if( saveCallback != null ) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveCallback.saveSuccess( -1 );
+                        }
+                    });
+                }
+            }
+            else {
+                fail( "Got unexpected response from server. Please contact Badge HQ.", saveCallback );
+            }
+        }
+        catch( IOException e ) {
+            fail("There was a network issue requesting to reset password, please check your connection and try again.", saveCallback);
+        }
+    }
+
     /**
      * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
      * and on success wipes local data on the phone and removes tokens.
@@ -2363,6 +2400,14 @@ public class DataProviderService extends Service {
          */
         public void syncMessagesAsync() {
             DataProviderService.this.syncMessagesAsync();
+        }
+
+
+        /**
+         * @see DataProviderService#requestResetPassword(String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void requestResetPassword(String email, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.requestResetPassword(email, saveCallback);
         }
     }
 
