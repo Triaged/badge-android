@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -101,14 +102,13 @@ public class LocationTrackingService extends Service implements LocationListener
         // Create a new global location parameters object
         mLocationRequest = LocationRequest.create();
 
-        // Two minutes should be fairly real time.
-        mLocationRequest.setInterval(120000);
+        mLocationRequest.setInterval(5000);
 
         // Consume limited power... cell and wifi
         mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         // Set the interval ceiling to two minutes
-        mLocationRequest.setFastestInterval(60000);
+        mLocationRequest.setFastestInterval(1000);
 
         /*
          * Create a new location client, using the enclosing class to
@@ -153,7 +153,10 @@ public class LocationTrackingService extends Service implements LocationListener
         Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
 
         if( location.getAccuracy() > 300f ) {
-            Log.d( LOG_TAG, "Accuracy of " + location.getAccuracy() + " isn't going to cut it." );
+            String msg = "Accuracy of " + location.getAccuracy() + " isn't going to cut it.";
+            // TODO delete me
+            Toast.makeText( this, msg, Toast.LENGTH_LONG );
+            Log.d( LOG_TAG, msg );
             return;
         }
 
@@ -182,7 +185,10 @@ public class LocationTrackingService extends Service implements LocationListener
                             }
                         }
                     }
-                    Log.i( LOG_TAG, "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude() );
+                    String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
+                    // TODO delete me
+                    Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG );
+                    Log.i( LOG_TAG, msg );
                     stopSelf();
                     return null;
                 }
