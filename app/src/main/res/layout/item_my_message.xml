@@ -14,6 +14,7 @@
         android:layout_alignTop="@+id/message_text"
         android:background="@null"
         android:contentDescription="@string/content_description_thumb"
+        android:layout_alignParentRight="true"
     />
 
     <com.triaged.badge.app.views.TextViewWithFont
@@ -27,6 +28,7 @@
         android:textColor="@color/white"
         android:visibility="gone"
         android:textSize="15sp"
+        android:layout_alignParentRight="true"
     />
 
     <com.triaged.badge.app.views.TextViewWithFont

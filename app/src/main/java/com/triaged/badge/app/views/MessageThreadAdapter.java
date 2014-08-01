@@ -3,6 +3,7 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,6 +79,12 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
         String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL));
         dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
+        int acknowledged = cursor.getInt( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ACK ) );
+        if (acknowledged == 1) {
+            Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
+        } else {
+            Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
+        }
     }
 
     /** This adapter uses 2 different types of views (my message and other message) */

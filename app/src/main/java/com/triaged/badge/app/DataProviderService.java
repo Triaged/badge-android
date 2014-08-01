@@ -27,7 +27,6 @@ import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
 import android.webkit.MimeTypeMap;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
@@ -55,7 +54,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,6 +81,9 @@ public class DataProviderService extends Service {
 
     public static final String THREAD_ID_EXTRA = "threadId";
     public static final String MESSAGE_ID_EXTRA = "messageId";
+    public static final String MESSAGE_BODY_EXTRA = "messageBody";
+    public static final String MESSAGE_FROM_EXTRA = "messageFrom";
+    public static final String IS_INCOMING_MSG_EXTRA = "isIncomingMessage";
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
@@ -768,6 +769,43 @@ public class DataProviderService extends Service {
         });
     }
 
+    protected void requestResetPassword( final String email, final AsyncSaveCallback saveCallback  ) {
+        JSONObject postBody = new JSONObject();
+        try {
+            JSONObject user = new JSONObject();
+            postBody.put( "email", email );
+        }
+        catch( JSONException e ) {
+            Log.e(LOG_TAG, "JSON exception creating post body for forgot password", e);
+            fail( "Unexpected issue, please contact Badge HQ", saveCallback );
+            return;
+        }
+
+        try {
+            HttpResponse response = apiClient.requestResetPasswordRequest( postBody );
+            int statusCode = response.getStatusLine().getStatusCode();
+            if( response.getEntity() != null ) {
+                response.getEntity().consumeContent();
+            }
+            if( statusCode == HttpStatus.SC_OK  ) {
+                if( saveCallback != null ) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveCallback.saveSuccess( -1 );
+                        }
+                    });
+                }
+            }
+            else {
+                fail( "Got unexpected response from server. Please contact Badge HQ.", saveCallback );
+            }
+        }
+        catch( IOException e ) {
+            fail("There was a network issue requesting to reset password, please check your connection and try again.", saveCallback);
+        }
+    }
+
     /**
      * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
      * and on success wipes local data on the phone and removes tokens.
@@ -800,23 +838,24 @@ public class DataProviderService extends Service {
 
     /**
      * Posts to /devices to register upon login.
+     *
+     * @param pushToken GCM device registration
      */
-    protected void registerDevice() {
+    protected void registerDevice( final String pushToken ) {
 
         sqlThread.submit(new Runnable() {
             @Override
             public void run() {
-                String gcmRegId = prefs.getString(LoginActivity.PROPERTY_REG_ID, "");
                 int androidVersion = android.os.Build.VERSION.SDK_INT;
 
                 JSONObject postData = new JSONObject();
                 JSONObject deviceData = new JSONObject();
                 try {
                     postData.put( "device", deviceData);
-                    deviceData.put( "token", gcmRegId );
+                    deviceData.put( "token", pushToken );
                     deviceData.put( "os_version", androidVersion );
                     deviceData.put( "service", SERVICE_ANDROID );
-                    deviceData.put( "guid", Settings.Secure.getString( DataProviderService.this.getContentResolver(),
+                    deviceData.put( "application_id", Settings.Secure.getString( DataProviderService.this.getContentResolver(),
                             Settings.Secure.ANDROID_ID ) );
                 }
                 catch( JSONException e ) {
@@ -1099,6 +1138,9 @@ public class DataProviderService extends Service {
                     int loggedInContactId = prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 );
                     if( loggedInContactId > 0 ) {
                         loggedInUser = getContact(loggedInContactId);
+                    }
+                    else {
+                        initialized = true;
                     }
 
                     if( loggedInUser != null ) {
@@ -1679,15 +1721,15 @@ public class DataProviderService extends Service {
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     String guid = UUID.randomUUID().toString();
+                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message );
-                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, loggedInUser.avatarUrl );
+                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds) );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1 );
-                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
                     database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
                     database.setTransactionSuccessful();
@@ -1697,6 +1739,7 @@ public class DataProviderService extends Service {
                     msg.put( "author_id", loggedInUser.id );
                     msg.put( "body", message );
                     msg.put( "timestamp", timestamp );
+                    msg.put( "guid", guid );
                     msgWrapper.put( "guid", guid );
                     // Bind/unbind every time so that the service doesn't live past
                     // stopService()
@@ -1729,6 +1772,9 @@ public class DataProviderService extends Service {
                 }
                 Intent newMsgIntent = new Intent( NEW_MSG_ACTION );
                 newMsgIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                newMsgIntent.putExtra( IS_INCOMING_MSG_EXTRA, false );
+                //newMsgIntent.putExtra( MESSAGE_ID_EXTRA, mess)
+                //newMsgIntent.putExtra( )
                 localBroadcastManager.sendBroadcast( newMsgIntent );
             }
         });
@@ -1852,7 +1898,22 @@ public class DataProviderService extends Service {
                         else {
                             setMessageContentValuesFromJSON(threadId, msg, msgValues, true);
                             database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
-                            newMessages = true;
+                            if( broadcast ) {
+                                Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
+                                Contact fromContact = getContact( msgValues.getAsInteger( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) );
+                                newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
+                                newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
+                                if( fromContact != null ) {
+                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, fromContact.firstName);
+                                }
+                                else {
+                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
+                                }
+
+                                newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
+                                localBroadcastManager.sendBroadcast(newMessageIntent);
+                            }
+
                         }
                         msgValues.clear();
                     }
@@ -1873,11 +1934,6 @@ public class DataProviderService extends Service {
                     }
                     else {
                         messages.close();
-                    }
-                    if( newMessages && broadcast ) {
-                        Intent newMessagesIntent = new Intent(NEW_MSG_ACTION);
-                        newMessagesIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                        localBroadcastManager.sendBroadcast(newMessagesIntent);
                     }
                     database.setTransactionSuccessful();
                 }
@@ -2029,9 +2085,13 @@ public class DataProviderService extends Service {
         for( int i = 0; i < numUsers; i++ ) {
             int userId = userIdArr.getInt( i );
             if( userId != loggedInUser.id ) {
-                Contact c = getContact( userId );
-                names.append( delim ).append( c.name );
-                delim = ", ";
+                Contact c = getContact(userId);
+                if (numUsers > 2) {
+                    names.append(delim).append(c.firstName);
+                    delim = ", ";
+                } else {
+                    names.append(delim).append(c.name);
+                }
             }
         }
         return names.toString();
@@ -2240,10 +2300,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#registerDevice()
+         * @see DataProviderService#registerDevice( String )
          */
-        public void registerDevice() {
-            DataProviderService.this.registerDevice();
+        public void registerDevice( String pushToken ) {
+            DataProviderService.this.registerDevice( pushToken );
         }
 
         /**
@@ -2341,6 +2401,14 @@ public class DataProviderService extends Service {
          */
         public void syncMessagesAsync() {
             DataProviderService.this.syncMessagesAsync();
+        }
+
+
+        /**
+         * @see DataProviderService#requestResetPassword(String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
+         */
+        public void requestResetPassword(String email, AsyncSaveCallback saveCallback) {
+            DataProviderService.this.requestResetPassword(email, saveCallback);
         }
     }
 

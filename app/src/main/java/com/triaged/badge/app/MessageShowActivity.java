@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.Editable;
@@ -32,6 +33,9 @@ import com.triaged.badge.data.Contact;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 /**
  * Activity for a message thread.
  *
@@ -56,8 +60,8 @@ public class MessageShowActivity extends BadgeActivity {
     protected String threadId;
     private TextView backButton;
     private Intent intent;
+    private BroadcastReceiver dataAvailableReceiver;
 
-    private String userNamesList;
     private int userCount = 2;
     private int soleCounterpartId = 0;
     private LinearLayout threadMembersWrapper = null;
@@ -69,8 +73,9 @@ public class MessageShowActivity extends BadgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         intent = getIntent();
-        BadgeApplication app = (BadgeApplication) getApplication();
+        final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
+        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -84,7 +89,8 @@ public class MessageShowActivity extends BadgeActivity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onBackPressed();
+                Intent backToListIntent = new Intent(MessageShowActivity.this, MessagesIndexActivity.class);
+                startActivity(backToListIntent);
             }
         });
 
@@ -112,13 +118,8 @@ public class MessageShowActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_message_show);
 
-        threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
-        dataProviderServiceBinding.markAsRead( threadId );
-
         threadList = (ListView) findViewById(R.id.message_thread);
-        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
-        threadList.setAdapter(adapter);
-        threadList.setSelection(adapter.getCount() - 1);
+
         threadList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -138,7 +139,7 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         };
-        localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.NEW_MSG_ACTION ) );
+        localBroadcastManager.registerReceiver(refreshReceiver, new IntentFilter(DataProviderService.NEW_MSG_ACTION));
 
         postBox = (EditText) findViewById(R.id.input_box);
 
@@ -186,11 +187,38 @@ public class MessageShowActivity extends BadgeActivity {
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
+        dataAvailableReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                dataProviderServiceBinding = app.dataProviderServiceBinding;
+                showThread();
+            }
+        };
+        localBroadcastManager.registerReceiver(dataAvailableReceiver, new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION));
+
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+            showThread();
+        }
+
+    }
+
+    /**
+     * This needs to be abstracted because it may need to happen asynchronously if
+     * headed straight here from a push notification and database not set up yet.
+     */
+    protected void showThread() {
+        dataProviderServiceBinding.markAsRead( threadId );
+        adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
+        threadList.setAdapter(adapter);
+        threadList.setSelection(adapter.getCount() - 1);
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
     }
 
     @Override
     protected void onDestroy() {
-        localBroadcastManager.unregisterReceiver( refreshReceiver );
+        localBroadcastManager.unregisterReceiver(refreshReceiver);
+        localBroadcastManager.unregisterReceiver(dataAvailableReceiver);
         adapter.destroy();
         super.onDestroy();
     }
@@ -236,15 +264,8 @@ public class MessageShowActivity extends BadgeActivity {
         };
 
         // 1dp/ms
-        a.setDuration((int)(initialHeight / densityMultiplier));
+        a.setDuration((int) (initialHeight / densityMultiplier));
         v.startAnimation(a);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
-        setupContactsMenu();
     }
 
     private void setupContactsMenu() {
@@ -254,8 +275,7 @@ public class MessageShowActivity extends BadgeActivity {
             JSONArray users = new JSONArray(usersJsonString);
             userCount = users.length();
             for (int i=0; i<userCount; i++) {
-                String user = (String) users.get(i);
-                int userId = Integer.parseInt(user);
+                Integer userId = users.getInt(i);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
                     if (userCount == 2) {
@@ -268,6 +288,8 @@ public class MessageShowActivity extends BadgeActivity {
                         contactTitle.setText(c.jobTitle);
                         ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
                         TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                        noPhotoThumb.setText(c.initials);
+                        noPhotoThumb.setVisibility(View.VISIBLE);
                         if (c.avatarUrl != null) {
                             dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
                         }
@@ -278,6 +300,39 @@ public class MessageShowActivity extends BadgeActivity {
                                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                                 intent.putExtra("PROFILE_ID", c.id);
                                 startActivity(intent);
+                            }
+                        });
+                        ImageButton messageContactButton = (ImageButton) contactView.findViewById(R.id.message_contact);
+                        messageContactButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                final Integer[] recipientIds = new Integer[] { c.id, dataProviderServiceBinding.getLoggedInUser().id};
+                                Arrays.sort(recipientIds);
+                                new AsyncTask<Void, Void, String>() {
+                                    @Override
+                                    protected String doInBackground(Void... params) {
+                                        try {
+                                            return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                        }
+                                        catch( JSONException e ) {
+                                            Toast.makeText(MessageShowActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                                        }
+                                        catch( IOException e ) {
+                                            Toast.makeText( MessageShowActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                                        }
+                                        return null;
+                                    }
+
+                                    @Override
+                                    protected void onPostExecute( String threadId ) {
+                                        if( threadId != null ) {
+                                            Intent intent = new Intent(MessageShowActivity.this, MessageShowActivity.class);
+                                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                                            intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+                                            startActivity(intent);
+                                        }
+                                    }
+                                }.execute();
                             }
                         });
                         threadMembersWrapper.addView(contactView);
@@ -297,8 +352,17 @@ public class MessageShowActivity extends BadgeActivity {
             dataProviderServiceBinding.markAsRead( threadId );
             adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
             adapter.notifyDataSetChanged();
+            backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+            setupContactsMenu();
         }
         super.onNewIntent(intent);
+    }
+
+    @Override
+    protected void onStart() {
+        Notifier.clearNotifications( this );
+        super.onStart();
+
     }
 
     protected void scrollMyListViewToBottom() {
@@ -309,5 +373,12 @@ public class MessageShowActivity extends BadgeActivity {
                 threadList.setSelection(adapter.getCount() - 1);
             }
         });
+    }
+
+    @Override
+    protected void notifyNewMessage(Intent intent) {
+        if( !intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ).equals( threadId ) ) {
+            super.notifyNewMessage(intent);
+        }
     }
 }

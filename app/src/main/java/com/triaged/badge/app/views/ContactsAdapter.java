@@ -3,6 +3,7 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.MessageNewActivity;
@@ -19,6 +21,12 @@ import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
+
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
@@ -76,9 +84,34 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
             holder.messageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(context, MessageShowActivity.class);
-                    intent.putExtra(MessageNewActivity.RECIPIENT_IDS_EXTRA, ((Contact)holder.messageButton.getTag()).id);
-                    context.startActivity(intent);
+                    final Integer[] recipientIds = new Integer[] {((Contact)holder.messageButton.getTag()).id, dataProviderServiceBinding.getLoggedInUser().id};
+                    Arrays.sort(recipientIds);
+                    new AsyncTask<Void, Void, String>() {
+                        @Override
+                        protected String doInBackground(Void... params) {
+                            try {
+                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                            }
+                            catch( JSONException e ) {
+                                Toast.makeText(context, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                            }
+                            catch( IOException e ) {
+                                Toast.makeText( context, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute( String threadId ) {
+                            if( threadId != null ) {
+                                Intent intent = new Intent(context, MessageShowActivity.class);
+                                intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                                intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+                                context.startActivity(intent);
+                            }
+                        }
+                    }.execute();
+
                 }
             });
         }
