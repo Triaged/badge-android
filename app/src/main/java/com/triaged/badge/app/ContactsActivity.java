@@ -1,7 +1,6 @@
 package com.triaged.badge.app;
 
 import android.app.ActionBar;
-import android.app.ActivityManager;
 import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -317,11 +316,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
         setSearchBarHint();
-        if (isMyServiceRunning(LocationTrackingService.class)) {
-            Log.d(TAG, "LOCATION SERVICE IS RUNNING");
-        } else {
-            Log.d(TAG, "LOCATION SERVICE IS NOT RUNNING");
-        }
     }
 
     @Override
@@ -442,15 +436,5 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         } else {
             searchBar.setHint("Search Departments");
         }
-    }
-
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
     }
 }
