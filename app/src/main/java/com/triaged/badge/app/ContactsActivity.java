@@ -112,6 +112,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setTypeface(regular);
                 departmentsListView.setVisibility( View.INVISIBLE );
                 contactsListView.setVisibility(View.VISIBLE);
+                setSearchBarHint();
             }
         });
 
@@ -124,6 +125,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 departmentsTabButton.setTypeface(medium);
                 contactsListView.setVisibility(View.INVISIBLE);
                 departmentsListView.setVisibility(View.VISIBLE);
+                setSearchBarHint();
             }
         });
 
@@ -163,8 +165,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         contactsListView.setVisibility(View.GONE);
                     }
                     else {
-                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
-                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.setFilter( text );
                     }
                 } else {
@@ -174,8 +174,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                         searchResultsList.setVisibility(View.GONE);
                     }
                     else {
-                        departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
-                        departmentsListView.setLayoutParams(departmentListViewParams);
                         departmentsAdapter.clearFilter();
                     }
                 }
@@ -202,34 +200,38 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = contactsAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                    int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                    int clickedId = contactsAdapter.getCachedContact(position).id;
+                    Intent intent;
+                    if (userId == clickedId) {
+                        intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", clickedId);
+                    startActivity(intent);
                 }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
-                startActivity(intent);
             }
         });
 
         searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = searchResultsAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                    int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                    int clickedId = searchResultsAdapter.getCachedContact(position).id;
+                    Intent intent;
+                    if (userId == clickedId) {
+                        intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", clickedId);
+                    startActivity(intent);
                 }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
-                startActivity(intent);
             }
         });
 
@@ -288,12 +290,16 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                     contactsDepartmentsTab.setVisibility(View.GONE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, 0);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    departmentListViewParams.setMargins(0, departmentListTopMargin, 0, 0);
+                    departmentsListView.setLayoutParams(departmentListViewParams);
                     searchBar.setCursorVisible(true);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     contactsDepartmentsTab.setVisibility(View.VISIBLE);
                     contactsListViewParams.setMargins(0, contactsListTopMargin, 0, contactsListBottomMargin);
                     contactsListView.setLayoutParams(contactsListViewParams);
+                    departmentListViewParams.setMargins(0, departmentListTopMargin, 0, departmentListBottomMargin);
+                    departmentsListView.setLayoutParams(departmentListViewParams);
                     searchBar.setCursorVisible(false);
                 }
             }
@@ -309,6 +315,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         actionBar.getTabAt(0).setIcon(R.drawable.messages_unselected);
         actionBar.getTabAt(1).setIcon(R.drawable.contacts_selected).select();
         actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+        setSearchBarHint();
     }
 
     @Override
@@ -334,12 +341,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             startActivity(intent);
             overridePendingTransition(0, 0);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent( this, MyProfileActivity.class );
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
-            startActivity(intent);
-            overridePendingTransition(0, 0);
+            if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                tab.setIcon(R.drawable.profile_selected);
+                Intent intent = new Intent( this, MyProfileActivity.class );
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            }
         }
     }
 
@@ -419,5 +428,13 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     protected void logout() {
         shouldRegister = true;
         super.logout();
+    }
+
+    private void setSearchBarHint() {
+        if (contactsTabButton.isSelected()) {
+            searchBar.setHint("Search Contacts");
+        } else {
+            searchBar.setHint("Search Departments");
+        }
     }
 }

@@ -16,6 +16,7 @@ import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -30,6 +31,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -92,6 +94,8 @@ public class EditProfileActivity extends BadgeActivity {
     protected int departmentId = 0;
     protected int officeId = 0;
     protected byte[] newProfilePhotoData;
+
+    private ProgressBar pendingUploadBar;
 
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
@@ -395,6 +399,8 @@ public class EditProfileActivity extends BadgeActivity {
             }
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
 
+        pendingUploadBar = (ProgressBar) findViewById(R.id.pending_upload);
+
     }
 
     @Override
@@ -409,21 +415,7 @@ public class EditProfileActivity extends BadgeActivity {
             switch (requestCode) {
                 case PICTURE_REQUEST_CODE:
                     // GET FROM GALLERY
-                    boolean isCamera = data == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
-                    Bitmap photo;
-                    if (isCamera) {
-                        photo = getPhotoFromFileSystem();
-                    } else {
-                        photo = getBitmapFromGallery(data, EditProfileActivity.this);
-                    }
-                    photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
-                    profileImageView.setImageBitmap(photo);
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                    newProfilePhotoData = byteArrayOutputStream.toByteArray();
-                    if (profileImageMissingView.getVisibility() == View.VISIBLE) {
-                        profileImageMissingView.setVisibility(View.GONE);
-                    }
+                    new ProcessImageTask().execute(data);
                     break;
                 case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:
                     department.secondaryValue = data.getStringExtra(OnboardingDepartmentActivity.DEPT_NAME_EXTRA);
@@ -532,5 +524,44 @@ public class EditProfileActivity extends BadgeActivity {
 
         currentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    private class ProcessImageTask extends AsyncTask<Intent, Void, Bitmap> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pendingUploadBar.setVisibility(View.VISIBLE);
+            profileImageView.setVisibility(View.GONE);
+            profileImageMissingView.setVisibility(View.GONE);
+        }
+
+        @Override
+        protected Bitmap doInBackground(Intent... params) {
+            boolean isCamera = params[0] == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(params[0].getAction());
+            Bitmap photo;
+            if (isCamera) {
+                photo = getPhotoFromFileSystem();
+            } else {
+                photo = getBitmapFromGallery(params[0], EditProfileActivity.this);
+            }
+            photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
+            return photo;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            pendingUploadBar.setVisibility(View.GONE);
+            profileImageMissingView.setVisibility(View.VISIBLE);
+            profileImageView.setVisibility(View.VISIBLE);
+            profileImageView.setImageBitmap(bitmap);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            newProfilePhotoData = byteArrayOutputStream.toByteArray();
+            if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                profileImageMissingView.setVisibility(View.GONE);
+            }
+        }
     }
 }

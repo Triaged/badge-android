@@ -714,7 +714,7 @@ public class DataProviderService extends Service {
         }
         loggedInUser = null;
         prefs.edit().clear().commit();
-        stopService( new Intent( this, LocationTrackingService.class ) );
+        LocationTrackingService.clearAlarm( localBinding, this );
 
         // Wipe DB, we're not logged in anymore.
         database.execSQL(CLEAR_CONTACTS_SQL);
@@ -1178,7 +1178,8 @@ public class DataProviderService extends Service {
                             if( pInfo.versionCode > prefs.getInt( INSTALLED_VERSION_PREFS_KEY, -1 ) ) {
                                 prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode ).commit();
                                 if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true )  ) {
-                                    startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
+                                    LocationTrackingService.scheduleAlarm( DataProviderService.this );
+                                    // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
                                 }
                             }
                         }
