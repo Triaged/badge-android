@@ -362,6 +362,10 @@ public class MessageShowActivity extends BadgeActivity {
         adapter.notifyDataSetChanged();
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
         setupContactsMenu();
+        if (adapter.getCount() > 0 && !showKeyboard) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        }
         super.onNewIntent(intent);
     }
 
