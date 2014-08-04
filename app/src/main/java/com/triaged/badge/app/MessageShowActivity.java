@@ -69,6 +69,8 @@ public class MessageShowActivity extends BadgeActivity {
 
     private SharedPreferences prefs;
 
+    private boolean lengthGreaterThanZero = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,6 +166,13 @@ public class MessageShowActivity extends BadgeActivity {
                 } else if (postBox.getLineCount() < 3 && expanded) {
                     collapse(postBoxWrapper);
                     expanded = false;
+                }
+                if (postBox.getText().toString().length() > 0 && !lengthGreaterThanZero) {
+                    sendButton.setImageResource(R.drawable.ic_action_send_now_orange);
+                    lengthGreaterThanZero = true;
+                } else if (postBox.getText().toString().length() == 0 && lengthGreaterThanZero) {
+                    sendButton.setImageResource(R.drawable.ic_action_send_now);
+                    lengthGreaterThanZero = false;
                 }
             }
 
