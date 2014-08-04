@@ -45,6 +45,10 @@ public class BadgeApplication extends Application {
                 mixpanelAPI.track("appForeground", props);
                 mixpanelAPI.flush();
                 startService( fayeServiceIntent );
+                if( dataProviderServiceBinding != null ) {
+                    dataProviderServiceBinding.syncMessagesAsync();
+                    dataProviderServiceBinding.syncCompanyAsync();
+                }
             }
 
             @Override

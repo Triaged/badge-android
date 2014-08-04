@@ -340,6 +340,44 @@ public class DataProviderService extends Service {
     }
 
     /**
+     * Partial sync of contacts, only download/save contacts that have changed
+     * since the last company sync.
+     *
+     * Used when app foregrounds.
+     */
+    protected void syncContactsPartial( ) {
+        // Sanity check, if we've synced within a minute, don't bother.
+        if( lastSynced > System.currentTimeMillis() - 120000 ) {
+            return;
+        }
+
+        sqlThread.submit( new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
+                    ensureNotUnauthorized( response );
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if( statusCode == HttpStatus.SC_OK ) {
+                        parseJSONResponse( response.getEntity() );
+                    }
+                    else {
+                        if( response.getEntity() != null  ) {
+                            response.getEntity().consumeContent();
+                        }
+                    }
+                }
+                catch( IOException e ) {
+
+                }
+                catch( JSONException e ) {
+
+                }
+            }
+        } );
+    }
+
+    /**
      * Syncs company info from the cloud to the device.
      *
      * Notifies listeners via local broadcast that data has been updated with the {@link #DB_UPDATED_ACTION}
@@ -360,7 +398,7 @@ public class DataProviderService extends Service {
         prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
         try {
             db.beginTransaction();
-            HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
+            HttpResponse response = apiClient.downloadCompanyRequest( 0 /* Get all contacts */);
             ensureNotUnauthorized( response );
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
