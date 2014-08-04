@@ -32,6 +32,7 @@ import com.triaged.badge.data.Contact;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -190,6 +191,13 @@ public class MessageShowActivity extends BadgeActivity {
                 if (!msg.equals("")) {
                     dataProviderServiceBinding.sendMessageAsync(threadId, msg);
                     postBox.setText("");
+                    JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                    try {
+                        props.put("recipient_id", threadId);
+                        mixpanel.track("message_sent", props);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
