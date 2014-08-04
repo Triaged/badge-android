@@ -43,7 +43,7 @@ public class Notifier {
             Notification.Builder mBuilder =
                     new Notification.Builder(context)
                             // TODO we need the real icon
-                            .setSmallIcon(R.drawable.ic_action_person)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle("New message from " + from )
                             .setContentText(msg)
                             .setSound( soundUri )
@@ -69,7 +69,7 @@ public class Notifier {
             Notification.Builder mBuilder =
                     new Notification.Builder(context)
                             // TODO we need the real icon
-                            .setSmallIcon(R.drawable.ic_action_person)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle( String.format( "%d new messages", numMessages ) )
                             .setContentText( namesBuilder.toString() )
                             .setSound( soundUri )
