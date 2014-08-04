@@ -24,7 +24,6 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
 
     private ListView contactsForDepartmentList;
     private ContactsAdapterWithoutHeadings adapter;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
@@ -347,10 +348,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
      */
     @Override
     protected void onDatabaseReady() {
-        // SETUP CONTACTS
-        loadContactsAndDepartments();
+        new AsyncTask<Void, Void, Void>() {
 
-        lazyDeviceRegistration();
+            @Override
+            protected Void doInBackground(Void... params) {
+                loadContactsAndDepartments();
+
+                // SETUP CONTACTS
+                lazyDeviceRegistration();
+                return null;
+            }
+        };
     }
 
     /**
