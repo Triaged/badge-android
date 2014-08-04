@@ -61,14 +61,12 @@ public class BadgeApplication extends Application {
         dataProviderServiceConnnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.d(TAG, "SERVICE CONNECTED YAAAAY");
                 dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
                 dataProviderServiceBinding.initDatabase();
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                Log.d(TAG, "SERVICE DISCONNECTED BOOOOOO");
             }
         };
 

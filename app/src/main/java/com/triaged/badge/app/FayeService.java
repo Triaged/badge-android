@@ -73,7 +73,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
+        // Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
         if( loggedInUserId > 0 ) {
             JSONObject extension = new JSONObject();
             try {
@@ -141,7 +141,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void subscribedToChannel(String subscription) {
-        Log.d(LOG_TAG, "Faye subscribed to channel!");
+        // Log.d(LOG_TAG, "Faye subscribed to channel!");
         ensureDataServiceBinding();
     }
 
@@ -173,7 +173,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         catch( JSONException e ) {
             Log.w( LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e );
         }
-        Log.d( LOG_TAG, "Message: " + json.toString() );
+        // Log.d( LOG_TAG, "Message: " + json.toString() );
     }
 
     public class LocalBinding extends Binder {

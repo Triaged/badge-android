@@ -177,7 +177,7 @@ public class LocationTrackingService extends Service implements LocationListener
 
     @Override
     public void onLocationChanged( final Location location) {
-        Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
+        // Log.d( LOG_TAG, "Location service: " + location.getLatitude() + ", " + location.getLongitude() + " with accuracy " + location.getAccuracy() );
 
         if( logLocations ) {
             String line = new Date().toString() + ": New location: " + location.getLatitude() + "," + location.getLongitude() + " accuracy " + location.getAccuracy() + "\n";
@@ -194,7 +194,7 @@ public class LocationTrackingService extends Service implements LocationListener
             String msg = "Accuracy of " + location.getAccuracy() + " isn't going to cut it.";
             // TODO delete me
             //Toast.makeText( this, msg, Toast.LENGTH_LONG ).show();
-            Log.d( LOG_TAG, msg );
+            // Log.d( LOG_TAG, msg );
             return;
         }
 
@@ -234,15 +234,14 @@ public class LocationTrackingService extends Service implements LocationListener
                             }
                         }
                     }
-                    final String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
-                    // TODO delete me
+                    // final String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
 //                    handler.post( new Runnable() {
 //                        @Override
 //                        public void run() {
 //                            Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG ).show();
 //                        }
 //                    });
-                    Log.i( LOG_TAG, msg );
+                    // Log.i( LOG_TAG, msg );
                     stopSelf();
                     return null;
                 }
@@ -274,7 +273,7 @@ public class LocationTrackingService extends Service implements LocationListener
         } else {
             // Google Play services was not available for some reason
             // Display an error dialog
-            Log.d(LOG_TAG, "GMS unavailable");
+            Log.e(LOG_TAG, "GMS unavailable");
             return false;
         }
     }
