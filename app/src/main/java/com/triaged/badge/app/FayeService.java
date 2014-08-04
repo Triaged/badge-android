@@ -33,7 +33,10 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     protected static final String LOG_TAG = FayeService.class.getName();
 
-    protected static final String FAYE_HOST = "ws://badge-messaging-staging.herokuapp.com/streaming";
+    protected static final String STAGING_FAYE_HOST = "ws://messaging.badge.co/streaming";
+    protected static final String PROD_FAYE_HOST = "ws://messaging.badge.co/streaming";
+    protected static final String FAYE_HOST = PROD_FAYE_HOST;
+
     //protected Fa faye;
     protected SharedPreferences prefs;
     protected boolean fayeConnected = false;

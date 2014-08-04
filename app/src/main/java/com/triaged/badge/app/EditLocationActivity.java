@@ -23,6 +23,8 @@ public class EditLocationActivity extends OnboardingLocationActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        continueButton.setText("Back");
+
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
         onboardingDotsView.setVisibility(View.GONE);
 

@@ -193,7 +193,7 @@ public class LocationTrackingService extends Service implements LocationListener
         if( location.getAccuracy() > 300f ) {
             String msg = "Accuracy of " + location.getAccuracy() + " isn't going to cut it.";
             // TODO delete me
-            Toast.makeText( this, msg, Toast.LENGTH_LONG ).show();
+            //Toast.makeText( this, msg, Toast.LENGTH_LONG ).show();
             Log.d( LOG_TAG, msg );
             return;
         }
@@ -236,12 +236,12 @@ public class LocationTrackingService extends Service implements LocationListener
                     }
                     final String msg = "Phone location checked against office locations! " + location.getLatitude() + ", " + location.getLongitude();
                     // TODO delete me
-                    handler.post( new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG ).show();
-                        }
-                    });
+//                    handler.post( new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            Toast.makeText( LocationTrackingService.this, msg, Toast.LENGTH_LONG ).show();
+//                        }
+//                    });
                     Log.i( LOG_TAG, msg );
                     stopSelf();
                     return null;

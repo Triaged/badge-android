@@ -200,34 +200,38 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = contactsAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                    int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                    int clickedId = contactsAdapter.getCachedContact(position).id;
+                    Intent intent;
+                    if (userId == clickedId) {
+                        intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", clickedId);
+                    startActivity(intent);
                 }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
-                startActivity(intent);
             }
         });
 
         searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
-                int clickedId = searchResultsAdapter.getCachedContact(position).id;
-                Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
-                } else {
-                    intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                    int userId = dataProviderServiceBinding.getLoggedInUser().id;
+                    int clickedId = searchResultsAdapter.getCachedContact(position).id;
+                    Intent intent;
+                    if (userId == clickedId) {
+                        intent = new Intent(ContactsActivity.this, MyProfileActivity.class);
+                    } else {
+                        intent = new Intent(ContactsActivity.this, OtherProfileActivity.class);
+                    }
+                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.putExtra("PROFILE_ID", clickedId);
+                    startActivity(intent);
                 }
-                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
-                startActivity(intent);
             }
         });
 
@@ -337,12 +341,14 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             startActivity(intent);
             overridePendingTransition(0, 0);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent( this, MyProfileActivity.class );
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
-            startActivity(intent);
-            overridePendingTransition(0, 0);
+            if (dataProviderServiceBinding.getLoggedInUser() != null) {
+                tab.setIcon(R.drawable.profile_selected);
+                Intent intent = new Intent( this, MyProfileActivity.class );
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            }
         }
     }
 

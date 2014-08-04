@@ -30,7 +30,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
 
     protected static final int ADD_OFFICE_REQUEST_CODE = 1;
 
-    private Button continueButton = null;
+    protected Button continueButton = null;
     protected ListView officeLocationsList = null;
     protected ImageView noLocationCheck = null;
     protected OfficeLocationsAdapter officeLocationsAdapter = null;

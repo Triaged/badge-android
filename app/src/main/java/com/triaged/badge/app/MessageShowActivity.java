@@ -32,6 +32,7 @@ import com.triaged.badge.data.Contact;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -69,6 +70,8 @@ public class MessageShowActivity extends BadgeActivity {
 
     private SharedPreferences prefs;
 
+    private boolean lengthGreaterThanZero = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,6 +94,7 @@ public class MessageShowActivity extends BadgeActivity {
             public void onClick(View v) {
                 Intent backToListIntent = new Intent(MessageShowActivity.this, MessagesIndexActivity.class);
                 startActivity(backToListIntent);
+                finish();
             }
         });
 
@@ -164,6 +168,13 @@ public class MessageShowActivity extends BadgeActivity {
                     collapse(postBoxWrapper);
                     expanded = false;
                 }
+                if (postBox.getText().toString().length() > 0 && !lengthGreaterThanZero) {
+                    sendButton.setImageResource(R.drawable.ic_action_send_now_orange);
+                    lengthGreaterThanZero = true;
+                } else if (postBox.getText().toString().length() == 0 && lengthGreaterThanZero) {
+                    sendButton.setImageResource(R.drawable.ic_action_send_now);
+                    lengthGreaterThanZero = false;
+                }
             }
 
             @Override
@@ -177,8 +188,17 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 String msg = postBox.getText().toString();
-                dataProviderServiceBinding.sendMessageAsync( threadId, msg );
-                postBox.setText( "" );
+                if (!msg.equals("")) {
+                    dataProviderServiceBinding.sendMessageAsync(threadId, msg);
+                    postBox.setText("");
+                    JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                    try {
+                        props.put("recipient_id", threadId);
+                        mixpanel.track("message_sent", props);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
         } );
@@ -358,7 +378,7 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onStart() {
-        Notifier.clearNotifications( this );
+        Notifier.clearNotifications(this);
         super.onStart();
 
     }
