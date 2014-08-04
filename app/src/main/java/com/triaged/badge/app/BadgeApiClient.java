@@ -36,9 +36,9 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String PROD_API_MESSAGING_HOST = "messaging.badge.co";
     private static final String STAGING_API_MESSAGING_HOST = "badge-messaging-staging.herokuapp.com";
     //private static final String STAGING_API_MESSAGING_HOST = "10.9.8.93";
-    private static final String API_MESSAGING_HOST = STAGING_API_MESSAGING_HOST;
+    private static final String API_MESSAGING_HOST = PROD_API_MESSAGING_HOST;
 
-    private static final String API_HOST = STAGING_API_HOST;
+    private static final String API_HOST = PROD_API_HOST;
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
