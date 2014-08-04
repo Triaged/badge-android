@@ -345,9 +345,9 @@ public class DataProviderService extends Service {
      *
      * Used when app foregrounds.
      */
-    protected void syncContactsPartial( ) {
-        // Sanity check, if we've synced within a minute, don't bother.
-        if( lastSynced > System.currentTimeMillis() - 120000 ) {
+    protected void partialSyncContactsAsync( ) {
+        // Sanity check, if we've synced within 2 minutes, don't bother.
+        if( lastSynced > System.currentTimeMillis() - 120000 || database == null ) {
             return;
         }
 
@@ -355,11 +355,33 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 try {
-                    HttpResponse response = apiClient.downloadCompanyRequest(lastSynced);
+                    long previousSync = lastSynced;
+                    lastSynced = System.currentTimeMillis();
+                    prefs.edit().putLong( LAST_SYNCED_PREFS_KEY, lastSynced ).commit();
+
+                    HttpResponse response = apiClient.downloadCompanyRequest( previousSync - 60000 /* one minute of buffer */ );
                     ensureNotUnauthorized( response );
                     int statusCode = response.getStatusLine().getStatusCode();
                     if( statusCode == HttpStatus.SC_OK ) {
-                        parseJSONResponse( response.getEntity() );
+                        JSONArray companyArr = parseJSONArrayResponse( response.getEntity() );
+                        JSONObject companyObj = companyArr.getJSONObject( 0 );
+                        JSONArray contactsArr = companyObj.getJSONArray("users");
+                        ContentValues values = new ContentValues();
+                        int contactsLength = contactsArr.length();
+                        for (int i = 0; i < contactsLength; i++) {
+                            JSONObject newContact = contactsArr.getJSONObject(i);
+                            setContactDBValesFromJSON( newContact, values );
+                            Contact c = getContact( newContact.getInt("id") );
+                            if( c == null ) {
+                                database.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
+                            }
+                            else {
+                                database.update( CompanySQLiteHelper.TABLE_CONTACTS, values, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID ), new String[] { newContact.getString("id") } );
+                            }
+                            values.clear();
+                        }
+
+                        localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
                     }
                     else {
                         if( response.getEntity() != null  ) {
@@ -407,15 +429,8 @@ public class DataProviderService extends Service {
                     db.execSQL(CLEAR_DEPARTMENTS_SQL);
                     db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
 
-
-                    ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream(256 * 1024 /* 256 k */);
-                    response.getEntity().writeTo(jsonBuffer);
-
-
-                    JSONArray companyArr = new JSONArray(jsonBuffer.toString("UTF-8"));
+                    JSONArray companyArr = parseJSONArrayResponse( response.getEntity() );
                     JSONObject companyObj = companyArr.getJSONObject(0);
-                    // Allow immediate GC
-                    jsonBuffer = null;
                     ContentValues values = new ContentValues();
 
                     JSONArray contactsArr = companyObj.getJSONArray("users");
@@ -1936,7 +1951,7 @@ public class DataProviderService extends Service {
 
     protected void syncMessagesSync( ) {
         try {
-            HttpResponse response = apiClient.getMessageHistory(prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ), loggedInUser.id );
+            HttpResponse response = apiClient.getMessageHistory(prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ) - 10000000 /* 15 seconds of buffer */, loggedInUser.id );
             int status = response.getStatusLine().getStatusCode();
             if( status == HttpStatus.SC_OK ) {
                 JSONArray msgResponse = parseJSONArrayResponse( response.getEntity() );
@@ -2042,7 +2057,12 @@ public class DataProviderService extends Service {
                         }
                         msgValues.clear();
                     }
-                    prefs.edit().putLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp ).commit();
+                    // If I'm honest, this switch isn't intended to be used this way,
+                    // but the idea here is only update the timestamp on history sync
+                    // so that all messages will eventually be dl'd no matter what.
+                    if( !broadcast ) {
+                        prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+                    }
 
                     // Get id of most recent msg.
                     Cursor messages = getMessages( threadId );
@@ -2286,7 +2306,7 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#getContactsByDepartmentCursor(int)
          */
-        public Cursor getContactsByDepartmentCursor( int departmentId ) {
+        public Cursor getContactsByDepartmentCursor(int departmentId) {
             return DataProviderService.this.getContactsByDepartmentCursor(departmentId);
         }
 
@@ -2294,7 +2314,7 @@ public class DataProviderService extends Service {
          * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
          */
         public Cursor getContactsCursorExcludingLoggedInUser() {
-           return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
+            return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
         }
 
         /**
@@ -2307,21 +2327,21 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
          */
-        public void setSmallContactImage( Contact c, View thumbImageView, View placeholderView ) {
-            DataProviderService.this.setSmallContactImage(c.avatarUrl, thumbImageView, placeholderView );
+        public void setSmallContactImage(Contact c, View thumbImageView, View placeholderView) {
+            DataProviderService.this.setSmallContactImage(c.avatarUrl, thumbImageView, placeholderView);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
          */
-        public void setSmallContactImage( String avatarUrl, View thumbImageView, View placeholderView ) {
-            DataProviderService.this.setSmallContactImage( avatarUrl, thumbImageView, placeholderView );
+        public void setSmallContactImage(String avatarUrl, View thumbImageView, View placeholderView) {
+            DataProviderService.this.setSmallContactImage(avatarUrl, thumbImageView, placeholderView);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#setLargeContactImage(com.triaged.badge.data.Contact, android.widget.ImageView)
          */
-        public void setLargeContactImage( Contact c, ImageView imageView ) {
+        public void setLargeContactImage(Contact c, ImageView imageView) {
             DataProviderService.this.setLargeContactImage(c, imageView);
         }
 
@@ -2337,42 +2357,42 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#getContactsManaged(int)
          */
-        public Cursor getContactsManaged( int contactId ) {
-            return DataProviderService.this.getContactsManaged( contactId );
+        public Cursor getContactsManaged(int contactId) {
+            return DataProviderService.this.getContactsManaged(contactId);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#loginAsync(String, String, com.triaged.badge.app.DataProviderService.LoginCallback)
          */
-        public void loginAsync( String email, String password, LoginCallback loginCallback) {
-            DataProviderService.this.loginAsync( email, password, loginCallback);
+        public void loginAsync(String email, String password, LoginCallback loginCallback) {
+            DataProviderService.this.loginAsync(email, password, loginCallback);
         }
 
         /**
          * @return null of not logged in, contact representing user acct otherwise.
          */
-        public Contact getLoggedInUser( ) {
+        public Contact getLoggedInUser() {
             return loggedInUser;
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#saveBasicProfileDataAsync(String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveBasicProfileDataAsync( String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback ) {
+        public void saveBasicProfileDataAsync(String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback) {
             DataProviderService.this.saveBasicProfileDataAsync(firstName, lastName, birthDateString, cellPhone, saveCallback);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#savePositionProfileDataAsync(String, int, int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void savePositionProfileDataAsync( String jobTitle, int departmentId, int managerId, AsyncSaveCallback saveCallback ) {
+        public void savePositionProfileDataAsync(String jobTitle, int departmentId, int managerId, AsyncSaveCallback saveCallback) {
             DataProviderService.this.savePositionProfileDataAsync(jobTitle, departmentId, managerId, saveCallback);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#savePrimaryLocationAsync(int, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void savePrimaryLocationASync( int primaryLocation, AsyncSaveCallback saveCallback ) {
+        public void savePrimaryLocationASync(int primaryLocation, AsyncSaveCallback saveCallback) {
             DataProviderService.this.savePrimaryLocationAsync(primaryLocation, saveCallback);
         }
 
@@ -2380,22 +2400,22 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, byte[], com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void saveAllProfileDataAsync( String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
+        public void saveAllProfileDataAsync(String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
             DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFile, saveCallback);
         }
 
         /**
          * @see DataProviderService#getOfficeLocationName(int)
          */
-        public String getOfficeLocationName( int locationId ) {
+        public String getOfficeLocationName(int locationId) {
             return DataProviderService.this.getOfficeLocationName(locationId);
         }
 
         /*
          * @see DataProviderService#getDepartmentCursor(boolean)
          */
-        public Cursor getDepartmentCursor( boolean onlyNonEmptyDepts ) {
-            return DataProviderService.this.getDepartmentCursor( onlyNonEmptyDepts );
+        public Cursor getDepartmentCursor(boolean onlyNonEmptyDepts) {
+            return DataProviderService.this.getDepartmentCursor(onlyNonEmptyDepts);
         }
 
         /**
@@ -2405,50 +2425,52 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getOfficeLocationsCursor();
         }
 
-        /** @see DataProviderService#loggedOut()  */
+        /**
+         * @see DataProviderService#loggedOut()
+         */
         public void logout() {
             DataProviderService.this.unregisterDevice();
         }
-        
+
         /**
          * @see com.triaged.badge.app.DataProviderService#createNewDepartmentAsync(String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void createNewDepartmentAsync( String department, AsyncSaveCallback saveCallback ) {
+        public void createNewDepartmentAsync(String department, AsyncSaveCallback saveCallback) {
             DataProviderService.this.createNewDepartmentAsync(department, saveCallback);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#createNewOfficeLocationAsync(String, String, String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void createNewOfficeLocationAsync( String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback ) {
+        public void createNewOfficeLocationAsync(String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback) {
             DataProviderService.this.createNewOfficeLocationAsync(address, city, state, zip, country, saveCallback);
         }
 
         /**
-         * @see DataProviderService#registerDevice( String )
+         * @see DataProviderService#registerDevice(String)
          */
-        public void registerDevice( String pushToken ) {
+        public void registerDevice(String pushToken) {
             DataProviderService.this.registerDevice(pushToken);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#checkInToOffice(int)
          */
-        public void checkInToOffice( int officeId  ) {
+        public void checkInToOffice(int officeId) {
             DataProviderService.this.checkInToOffice(officeId);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#checkOutOfOfficeAsync(int)
          */
-        public void checkOutOfOffice( int officeId ) {
+        public void checkOutOfOffice(int officeId) {
             DataProviderService.this.checkOutOfOfficeAsync(officeId);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#changePassword(String, String, String, com.triaged.badge.app.DataProviderService.AsyncSaveCallback)
          */
-        public void changePassword( String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback ) {
+        public void changePassword(String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback) {
             DataProviderService.this.changePassword(oldPassword, newPassword, newPasswordConfirmation, saveCallback);
         }
 
@@ -2459,43 +2481,43 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getBasicMixpanelData();
         }
 
-        public void refreshContact( int contactId ) {
-            DataProviderService.this.refreshContact( contactId );
+        public void refreshContact(int contactId) {
+            DataProviderService.this.refreshContact(contactId);
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, String, boolean )
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, String, boolean)
          */
-        public void upsertThreadAndMessages( JSONObject thread, String guid ) {
+        public void upsertThreadAndMessages(JSONObject thread, String guid) {
             DataProviderService.this.upsertThreadAndMessages(thread, guid, true);
         }
 
         /**
          * @see DataProviderService#getThreads()
          */
-        public Cursor getThreads( ) {
+        public Cursor getThreads() {
             return DataProviderService.this.getThreads();
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#getMessages(String)
          */
-        public Cursor getMessages( String threadId ) {
+        public Cursor getMessages(String threadId) {
             return DataProviderService.this.getMessages(threadId);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#sendMessageAsync(String, String)
          */
-        public void sendMessageAsync( String threadId, String body ) {
-            DataProviderService.this.sendMessageAsync( threadId, body );
+        public void sendMessageAsync(String threadId, String body) {
+            DataProviderService.this.sendMessageAsync(threadId, body);
         }
 
         /**
          * @see com.triaged.badge.app.DataProviderService#createThreadSync(Integer[])
          */
-        public String createThreadSync( Integer[] userIds ) throws JSONException, IOException {
-            return DataProviderService.this.createThreadSync( userIds );
+        public String createThreadSync(Integer[] userIds) throws JSONException, IOException {
+            return DataProviderService.this.createThreadSync(userIds);
         }
 
         /**
@@ -2505,11 +2527,10 @@ public class DataProviderService extends Service {
          * @param threadId
          * @return
          */
-        public String getRecipientNames( String threadId ) {
+        public String getRecipientNames(String threadId) {
             try {
                 return userIdArrayToNames(new JSONArray(prefs.getString(threadId, "[]")));
-            }
-            catch( JSONException e ) {
+            } catch (JSONException e) {
                 return null;
             }
         }
@@ -2517,8 +2538,8 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#markAsRead(String)
          */
-        public void markAsRead( String threadId ) {
-            DataProviderService.this.markAsRead( threadId );
+        public void markAsRead(String threadId) {
+            DataProviderService.this.markAsRead(threadId);
         }
 
         /**
@@ -2529,9 +2550,9 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#retryMessageAsync( String )
+         * @see com.triaged.badge.app.DataProviderService#retryMessageAsync(String)
          */
-        public void retryMessageAsync( String guid ) {
+        public void retryMessageAsync(String guid) {
             DataProviderService.this.retryMessageAsync(guid);
         }
 
@@ -2540,6 +2561,13 @@ public class DataProviderService extends Service {
          */
         public void requestResetPassword(String email, AsyncSaveCallback saveCallback) {
             DataProviderService.this.requestResetPassword(email, saveCallback);
+        }
+
+        /**
+         * @see DataProviderService#partialSyncContactsAsync()
+         */
+        public void partialSyncContactsAsync( ) {
+            DataProviderService.this.partialSyncContactsAsync();
         }
     }
 

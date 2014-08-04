@@ -47,7 +47,7 @@ public class BadgeApplication extends Application {
                 startService( fayeServiceIntent );
                 if( dataProviderServiceBinding != null ) {
                     dataProviderServiceBinding.syncMessagesAsync();
-                    dataProviderServiceBinding.syncCompanyAsync();
+                    dataProviderServiceBinding.partialSyncContactsAsync();
                 }
             }
 
