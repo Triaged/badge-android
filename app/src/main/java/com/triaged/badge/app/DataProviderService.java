@@ -1987,6 +1987,7 @@ public class DataProviderService extends Service {
                     }
                     upsertThreadAndMessages( thread, guid, false );
                 }
+                localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
             }
             else {
                 if( response.getEntity() != null ) {

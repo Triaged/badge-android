@@ -347,12 +347,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
      */
     @Override
     protected void onDatabaseReady() {
-
-        loadContactsAndDepartments();
-
         // SETUP CONTACTS
-        lazyDeviceRegistration();
         loadContactsAndDepartments();
+
+        lazyDeviceRegistration();
     }
 
     /**

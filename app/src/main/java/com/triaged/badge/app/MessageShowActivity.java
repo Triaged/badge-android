@@ -355,7 +355,7 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        threadId = intent.getStringExtra( THREAD_ID_EXTRA );
+        threadId = intent.getStringExtra(THREAD_ID_EXTRA);
         showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
         dataProviderServiceBinding.markAsRead( threadId );
         adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
@@ -363,6 +363,14 @@ public class MessageShowActivity extends BadgeActivity {
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
         setupContactsMenu();
         super.onNewIntent(intent);
+    }
+
+    @Override
+    protected void onDatabaseUpdated() {
+        super.onDatabaseUpdated();
+        dataProviderServiceBinding.markAsRead( threadId );
+        adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+        adapter.notifyDataSetChanged();
     }
 
     @Override
