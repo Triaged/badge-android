@@ -17,6 +17,7 @@ import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -499,15 +500,58 @@ public class EditProfileActivity extends BadgeActivity {
      * @param *data  @param context * @return
      */
     public Bitmap getBitmapFromGallery(Intent data, Context context){
-        Uri selectedImage = data.getData();
-        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-        Cursor cursor = context.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
+        currentPhotoPath = getPath( data.getData() );
+        if (currentPhotoPath != null) {
+            Bitmap fileSystemBmp = getPhotoFromFileSystem();
+            if (fileSystemBmp != null) {
+                return fileSystemBmp;
+            } else {
+                return loadPicasaImageFromGallery( data.getData() );
+            }
+        } else {
+            return loadPicasaImageFromGallery( data.getData() );
+        }
+    }
+
+    /**
+     * helper to retrieve the path of an image URI
+     */
+    public String getPath(Uri uri) {
+        String[] projection = {  MediaStore.MediaColumns.DATA};
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if(cursor != null) {
+            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+            String filePath = cursor.getString(columnIndex);
+            cursor.close();
+            return filePath;
+        } else {
+            return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+        }
+    }
+
+    // NEW METHOD FOR PICASA IMAGE LOAD
+    private Bitmap loadPicasaImageFromGallery(final Uri uri) {
+        String[] projection = {  MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.DISPLAY_NAME };
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+
+            int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+            if (columnIndex != -1) {
+                try {
+                    Bitmap bitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                    return bitmap;
+                    // THIS IS THE BITMAP IMAGE WE ARE LOOKING FOR.
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
         cursor.close();
-        currentPhotoPath = picturePath;
-        return getPhotoFromFileSystem();
+        return null;
     }
 
     private File createImageFile() throws IOException {
@@ -551,17 +595,21 @@ public class EditProfileActivity extends BadgeActivity {
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
             pendingUploadBar.setVisibility(View.GONE);
             profileImageMissingView.setVisibility(View.VISIBLE);
             profileImageView.setVisibility(View.VISIBLE);
-            profileImageView.setImageBitmap(bitmap);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-            newProfilePhotoData = byteArrayOutputStream.toByteArray();
-            if (profileImageMissingView.getVisibility() == View.VISIBLE) {
-                profileImageMissingView.setVisibility(View.GONE);
+            if (bitmap != null) {
+                profileImageView.setImageBitmap(bitmap);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                newProfilePhotoData = byteArrayOutputStream.toByteArray();
+                if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                    profileImageMissingView.setVisibility(View.GONE);
+                }
+            } else {
+                Toast.makeText(EditProfileActivity.this, "Unable to retrieve photo", Toast.LENGTH_SHORT).show();
             }
+            super.onPostExecute(bitmap);
         }
     }
 }
