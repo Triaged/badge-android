@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -45,6 +46,7 @@ import java.util.Arrays;
 public class MessageShowActivity extends BadgeActivity {
 
     public static final String THREAD_ID_EXTRA = "threadId";
+    public static final String SHOW_KEYBOARD_EXTRA = "showKeyboard";
     private static final String LOG_TAG = MessageShowActivity.class.getName();
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -68,6 +70,7 @@ public class MessageShowActivity extends BadgeActivity {
     private SharedPreferences prefs;
 
     private boolean lengthGreaterThanZero = false;
+    private boolean showKeyboard = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +78,7 @@ public class MessageShowActivity extends BadgeActivity {
         final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -209,16 +213,16 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onDatabaseReady() {
-        showThread();
-    }
-
-    protected void showThread() {
         dataProviderServiceBinding.markAsRead( threadId );
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
         threadList.setSelection(adapter.getCount() - 1);
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
         setupContactsMenu();
+        if (adapter.getCount() > 0) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        }
     }
 
     @Override
@@ -352,6 +356,7 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         threadId = intent.getStringExtra( THREAD_ID_EXTRA );
+        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
         dataProviderServiceBinding.markAsRead( threadId );
         adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
         adapter.notifyDataSetChanged();
@@ -381,6 +386,12 @@ public class MessageShowActivity extends BadgeActivity {
     protected void notifyNewMessage(Intent intent) {
         if( !intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ).equals( threadId ) ) {
             super.notifyNewMessage(intent);
+        } else {
+            threadId = intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA);
+            showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
+            dataProviderServiceBinding.markAsRead( threadId );
+            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+            adapter.notifyDataSetChanged();
         }
     }
 }

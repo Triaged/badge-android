@@ -103,6 +103,10 @@ public class EditProfileActivity extends BadgeActivity {
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
+            Intent saveIntent = new Intent(EditProfileActivity.this, MyProfileActivity.class);
+            saveIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            saveIntent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+            startActivity(saveIntent);
             finish();
         }
 

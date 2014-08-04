@@ -93,10 +93,20 @@ public class MessageNewActivity extends BadgeActivity {
                                 return dataProviderServiceBinding.createThreadSync(recipientIds);
                             }
                             catch( JSONException e ) {
-                                Toast.makeText( MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT ).show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText( MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT ).show();
+                                    }
+                                });
                             }
                             catch( IOException e ) {
-                                Toast.makeText( MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText( MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                                    }
+                                });
                             }
                             return null;
                         }
