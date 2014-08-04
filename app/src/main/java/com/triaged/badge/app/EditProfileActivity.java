@@ -98,6 +98,10 @@ public class EditProfileActivity extends BadgeActivity {
 
     private ProgressBar pendingUploadBar;
 
+    private boolean changesAwaitingSave = false;
+
+    private TextView saveButton;
+
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
@@ -132,10 +136,11 @@ public class EditProfileActivity extends BadgeActivity {
             }
         });
 
-        TextView saveButton = (TextView) backButtonBar.findViewById(R.id.save_button);
+        saveButton = (TextView) backButtonBar.findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                changesAwaitingSave = false;
                 dataProviderServiceBinding.saveAllProfileDataAsync(
                         firstName.valueToSave,
                         lastName.valueToSave,
@@ -277,6 +282,7 @@ public class EditProfileActivity extends BadgeActivity {
                                         editView.invalidate();
                                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                                         imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+                                        changesAwaitingSave = true;
                                         dialog.cancel();
                                     }
                                 });
@@ -365,6 +371,7 @@ public class EditProfileActivity extends BadgeActivity {
                 iso8601Format.setTimeZone( Contact.GMT );
                 birthDate.valueToSave = iso8601Format.format(birthdayCalendar.getTime());
                 birthDate.invalidate();
+                changesAwaitingSave = true;
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 
@@ -397,6 +404,7 @@ public class EditProfileActivity extends BadgeActivity {
                 iso8601Format.setTimeZone( Contact.GMT );
                 startDate.valueToSave = iso8601Format.format(startDateCalendar.getTime());
                 startDate.invalidate();
+                changesAwaitingSave = true;
             }
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
 
@@ -406,8 +414,29 @@ public class EditProfileActivity extends BadgeActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        if (changesAwaitingSave) {
+            new AlertDialog.Builder(EditProfileActivity.this)
+                    .setTitle("Save Changes?")
+                    .setMessage("Do you want to save your changes?")
+                    .setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            saveButton.performClick();
+                            dialog.cancel();
+                        }
+                    })
+                    .setNegativeButton("DISCARD", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            changesAwaitingSave = false;
+                            onBackPressed();
+                            dialog.cancel();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        } else {
+            super.onBackPressed();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        }
     }
 
     @Override
@@ -422,17 +451,20 @@ public class EditProfileActivity extends BadgeActivity {
                     department.secondaryValue = data.getStringExtra(OnboardingDepartmentActivity.DEPT_NAME_EXTRA);
                     department.invalidate();
                     departmentId = resultCode;
+                    changesAwaitingSave = true;
                     break;
                 case OnboardingPositionActivity.MANAGER_REQUEST_CODE:
                     reportingTo.secondaryValue = data.getStringExtra(OnboardingReportingToActivity.MGR_NAME_EXTRA);
                     reportingTo.invalidate();
                     managerId = resultCode;
+                    changesAwaitingSave = true;
                     break;
                 case EDIT_MY_LOCATION_REQUEST_CODE:
                     String officeNameFromResult = data.getStringExtra(EditLocationActivity.OFFICE_NAME_EXTRA);
                     officeLocation.secondaryValue = officeNameFromResult == null ? "None" : officeNameFromResult;
                     officeLocation.invalidate();
                     officeId = resultCode;
+                    changesAwaitingSave = true;
                     break;
             }
         }
@@ -506,7 +538,7 @@ public class EditProfileActivity extends BadgeActivity {
             if (fileSystemBmp != null) {
                 return fileSystemBmp;
             } else {
-                return loadPicasaImageFromGallery( data.getData() );
+                return loadPicasaImageFromGallery(data.getData());
             }
         } else {
             return loadPicasaImageFromGallery( data.getData() );
@@ -606,6 +638,7 @@ public class EditProfileActivity extends BadgeActivity {
                 if (profileImageMissingView.getVisibility() == View.VISIBLE) {
                     profileImageMissingView.setVisibility(View.GONE);
                 }
+                changesAwaitingSave = true;
             } else {
                 Toast.makeText(EditProfileActivity.this, "Unable to retrieve photo", Toast.LENGTH_SHORT).show();
             }
