@@ -64,7 +64,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
 
     protected static final String SQL_DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 17;
+    protected static final int DATABASE_VERSION = 18;
     private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
             TABLE_CONTACTS,
             COLUMN_CONTACT_ID,

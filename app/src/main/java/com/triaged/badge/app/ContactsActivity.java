@@ -378,34 +378,29 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             @Override
             protected Void doInBackground(Void... params) {
                 if( dataProviderServiceBinding.getLoggedInUser() != null ) {
-                    if (contactsAdapter != null) {
-                        contactsAdapter.refresh();
-                    } else {
-                        final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                        runOnUiThread( new Runnable() {
-                            @Override
-                            public void run() {
-                                contactsAdapter = new ContactsAdapter(ContactsActivity.this, dataProviderServiceBinding, cursor, R.layout.item_contact_with_msg);
+                    final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    runOnUiThread( new Runnable() {
+                        @Override
+                        public void run() {
+                            if (contactsAdapter != null) {
+                                contactsAdapter.changeCursor( contactsCursor );
+                            } else {
+                                contactsAdapter = new ContactsAdapter(ContactsActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_with_msg);
                                 contactsListView.setAdapter(contactsAdapter);
                                 loadingSpinner.setVisibility( View.GONE );
                             }
-                        } );
 
-                    }
-                    if (searchResultsAdapter != null) {
-                        searchResultsAdapter.refresh(dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser());
-                    }
-                    else {
-                        final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                        runOnUiThread( new Runnable() {
-                            @Override
-                            public void run() {
-                                searchResultsAdapter = new ContactsAdapterWithoutHeadings(ContactsActivity.this, cursor, dataProviderServiceBinding, false);
+                            if (searchResultsAdapter != null) {
+                                searchResultsAdapter.changeCursor( searchCursor );
+                            }
+                            else {
+                                searchResultsAdapter = new ContactsAdapterWithoutHeadings(ContactsActivity.this, searchCursor, dataProviderServiceBinding, false);
                                 searchResultsList.setAdapter(searchResultsAdapter);
                             }
-                        });
 
-                    }
+                        }
+                    });
                 }
                 return null;
             }

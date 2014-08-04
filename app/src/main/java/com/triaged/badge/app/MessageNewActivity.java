@@ -244,32 +244,39 @@ public class MessageNewActivity extends BadgeActivity {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
-                if( searchResultsAdapter != null ) {
-                    searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
-                }
-                else {
-                    final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                    runOnUiThread( new Runnable() {
-                        @Override
-                        public void run() {
-                            searchResultsAdapter = new ContactsAdapterWithoutHeadings( MessageNewActivity.this, cursor, dataProviderServiceBinding, false );
-                            searchResultsList.setAdapter( searchResultsAdapter );
+                final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+
+                runOnUiThread( new Runnable() {
+                    @Override
+                    public void run() {
+                        if( searchResultsAdapter != null ) {
+                            searchResultsAdapter.changeCursor( searchCursor );
                         }
-                    });
-                }
-                if( contactsAdapter != null ) {
-                    contactsAdapter.refresh();
-                }
-                else {
-                    final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            contactsAdapter = new ContactsAdapter(MessageNewActivity.this, dataProviderServiceBinding, cursor, R.layout.item_contact_no_msg);
-                            contactsListView.setAdapter(contactsAdapter);
+                        else {
+                            runOnUiThread( new Runnable() {
+                                @Override
+                                public void run() {
+                                    searchResultsAdapter = new ContactsAdapterWithoutHeadings( MessageNewActivity.this, searchCursor, dataProviderServiceBinding, false );
+                                    searchResultsList.setAdapter( searchResultsAdapter );
+                                }
+                            });
                         }
-                    });
-                }
+                        if( contactsAdapter != null ) {
+                            contactsAdapter.changeCursor( contactsCursor );
+                        }
+                        else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    contactsAdapter = new ContactsAdapter(MessageNewActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_no_msg);
+                                    contactsListView.setAdapter(contactsAdapter);
+                                }
+                            });
+                        }
+
+                    }
+                });
                 return null;
             }
         }.execute();

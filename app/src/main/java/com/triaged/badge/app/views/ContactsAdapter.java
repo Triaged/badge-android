@@ -169,13 +169,10 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         return c;
     }
 
-    /**
-     * Notifies the adapter that new data is available so it should
-     * re-query and refresh the data shown in the list.
-     */
-    public void refresh() {
+    @Override
+    public void changeCursor(Cursor cursor) {
         contactCache.evictAll();
-        changeCursor( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
+        super.changeCursor(cursor);
     }
 
     /**
