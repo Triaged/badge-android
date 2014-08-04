@@ -58,9 +58,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface medium = null;
     private Typeface regular = null;
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-    protected boolean databaseReady;
-    protected BroadcastReceiver receiver;
     protected BadgeApplication app;
 
     private LocalBroadcastManager localBroadcastManager;
@@ -236,19 +233,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
 
-        databaseReady = false;
-        receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
-                    dataProviderServiceBinding = app.dataProviderServiceBinding;
-                    databaseReadyCallback();
-                }
-                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
-                    loadContactsAndDepartments();
-                }
-            }
-        };
 
 
         departmentsListView = (ListView) findViewById(R.id.departments_list);
@@ -267,12 +251,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
         filter.addAction(DataProviderService.DB_UPDATED_ACTION);
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        localBroadcastManager.registerReceiver(receiver, filter);
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
-        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
-            databaseReadyCallback();
-        }
 
         final View activityRootView = findViewById(R.id.activity_root);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -330,7 +308,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.destroy();
         }
-        localBroadcastManager.unregisterReceiver(receiver);
     }
 
     @Override
@@ -365,19 +342,25 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
     /**
-     * This callback should be invoked whenever the database is determined
-     * to be ready, which may be asynchronous with activity create and start.
-     *
-     * No contacts db operation should occur until this has been called.
+     * This callback is invoked once and only once
+     * when the database is ready.
      */
-    protected void databaseReadyCallback() {
-        if( !databaseReady ) {
-            databaseReady = true;
+    @Override
+    protected void onDatabaseReady() {
 
-            // SETUP CONTACTS
-            lazyDeviceRegistration();
-            loadContactsAndDepartments();
-        }
+        loadContactsAndDepartments();
+
+        // SETUP CONTACTS
+        lazyDeviceRegistration();
+        loadContactsAndDepartments();
+    }
+
+    /**
+     * Refresh contact list on resync
+     */
+    @Override
+    protected void onDatabaseUpdated() {
+        loadContactsAndDepartments();
     }
 
     protected void loadContactsAndDepartments() {

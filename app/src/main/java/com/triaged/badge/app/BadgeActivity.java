@@ -10,6 +10,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -46,6 +47,8 @@ public abstract class BadgeActivity extends Activity {
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
     protected LocalBroadcastManager localBroadcastManager;
+    protected BroadcastReceiver databaseReadyReceiver;
+    protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private BroadcastReceiver logoutListener;
     private BroadcastReceiver newMessageReceiver;
     IntentFilter newMessageIntentFilter;
@@ -76,12 +79,40 @@ public abstract class BadgeActivity extends Activity {
 
         mixpanel = MixpanelAPI.getInstance(this, BadgeApplication.MIXPANEL_TOKEN);
 
+
+
+        databaseReadyReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
+                    dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+                    onDatabaseReady();
+                }
+                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
+                    onDatabaseUpdated();
+                }
+            }
+        };
+        IntentFilter dbActionFilter = new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION );
+        dbActionFilter.addAction( DataProviderService.DB_UPDATED_ACTION );
+        localBroadcastManager.registerReceiver( databaseReadyReceiver, dbActionFilter );
+        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        if( dataProviderServiceBinding != null ) {
+            new Handler().post( new Runnable() {
+                @Override
+                public void run() {
+                    onDatabaseReady();
+                }
+            } );
+
+        }
         super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onDestroy() {
         mixpanel.flush();
+        localBroadcastManager.unregisterReceiver( databaseReadyReceiver );
         localBroadcastManager.unregisterReceiver( logoutListener );
         super.onDestroy();
     }
@@ -89,13 +120,32 @@ public abstract class BadgeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        localBroadcastManager.registerReceiver( newMessageReceiver, newMessageIntentFilter );
+        localBroadcastManager.registerReceiver(newMessageReceiver, newMessageIntentFilter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        localBroadcastManager.unregisterReceiver( newMessageReceiver );
+        localBroadcastManager.unregisterReceiver(newMessageReceiver);
+    }
+
+    /**
+     * Implement this method to do any activity set up
+     * that requires access to badge data.
+     *
+     * Do not attempt to access {@link #dataProviderServiceBinding}
+     * until this has been called.
+     *
+     * This is always invoked after {@link android.app.Activity#onCreate(android.os.Bundle)}
+     */
+    protected abstract void onDatabaseReady();
+
+    /**
+     * Default impl does nothing. Override to be notified
+     * when the database has been re-synced.
+     */
+    protected void onDatabaseUpdated() {
+
     }
 
     /**
