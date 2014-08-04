@@ -70,7 +70,7 @@ public class MessageShowActivity extends BadgeActivity {
     private SharedPreferences prefs;
 
     private boolean lengthGreaterThanZero = false;
-    private boolean showKeyboard = false;
+    private boolean showKeyboard = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +78,7 @@ public class MessageShowActivity extends BadgeActivity {
         final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
-        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
+        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -219,7 +219,7 @@ public class MessageShowActivity extends BadgeActivity {
         threadList.setSelection(adapter.getCount() - 1);
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
         setupContactsMenu();
-        if (adapter.getCount() > 0) {
+        if (adapter.getCount() > 0 && !showKeyboard) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
         }
@@ -388,7 +388,7 @@ public class MessageShowActivity extends BadgeActivity {
             super.notifyNewMessage(intent);
         } else {
             threadId = intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA);
-            showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
+            showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
             dataProviderServiceBinding.markAsRead( threadId );
             adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
             adapter.notifyDataSetChanged();

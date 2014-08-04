@@ -51,6 +51,7 @@ public class Notifier {
 
             // Creates an explicit intent for an Activity in your app
             Intent resultIntent = new Intent(context, MessageShowActivity.class);
+            resultIntent.putExtra(MessageShowActivity.SHOW_KEYBOARD_EXTRA, false);
             resultIntent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
             PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
