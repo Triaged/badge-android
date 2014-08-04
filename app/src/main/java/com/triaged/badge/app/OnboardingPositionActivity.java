@@ -76,7 +76,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
         jobTitleField = (EditText)findViewById( R.id.your_job_title );
 
-        if (loggedInUser.jobTitle != null && !loggedInUser.departmentName.equals("")) {
+        if (loggedInUser.jobTitle != null && !loggedInUser.jobTitle.equals("")) {
             jobTitleField.setText(loggedInUser.jobTitle);
         }
 

@@ -39,16 +39,6 @@
             android:background="@drawable/tappable_row_bg"
             >
 
-            <ImageView
-                android:id="@+id/contact_thumb"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginTop="2dp"
-                android:background="@null"
-                android:contentDescription="@string/content_description_thumb"
-                />
-
             <com.triaged.badge.app.views.TextViewWithFont
                 android:id="@+id/no_photo_thumb"
                 android:layout_width="40dp"
@@ -59,6 +49,25 @@
                 android:textColor="@color/white"
                 android:visibility="gone"
                 android:textSize="15sp"
+                />
+
+            <ImageView
+                android:id="@+id/contact_thumb"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="2dp"
+                android:background="@null"
+                android:contentDescription="@string/content_description_thumb"
+                />
+
+            <ProgressBar
+                android:id="@+id/pending_upload"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"
                 />
 
             <com.triaged.badge.app.views.TextViewWithFont

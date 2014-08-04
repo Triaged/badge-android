@@ -16,6 +16,8 @@ import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
@@ -30,6 +32,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -93,6 +96,12 @@ public class EditProfileActivity extends BadgeActivity {
     protected int officeId = 0;
     protected byte[] newProfilePhotoData;
 
+    private ProgressBar pendingUploadBar;
+
+    private boolean changesAwaitingSave = false;
+
+    private TextView saveButton;
+
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
@@ -127,10 +136,11 @@ public class EditProfileActivity extends BadgeActivity {
             }
         });
 
-        TextView saveButton = (TextView) backButtonBar.findViewById(R.id.save_button);
+        saveButton = (TextView) backButtonBar.findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                changesAwaitingSave = false;
                 dataProviderServiceBinding.saveAllProfileDataAsync(
                         firstName.valueToSave,
                         lastName.valueToSave,
@@ -272,6 +282,7 @@ public class EditProfileActivity extends BadgeActivity {
                                         editView.invalidate();
                                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                                         imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+                                        changesAwaitingSave = true;
                                         dialog.cancel();
                                     }
                                 });
@@ -360,6 +371,7 @@ public class EditProfileActivity extends BadgeActivity {
                 iso8601Format.setTimeZone( Contact.GMT );
                 birthDate.valueToSave = iso8601Format.format(birthdayCalendar.getTime());
                 birthDate.invalidate();
+                changesAwaitingSave = true;
             }
         }, birthdayCalendar.get(Calendar.YEAR), birthdayCalendar.get(Calendar.MONTH), birthdayCalendar.get(Calendar.DAY_OF_MONTH));
 
@@ -392,15 +404,39 @@ public class EditProfileActivity extends BadgeActivity {
                 iso8601Format.setTimeZone( Contact.GMT );
                 startDate.valueToSave = iso8601Format.format(startDateCalendar.getTime());
                 startDate.invalidate();
+                changesAwaitingSave = true;
             }
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
+
+        pendingUploadBar = (ProgressBar) findViewById(R.id.pending_upload);
 
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        if (changesAwaitingSave) {
+            new AlertDialog.Builder(EditProfileActivity.this)
+                    .setTitle("Save Changes?")
+                    .setMessage("Do you want to save your changes?")
+                    .setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            saveButton.performClick();
+                            dialog.cancel();
+                        }
+                    })
+                    .setNegativeButton("DISCARD", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            changesAwaitingSave = false;
+                            onBackPressed();
+                            dialog.cancel();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        } else {
+            super.onBackPressed();
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        }
     }
 
     @Override
@@ -409,37 +445,26 @@ public class EditProfileActivity extends BadgeActivity {
             switch (requestCode) {
                 case PICTURE_REQUEST_CODE:
                     // GET FROM GALLERY
-                    boolean isCamera = data == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(data.getAction());
-                    Bitmap photo;
-                    if (isCamera) {
-                        photo = getPhotoFromFileSystem();
-                    } else {
-                        photo = getBitmapFromGallery(data, EditProfileActivity.this);
-                    }
-                    photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
-                    profileImageView.setImageBitmap(photo);
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                    newProfilePhotoData = byteArrayOutputStream.toByteArray();
-                    if (profileImageMissingView.getVisibility() == View.VISIBLE) {
-                        profileImageMissingView.setVisibility(View.GONE);
-                    }
+                    new ProcessImageTask().execute(data);
                     break;
                 case OnboardingPositionActivity.DEPARTMENT_REQUEST_CODE:
                     department.secondaryValue = data.getStringExtra(OnboardingDepartmentActivity.DEPT_NAME_EXTRA);
                     department.invalidate();
                     departmentId = resultCode;
+                    changesAwaitingSave = true;
                     break;
                 case OnboardingPositionActivity.MANAGER_REQUEST_CODE:
                     reportingTo.secondaryValue = data.getStringExtra(OnboardingReportingToActivity.MGR_NAME_EXTRA);
                     reportingTo.invalidate();
                     managerId = resultCode;
+                    changesAwaitingSave = true;
                     break;
                 case EDIT_MY_LOCATION_REQUEST_CODE:
                     String officeNameFromResult = data.getStringExtra(EditLocationActivity.OFFICE_NAME_EXTRA);
                     officeLocation.secondaryValue = officeNameFromResult == null ? "None" : officeNameFromResult;
                     officeLocation.invalidate();
                     officeId = resultCode;
+                    changesAwaitingSave = true;
                     break;
             }
         }
@@ -507,15 +532,58 @@ public class EditProfileActivity extends BadgeActivity {
      * @param *data  @param context * @return
      */
     public Bitmap getBitmapFromGallery(Intent data, Context context){
-        Uri selectedImage = data.getData();
-        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-        Cursor cursor = context.getContentResolver().query(selectedImage,filePathColumn, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
+        currentPhotoPath = getPath( data.getData() );
+        if (currentPhotoPath != null) {
+            Bitmap fileSystemBmp = getPhotoFromFileSystem();
+            if (fileSystemBmp != null) {
+                return fileSystemBmp;
+            } else {
+                return loadPicasaImageFromGallery(data.getData());
+            }
+        } else {
+            return loadPicasaImageFromGallery( data.getData() );
+        }
+    }
+
+    /**
+     * helper to retrieve the path of an image URI
+     */
+    public String getPath(Uri uri) {
+        String[] projection = {  MediaStore.MediaColumns.DATA};
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if(cursor != null) {
+            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+            cursor.moveToFirst();
+            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+            String filePath = cursor.getString(columnIndex);
+            cursor.close();
+            return filePath;
+        } else {
+            return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+        }
+    }
+
+    // NEW METHOD FOR PICASA IMAGE LOAD
+    private Bitmap loadPicasaImageFromGallery(final Uri uri) {
+        String[] projection = {  MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.DISPLAY_NAME };
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+        if(cursor != null) {
+            cursor.moveToFirst();
+
+            int columnIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+            if (columnIndex != -1) {
+                try {
+                    Bitmap bitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                    return bitmap;
+                    // THIS IS THE BITMAP IMAGE WE ARE LOOKING FOR.
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
         cursor.close();
-        currentPhotoPath = picturePath;
-        return getPhotoFromFileSystem();
+        return null;
     }
 
     private File createImageFile() throws IOException {
@@ -532,5 +600,49 @@ public class EditProfileActivity extends BadgeActivity {
 
         currentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    private class ProcessImageTask extends AsyncTask<Intent, Void, Bitmap> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pendingUploadBar.setVisibility(View.VISIBLE);
+            profileImageView.setVisibility(View.GONE);
+            profileImageMissingView.setVisibility(View.GONE);
+        }
+
+        @Override
+        protected Bitmap doInBackground(Intent... params) {
+            boolean isCamera = params[0] == null || MediaStore.ACTION_IMAGE_CAPTURE.equals(params[0].getAction());
+            Bitmap photo;
+            if (isCamera) {
+                photo = getPhotoFromFileSystem();
+            } else {
+                photo = getBitmapFromGallery(params[0], EditProfileActivity.this);
+            }
+            photo = ThumbnailUtils.extractThumbnail(photo, 300, 300);
+            return photo;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            pendingUploadBar.setVisibility(View.GONE);
+            profileImageMissingView.setVisibility(View.VISIBLE);
+            profileImageView.setVisibility(View.VISIBLE);
+            if (bitmap != null) {
+                profileImageView.setImageBitmap(bitmap);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                newProfilePhotoData = byteArrayOutputStream.toByteArray();
+                if (profileImageMissingView.getVisibility() == View.VISIBLE) {
+                    profileImageMissingView.setVisibility(View.GONE);
+                }
+                changesAwaitingSave = true;
+            } else {
+                Toast.makeText(EditProfileActivity.this, "Unable to retrieve photo", Toast.LENGTH_SHORT).show();
+            }
+            super.onPostExecute(bitmap);
+        }
     }
 }

@@ -82,7 +82,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             backStackIds= new ArrayList<Integer>();
         }
 
-        if( dataProviderServiceBinding.getLoggedInUser().id == contactId ) {
+        if( dataProviderServiceBinding.getLoggedInUser() != null && dataProviderServiceBinding.getLoggedInUser().id == contactId ) {
             requestWindowFeature(Window.FEATURE_ACTION_BAR);
         }
 
