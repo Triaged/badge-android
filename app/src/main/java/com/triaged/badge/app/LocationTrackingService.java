@@ -160,7 +160,9 @@ public class LocationTrackingService extends Service implements LocationListener
             }
         }
         super.onDestroy();
-        mLocationClient.removeLocationUpdates(this);
+        if( mLocationClient.isConnected() ) {
+            mLocationClient.removeLocationUpdates(this);
+        }
     }
 
     @Override

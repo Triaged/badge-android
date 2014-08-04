@@ -50,6 +50,8 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_OFFICE_LOCATION_LAT = "latitude";
     public static final String COLUMN_OFFICE_LOCATION_LNG = "longitude";
 
+    /** primary key */
+    public static final String COLUMN_MESSAGES_LOCAL_ID = "local_id";
     public static final String COLUMN_MESSAGES_ID = "_id";
     public static final String COLUMN_MESSAGES_BODY = "body";
     public static final String COLUMN_MESSAGES_THREAD_ID = "thread_id";
@@ -104,8 +106,9 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_OFFICE_LOCATION_LNG
     );
 
-    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format( "create table %s (%s  string primary key, %s string, %s integer, %s text, %s integer, %s integer, %s integer, %s string, %s string, %s integer, %s string);",
+    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format( "create table %s (%s integer primary key autoincrement, %s  string, %s string, %s integer, %s text, %s integer, %s integer, %s integer, %s string, %s string, %s integer, %s string);",
             TABLE_MESSAGES,
+            COLUMN_MESSAGES_LOCAL_ID,
             COLUMN_MESSAGES_ID,
             COLUMN_MESSAGES_THREAD_ID,
             COLUMN_MESSAGES_FROM_ID,

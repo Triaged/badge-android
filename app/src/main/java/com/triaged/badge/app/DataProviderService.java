@@ -180,7 +180,7 @@ public class DataProviderService extends Service {
 
 
     protected static final String QUERY_MESSAGE_SQL =
-            String.format( "SELECT * FROM %s WHERE %s IN (?, ?)", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID );
+            String.format( "SELECT * FROM %s WHERE %s = ? OR %s = ?", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID );
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
@@ -1809,7 +1809,7 @@ public class DataProviderService extends Service {
                     // GUID
                     final String guid = UUID.randomUUID().toString();
                     JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
-                    msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, guid );
+                    //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message );
                     msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds) );
@@ -2043,16 +2043,16 @@ public class DataProviderService extends Service {
                             mostRecentMsgTimestamp = timestamp;
                         }
                         String messageId = msg.getString( "id" );
-                        String[] messageSelector = new String[] { guid, messageId };
+                        String[] messageSelector = new String[] { messageId, guid };
                         Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
-                        if( msgCursor.getCount() == 1 ) {
+                        if( msgCursor.getCount() > 0 ) {
                             msgCursor.moveToFirst();
-                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
+                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED ) {
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
                                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
 
-                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s IN (?,  ?)", CompanySQLiteHelper.COLUMN_MESSAGES_ID), messageSelector);
+                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ? OR %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID ), messageSelector);
                                 // Callback that msg is confirmed?
                                 Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
                                 ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
@@ -2109,6 +2109,9 @@ public class DataProviderService extends Service {
                 }
                 catch( JSONException e ) {
                     Log.e( LOG_TAG, "Malformed JSON back from faye." );
+                }
+                catch( Throwable wtf ) {
+                    Log.e( LOG_TAG, "Couldn't insert message and it's causing all kinds of problems.", wtf );
                 }
                 finally {
                     database.endTransaction();
