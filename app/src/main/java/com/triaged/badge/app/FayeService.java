@@ -143,7 +143,6 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     public void subscribedToChannel(String subscription) {
         Log.d(LOG_TAG, "Faye subscribed to channel!");
         ensureDataServiceBinding();
-        dataProviderServiceBinding.syncMessagesAsync();
     }
 
     @Override

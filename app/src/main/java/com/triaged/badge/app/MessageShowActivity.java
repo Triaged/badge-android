@@ -138,6 +138,7 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if( threadId.equals( intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ) ) ) {
+                    dataProviderServiceBinding.markAsRead( threadId );
                     adapter.changeCursor( dataProviderServiceBinding.getMessages(threadId) );
                     adapter.notifyDataSetChanged();
                 }
@@ -145,6 +146,7 @@ public class MessageShowActivity extends BadgeActivity {
         };
         IntentFilter threadUpdateFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
         threadUpdateFilter.addAction( DataProviderService.MSG_STATUS_CHANGED_ACTION);
+        threadUpdateFilter.addAction( DataProviderService.MSGS_UPDATED_ACTION );
         localBroadcastManager.registerReceiver(refreshReceiver, threadUpdateFilter);
 
         postBox = (EditText) findViewById(R.id.input_box);
@@ -367,14 +369,6 @@ public class MessageShowActivity extends BadgeActivity {
             imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
         }
         super.onNewIntent(intent);
-    }
-
-    @Override
-    protected void onDatabaseUpdated() {
-        super.onDatabaseUpdated();
-        dataProviderServiceBinding.markAsRead( threadId );
-        adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
-        adapter.notifyDataSetChanged();
     }
 
     @Override

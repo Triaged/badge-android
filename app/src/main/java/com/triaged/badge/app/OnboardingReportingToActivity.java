@@ -1,7 +1,9 @@
 package com.triaged.badge.app;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -140,20 +142,39 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
     }
 
     private void loadContacts() {
-        if( contactsAdapter != null ) {
-            contactsAdapter.refresh();
-        }
-        else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
-            contactsListView.setAdapter(contactsAdapter);
-        }
-        if( searchResultsAdapter != null ) {
-            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
-        }
-        else {
-            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
-            searchResultsList.setAdapter( searchResultsAdapter );
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                if( searchResultsAdapter != null ) {
+                    searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
+                }
+                else {
+                    final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    runOnUiThread( new Runnable() {
+                        @Override
+                        public void run() {
+                            searchResultsAdapter = new ContactsAdapterWithoutHeadings( OnboardingReportingToActivity.this, cursor, dataProviderServiceBinding, false );
+                            searchResultsList.setAdapter( searchResultsAdapter );
+                        }
+                    });
+                }
+                if( contactsAdapter != null ) {
+                    contactsAdapter.refresh();
+                }
+                else {
+                    final Cursor cursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            contactsAdapter = new ContactsAdapter(OnboardingReportingToActivity.this, dataProviderServiceBinding, cursor, R.layout.item_contact_no_msg);
+                            contactsListView.setAdapter(contactsAdapter);
+                        }
+                    });
+                }
+                return null;
+            }
+        }.execute();
+
     }
 
     @Override

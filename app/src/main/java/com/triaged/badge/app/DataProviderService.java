@@ -76,6 +76,7 @@ public class DataProviderService extends Service {
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
+    public static final String MSGS_UPDATED_ACTION = "com.triage.badge.MSGS_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
@@ -1987,7 +1988,7 @@ public class DataProviderService extends Service {
                     }
                     upsertThreadAndMessages( thread, guid, false );
                 }
-                localBroadcastManager.sendBroadcast( new Intent( DB_UPDATED_ACTION ) );
+                localBroadcastManager.sendBroadcast( new Intent( MSGS_UPDATED_ACTION ) );
             }
             else {
                 if( response.getEntity() != null ) {
