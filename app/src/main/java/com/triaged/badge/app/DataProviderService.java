@@ -390,10 +390,10 @@ public class DataProviderService extends Service {
                     }
                 }
                 catch( IOException e ) {
-
+                    Log.e( LOG_TAG, "Network issue doing partial contact sync. " );
                 }
                 catch( JSONException e ) {
-
+                    Log.e( LOG_TAG, "Couldn't understand response from Badge server", e );
                 }
             }
         } );

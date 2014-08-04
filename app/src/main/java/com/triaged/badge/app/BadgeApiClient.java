@@ -1,5 +1,7 @@
 package com.triaged.badge.app;
 
+import android.net.Uri;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -68,8 +70,10 @@ public class BadgeApiClient extends DefaultHttpClient {
 
     public BadgeApiClient( String apiToken ) {
         super();
-        httpHost = new HttpHost( API_HOST );
-        messagingHttpHost = new HttpHost( API_MESSAGING_HOST );
+        URI uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_HOST ) );
+        httpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
+        uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_MESSAGING_HOST ) );
+        messagingHttpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
         this.apiToken = apiToken;
     }
 
