@@ -27,7 +27,7 @@ public class PlacesAutocompleteAdapter extends ArrayAdapter<String> implements F
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
     private static final String TYPE_AUTOCOMPLETE = "/autocomplete";
     private static final String OUT_JSON = "/json";
-    private static final String API_KEY = "AIzaSyCY4l3sahn15yyfF4n6IqJFEgk6yXaHMjw";
+    private static final String API_KEY = "AIzaSyChN_CmOPqxcdTGl0cgRSy3TNgOAp_MwQo";
 
     private ArrayList<String> resultList;
 
