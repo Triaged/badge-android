@@ -137,8 +137,11 @@ public abstract class BadgeActivity extends Activity {
      * until this has been called.
      *
      * This is always invoked after {@link android.app.Activity#onCreate(android.os.Bundle)}
+     *
+     * Default impl does nothing.
      */
-    protected abstract void onDatabaseReady();
+    protected void onDatabaseReady() {
+    }
 
     /**
      * Default impl does nothing. Override to be notified

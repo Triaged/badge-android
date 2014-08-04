@@ -42,8 +42,9 @@ import java.util.List;
 public abstract class AbstractProfileActivity extends BadgeActivity  {
 
     private static final String LOG = AbstractProfileActivity.class.getName();
+    public static final String PROFILE_ID_EXTRA = "PROFILE_ID";
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+
     private ServiceConnection dataProviderServiceConnnection = null;
     protected Contact contact = null;
     private int contactId = 0;
@@ -76,7 +77,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         final Intent intent = getIntent();
-        contactId = intent.getIntExtra("PROFILE_ID", 0);
+        contactId = intent.getIntExtra(PROFILE_ID_EXTRA, 0);
         backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
         if (backStackIds == null) {
             backStackIds= new ArrayList<Integer>();
@@ -109,8 +110,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(AbstractProfileActivity.this, ContactsForDepartmentActivity.class);
-                intent.putExtra("DEPARTMENT_ID", contact.departmentId);
-                intent.putExtra("DEPARTMENT_NAME", contact.departmentName);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_ID_EXTRA, contact.departmentId);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_NAME_EXTRA, contact.departmentName);
                 startActivity(intent);
             }
         });

@@ -56,7 +56,6 @@ public class OnboardingMapActivity extends BackButtonActivity implements
     private ImageButton findMeButton = null;
     private String provider;
     private Location myLocation;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
     protected Address addressToAdd;
 
     // A request to connect to Location Services
@@ -81,7 +80,6 @@ public class OnboardingMapActivity extends BackButtonActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         addressToAdd = null;
         setContentView(R.layout.activity_onboarding_map);
         backButton.setText("Add New Office");

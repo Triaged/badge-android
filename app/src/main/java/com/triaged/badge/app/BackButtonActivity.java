@@ -14,7 +14,7 @@ import org.w3c.dom.Text;
  *
  * Created by Will on 7/18/14.
  */
-public class BackButtonActivity extends BadgeActivity {
+public abstract class BackButtonActivity extends BadgeActivity {
 
     protected TextView backButton;
 

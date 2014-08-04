@@ -24,8 +24,6 @@ public class ChangePasswordActivity extends BackButtonActivity {
         final EditText confirmPasswordField = (EditText)findViewById( R.id.confirm_password );
         final Button changeButton = (Button)findViewById( R.id.change_password_button );
 
-        final DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-
         changeButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,6 +48,11 @@ public class ChangePasswordActivity extends BackButtonActivity {
         });
 
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+
     }
 
     @Override
