@@ -178,6 +178,11 @@ public class LoginActivity extends BadgeActivity {
     }
 
     @Override
+    protected void onDatabaseReady() {
+
+    }
+
+    @Override
     protected void logout() {
         // Do nothing since we're the UI to log back in.
     }

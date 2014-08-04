@@ -31,7 +31,6 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
     public static final String MGR_NAME_EXTRA = "mgrName";
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private ContactsAdapterWithoutHeadings searchResultsAdapter = null;
 
     private EditText searchBar = null;
@@ -133,9 +132,11 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
             }
         });
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        loadContacts();
+    }
 
+    @Override
+    protected void onDatabaseReady() {
+        loadContacts();
     }
 
     private void loadContacts() {

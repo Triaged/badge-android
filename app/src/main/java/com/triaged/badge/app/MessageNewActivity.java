@@ -45,7 +45,6 @@ public class MessageNewActivity extends BadgeActivity {
 
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private ContactsAdapterWithoutHeadings searchResultsAdapter = null;
 
     private EditText searchBar = null;
@@ -187,8 +186,6 @@ public class MessageNewActivity extends BadgeActivity {
             }
         });
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        loadContacts();
 
         densityMultiplier = getResources().getDisplayMetrics().density;
         final View activityRootView = findViewById(R.id.activity_root);
@@ -214,6 +211,11 @@ public class MessageNewActivity extends BadgeActivity {
 
         tagItemLayoutParams = new CustomLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tagItemLayoutParams.setMargins(0, (int) (4 * densityMultiplier), (int) (4 * densityMultiplier), 0);
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+        loadContacts();
     }
 
     @Override

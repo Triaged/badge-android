@@ -39,7 +39,6 @@ public class OnboardingPositionActivity extends BadgeActivity {
 
     protected int managerId = 0;
     protected int deptartmentId = 0;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -69,16 +68,10 @@ public class OnboardingPositionActivity extends BadgeActivity {
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) findViewById(R.id.onboarding_dots);
         onboardingDotsView.currentDotIndex = 1;
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        final Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
-        managerId = loggedInUser.managerId;
-        deptartmentId = loggedInUser.departmentId;
+
 
         jobTitleField = (EditText)findViewById( R.id.your_job_title );
 
-        if (loggedInUser.jobTitle != null && !loggedInUser.jobTitle.equals("")) {
-            jobTitleField.setText(loggedInUser.jobTitle);
-        }
 
         continueButton = (Button) findViewById(R.id.continue_button);
         continueButton.setOnClickListener(new View.OnClickListener() {
@@ -90,12 +83,6 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         yourDepartmentButton = (TextView) findViewById(R.id.your_department);
-        if (loggedInUser.departmentName != null && !loggedInUser.departmentName.equals("")) {
-            yourDepartmentButton.setText( loggedInUser.departmentName );
-        }
-        if( loggedInUser.departmentId > 0 ) {
-            yourDepartmentButton.setSelected( true );
-        }
         yourDepartmentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -105,12 +92,6 @@ public class OnboardingPositionActivity extends BadgeActivity {
         });
 
         reportingToButton = (TextView) findViewById(R.id.reporting_to);
-        if (loggedInUser.managerName != null && !loggedInUser.managerName.equals("")) {
-            reportingToButton.setText(loggedInUser.managerName);
-        }
-        if( loggedInUser.managerId > 0 ) {
-            reportingToButton.setSelected( true );
-        }
         reportingToButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -149,6 +130,32 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 }
             }
         });
+
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+        final Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+        managerId = loggedInUser.managerId;
+        deptartmentId = loggedInUser.departmentId;
+
+        if (loggedInUser.jobTitle != null && !loggedInUser.jobTitle.equals("")) {
+            jobTitleField.setText(loggedInUser.jobTitle);
+        }
+
+        if (loggedInUser.departmentName != null && !loggedInUser.departmentName.equals("")) {
+            yourDepartmentButton.setText( loggedInUser.departmentName );
+        }
+        if( loggedInUser.departmentId > 0 ) {
+            yourDepartmentButton.setSelected( true );
+        }
+        if (loggedInUser.managerName != null && !loggedInUser.managerName.equals("")) {
+            reportingToButton.setText(loggedInUser.managerName);
+        }
+        if( loggedInUser.managerId > 0 ) {
+            reportingToButton.setSelected( true );
+        }
+
 
     }
 

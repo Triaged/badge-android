@@ -55,13 +55,10 @@ public class MessageShowActivity extends BadgeActivity {
     private RelativeLayout postBoxWrapper;
     private float densityMultiplier = 1;
     private boolean expanded = false;
-    private Contact counterPart;
     private BroadcastReceiver refreshReceiver;
     protected ImageButton sendButton;
     protected String threadId;
     private TextView backButton;
-    private Intent intent;
-    private BroadcastReceiver dataAvailableReceiver;
 
     private int userCount = 2;
     private int soleCounterpartId = 0;
@@ -75,7 +72,6 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        intent = getIntent();
         final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
@@ -209,19 +205,11 @@ public class MessageShowActivity extends BadgeActivity {
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        dataAvailableReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                dataProviderServiceBinding = app.dataProviderServiceBinding;
-                showThread();
-            }
-        };
-        localBroadcastManager.registerReceiver(dataAvailableReceiver, new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION));
+    }
 
-        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
-            showThread();
-        }
-
+    @Override
+    protected void onDatabaseReady() {
+        showThread();
     }
 
     protected void showThread() {
@@ -236,7 +224,6 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onDestroy() {
         localBroadcastManager.unregisterReceiver(refreshReceiver);
-        localBroadcastManager.unregisterReceiver(dataAvailableReceiver);
         adapter.destroy();
         super.onDestroy();
     }
@@ -364,15 +351,12 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        String oldThreadId = threadId;
         threadId = intent.getStringExtra( THREAD_ID_EXTRA );
-        if( !oldThreadId.equals( threadId ) ) {
-            dataProviderServiceBinding.markAsRead( threadId );
-            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
-            adapter.notifyDataSetChanged();
-            backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
-            setupContactsMenu();
-        }
+        dataProviderServiceBinding.markAsRead( threadId );
+        adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+        adapter.notifyDataSetChanged();
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
         super.onNewIntent(intent);
     }
 

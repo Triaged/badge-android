@@ -51,7 +51,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
     protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -74,20 +73,39 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
     };
 
     @Override
+    protected void onDatabaseReady() {
+        Contact account = dataProviderServiceBinding.getLoggedInUser();
+        lastName.setText( account.lastName );
+        firstName.setText( account.firstName );
+        cellNumber.setText( account.cellPhone );
+        birthday.setText( account.birthDateString );
+
+        if (account.birthDateString != null && !account.birthDateString.equals("")) {
+            try {
+                birthdayCalendar.setTime( birthdayFormat.parse( account.birthDateString ) );
+                birthday.setText(account.birthDateString);
+            } catch (ParseException e) {
+                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
+            }
+        }
+
+        birthdayCalendar.set( Calendar.HOUR, 0 );
+        birthdayCalendar.set( Calendar.MINUTE, 0 );
+        birthdayCalendar.set( Calendar.SECOND, 0 );
+
+
+
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
         setContentView(R.layout.activity_welcome);
         firstName = (EditText) findViewById(R.id.first_name);
         lastName = (EditText) findViewById(R.id.last_name);
         cellNumber = (EditText) findViewById(R.id.cell_number);
         birthday = (EditText) findViewById(R.id.birthday);
 
-        Contact account = dataProviderServiceBinding.getLoggedInUser();
-        lastName.setText( account.lastName );
-        firstName.setText( account.firstName );
-        cellNumber.setText( account.cellPhone );
-        birthday.setText( account.birthDateString );
 
         Button continueButton = (Button) findViewById(R.id.continue_button);
 
@@ -107,16 +125,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
         birthdayFormat = new SimpleDateFormat( Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
 
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
-
-        if (loggedInUser.birthDateString != null && !loggedInUser.birthDateString.equals("")) {
-            try {
-                birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
-                birthday.setText(loggedInUser.birthDateString);
-            } catch (ParseException e) {
-                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
-            }
-        }
 
         birthdayCalendar.set( Calendar.HOUR, 0 );
         birthdayCalendar.set( Calendar.MINUTE, 0 );
