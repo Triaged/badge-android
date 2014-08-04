@@ -767,6 +767,8 @@ public class DataProviderService extends Service {
         }
         loggedInUser = null;
         prefs.edit().clear().commit();
+
+        // Stop tracking location
         LocationTrackingService.clearAlarm( localBinding, this );
 
         // Wipe DB, we're not logged in anymore.
@@ -774,14 +776,27 @@ public class DataProviderService extends Service {
         database.execSQL(CLEAR_DEPARTMENTS_SQL);
         database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
         database.execSQL(CLEAR_MESSAGES_SQL);
+        notifyUILoggedOut();
+
+
+        // Stop the messaging service.
+        Intent fayeIntent = new Intent( this, FayeService.class );
+        stopService( fayeIntent );
+
+
+        // Report the event to mixpanel
+        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+        mixpanelAPI.clearSuperProperties();
+    }
+
+    private void notifyUILoggedOut() {
+        // Start the login activity
         Intent intent = new Intent( this, LoginActivity.class );
         intent.setFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
         startActivity( intent );
-        Intent fayeIntent = new Intent( this, FayeService.class );
-        stopService( fayeIntent );
+
+        // Tell other activities to close.
         localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
-        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
-        mixpanelAPI.clearSuperProperties();
     }
 
     protected void changePassword( final String currentPassword, final String newPassword, final String newPasswordConfirmation, final AsyncSaveCallback saveCallback ) {
@@ -1052,10 +1067,12 @@ public class DataProviderService extends Service {
      *
      * @param response
      */
-    protected void ensureNotUnauthorized( HttpResponse response ) {
+    protected boolean ensureNotUnauthorized( HttpResponse response ) {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
             loggedOut();
+            return false;
         }
+        return true;
     }
 
     /**
@@ -1111,7 +1128,7 @@ public class DataProviderService extends Service {
 
                     try {
                         HttpResponse response = apiClient.checkinRequest( officeId );
-                        ensureNotUnauthorized( response );
+                        //ensureNotUnauthorized( response );
                         int status = response.getStatusLine().getStatusCode();
                         if( response.getEntity() != null ) {
                             response.getEntity().consumeContent();
@@ -1163,7 +1180,7 @@ public class DataProviderService extends Service {
     protected void checkOutOfOfficeSynchronously(int officeId ) {
         try {
             HttpResponse response = apiClient.checkoutRequest(officeId);
-            ensureNotUnauthorized(response);
+            //ensureNotUnauthorized(response);
             int status = response.getStatusLine().getStatusCode();
             if (response.getEntity() != null) {
                 response.getEntity().consumeContent();
@@ -1193,35 +1210,40 @@ public class DataProviderService extends Service {
             public void run() {
                 try {
                     database = databaseHelper.getWritableDatabase();
-                    // TODO for now just making sure this runs at most once per half hour.
-                    // In the future it should ask for any records modified since last sync
-                    // every time.
+
                     int loggedInContactId = prefs.getInt( LOGGED_IN_USER_ID_PREFS_KEY, -1 );
                     if( loggedInContactId > 0 ) {
-                        loggedInUser = getContact(loggedInContactId);
+                        // If we're logged in, and the database isn't empty, the UI should be ready to go.
+                        if( (loggedInUser = getContact(loggedInContactId)) != null ) {
+                            initialized = true;
+                            localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                        }
                     }
                     else {
-                        initialized = true;
-                    }
-
-                    if( loggedInUser != null ) {
+                        // If there's no logged in user, nothing else will happen so we're done here.
                         initialized = true;
                         localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                     }
 
+                    // If there's a logged in user, sync the whole company.
                     if ( !apiClient.apiToken.isEmpty() ) {
                         syncCompany(database);
 
-                        if( loggedInContactId > 0 ) {
-                            loggedInUser = getContact(loggedInContactId);
+                        // Edge case avoided here, user was unauthorized
+                        // and now db is empty, this is null.
+                        if( loggedInUser != null ) {
                             syncMessagesSync();
 
-
-                            if( !initialized ) {
-                                initialized = true;
-                                localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
-                            }
                         }
+
+                        // If we had to sync the company first (it was dropped
+                        // due to DB upgrade or whatever) noooooow we can
+                        // let the UI know we're initialized.
+                        if( !initialized ) {
+                            initialized = true;
+                            localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                        }
+
 
                         // Check if this is the first boot of a new install
                         // If it is, since we're logged in, if the user hasnt
@@ -1242,9 +1264,10 @@ public class DataProviderService extends Service {
 
                     }
                     else {
-                        loggedOut();
+                        notifyUILoggedOut();
                     }
-                } catch (Throwable t) {
+                }
+                catch (Throwable t) {
                     Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
                 }
             }
@@ -1624,7 +1647,7 @@ public class DataProviderService extends Service {
                 JSONObject locationData = new JSONObject();
                 try {
                     postData.put("office_location", locationData );
-                    locationData.put( "street_address", address );
+                    locationData.put("street_address", address);
                     locationData.put( "city", city );
                     locationData.put( "zip_code", zip );
                     locationData.put( "state", state );
