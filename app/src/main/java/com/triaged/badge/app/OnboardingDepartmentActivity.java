@@ -63,7 +63,6 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         addView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(OnboardingDepartmentActivity.this, "ADD NEW DEPARTMENT", Toast.LENGTH_SHORT).show();
                 final AlertDialog.Builder alertDialog = new AlertDialog.Builder(OnboardingDepartmentActivity.this);
                 alertDialog.setTitle("Add Department");
                 final EditText input = new EditText(OnboardingDepartmentActivity.this);
