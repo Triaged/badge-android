@@ -30,7 +30,9 @@ import java.net.URISyntaxException;
 public class BadgeApiClient extends DefaultHttpClient {
     public static final String MIME_TYPE_JSON = "application/json";
 
-    private static final String API_PROTOCOL = "http";
+    private static final String STAGING_API_PROTOCOL = "http";
+    private static final String PROD_API_PROTOCOL = "https";
+    private static final String API_PROTOCOL = PROD_API_PROTOCOL;
     private static final String PROD_API_HOST = "api.badge.co";
     private static final String STAGING_API_HOST = "api.badge-staging.com";
     private static final String PROD_API_MESSAGING_HOST = "messaging.badge.co";
