@@ -13,7 +13,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.app.views.DepartmentsAdapter;
 import com.triaged.badge.app.views.OfficeLocationsAdapter;
 import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.CompanySQLiteHelper;

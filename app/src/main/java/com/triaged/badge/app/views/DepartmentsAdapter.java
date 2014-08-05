@@ -34,8 +34,9 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
     private int resourceId;
     private boolean onlyNonEmptyDepartments;
     private List<Department> baseList;
+    public Cursor departmentsCursor;
 
-    public DepartmentsAdapter(Context context, int resourceId, DataProviderService.LocalBinding dataProviderServiceBinding, boolean onlyNonEmptyDepartments) {
+    public DepartmentsAdapter(Context context, int resourceId, DataProviderService.LocalBinding dataProviderServiceBinding, Cursor departmentsCursor) {
         super(context, resourceId);
         this.context = context;
         this.inflater = LayoutInflater.from(context);
@@ -43,13 +44,15 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
         this.onlyNonEmptyDepartments = onlyNonEmptyDepartments;
         this.dataProviderServiceBinding = dataProviderServiceBinding;
         baseList = new LinkedList<Department>();
+        this.departmentsCursor = departmentsCursor;
         addDepartments();
     }
 
     private void addDepartments() {
         clear();
         baseList.clear();
-        Cursor c = dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments );
+        // Cursor c = dataProviderServiceBinding.getDepartmentCursor( onlyNonEmptyDepartments );
+        Cursor c = departmentsCursor;
         while( c.moveToNext() ) {
             Department dept = new Department();
             dept.fromCursor(c);

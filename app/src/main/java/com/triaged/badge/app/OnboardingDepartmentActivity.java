@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
@@ -31,6 +33,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
+    private Cursor departmentsCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +117,20 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
     @Override
     protected void onDatabaseReady() {
         dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_no_count, dataProviderServiceBinding, false );
-        departmentsListView.setAdapter( departmentsAdapter );
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                departmentsCursor = dataProviderServiceBinding.getDepartmentCursor( false );
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                departmentsAdapter = new DepartmentsAdapter( OnboardingDepartmentActivity.this, R.layout.item_department_no_count, dataProviderServiceBinding, departmentsCursor );
+                departmentsListView.setAdapter( departmentsAdapter );
+                super.onPostExecute(aVoid);
+            }
+        }.execute();
     }
 }

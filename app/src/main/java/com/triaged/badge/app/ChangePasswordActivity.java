@@ -27,23 +27,30 @@ public class ChangePasswordActivity extends BackButtonActivity {
         changeButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dataProviderServiceBinding.changePassword(
-                        currentPasswordField.getText().toString(),
-                        newPasswordField.getText().toString(),
-                        confirmPasswordField.getText().toString(),
-                        new DataProviderService.AsyncSaveCallback() {
-                            @Override
-                            public void saveSuccess(int newId) {
-                                Toast.makeText( ChangePasswordActivity.this, "Your password has been changed successfully.", Toast.LENGTH_SHORT ).show();
-                                finish();
-                            }
+                String currentPasswordText = currentPasswordField.getText().toString();
+                String newPasswordText = newPasswordField.getText().toString();
+                String confirmPasswordText = confirmPasswordField.getText().toString();
+                if (currentPasswordText.equals("") || newPasswordText.equals("") || confirmPasswordText.equals("")) {
+                    Toast.makeText(ChangePasswordActivity.this, "Please fill in all fields to change password", Toast.LENGTH_SHORT).show();
+                } else {
+                    dataProviderServiceBinding.changePassword(
+                            currentPasswordText,
+                            newPasswordText,
+                            confirmPasswordText,
+                            new DataProviderService.AsyncSaveCallback() {
+                                @Override
+                                public void saveSuccess(int newId) {
+                                    Toast.makeText(ChangePasswordActivity.this, "Your password has been changed successfully.", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }
 
-                            @Override
-                            public void saveFailed(String reason) {
-                                Toast.makeText( ChangePasswordActivity.this, reason, Toast.LENGTH_SHORT ).show();
+                                @Override
+                                public void saveFailed(String reason) {
+                                    Toast.makeText(ChangePasswordActivity.this, reason, Toast.LENGTH_SHORT).show();
+                                }
                             }
-                        }
-                );
+                    );
+                }
             }
         });
 

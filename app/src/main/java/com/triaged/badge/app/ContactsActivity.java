@@ -80,6 +80,10 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private int contactsListTopMargin = 0;
     private int contactsListBottomMargin = 0;
 
+    private Cursor contactsCursor;
+    private Cursor searchCursor;
+    private Cursor departmentsCursor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -366,43 +370,45 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
     protected void loadContactsAndDepartments() {
 
-        if (departmentsAdapter != null) {
-            departmentsAdapter.refresh();
-        }
-        else {
-            departmentsAdapter = new DepartmentsAdapter(ContactsActivity.this, R.layout.item_department_with_count, dataProviderServiceBinding, true);
-            departmentsListView.setAdapter(departmentsAdapter);
-        }
-
         new AsyncTask<Void, Void, Void>() {
+
             @Override
             protected Void doInBackground(Void... params) {
                 if( dataProviderServiceBinding.getLoggedInUser() != null ) {
-                    final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                    final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                    runOnUiThread( new Runnable() {
-                        @Override
-                        public void run() {
-                            if (contactsAdapter != null) {
-                                contactsAdapter.changeCursor( contactsCursor );
-                            } else {
-                                contactsAdapter = new ContactsAdapter(ContactsActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_with_msg);
-                                contactsListView.setAdapter(contactsAdapter);
-                                loadingSpinner.setVisibility( View.GONE );
-                            }
-
-                            if (searchResultsAdapter != null) {
-                                searchResultsAdapter.changeCursor( searchCursor );
-                            }
-                            else {
-                                searchResultsAdapter = new ContactsAdapterWithoutHeadings(ContactsActivity.this, searchCursor, dataProviderServiceBinding, false);
-                                searchResultsList.setAdapter(searchResultsAdapter);
-                            }
-
-                        }
-                    });
+                    contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    departmentsCursor = dataProviderServiceBinding.getDepartmentCursor( true );
                 }
                 return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                if (contactsCursor != null && searchCursor != null && departmentsCursor != null) {
+                    if (contactsAdapter != null) {
+                        contactsAdapter.changeCursor(contactsCursor);
+                    } else {
+                        contactsAdapter = new ContactsAdapter(ContactsActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_with_msg);
+                        contactsListView.setAdapter(contactsAdapter);
+                        loadingSpinner.setVisibility(View.GONE);
+                    }
+
+                    if (searchResultsAdapter != null) {
+                        searchResultsAdapter.changeCursor(searchCursor);
+                    } else {
+                        searchResultsAdapter = new ContactsAdapterWithoutHeadings(ContactsActivity.this, searchCursor, dataProviderServiceBinding, false);
+                        searchResultsList.setAdapter(searchResultsAdapter);
+                    }
+
+                    if (departmentsAdapter != null) {
+                        departmentsAdapter.departmentsCursor = departmentsCursor;
+                        departmentsAdapter.refresh();
+                    } else {
+                        departmentsAdapter = new DepartmentsAdapter(ContactsActivity.this, R.layout.item_department_with_count, dataProviderServiceBinding, departmentsCursor);
+                        departmentsListView.setAdapter(departmentsAdapter);
+                    }
+                }
+                super.onPostExecute(aVoid);
             }
         }.execute();
     }
