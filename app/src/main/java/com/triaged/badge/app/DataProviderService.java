@@ -1595,7 +1595,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count"));
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {
