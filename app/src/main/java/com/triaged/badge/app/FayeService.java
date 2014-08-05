@@ -141,8 +141,6 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void subscribedToChannel(String subscription) {
-        // Log.d(LOG_TAG, "Faye subscribed to channel!");
-        ensureDataServiceBinding();
     }
 
     @Override
@@ -166,7 +164,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             if (json.has("guid")) {
                 guid = json.getString("guid");
             }
-            dataProviderServiceBinding.upsertThreadAndMessages( json.getJSONObject( "message_thread" ), guid );
+            dataProviderServiceBinding.upsertThreadAndMessagesAsync( json.getJSONObject( "message_thread" ), guid );
             // Do actual work.
 
         }
