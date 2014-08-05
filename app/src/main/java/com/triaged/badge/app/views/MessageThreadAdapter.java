@@ -73,7 +73,11 @@ public class MessageThreadAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
+        long messageTimeMillis = cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l;
+        if( messageTimeMillis > System.currentTimeMillis() ) {
+            messageTimeMillis = System.currentTimeMillis();
+        }
+        messageDate.setTime( messageTimeMillis );
         // TODO this is probably not the right timestamp format.
         holder.timestamp.setText( prettyTime.format( messageDate ) );
         holder.userPhoto.setVisibility(View.VISIBLE);

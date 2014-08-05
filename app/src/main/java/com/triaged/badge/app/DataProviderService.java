@@ -1978,7 +1978,7 @@ public class DataProviderService extends Service {
 
     protected void syncMessagesSync( ) {
         try {
-            HttpResponse response = apiClient.getMessageHistory(prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ) - 10000000 /* 15 seconds of buffer */, loggedInUser.id );
+            HttpResponse response = apiClient.getMessageHistory(prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 ) - 10000000 /* 10 seconds of buffer */, loggedInUser.id );
             int status = response.getStatusLine().getStatusCode();
             if( status == HttpStatus.SC_OK ) {
                 JSONArray msgResponse = parseJSONArrayResponse( response.getEntity() );
@@ -1990,8 +1990,11 @@ public class DataProviderService extends Service {
                         guid = thread.getString( "guid" );
                     }
                     upsertThreadAndMessages( thread, guid, false );
+                    Intent updateIntent = new Intent( MSGS_UPDATED_ACTION );
+                    updateIntent.putExtra( THREAD_ID_EXTRA, thread.getString( "id" ) );
+                    localBroadcastManager.sendBroadcast(  updateIntent );
+
                 }
-                localBroadcastManager.sendBroadcast( new Intent( MSGS_UPDATED_ACTION ) );
             }
             else {
                 if( response.getEntity() != null ) {
@@ -2020,108 +2023,101 @@ public class DataProviderService extends Service {
      *                  assume they are historical
      */
     protected void upsertThreadAndMessages( final JSONObject thread, final String guid, final boolean broadcast ) {
-        sqlThread.submit( new Runnable() {
-            @Override
-            public void run() {
-                String threadId;
-                database.beginTransaction();
-                try {
-                    threadId = thread.getString( "id" );
-                    JSONArray userIds = thread.getJSONArray( "user_ids" );
+        String threadId;
+        database.beginTransaction();
+        try {
+            threadId = thread.getString( "id" );
+            JSONArray userIds = thread.getJSONArray( "user_ids" );
 
-                    String userIdsList = userIdArrayToKey( userIds );
+            String userIdsList = userIdArrayToKey( userIds );
 
-                    prefs.edit().putString( userIdsList, threadId ).putString(threadId, userIds.toString()).commit();
+            prefs.edit().putString( userIdsList, threadId ).putString(threadId, userIds.toString()).commit();
 
-                    JSONArray msgArray = thread.getJSONArray( "messages" );
-                    int numMessages = msgArray.length();
-                    ContentValues msgValues = new ContentValues();
-                    boolean newMessages = false;
-                    msgValues.clear();
-                    long mostRecentMsgTimestamp = prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 );
-                    for( int i = 0; i < numMessages; i++ ) {
-                        JSONObject msg = msgArray.getJSONObject( i );
-                        long timestamp = (long)(msg.getDouble( "timestamp" ) * 1000000d) /* nanos */;
-                        if( timestamp > mostRecentMsgTimestamp ) {
-                            mostRecentMsgTimestamp = timestamp;
-                        }
-                        String messageId = msg.getString( "id" );
-                        String[] messageSelector = new String[] { messageId, guid };
-                        Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
-                        if( msgCursor.getCount() > 0 ) {
-                            msgCursor.moveToFirst();
-                            if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED ) {
-                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
-                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
-                                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
+            JSONArray msgArray = thread.getJSONArray( "messages" );
+            int numMessages = msgArray.length();
+            ContentValues msgValues = new ContentValues();
+            msgValues.clear();
+            long mostRecentMsgTimestamp = prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 );
+            for( int i = 0; i < numMessages; i++ ) {
+                JSONObject msg = msgArray.getJSONObject( i );
+                long timestamp = (long)(msg.getDouble( "timestamp" ) * 1000000d) /* nanos */;
+                if( timestamp > mostRecentMsgTimestamp ) {
+                    mostRecentMsgTimestamp = timestamp;
+                }
+                String messageId = msg.getString( "id" );
+                String[] messageSelector = new String[] { messageId, guid };
+                Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
+                if( msgCursor.getCount() > 0 ) {
+                    msgCursor.moveToFirst();
+                    if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED ) {
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId );
+                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp );
 
-                                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ? OR %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID ), messageSelector);
-                                // Callback that msg is confirmed?
-                                Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
-                                ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
-                                ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
-                                localBroadcastManager.sendBroadcast(ackIntent);
-                            }
+                        database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ? OR %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID ), messageSelector);
+                        // Callback that msg is confirmed?
+                        Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
+                        ackIntent.putExtra( MESSAGE_ID_EXTRA, messageId );
+                        ackIntent.putExtra( THREAD_ID_EXTRA, threadId );
+                        localBroadcastManager.sendBroadcast(ackIntent);
+                    }
+                }
+                else {
+                    setMessageContentValuesFromJSON(threadId, msg, msgValues );
+                    database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
+                    if( broadcast ) {
+                        Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
+                        Contact fromContact = getContact( msgValues.getAsInteger( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) );
+                        newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
+                        newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
+                        if( fromContact != null ) {
+                            newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, fromContact.firstName);
                         }
                         else {
-                            setMessageContentValuesFromJSON(threadId, msg, msgValues );
-                            database.insert( CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues );
-                            if( broadcast ) {
-                                Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
-                                Contact fromContact = getContact( msgValues.getAsInteger( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) );
-                                newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                                newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
-                                if( fromContact != null ) {
-                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, fromContact.firstName);
-                                }
-                                else {
-                                    newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
-                                }
-
-                                newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
-                                localBroadcastManager.sendBroadcast(newMessageIntent);
-                            }
-
+                            newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
                         }
-                        msgValues.clear();
-                    }
-                    // If I'm honest, this switch isn't intended to be used this way,
-                    // but the idea here is only update the timestamp on history sync
-                    // so that all messages will eventually be dl'd no matter what.
-                    if( !broadcast ) {
-                        prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+
+                        newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
+                        localBroadcastManager.sendBroadcast(newMessageIntent);
                     }
 
-                    // Get id of most recent msg.
-                    Cursor messages = getMessages( threadId );
-                    if( messages.moveToLast() ) {
-                        String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
-                        messages.close();
-                        // Unset thread head on all thread messages.
-                        clearThreadHead( threadId, msgValues );
-
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
-                        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
-                        database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ), new String[] { mostRecentId } );
-                    }
-                    else {
-                        messages.close();
-                    }
-                    database.setTransactionSuccessful();
                 }
-                catch( JSONException e ) {
-                    Log.e( LOG_TAG, "Malformed JSON back from faye." );
-                }
-                catch( Throwable wtf ) {
-                    Log.e( LOG_TAG, "Couldn't insert message and it's causing all kinds of problems.", wtf );
-                }
-                finally {
-                    database.endTransaction();
-                }
-
+                msgValues.clear();
             }
-        });
+            // If I'm honest, this switch isn't intended to be used this way,
+            // but the idea here is only update the timestamp on history sync
+            // so that all messages will eventually be dl'd no matter what.
+            if( !broadcast ) {
+                prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+            }
+
+            // Get id of most recent msg.
+            Cursor messages = getMessages( threadId );
+            if( messages.moveToLast() ) {
+                String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+                messages.close();
+                // Unset thread head on all thread messages.
+                clearThreadHead( threadId, msgValues );
+
+                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
+                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
+                msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
+                database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ), new String[] { mostRecentId } );
+            }
+            else {
+                messages.close();
+            }
+            database.setTransactionSuccessful();
+        }
+        catch( JSONException e ) {
+            Log.e( LOG_TAG, "Malformed JSON back from faye." );
+        }
+        catch( Throwable wtf ) {
+            Log.e( LOG_TAG, "Couldn't insert message and it's causing all kinds of problems.", wtf );
+        }
+        finally {
+            database.endTransaction();
+        }
     }
 
     /**
@@ -2519,8 +2515,13 @@ public class DataProviderService extends Service {
         /**
          * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, String, boolean)
          */
-        public void upsertThreadAndMessages(JSONObject thread, String guid) {
-            DataProviderService.this.upsertThreadAndMessages(thread, guid, true);
+        public void upsertThreadAndMessagesAsync(final JSONObject thread, final String guid) {
+            sqlThread.submit( new Runnable() {
+                @Override
+                public void run() {
+                    DataProviderService.this.upsertThreadAndMessages(thread, guid, true);
+                }
+            } );
         }
 
         /**
