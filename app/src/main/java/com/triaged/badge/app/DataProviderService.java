@@ -498,7 +498,6 @@ public class DataProviderService extends Service {
                 }
             }
 
-
             db.setTransactionSuccessful();
             updated = true;
         }
@@ -514,7 +513,6 @@ public class DataProviderService extends Service {
         if( updated && initialized ) {
             localBroadcastManager.sendBroadcast( new Intent(DB_UPDATED_ACTION) );
         }
-
     }
 
 
@@ -2276,19 +2274,26 @@ public class DataProviderService extends Service {
         StringBuilder names = new StringBuilder();
         String delim = "";
         int numUsers = userIdArr.length();
+        StringBuilder firstNames = new StringBuilder();
+        int validNames = 0;
         for( int i = 0; i < numUsers; i++ ) {
             int userId = userIdArr.getInt( i );
             if( userId != loggedInUser.id ) {
                 Contact c = getContact(userId);
-                if (numUsers > 2) {
-                    names.append(delim).append(c.firstName);
+                if( c != null ) {
+                    names.append( delim ).append( c.name );
+                    firstNames.append( delim ).append( c.firstName );
+                    validNames++;
                     delim = ", ";
-                } else {
-                    names.append(delim).append(c.name);
                 }
             }
         }
-        return names.toString();
+        if( validNames > 1 ) {
+            return firstNames.toString();
+        }
+        else {
+            return names.toString();
+        }
     }
 
     /**
