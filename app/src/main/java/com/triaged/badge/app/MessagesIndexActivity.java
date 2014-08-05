@@ -142,12 +142,14 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             startActivity(intent);
             overridePendingTransition(0,0);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent( this, MyProfileActivity.class );
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
-            startActivity(intent);
-            overridePendingTransition(0,0);
+            if (dataProviderServiceBinding != null && dataProviderServiceBinding.getLoggedInUser() != null) {
+                tab.setIcon(R.drawable.profile_selected);
+                Intent intent = new Intent( this, MyProfileActivity.class );
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            }
         }
     }
 
