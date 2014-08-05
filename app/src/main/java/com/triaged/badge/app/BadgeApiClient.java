@@ -1,5 +1,7 @@
 package com.triaged.badge.app;
 
+import android.net.Uri;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -30,7 +32,10 @@ import java.net.URISyntaxException;
 public class BadgeApiClient extends DefaultHttpClient {
     public static final String MIME_TYPE_JSON = "application/json";
 
-    private static final String API_PROTOCOL = "https";
+
+    private static final String STAGING_API_PROTOCOL = "http";
+    private static final String PROD_API_PROTOCOL = "https";
+    private static final String API_PROTOCOL = PROD_API_PROTOCOL;
     private static final String PROD_API_HOST = "api.badge.co";
     private static final String STAGING_API_HOST = "api.badge-staging.com";
     private static final String PROD_API_MESSAGING_HOST = "messaging.badge.co";
@@ -44,7 +49,7 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
     private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
     //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
-    private static final String GET_COMPANY_URI = String.format( "%s://%s/v1/company", API_PROTOCOL, API_HOST );
+    private static final String GET_COMPANY_URI_PATTERN = "%s://%s/v1/company?timestamp=%d";
     private static final String GET_MSG_HISTORY_URI_FORMAT = "%s://%s/api/v1/user/messages?timestamp=%d";
     private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
     private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
@@ -66,8 +71,10 @@ public class BadgeApiClient extends DefaultHttpClient {
 
     public BadgeApiClient( String apiToken ) {
         super();
-        httpHost = new HttpHost( API_HOST );
-        messagingHttpHost = new HttpHost( API_MESSAGING_HOST );
+        URI uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_HOST ) );
+        httpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
+        uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_MESSAGING_HOST ) );
+        messagingHttpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
         this.apiToken = apiToken;
     }
 
@@ -80,9 +87,10 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @param lastSynced It should request only contacts at that company modified since this time in milliseconds
      * @throws IOException if network issues occur during the process.
      */
-    public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException, JSONException {
-        HttpGet getCompany = new HttpGet( GET_COMPANY_URI );
+    public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException {
+        HttpGet getCompany = new HttpGet( String.format( GET_COMPANY_URI_PATTERN, API_PROTOCOL, API_HOST, lastSynced ) );
         getCompany.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
+
         return execute( httpHost, getCompany );
     }
 

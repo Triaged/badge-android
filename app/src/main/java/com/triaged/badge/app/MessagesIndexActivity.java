@@ -31,8 +31,6 @@ import java.util.List;
  */
 public class MessagesIndexActivity extends BadgeActivity implements ActionBar.TabListener {
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-
     protected ListView messagesList;
     protected MessagesListAdapter adapter;
     private BroadcastReceiver refreshReceiver;
@@ -44,9 +42,6 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         requestWindowFeature(Window.FEATURE_ACTION_BAR);
         ActionBar actionBar = getActionBar();
@@ -60,24 +55,25 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         setContentView(R.layout.activity_messages_index);
         messagesList = (ListView) findViewById(R.id.messages_list);
 
-        adapter = new MessagesListAdapter(dataProviderServiceBinding, this, dataProviderServiceBinding.getThreads(), false );
-        messagesList.setAdapter(adapter);
         messagesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MessagesIndexActivity.this, MessageShowActivity.class);
                 intent.putExtra( MessageShowActivity.THREAD_ID_EXTRA,  ((MessagesListAdapter.ViewHolder)view.getTag()).threadId );
+                intent.putExtra( MessageShowActivity.SHOW_KEYBOARD_EXTRA, false);
                 intent.setFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
                 startActivity(intent);
             }
         });
 
         IntentFilter messageUpdateFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
+        messageUpdateFilter.addAction( DataProviderService.MSGS_UPDATED_ACTION );
         refreshReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 adapter.changeCursor( dataProviderServiceBinding.getThreads() );
                 adapter.notifyDataSetChanged();
+                toggleUI();
             }
         };
         localBroadcastManager.registerReceiver( refreshReceiver, messageUpdateFilter );
@@ -96,15 +92,7 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
         noMessagesInfo = (TextView) findViewById(R.id.no_messages_info);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Notifier.clearNotifications( this );
-        overridePendingTransition(0,0);
-        ActionBar actionBar = getActionBar();
-        actionBar.getTabAt(0).setIcon(R.drawable.messages_selected).select();
-        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
-        actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+    protected void toggleUI() {
         if (adapter.getCount() == 0) {
             noMessagesImage.setVisibility(View.VISIBLE);
             noMessagesTitle.setVisibility(View.VISIBLE);
@@ -114,7 +102,29 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             noMessagesTitle.setVisibility(View.GONE);
             noMessagesInfo.setVisibility(View.GONE);
         }
+    }
 
+    @Override
+    protected void onDatabaseReady() {
+        adapter = new MessagesListAdapter(dataProviderServiceBinding, this, dataProviderServiceBinding.getThreads(), false );
+        messagesList.setAdapter(adapter);
+        toggleUI();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Notifier.clearNotifications( this );
+        overridePendingTransition(0,0);
+        ActionBar actionBar = getActionBar();
+        actionBar.getTabAt(0).setIcon(R.drawable.messages_selected).select();
+        actionBar.getTabAt(1).setIcon(R.drawable.contacts_unselected);
+        actionBar.getTabAt(2).setIcon(R.drawable.profile_unselected);
+        if( adapter != null ) {
+            adapter.changeCursor( dataProviderServiceBinding.getThreads() );
+            adapter.notifyDataSetChanged();
+            toggleUI();
+        }
     }
 
     @Override
@@ -132,12 +142,14 @@ public class MessagesIndexActivity extends BadgeActivity implements ActionBar.Ta
             startActivity(intent);
             overridePendingTransition(0,0);
         } else if (tab.getPosition() == 2) {
-            tab.setIcon(R.drawable.profile_selected);
-            Intent intent = new Intent( this, MyProfileActivity.class );
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
-            startActivity(intent);
-            overridePendingTransition(0,0);
+            if (dataProviderServiceBinding != null && dataProviderServiceBinding.getLoggedInUser() != null) {
+                tab.setIcon(R.drawable.profile_selected);
+                Intent intent = new Intent( this, MyProfileActivity.class );
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            }
         }
     }
 

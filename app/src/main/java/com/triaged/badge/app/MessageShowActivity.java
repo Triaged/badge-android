@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -24,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +34,7 @@ import com.triaged.badge.data.Contact;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,6 +47,7 @@ import java.util.Arrays;
 public class MessageShowActivity extends BadgeActivity {
 
     public static final String THREAD_ID_EXTRA = "threadId";
+    public static final String SHOW_KEYBOARD_EXTRA = "showKeyboard";
     private static final String LOG_TAG = MessageShowActivity.class.getName();
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -54,13 +58,10 @@ public class MessageShowActivity extends BadgeActivity {
     private RelativeLayout postBoxWrapper;
     private float densityMultiplier = 1;
     private boolean expanded = false;
-    private Contact counterPart;
     private BroadcastReceiver refreshReceiver;
     protected ImageButton sendButton;
     protected String threadId;
     private TextView backButton;
-    private Intent intent;
-    private BroadcastReceiver dataAvailableReceiver;
 
     private int userCount = 2;
     private int soleCounterpartId = 0;
@@ -70,14 +71,17 @@ public class MessageShowActivity extends BadgeActivity {
     private SharedPreferences prefs;
 
     private boolean lengthGreaterThanZero = false;
+    private boolean showKeyboard = true;
+
+    private ScrollView threadMembersScrollView = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        intent = getIntent();
         final BadgeApplication app = (BadgeApplication) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
+        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -102,10 +106,10 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 if (userCount > 2) {
-                    if (threadMembersWrapper.getVisibility() == View.VISIBLE) {
-                        threadMembersWrapper.setVisibility(View.GONE);
+                    if (threadMembersScrollView.getVisibility() == View.VISIBLE) {
+                        threadMembersScrollView.setVisibility(View.GONE);
                     } else {
-                        threadMembersWrapper.setVisibility(View.VISIBLE);
+                        threadMembersScrollView.setVisibility(View.VISIBLE);
                     }
                 } else {
                     Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
@@ -137,6 +141,7 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if( threadId.equals( intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ) ) ) {
+                    dataProviderServiceBinding.markAsRead( threadId );
                     adapter.changeCursor( dataProviderServiceBinding.getMessages(threadId) );
                     adapter.notifyDataSetChanged();
                 }
@@ -144,6 +149,7 @@ public class MessageShowActivity extends BadgeActivity {
         };
         IntentFilter threadUpdateFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
         threadUpdateFilter.addAction( DataProviderService.MSG_STATUS_CHANGED_ACTION);
+        threadUpdateFilter.addAction( DataProviderService.MSGS_UPDATED_ACTION );
         localBroadcastManager.registerReceiver(refreshReceiver, threadUpdateFilter);
 
         postBox = (EditText) findViewById(R.id.input_box);
@@ -190,6 +196,13 @@ public class MessageShowActivity extends BadgeActivity {
                 if (!msg.equals("")) {
                     dataProviderServiceBinding.sendMessageAsync(threadId, msg);
                     postBox.setText("");
+                    JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                    try {
+                        props.put("recipient_id", threadId);
+                        mixpanel.track("message_sent", props);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -197,38 +210,35 @@ public class MessageShowActivity extends BadgeActivity {
 
         postBox.addTextChangedListener(textWatcher);
 
+        threadMembersScrollView = (ScrollView) findViewById(R.id.thread_members_wrapper);
+
         threadMembersWrapper = (LinearLayout) findViewById(R.id.thread_members);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        dataAvailableReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                dataProviderServiceBinding = app.dataProviderServiceBinding;
-                showThread();
-            }
-        };
-        localBroadcastManager.registerReceiver(dataAvailableReceiver, new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION));
-
-        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
-            showThread();
-        }
-
     }
 
-    protected void showThread() {
-        dataProviderServiceBinding.markAsRead( threadId );
+    @Override
+    protected void onDatabaseReady() {
+        dataProviderServiceBinding.markAsRead(threadId);
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
         threadList.setSelection(adapter.getCount() - 1);
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
         setupContactsMenu();
+        if (adapter.getCount() > 0 && !showKeyboard) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        } else {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        }
+        threadMembersScrollView.setVisibility(View.GONE);
     }
 
     @Override
     protected void onDestroy() {
         localBroadcastManager.unregisterReceiver(refreshReceiver);
-        localBroadcastManager.unregisterReceiver(dataAvailableReceiver);
         adapter.destroy();
         super.onDestroy();
     }
@@ -288,6 +298,9 @@ public class MessageShowActivity extends BadgeActivity {
                 Integer userId = users.getInt(i);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
+                    if( c == null ) {
+                        continue;
+                    }
                     if (userCount == 2) {
                         soleCounterpartId = c.id;
                     } else {
@@ -356,15 +369,21 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        String oldThreadId = threadId;
-        threadId = intent.getStringExtra( THREAD_ID_EXTRA );
-        if( !oldThreadId.equals( threadId ) ) {
-            dataProviderServiceBinding.markAsRead( threadId );
-            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
-            adapter.notifyDataSetChanged();
-            backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
-            setupContactsMenu();
+        threadId = intent.getStringExtra(THREAD_ID_EXTRA);
+        showKeyboard = intent.getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
+        dataProviderServiceBinding.markAsRead(threadId);
+        adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+        adapter.notifyDataSetChanged();
+        backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));
+        setupContactsMenu();
+        if (adapter.getCount() > 0 && !showKeyboard) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        } else {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }
+        threadMembersScrollView.setVisibility(View.GONE);
         super.onNewIntent(intent);
     }
 
@@ -389,6 +408,12 @@ public class MessageShowActivity extends BadgeActivity {
     protected void notifyNewMessage(Intent intent) {
         if( !intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA ).equals( threadId ) ) {
             super.notifyNewMessage(intent);
+        } else {
+            threadId = intent.getStringExtra( DataProviderService.THREAD_ID_EXTRA);
+            showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
+            dataProviderServiceBinding.markAsRead( threadId );
+            adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
+            adapter.notifyDataSetChanged();
         }
     }
 }

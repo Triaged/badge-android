@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -45,7 +46,6 @@ public class MessageNewActivity extends BadgeActivity {
 
     private StickyListHeadersListView contactsListView = null;
     private ContactsAdapter contactsAdapter = null;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private ContactsAdapterWithoutHeadings searchResultsAdapter = null;
 
     private EditText searchBar = null;
@@ -94,10 +94,20 @@ public class MessageNewActivity extends BadgeActivity {
                                 return dataProviderServiceBinding.createThreadSync(recipientIds);
                             }
                             catch( JSONException e ) {
-                                Toast.makeText( MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT ).show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
                             catch( IOException e ) {
-                                Toast.makeText( MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT ).show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
                             return null;
                         }
@@ -187,8 +197,6 @@ public class MessageNewActivity extends BadgeActivity {
             }
         });
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        loadContacts();
 
         densityMultiplier = getResources().getDisplayMetrics().density;
         final View activityRootView = findViewById(R.id.activity_root);
@@ -217,6 +225,11 @@ public class MessageNewActivity extends BadgeActivity {
     }
 
     @Override
+    protected void onDatabaseReady() {
+        loadContacts();
+    }
+
+    @Override
     protected void onDestroy() {
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.destroy();
@@ -228,20 +241,45 @@ public class MessageNewActivity extends BadgeActivity {
     }
 
     private void loadContacts() {
-        if( searchResultsAdapter != null ) {
-            searchResultsAdapter.refresh( dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser() );
-        }
-        else {
-            searchResultsAdapter = new ContactsAdapterWithoutHeadings( this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false );
-            searchResultsList.setAdapter( searchResultsAdapter );
-        }
-        if( contactsAdapter != null ) {
-            contactsAdapter.refresh();
-        }
-        else {
-            contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_no_msg);
-            contactsListView.setAdapter(contactsAdapter);
-        }
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+
+                runOnUiThread( new Runnable() {
+                    @Override
+                    public void run() {
+                        if( searchResultsAdapter != null ) {
+                            searchResultsAdapter.changeCursor( searchCursor );
+                        }
+                        else {
+                            runOnUiThread( new Runnable() {
+                                @Override
+                                public void run() {
+                                    searchResultsAdapter = new ContactsAdapterWithoutHeadings( MessageNewActivity.this, searchCursor, dataProviderServiceBinding, false );
+                                    searchResultsList.setAdapter( searchResultsAdapter );
+                                }
+                            });
+                        }
+                        if( contactsAdapter != null ) {
+                            contactsAdapter.changeCursor( contactsCursor );
+                        }
+                        else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    contactsAdapter = new ContactsAdapter(MessageNewActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_no_msg);
+                                    contactsListView.setAdapter(contactsAdapter);
+                                }
+                            });
+                        }
+
+                    }
+                });
+                return null;
+            }
+        }.execute();
     }
 
     private void addRecipient(final int contactId, final String contactName) {

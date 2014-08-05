@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,8 +44,9 @@ import java.util.List;
 public abstract class AbstractProfileActivity extends BadgeActivity  {
 
     private static final String LOG = AbstractProfileActivity.class.getName();
+    public static final String PROFILE_ID_EXTRA = "PROFILE_ID";
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+
     private ServiceConnection dataProviderServiceConnnection = null;
     protected Contact contact = null;
     private int contactId = 0;
@@ -63,6 +66,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView managesHeader = null;
     private TextView bossHeader = null;
     private TextView departmentHeader = null;
+    private TextView availabilityHeader = null;
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
 
@@ -76,7 +80,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         final Intent intent = getIntent();
-        contactId = intent.getIntExtra("PROFILE_ID", 0);
+        contactId = intent.getIntExtra(PROFILE_ID_EXTRA, 0);
         backStackIds = intent.getIntegerArrayListExtra("BACK_STACK_IDS");
         if (backStackIds == null) {
             backStackIds= new ArrayList<Integer>();
@@ -104,13 +108,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         departmentHeader = (TextView) findViewById(R.id.department_header);
         bossHeader = (TextView) findViewById(R.id.profile_heading_reports_to);
         bossView = (ProfileReportsToView) findViewById(R.id.boss_view);
+        availabilityHeader = (TextView) findViewById(R.id.availability_header);
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(AbstractProfileActivity.this, ContactsForDepartmentActivity.class);
-                intent.putExtra("DEPARTMENT_ID", contact.departmentId);
-                intent.putExtra("DEPARTMENT_NAME", contact.departmentName);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_ID_EXTRA, contact.departmentId);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_NAME_EXTRA, contact.departmentName);
                 startActivity(intent);
             }
         });
@@ -307,8 +312,12 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 birthDateView.setVisibility(View.GONE);
             }
 
+            // availabilityHeader.setVisibility(View.VISIBLE);
+            // currentLocationView.setVisibility(View.VISIBLE);
+
             int currentLocationId = contact.currentOfficeLocationId;
-            if( currentLocationId > 0 ) {
+            String officeLocationName = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
+            if( officeLocationName != null ) {
                 currentLocationView.isOn = true;
                 currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
             }

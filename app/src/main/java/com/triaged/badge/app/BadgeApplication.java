@@ -21,7 +21,7 @@ import org.json.JSONObject;
 public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
-    public static final String MIXPANEL_TOKEN = "b9c753b3560536492eba971a53213f5f";
+    public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
@@ -45,6 +45,10 @@ public class BadgeApplication extends Application {
                 mixpanelAPI.track("appForeground", props);
                 mixpanelAPI.flush();
                 startService( fayeServiceIntent );
+                if( dataProviderServiceBinding != null ) {
+                    dataProviderServiceBinding.syncMessagesAsync();
+                    dataProviderServiceBinding.partialSyncContactsAsync();
+                }
             }
 
             @Override
@@ -57,14 +61,12 @@ public class BadgeApplication extends Application {
         dataProviderServiceConnnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.d(TAG, "SERVICE CONNECTED YAAAAY");
                 dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
                 dataProviderServiceBinding.initDatabase();
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                Log.d(TAG, "SERVICE DISCONNECTED BOOOOOO");
             }
         };
 

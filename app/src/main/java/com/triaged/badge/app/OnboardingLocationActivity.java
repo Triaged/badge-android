@@ -13,7 +13,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.app.views.DepartmentsAdapter;
 import com.triaged.badge.app.views.OfficeLocationsAdapter;
 import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -34,7 +33,6 @@ public class OnboardingLocationActivity extends BadgeActivity {
     protected ListView officeLocationsList = null;
     protected ImageView noLocationCheck = null;
     protected OfficeLocationsAdapter officeLocationsAdapter = null;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
@@ -111,11 +109,13 @@ public class OnboardingLocationActivity extends BadgeActivity {
             }
         });
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
 
+    }
+
+    @Override
+    protected void onDatabaseReady() {
         officeLocationsAdapter = new OfficeLocationsAdapter( this, dataProviderServiceBinding, R.layout.item_office_location);
         officeLocationsList.setAdapter( officeLocationsAdapter );
-
     }
 
     @Override

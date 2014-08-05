@@ -104,7 +104,11 @@ public class MessagesListAdapter extends CursorAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        dateToFormat.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ))/ 1000l );
+        long serverTime = cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ))/ 1000l;
+        if( serverTime > System.currentTimeMillis() ) {
+            serverTime = System.currentTimeMillis() - 5000;
+        }
+        dateToFormat.setTime(  serverTime );
         holder.timestamp.setText( prettyTime.format(  dateToFormat) );
     }
 

@@ -43,7 +43,7 @@ public class Notifier {
             Notification.Builder mBuilder =
                     new Notification.Builder(context)
                             // TODO we need the real icon
-                            .setSmallIcon(R.drawable.ic_action_person)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle("New message from " + from )
                             .setContentText(msg)
                             .setSound( soundUri )
@@ -51,6 +51,7 @@ public class Notifier {
 
             // Creates an explicit intent for an Activity in your app
             Intent resultIntent = new Intent(context, MessageShowActivity.class);
+            resultIntent.putExtra(MessageShowActivity.SHOW_KEYBOARD_EXTRA, false);
             resultIntent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
             PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
@@ -69,7 +70,7 @@ public class Notifier {
             Notification.Builder mBuilder =
                     new Notification.Builder(context)
                             // TODO we need the real icon
-                            .setSmallIcon(R.drawable.ic_action_person)
+                            .setSmallIcon(R.drawable.ic_notification)
                             .setContentTitle( String.format( "%d new messages", numMessages ) )
                             .setContentText( namesBuilder.toString() )
                             .setSound( soundUri )

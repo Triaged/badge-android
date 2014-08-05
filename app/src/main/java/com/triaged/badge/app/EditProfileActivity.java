@@ -20,6 +20,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -42,6 +43,8 @@ import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -63,8 +66,6 @@ public class EditProfileActivity extends BadgeActivity {
     private static final int EDIT_MY_LOCATION_REQUEST_CODE = 20;
 
     protected static final String LOG_TAG = EditProfileActivity.class.getName();
-
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     /** Values may need to be updated on activity result, accessed during call to save */
     private ImageView profileImageView = null;
@@ -105,6 +106,10 @@ public class EditProfileActivity extends BadgeActivity {
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
+            Intent saveIntent = new Intent(EditProfileActivity.this, MyProfileActivity.class);
+            saveIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            saveIntent.putExtra("PROFILE_ID", dataProviderServiceBinding.getLoggedInUser().id);
+            startActivity(saveIntent);
             finish();
         }
 
@@ -117,9 +122,6 @@ public class EditProfileActivity extends BadgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
@@ -163,56 +165,20 @@ public class EditProfileActivity extends BadgeActivity {
 
         setContentView(R.layout.activity_edit_profile);
 
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+
 
         profileImageView = (ImageView) findViewById(R.id.contact_thumb);
         profileImageMissingView = (TextView) findViewById(R.id.no_photo_thumb);
-
-        profileImageMissingView.setText(loggedInUser.initials);
-        profileImageMissingView.setVisibility(View.VISIBLE);
-        if (loggedInUser.avatarUrl != null) {
-            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView);
-        }
-
         firstName = (EditProfileInfoView) findViewById(R.id.edit_first_name);
-        firstName.secondaryValue = loggedInUser.firstName;
-        firstName.valueToSave = loggedInUser.firstName;
-
         lastName = (EditProfileInfoView) findViewById(R.id.edit_last_name);
-        lastName.secondaryValue = loggedInUser.lastName;
-        lastName.valueToSave = loggedInUser.lastName;
-
         cellPhone = (EditProfileInfoView) findViewById(R.id.edit_cell_phone);
-        cellPhone.secondaryValue = loggedInUser.cellPhone != null ? loggedInUser.cellPhone: "Add";
-        cellPhone.valueToSave = loggedInUser.cellPhone;
-
         officePhone = (EditProfileInfoView) findViewById(R.id.edit_office_phone);
-        officePhone.secondaryValue = loggedInUser.officePhone != null ? loggedInUser.officePhone : "Add";
-        officePhone.valueToSave = loggedInUser.officePhone;
-
         jobTitle = (EditProfileInfoView) findViewById(R.id.edit_job_title);
-        jobTitle.secondaryValue = loggedInUser.jobTitle != null ? loggedInUser.jobTitle : "Add";
-        jobTitle.valueToSave = loggedInUser.jobTitle;
-
         department = (EditProfileInfoView) findViewById(R.id.edit_department);
-        department.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
-        departmentId = loggedInUser.departmentId;
-
         reportingTo = (EditProfileInfoView) findViewById(R.id.edit_reporting_to);
-        reportingTo.secondaryValue = loggedInUser.managerName != null ? loggedInUser.managerName : "Add";
-        managerId = loggedInUser.managerId;
-
         officeLocation = (EditProfileInfoView) findViewById(R.id.edit_office_location);
-        officeLocation.secondaryValue = loggedInUser.officeName != null ? loggedInUser.officeName : "Add";
-        officeId = loggedInUser.primaryOfficeLocationId;
-
         startDate = (EditProfileInfoView) findViewById(R.id.edit_start_date);
-        startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Add";
-        startDate.valueToSave = loggedInUser.startDateString;
-
         birthDate = (EditProfileInfoView) findViewById(R.id.edit_birth_date);
-        birthDate.secondaryValue = loggedInUser.birthDateString != null ? loggedInUser.birthDateString : "Add";
-        birthDate.valueToSave = loggedInUser.birthDateString;
 
         LinearLayout editFieldsWrapper = (LinearLayout) findViewById(R.id.edit_fields_wrapper);
         for (int i=0; i<editFieldsWrapper.getChildCount(); i++) {
@@ -254,13 +220,13 @@ public class EditProfileActivity extends BadgeActivity {
                                         }
                                     }
                                     catch (SecurityException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                     catch (IllegalArgumentException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                     catch (IllegalAccessException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                 }
                                 break;
@@ -348,16 +314,10 @@ public class EditProfileActivity extends BadgeActivity {
         birthdayCalendar = Calendar.getInstance();
         birthdayCalendar.setTimeZone(Contact.GMT);
         birthdayCalendar.set( Calendar.YEAR, 1 );
+
         birthdayFormat = new SimpleDateFormat(Contact.BIRTHDAY_FORMAT_STRING, Locale.US);
         birthdayFormat.setTimeZone( Contact.GMT );
 
-        if (loggedInUser.birthDateString != null) {
-            try {
-                birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
-            } catch (ParseException e) {
-                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
-            }
-        }
 
         birthdayCalendar.set( Calendar.HOUR, 0 );
         birthdayCalendar.set( Calendar.MINUTE, 0 );
@@ -380,15 +340,7 @@ public class EditProfileActivity extends BadgeActivity {
         startDateCalendar.setTimeZone( Contact.GMT );
         startDateFormat = new SimpleDateFormat( Contact.START_DATE_FORMAT_STRING, Locale.US);
         startDateFormat.setTimeZone( Contact.GMT );
-        if (loggedInUser.startDateString != null) {
-            // assign startDate to calendar
-            try {
-                startDateCalendar.setTime(startDateFormat.parse(loggedInUser.startDateString));
-            }
-            catch (ParseException e) {
-                Log.w(LOG_TAG, "Value got saved for start date format that is no bueno", e);
-            }
-        }
+
         startDateCalendar.set( Calendar.HOUR, 0 );
         startDateCalendar.set( Calendar.MINUTE, 0 );
         startDateCalendar.set( Calendar.SECOND, 0 );
@@ -409,6 +361,72 @@ public class EditProfileActivity extends BadgeActivity {
         }, startDateCalendar.get(Calendar.YEAR),startDateCalendar.get(Calendar.MONTH), startDateCalendar.get(Calendar.DAY_OF_MONTH));
 
         pendingUploadBar = (ProgressBar) findViewById(R.id.pending_upload);
+
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+
+        profileImageMissingView.setText(loggedInUser.initials);
+        profileImageMissingView.setVisibility(View.VISIBLE);
+        if (loggedInUser.avatarUrl != null) {
+            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView);
+        }
+
+        firstName.secondaryValue = loggedInUser.firstName;
+        firstName.valueToSave = loggedInUser.firstName;
+
+        lastName.secondaryValue = loggedInUser.lastName;
+        lastName.valueToSave = loggedInUser.lastName;
+
+        cellPhone.secondaryValue = loggedInUser.cellPhone != null ? loggedInUser.cellPhone: "Add";
+        cellPhone.valueToSave = loggedInUser.cellPhone;
+
+        officePhone.secondaryValue = loggedInUser.officePhone != null ? loggedInUser.officePhone : "Add";
+        officePhone.valueToSave = loggedInUser.officePhone;
+
+        jobTitle.secondaryValue = loggedInUser.jobTitle != null ? loggedInUser.jobTitle : "Add";
+        jobTitle.valueToSave = loggedInUser.jobTitle;
+
+        department.secondaryValue = loggedInUser.departmentName != null ? loggedInUser.departmentName : "Add";
+        departmentId = loggedInUser.departmentId;
+
+        reportingTo.secondaryValue = loggedInUser.managerName != null ? loggedInUser.managerName : "Add";
+        managerId = loggedInUser.managerId;
+
+        officeLocation.secondaryValue = loggedInUser.officeName != null ? loggedInUser.officeName : "Add";
+        officeId = loggedInUser.primaryOfficeLocationId;
+
+        startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Add";
+
+        birthDate.secondaryValue = loggedInUser.birthDateString != null ? loggedInUser.birthDateString : "Add";
+
+        if (loggedInUser.birthDateString != null) {
+            try {
+                birthdayCalendar.setTime( birthdayFormat.parse( loggedInUser.birthDateString ) );
+            } catch (ParseException e) {
+                Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
+            }
+        }
+        birthdayCalendar.set( Calendar.HOUR, 0 );
+        birthdayCalendar.set( Calendar.MINUTE, 0 );
+        birthdayCalendar.set( Calendar.SECOND, 0 );
+
+
+        if (loggedInUser.startDateString != null) {
+            // assign startDate to calendar
+            try {
+                startDateCalendar.setTime(startDateFormat.parse(loggedInUser.startDateString));
+            }
+            catch (ParseException e) {
+                Log.w(LOG_TAG, "Value got saved for start date format that is no bueno", e);
+            }
+        }
+        startDateCalendar.set( Calendar.HOUR, 0 );
+        startDateCalendar.set( Calendar.MINUTE, 0 );
+        startDateCalendar.set( Calendar.SECOND, 0 );
+
 
     }
 
@@ -474,23 +492,28 @@ public class EditProfileActivity extends BadgeActivity {
         Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
         try {
             ExifInterface exif = new ExifInterface(currentPhotoPath);
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-            Matrix matrix = new Matrix();
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
-                matrix.postRotate(90);
-            }
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
-                matrix.postRotate(180);
-            }
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-                matrix.postRotate(270);
-            }
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+            bitmap = getRotatedBitmap(exif, bitmap);
         }
         catch (Exception e) {
-            Log.d(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
+            Log.e(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
         }
 
+        return bitmap;
+    }
+
+    private Bitmap getRotatedBitmap(ExifInterface exif, Bitmap bitmap) {
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+        Matrix matrix = new Matrix();
+        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            matrix.postRotate(90);
+        }
+        else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            matrix.postRotate(180);
+        }
+        else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            matrix.postRotate(270);
+        }
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
         return bitmap;
     }
 
@@ -532,17 +555,44 @@ public class EditProfileActivity extends BadgeActivity {
      * @param *data  @param context * @return
      */
     public Bitmap getBitmapFromGallery(Intent data, Context context){
-        currentPhotoPath = getPath( data.getData() );
-        if (currentPhotoPath != null) {
-            Bitmap fileSystemBmp = getPhotoFromFileSystem();
-            if (fileSystemBmp != null) {
-                return fileSystemBmp;
-            } else {
-                return loadPicasaImageFromGallery(data.getData());
-            }
+        if (data.getData() == null) {
+            return null;
         } else {
-            return loadPicasaImageFromGallery( data.getData() );
+            if (Build.VERSION.SDK_INT < 19 ) {
+                currentPhotoPath = getPath(data.getData());
+                if (currentPhotoPath != null) {
+                    Bitmap fileSystemBmp = getPhotoFromFileSystem();
+                    if (fileSystemBmp != null) {
+                        return fileSystemBmp;
+                    } else {
+                        return loadPicasaImageFromGallery(data.getData());
+                    }
+                } else {
+                    return loadPicasaImageFromGallery(data.getData());
+                }
+            } else {
+                ParcelFileDescriptor parcelFileDescriptor;
+                try {
+                    parcelFileDescriptor = getContentResolver().openFileDescriptor(data.getData(), "r");
+                    FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                    Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+                    parcelFileDescriptor.close();
+                    String path = getPath(data.getData());
+                    if (path != null) {
+                        ExifInterface exifInterface = new ExifInterface(path);
+                        image = getRotatedBitmap(exifInterface, image);
+                    }
+                    if (image != null) {
+                        return image;
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        return null;
     }
 
     /**
@@ -550,17 +600,21 @@ public class EditProfileActivity extends BadgeActivity {
      */
     public String getPath(Uri uri) {
         String[] projection = {  MediaStore.MediaColumns.DATA};
-        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
-        if(cursor != null) {
-            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
-            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-            String filePath = cursor.getString(columnIndex);
-            cursor.close();
-            return filePath;
-        } else {
-            return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+        try {
+            Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+            if (cursor != null) {
+                //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+                //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                String filePath = cursor.getString(columnIndex);
+                cursor.close();
+                return filePath;
+            } else {
+                return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+            }
+        } catch (Exception e) {
+            return null;
         }
     }
 

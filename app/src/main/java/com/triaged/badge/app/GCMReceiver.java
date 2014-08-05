@@ -26,7 +26,7 @@ public class GCMReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive( final Context context, Intent intent) {
-        Log.i(GCMReceiver.class.getName(), "New GCM message: " + intent.getExtras().toString());
+        // Log.i(GCMReceiver.class.getName(), "New GCM message: " + intent.getExtras().toString());
         // Show notification
         String message = intent.getStringExtra( "message" );
         String threadId = intent.getStringExtra( "thread_id" );

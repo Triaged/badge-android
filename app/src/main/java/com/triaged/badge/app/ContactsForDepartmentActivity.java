@@ -19,16 +19,15 @@ import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
  */
 public class ContactsForDepartmentActivity extends BackButtonActivity {
 
+    public static final String DEPARTMENT_NAME_EXTRA = "DEPARTMENT_NAME";
+    public static final String DEPARTMENT_ID_EXTRA = "DEPARTMENT_ID";
+
     private ListView contactsForDepartmentList;
     private ContactsAdapterWithoutHeadings adapter;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         setContentView(R.layout.activity_contacts_for_department);
 
@@ -45,19 +44,24 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
                     intent = new Intent(ContactsForDepartmentActivity.this, OtherProfileActivity.class);
                 }
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra("PROFILE_ID", clickedId);
+                intent.putExtra( AbstractProfileActivity.PROFILE_ID_EXTRA, clickedId);
                 startActivity(intent);
             }
         });
 
         Intent intent = getIntent();
-        int departmentId = intent.getIntExtra("DEPARTMENT_ID", 0);
-        String departmentName = intent.getStringExtra("DEPARTMENT_NAME");
+        String departmentName = intent.getStringExtra(DEPARTMENT_NAME_EXTRA);
         backButton.setText(departmentName);
+
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+        Intent intent = getIntent();
+        int departmentId = intent.getIntExtra(DEPARTMENT_ID_EXTRA, 0);
         Cursor deptCursor = dataProviderServiceBinding.getContactsByDepartmentCursor(departmentId);
         adapter = new ContactsAdapterWithoutHeadings(this, deptCursor, dataProviderServiceBinding);
         contactsForDepartmentList.setAdapter(adapter);
-
     }
 
     @Override

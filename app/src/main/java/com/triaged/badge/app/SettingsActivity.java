@@ -28,14 +28,10 @@ import org.json.JSONObject;
  */
 public class SettingsActivity extends BackButtonActivity {
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        BadgeApplication app = (BadgeApplication) getApplication();
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences( this );
 
         setContentView(R.layout.activity_settings);

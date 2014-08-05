@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
@@ -31,7 +33,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    private Cursor departmentsCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +66,6 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
         addView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(OnboardingDepartmentActivity.this, "ADD NEW DEPARTMENT", Toast.LENGTH_SHORT).show();
                 final AlertDialog.Builder alertDialog = new AlertDialog.Builder(OnboardingDepartmentActivity.this);
                 alertDialog.setTitle("Add Department");
                 final EditText input = new EditText(OnboardingDepartmentActivity.this);
@@ -111,9 +112,25 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
             }
         });
 
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
-        departmentsAdapter = new DepartmentsAdapter( this, R.layout.item_department_no_count, dataProviderServiceBinding, false );
-        departmentsListView.setAdapter( departmentsAdapter );
     }
 
+    @Override
+    protected void onDatabaseReady() {
+        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                departmentsCursor = dataProviderServiceBinding.getDepartmentCursor( false );
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                departmentsAdapter = new DepartmentsAdapter( OnboardingDepartmentActivity.this, R.layout.item_department_no_count, dataProviderServiceBinding, departmentsCursor );
+                departmentsListView.setAdapter( departmentsAdapter );
+                super.onPostExecute(aVoid);
+            }
+        }.execute();
+    }
 }

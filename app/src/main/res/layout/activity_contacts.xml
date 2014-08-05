@@ -9,6 +9,14 @@
     android:id="@+id/activity_root"
     >
 
+    <ProgressBar
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/loading_spinner"
+        />
+
     <include layout="@layout/include_search" />
 
     <se.emilsjolander.stickylistheaders.StickyListHeadersListView

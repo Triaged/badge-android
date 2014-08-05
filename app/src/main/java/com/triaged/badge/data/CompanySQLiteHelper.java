@@ -50,7 +50,9 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_OFFICE_LOCATION_LAT = "latitude";
     public static final String COLUMN_OFFICE_LOCATION_LNG = "longitude";
 
-    public static final String COLUMN_MESSAGES_ID = "_id";
+    /** primary key */
+    public static final String COLUMN_MESSAGES_LOCAL_ID = "_id";
+    public static final String COLUMN_MESSAGES_ID = "server_msg_id";
     public static final String COLUMN_MESSAGES_BODY = "body";
     public static final String COLUMN_MESSAGES_THREAD_ID = "thread_id";
     public static final String COLUMN_MESSAGES_FROM_ID = "from_user_id";
@@ -64,7 +66,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
 
     protected static final String SQL_DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 17;
+    protected static final int DATABASE_VERSION = 20;
     private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
             TABLE_CONTACTS,
             COLUMN_CONTACT_ID,
@@ -104,8 +106,9 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_OFFICE_LOCATION_LNG
     );
 
-    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format( "create table %s (%s  string primary key, %s string, %s integer, %s text, %s integer, %s integer, %s integer, %s string, %s string, %s integer, %s string);",
+    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format( "create table %s (%s integer primary key autoincrement, %s text, %s text, %s integer, %s text, %s integer, %s integer, %s integer, %s text, %s text, %s integer, %s text);",
             TABLE_MESSAGES,
+            COLUMN_MESSAGES_LOCAL_ID,
             COLUMN_MESSAGES_ID,
             COLUMN_MESSAGES_THREAD_ID,
             COLUMN_MESSAGES_FROM_ID,

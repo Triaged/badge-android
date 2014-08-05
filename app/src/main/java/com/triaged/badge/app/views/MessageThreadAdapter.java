@@ -2,19 +2,14 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
@@ -23,7 +18,6 @@ import com.triaged.badge.data.Contact;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -73,7 +67,11 @@ public class MessageThreadAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
-        messageDate.setTime( cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l );
+        long messageTimeMillis = cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l;
+        if( messageTimeMillis > System.currentTimeMillis() ) {
+            messageTimeMillis = System.currentTimeMillis() - 5000;
+        }
+        messageDate.setTime( messageTimeMillis );
         // TODO this is probably not the right timestamp format.
         holder.timestamp.setText( prettyTime.format( messageDate ) );
         holder.userPhoto.setVisibility(View.VISIBLE);
@@ -89,10 +87,10 @@ public class MessageThreadAdapter extends CursorAdapter {
             holder.messageFailedButton.setVisibility(View.GONE);
             int status = cursor.getInt(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK));
             if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
-                Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
+                // Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
             } else if (status == DataProviderService.MSG_STATUS_PENDING) {
                 // Pending
-                Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
+                // Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
                 holder.progressBar.setVisibility(View.VISIBLE);
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);

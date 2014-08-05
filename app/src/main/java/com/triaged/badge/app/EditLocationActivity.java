@@ -32,7 +32,19 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) cityscape.getLayoutParams();
         lp.setMargins(0, 0, 0, 0);
         cityscape.setLayoutParams(lp);
+    }
 
+    @Override
+    protected void onContinue() {
+        Intent intent = new Intent(EditLocationActivity.this, EditProfileActivity.class);
+        intent.putExtra( OFFICE_NAME_EXTRA, officeLocationsAdapter.usersOfficeName );
+        setResult(officeLocationsAdapter.usersOffice, intent);
+        finish();
+    }
+
+    @Override
+    protected void onDatabaseReady() {
+        super.onDatabaseReady();
         Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
         if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {
             noLocationCheck.setVisibility(View.VISIBLE);
@@ -42,13 +54,5 @@ public class EditLocationActivity extends OnboardingLocationActivity {
             officeLocationsAdapter.usersOfficeName = loggedInUser.officeName;
             officeLocationsAdapter.refresh();
         }
-    }
-
-    @Override
-    protected void onContinue() {
-        Intent intent = new Intent(EditLocationActivity.this, EditProfileActivity.class);
-        intent.putExtra( OFFICE_NAME_EXTRA, officeLocationsAdapter.usersOfficeName );
-        setResult(officeLocationsAdapter.usersOffice, intent);
-        finish();
     }
 }

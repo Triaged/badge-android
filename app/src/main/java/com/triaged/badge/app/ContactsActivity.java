@@ -6,8 +6,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
@@ -17,12 +19,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 
@@ -58,9 +62,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface medium = null;
     private Typeface regular = null;
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding = null;
-    protected boolean databaseReady;
-    protected BroadcastReceiver receiver;
     protected BadgeApplication app;
 
     private LocalBroadcastManager localBroadcastManager;
@@ -72,12 +73,17 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private RelativeLayout.LayoutParams departmentListViewParams;
     private int departmentListTopMargin = 0;
     private int departmentListBottomMargin = 0;
+    protected ProgressBar loadingSpinner;
 
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
     private RelativeLayout.LayoutParams contactsListViewParams;
     private int contactsListTopMargin = 0;
     private int contactsListBottomMargin = 0;
+
+    private Cursor contactsCursor;
+    private Cursor searchCursor;
+    private Cursor departmentsCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +102,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
 
         contactsTabButton = (Button) findViewById(R.id.contacts_tab);
         departmentsTabButton = (Button) findViewById(R.id.departments_tab);
+        loadingSpinner = (ProgressBar) findViewById( R.id.loading_spinner );
 
         contactsTabButton.setSelected(true);
         departmentsTabButton.setSelected(false);
@@ -236,19 +243,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
 
-        databaseReady = false;
-        receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
-                    dataProviderServiceBinding = app.dataProviderServiceBinding;
-                    databaseReadyCallback();
-                }
-                else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
-                    loadContactsAndDepartments();
-                }
-            }
-        };
 
 
         departmentsListView = (ListView) findViewById(R.id.departments_list);
@@ -267,12 +261,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
         filter.addAction(DataProviderService.DB_UPDATED_ACTION);
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        localBroadcastManager.registerReceiver(receiver, filter);
-        dataProviderServiceBinding = app.dataProviderServiceBinding;
-        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
-            databaseReadyCallback();
-        }
 
         final View activityRootView = findViewById(R.id.activity_root);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -330,7 +318,6 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         if( searchResultsAdapter != null ) {
             searchResultsAdapter.destroy();
         }
-        localBroadcastManager.unregisterReceiver(receiver);
     }
 
     @Override
@@ -341,7 +328,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             startActivity(intent);
             overridePendingTransition(0, 0);
         } else if (tab.getPosition() == 2) {
-            if (dataProviderServiceBinding.getLoggedInUser() != null) {
+            if (dataProviderServiceBinding != null && dataProviderServiceBinding.getLoggedInUser() != null) {
                 tab.setIcon(R.drawable.profile_selected);
                 Intent intent = new Intent( this, MyProfileActivity.class );
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -365,43 +352,66 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     }
 
     /**
-     * This callback should be invoked whenever the database is determined
-     * to be ready, which may be asynchronous with activity create and start.
-     *
-     * No contacts db operation should occur until this has been called.
+     * This callback is invoked once and only once
+     * when the database is ready.
      */
-    protected void databaseReadyCallback() {
-        if( !databaseReady ) {
-            databaseReady = true;
+    @Override
+    protected void onDatabaseReady() {
+        lazyDeviceRegistration();
+        loadContactsAndDepartments();
+    }
 
-            // SETUP CONTACTS
-            lazyDeviceRegistration();
-            loadContactsAndDepartments();
-        }
+    /**
+     * Refresh contact list on resync
+     */
+    @Override
+    protected void onDatabaseUpdated() {
+        loadContactsAndDepartments();
     }
 
     protected void loadContactsAndDepartments() {
-        if( dataProviderServiceBinding.getLoggedInUser() != null ) {
-            if (contactsAdapter != null) {
-                contactsAdapter.refresh();
-            } else {
-                contactsAdapter = new ContactsAdapter(this, dataProviderServiceBinding, R.layout.item_contact_with_msg);
-                contactsListView.setAdapter(contactsAdapter);
+
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                if( dataProviderServiceBinding.getLoggedInUser() != null ) {
+                    contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
+                    departmentsCursor = dataProviderServiceBinding.getDepartmentCursor( true );
+                }
+                return null;
             }
 
-            if (departmentsAdapter != null) {
-                departmentsAdapter.refresh();
-            } else {
-                departmentsAdapter = new DepartmentsAdapter(this, R.layout.item_department_with_count, dataProviderServiceBinding, true);
-                departmentsListView.setAdapter(departmentsAdapter);
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                if (contactsCursor != null && searchCursor != null && departmentsCursor != null) {
+                    if (contactsAdapter != null) {
+                        contactsAdapter.changeCursor(contactsCursor);
+                    } else {
+                        contactsAdapter = new ContactsAdapter(ContactsActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_with_msg);
+                        contactsListView.setAdapter(contactsAdapter);
+                        loadingSpinner.setVisibility(View.GONE);
+                    }
+
+                    if (searchResultsAdapter != null) {
+                        searchResultsAdapter.changeCursor(searchCursor);
+                    } else {
+                        searchResultsAdapter = new ContactsAdapterWithoutHeadings(ContactsActivity.this, searchCursor, dataProviderServiceBinding, false);
+                        searchResultsList.setAdapter(searchResultsAdapter);
+                    }
+
+                    if (departmentsAdapter != null) {
+                        departmentsAdapter.departmentsCursor = departmentsCursor;
+                        departmentsAdapter.refresh();
+                    } else {
+                        departmentsAdapter = new DepartmentsAdapter(ContactsActivity.this, R.layout.item_department_with_count, dataProviderServiceBinding, departmentsCursor);
+                        departmentsListView.setAdapter(departmentsAdapter);
+                    }
+                }
+                super.onPostExecute(aVoid);
             }
-            if (searchResultsAdapter != null) {
-                searchResultsAdapter.refresh(dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser());
-            } else {
-                searchResultsAdapter = new ContactsAdapterWithoutHeadings(this, dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), dataProviderServiceBinding, false);
-                searchResultsList.setAdapter(searchResultsAdapter);
-            }
-        }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     /**

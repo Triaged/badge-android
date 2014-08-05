@@ -134,11 +134,18 @@ public class OtherProfileActivity extends AbstractProfileActivity {
     }
 
     @Override
+    protected void onDatabaseReady() {
+        dataProviderServiceBinding.refreshContact(contact.id);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // Try to refresh contact
         localBroadcastManager.registerReceiver( refreshReceiver, new IntentFilter( DataProviderService.DB_UPDATED_ACTION ));
-        dataProviderServiceBinding.refreshContact( contact.id );
+        if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() ) {
+            dataProviderServiceBinding.refreshContact(contact.id);
+        }
     }
 
     @Override

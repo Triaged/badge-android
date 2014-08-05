@@ -34,7 +34,8 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     protected static final String LOG_TAG = FayeService.class.getName();
 
     protected static final String STAGING_FAYE_HOST = "ws://messaging.badge.co/streaming";
-    protected static final String PROD_FAYE_HOST = "ws://badge-messaging.herokuapp.com/streaming";
+    protected static final String PROD_FAYE_HOST = "wss://messaging.badge.co/streaming";
+
     protected static final String FAYE_HOST = PROD_FAYE_HOST;
 
     //protected Fa faye;
@@ -73,7 +74,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
+        // Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
         if( loggedInUserId > 0 ) {
             JSONObject extension = new JSONObject();
             try {
@@ -141,9 +142,6 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void subscribedToChannel(String subscription) {
-        Log.d(LOG_TAG, "Faye subscribed to channel!");
-        ensureDataServiceBinding();
-        dataProviderServiceBinding.syncMessagesAsync();
     }
 
     @Override
@@ -162,19 +160,15 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             return;
         }
         ensureDataServiceBinding();
-        String guid = "foo";
         try {
-            if (json.has("guid")) {
-                guid = json.getString("guid");
-            }
-            dataProviderServiceBinding.upsertThreadAndMessages( json.getJSONObject( "message_thread" ), guid );
+            dataProviderServiceBinding.upsertThreadAndMessagesAsync( json.getJSONObject( "message_thread" )  );
             // Do actual work.
 
         }
         catch( JSONException e ) {
             Log.w( LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e );
         }
-        Log.d( LOG_TAG, "Message: " + json.toString() );
+        // Log.d( LOG_TAG, "Message: " + json.toString() );
     }
 
     public class LocalBinding extends Binder {
