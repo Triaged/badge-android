@@ -88,12 +88,14 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 Log.w( LOG_TAG, "Value got saved for birthdate format that is no bueno", e );
             }
         }
+        else {
+            birthdayCalendar.set( Calendar.MONTH, Calendar.JANUARY );
+            birthdayCalendar.set( Calendar.DAY_OF_MONTH, 1 );
+        }
 
         birthdayCalendar.set( Calendar.HOUR, 0 );
         birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.SECOND, 0 );
-
-
 
     }
 
@@ -115,7 +117,13 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 birthdayCalendar.setTimeZone( Contact.GMT );
                 SimpleDateFormat iso8601Format = new SimpleDateFormat(Contact.ISO_8601_FORMAT_STRING);
                 iso8601Format.setTimeZone( Contact.GMT );
-                String birthDateValue = iso8601Format.format(birthdayCalendar.getTime());
+                String birthDateValue;
+                if( "".equals( birthday.getText().toString() ) ) {
+                    birthDateValue = null;
+                }
+                else {
+                    birthDateValue = iso8601Format.format(birthdayCalendar.getTime());
+                }
                 dataProviderServiceBinding.saveBasicProfileDataAsync( firstName.getText().toString(), lastName.getText().toString(), birthDateValue, cellNumber.getText().toString(), saveCallback );
             }
         });
