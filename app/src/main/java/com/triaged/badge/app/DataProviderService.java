@@ -791,6 +791,7 @@ public class DataProviderService extends Service {
         // Report the event to mixpanel
         MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
         mixpanelAPI.clearSuperProperties();
+        apiClient.apiToken = "";
     }
 
     private void notifyUILoggedOut() {
@@ -898,8 +899,6 @@ public class DataProviderService extends Service {
                 try {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this);
                     int deviceId = prefs.getInt(REGISTERED_DEVICE_ID_PREFS_KEY, -1);
-                    // Do this regardless of whether we can communicate with the cloud or not.
-                    loggedOut();
                     if( deviceId != -1 ) {
                         HttpResponse response = apiClient.unregisterDeviceRequest( deviceId );
                         ensureNotUnauthorized( response );
@@ -911,6 +910,10 @@ public class DataProviderService extends Service {
                 }
                 catch( IOException e ) {
                     Log.e( LOG_TAG, "Wasn't able to delete device on api", e );
+                }
+                finally {
+                    // Do this regardless of whether we can communicate with the cloud or not.
+                    loggedOut();
                 }
             }
         } );
@@ -953,6 +956,7 @@ public class DataProviderService extends Service {
 
                         SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
                         prefsEditor.putInt(REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt("id"));
+                        prefsEditor.commit();
                     } else {
                         if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
