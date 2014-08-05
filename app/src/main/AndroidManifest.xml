@@ -178,17 +178,6 @@
             </intent-filter>
         </receiver>
 
-
-        <receiver
-            android:name=".GCMReceiver"
-            android:permission="com.google.android.c2dm.permission.SEND"
-            >
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-                <category android:name="com.triaged.badge.app" />
-            </intent-filter>
-        </receiver>
-
         <receiver android:name=".DeviceBootReceiver" android:enabled="true" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
