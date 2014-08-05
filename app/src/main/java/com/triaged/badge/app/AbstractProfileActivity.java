@@ -309,7 +309,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             }
 
             int currentLocationId = contact.currentOfficeLocationId;
-            if( currentLocationId > 0 ) {
+            String officeLocationName = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
+            if( officeLocationName != null ) {
                 currentLocationView.isOn = true;
                 currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
             }

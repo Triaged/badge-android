@@ -732,10 +732,13 @@ public class DataProviderService extends Service {
     private String getOfficeLocationName(int locationId) {
         if( database != null ) {
             Cursor cursor = database.rawQuery( QUERY_OFFICE_LOCATION_SQL, new String[] { String.valueOf( locationId ) } );
-            cursor.moveToFirst();
-            String name = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
-            cursor.close();
-            return name;
+            if (cursor.moveToFirst()) {
+                String name = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                cursor.close();
+                return name;
+            } else {
+                return null;
+            }
         }
         throw new IllegalStateException( "getOfficeLocationName() called before database available." );
     }
