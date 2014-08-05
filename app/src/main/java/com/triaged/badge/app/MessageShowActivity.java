@@ -229,6 +229,9 @@ public class MessageShowActivity extends BadgeActivity {
         if (adapter.getCount() > 0 && !showKeyboard) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        } else {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }
     }
 
@@ -363,7 +366,7 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         threadId = intent.getStringExtra(THREAD_ID_EXTRA);
-        showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
+        showKeyboard = intent.getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
         dataProviderServiceBinding.markAsRead(threadId);
         adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
         adapter.notifyDataSetChanged();
@@ -372,6 +375,10 @@ public class MessageShowActivity extends BadgeActivity {
         if (adapter.getCount() > 0 && !showKeyboard) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(postBox.getWindowToken(), 0);
+        } else {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            Log.d(TAG, "SHOW FORCED CALLED");
         }
         super.onNewIntent(intent);
     }
