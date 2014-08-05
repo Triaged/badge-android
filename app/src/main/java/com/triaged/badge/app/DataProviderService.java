@@ -732,10 +732,13 @@ public class DataProviderService extends Service {
     private String getOfficeLocationName(int locationId) {
         if( database != null ) {
             Cursor cursor = database.rawQuery( QUERY_OFFICE_LOCATION_SQL, new String[] { String.valueOf( locationId ) } );
-            cursor.moveToFirst();
-            String name = Contact.getStringSafelyFromCursor( cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
-            cursor.close();
-            return name;
+            if (cursor.moveToFirst()) {
+                String name = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                cursor.close();
+                return name;
+            } else {
+                return null;
+            }
         }
         throw new IllegalStateException( "getOfficeLocationName() called before database available." );
     }
@@ -1592,7 +1595,7 @@ public class DataProviderService extends Service {
                         final int departmentId = newDepartment.getInt("id");
                         values.put( CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId );
                         values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("contact_count"));
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         if( saveCallback != null ) {
                             handler.post(new Runnable() {

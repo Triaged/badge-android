@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,6 +73,8 @@ public class MessageShowActivity extends BadgeActivity {
     private boolean lengthGreaterThanZero = false;
     private boolean showKeyboard = true;
 
+    private ScrollView threadMembersScrollView = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,10 +106,10 @@ public class MessageShowActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 if (userCount > 2) {
-                    if (threadMembersWrapper.getVisibility() == View.VISIBLE) {
-                        threadMembersWrapper.setVisibility(View.GONE);
+                    if (threadMembersScrollView.getVisibility() == View.VISIBLE) {
+                        threadMembersScrollView.setVisibility(View.GONE);
                     } else {
-                        threadMembersWrapper.setVisibility(View.VISIBLE);
+                        threadMembersScrollView.setVisibility(View.VISIBLE);
                     }
                 } else {
                     Intent intent = new Intent(MessageShowActivity.this, OtherProfileActivity.class);
@@ -207,6 +210,8 @@ public class MessageShowActivity extends BadgeActivity {
 
         postBox.addTextChangedListener(textWatcher);
 
+        threadMembersScrollView = (ScrollView) findViewById(R.id.thread_members_wrapper);
+
         threadMembersWrapper = (LinearLayout) findViewById(R.id.thread_members);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -215,7 +220,7 @@ public class MessageShowActivity extends BadgeActivity {
 
     @Override
     protected void onDatabaseReady() {
-        dataProviderServiceBinding.markAsRead( threadId );
+        dataProviderServiceBinding.markAsRead(threadId);
         adapter = new MessageThreadAdapter(this, threadId, dataProviderServiceBinding );
         threadList.setAdapter(adapter);
         threadList.setSelection(adapter.getCount() - 1);
@@ -359,7 +364,7 @@ public class MessageShowActivity extends BadgeActivity {
     protected void onNewIntent(Intent intent) {
         threadId = intent.getStringExtra(THREAD_ID_EXTRA);
         showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, false );
-        dataProviderServiceBinding.markAsRead( threadId );
+        dataProviderServiceBinding.markAsRead(threadId);
         adapter.changeCursor( dataProviderServiceBinding.getMessages( threadId ) );
         adapter.notifyDataSetChanged();
         backButton.setText(dataProviderServiceBinding.getRecipientNames(threadId));

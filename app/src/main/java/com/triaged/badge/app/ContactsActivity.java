@@ -410,7 +410,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
                 }
                 super.onPostExecute(aVoid);
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     /**

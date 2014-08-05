@@ -98,13 +98,13 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
             Contact c = filteredList.get( position );
             View v;
             if( convertView == null ) {
-                v =  newView( context, c, parent );
+                v = newView( context, c, parent );
             }
             else {
                 v = convertView;
             }
-            bindView( convertView, context, c );
-            return convertView;
+            bindView( v, context, c );
+            return v;
         }
         else {
             return super.getView(position, convertView, parent);
