@@ -549,16 +549,20 @@ public class EditProfileActivity extends BadgeActivity {
      * @param *data  @param context * @return
      */
     public Bitmap getBitmapFromGallery(Intent data, Context context){
-        currentPhotoPath = getPath( data.getData() );
-        if (currentPhotoPath != null) {
-            Bitmap fileSystemBmp = getPhotoFromFileSystem();
-            if (fileSystemBmp != null) {
-                return fileSystemBmp;
+        if (data.getData() == null) {
+            return null;
+        } else {
+            currentPhotoPath = getPath(data.getData());
+            if (currentPhotoPath != null) {
+                Bitmap fileSystemBmp = getPhotoFromFileSystem();
+                if (fileSystemBmp != null) {
+                    return fileSystemBmp;
+                } else {
+                    return loadPicasaImageFromGallery(data.getData());
+                }
             } else {
                 return loadPicasaImageFromGallery(data.getData());
             }
-        } else {
-            return loadPicasaImageFromGallery( data.getData() );
         }
     }
 
