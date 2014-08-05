@@ -21,7 +21,7 @@ import org.json.JSONObject;
 public class BadgeApplication extends Application {
 
     private static final String TAG = BadgeApplication.class.getName();
-    public static final String MIXPANEL_TOKEN = "b9c753b3560536492eba971a53213f5f";
+    public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
