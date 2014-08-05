@@ -1990,8 +1990,11 @@ public class DataProviderService extends Service {
                         guid = thread.getString( "guid" );
                     }
                     upsertThreadAndMessages( thread, guid, false );
+                    Intent updateIntent = new Intent( MSGS_UPDATED_ACTION );
+                    updateIntent.putExtra( THREAD_ID_EXTRA, thread.getString( "id" ) );
+                    localBroadcastManager.sendBroadcast(  updateIntent );
+
                 }
-                localBroadcastManager.sendBroadcast( new Intent( MSGS_UPDATED_ACTION ) );
             }
             else {
                 if( response.getEntity() != null ) {
@@ -2033,7 +2036,6 @@ public class DataProviderService extends Service {
             JSONArray msgArray = thread.getJSONArray( "messages" );
             int numMessages = msgArray.length();
             ContentValues msgValues = new ContentValues();
-            boolean newMessages = false;
             msgValues.clear();
             long mostRecentMsgTimestamp = prefs.getLong( MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0 );
             for( int i = 0; i < numMessages; i++ ) {
