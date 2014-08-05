@@ -230,6 +230,15 @@ public class DataProviderService extends Service {
     protected LruCache<String, Bitmap> thumbCache;
 
 
+    public static void logCursor( Cursor c ) {
+        while( c.moveToNext() ) {
+            Log.d( LOG_TAG, "-------------------------------------------------------------------");
+            for (String column : c.getColumnNames()) {
+                Log.d(LOG_TAG, String.format("%s: %s", column, c.getString(c.getColumnIndex(column))));
+            }
+            Log.d( LOG_TAG, "-------------------------------------------------------------------");
+        }
+    }
 
     class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
         @Override
@@ -2201,7 +2210,7 @@ public class DataProviderService extends Service {
     private static void setMessageContentValuesFromJSON( String threadId, JSONObject msg, ContentValues msgValues ) throws JSONException {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString( "id" ) );
-        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt( "author_id" ) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt("author_id") );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
@@ -2766,7 +2775,7 @@ public class DataProviderService extends Service {
      */
     protected static JSONObject parseJSONResponse( HttpEntity entity ) throws IOException, JSONException {
         ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream( 1024 /* 256 k */ );
-        entity.writeTo( jsonBuffer );
+        entity.writeTo(jsonBuffer);
         jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONObject( json );
