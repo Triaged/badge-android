@@ -103,8 +103,8 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
             else {
                 v = convertView;
             }
-            bindView( convertView, context, c );
-            return convertView;
+            bindView( v, context, c );
+            return v;
         }
         else {
             return super.getView(position, convertView, parent);
