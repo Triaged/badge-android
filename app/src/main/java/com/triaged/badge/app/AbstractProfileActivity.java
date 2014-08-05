@@ -311,8 +311,8 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 birthDateView.setVisibility(View.GONE);
             }
 
-            availabilityHeader.setVisibility(View.VISIBLE);
-            currentLocationView.setVisibility(View.VISIBLE);
+            // availabilityHeader.setVisibility(View.VISIBLE);
+            // currentLocationView.setVisibility(View.VISIBLE);
 
             int currentLocationId = contact.currentOfficeLocationId;
             String officeLocationName = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
