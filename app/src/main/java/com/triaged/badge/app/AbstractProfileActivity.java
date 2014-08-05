@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -64,6 +66,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     private TextView managesHeader = null;
     private TextView bossHeader = null;
     private TextView departmentHeader = null;
+    private TextView availabilityHeader = null;
     private LayoutInflater inflater = null;
     private int numberManagedByPrevious = 0;
 
@@ -105,6 +108,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
         departmentHeader = (TextView) findViewById(R.id.department_header);
         bossHeader = (TextView) findViewById(R.id.profile_heading_reports_to);
         bossView = (ProfileReportsToView) findViewById(R.id.boss_view);
+        availabilityHeader = (TextView) findViewById(R.id.availability_header);
 
         departmentView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -307,6 +311,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             else {
                 birthDateView.setVisibility(View.GONE);
             }
+
+            // availabilityHeader.setVisibility(View.VISIBLE);
+            // currentLocationView.setVisibility(View.VISIBLE);
 
             int currentLocationId = contact.currentOfficeLocationId;
             String officeLocationName = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
