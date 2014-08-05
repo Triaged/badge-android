@@ -233,6 +233,7 @@ public class MessageShowActivity extends BadgeActivity {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }
+        threadMembersScrollView.setVisibility(View.GONE);
     }
 
     @Override
@@ -378,8 +379,8 @@ public class MessageShowActivity extends BadgeActivity {
         } else {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-            Log.d(TAG, "SHOW FORCED CALLED");
         }
+        threadMembersScrollView.setVisibility(View.GONE);
         super.onNewIntent(intent);
     }
 
