@@ -63,8 +63,8 @@ public class FayeClient implements Listener {
     private static final String VALUE_MIN_VERSION       = "1.0beta";
     private static final String VALUE_CONN_TYPE         = "websocket";
 
-    private static final long RECONNECT_WAIT            = 10000;
-    private static final int MAX_CONNECTION_ATTEMPTS    = 3;
+    private static final long RECONNECT_WAIT            = 5000;
+    private static final int MAX_CONNECTION_ATTEMPTS    = Integer.MAX_VALUE;
 
     private WebSocketClient mClient;
     private boolean mConnected = false;

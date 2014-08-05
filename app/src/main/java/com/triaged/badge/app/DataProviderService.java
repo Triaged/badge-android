@@ -1989,13 +1989,9 @@ public class DataProviderService extends Service {
                 int numThreads = msgResponse.length();
                 for( int i = 0; i < numThreads; i++ ) {
                     JSONObject thread = msgResponse.getJSONObject(i);
-                    String guid = "foo";
-                    if( thread.has( "guid" ) ) {
-                        guid = thread.getString( "guid" );
-                    }
-                    upsertThreadAndMessages( thread, guid, false );
+                    upsertThreadAndMessages( thread, false );
                     Intent updateIntent = new Intent( MSGS_UPDATED_ACTION );
-                    updateIntent.putExtra( THREAD_ID_EXTRA, thread.getString( "id" ) );
+                    updateIntent.putExtra( THREAD_ID_EXTRA, thread.getString("id") );
                     localBroadcastManager.sendBroadcast(  updateIntent );
 
                 }
@@ -2026,7 +2022,7 @@ public class DataProviderService extends Service {
      * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
      *                  assume they are historical
      */
-    protected void upsertThreadAndMessages( final JSONObject thread, final String guid, final boolean broadcast ) {
+    protected void upsertThreadAndMessages( final JSONObject thread, final boolean broadcast ) {
         String threadId;
         database.beginTransaction();
         try {
@@ -2037,7 +2033,7 @@ public class DataProviderService extends Service {
 
             prefs.edit().putString( userIdsList, threadId ).putString(threadId, userIds.toString()).commit();
 
-            JSONArray msgArray = thread.getJSONArray( "messages" );
+            JSONArray msgArray = thread.getJSONArray("messages");
             int numMessages = msgArray.length();
             ContentValues msgValues = new ContentValues();
             msgValues.clear();
@@ -2049,6 +2045,7 @@ public class DataProviderService extends Service {
                     mostRecentMsgTimestamp = timestamp;
                 }
                 String messageId = msg.getString( "id" );
+                String guid = msg.getString( "guid" );
                 String[] messageSelector = new String[] { messageId, guid };
                 Cursor msgCursor = database.rawQuery( QUERY_MESSAGE_SQL, messageSelector );
                 if( msgCursor.getCount() > 0 ) {
@@ -2098,7 +2095,18 @@ public class DataProviderService extends Service {
             // Get id of most recent msg.
             Cursor messages = getMessages( threadId );
             if( messages.moveToLast() ) {
-                String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+                String mostRecentGuid = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_GUID ) );
+                final String mostRecentId = messages.getString( messages.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_ID ) );
+                if( "Inf".equals( mostRecentGuid ) ) {
+                    // Dang! Crash the app to get a report.
+                    final String finalThreadId = threadId;
+                    handler.post( new Runnable() {
+                        @Override
+                        public void run() {
+                            throw new RuntimeException( "Crashing app. Couldn't set head of thread " + finalThreadId + " because message guid came back 'Inf' message id is " + mostRecentId );
+                        }
+                    } );
+                }
                 messages.close();
                 // Unset thread head on all thread messages.
                 clearThreadHead( threadId, msgValues );
@@ -2106,7 +2114,7 @@ public class DataProviderService extends Service {
                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl( userIds ) );
                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames( userIds ) );
                 msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1 );
-                database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID ), new String[] { mostRecentId } );
+                database.update( CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format( "%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID ), new String[] { mostRecentGuid } );
             }
             else {
                 messages.close();
@@ -2201,6 +2209,7 @@ public class DataProviderService extends Service {
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString( "body" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long)(msg.getDouble( "timestamp" ) * 1000000d) );
+        msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_GUID, msg.getString( "guid" ) );
         msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 0 );
     }
 
@@ -2517,13 +2526,13 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, String, boolean)
+         * @see com.triaged.badge.app.DataProviderService#upsertThreadAndMessages(org.json.JSONObject, boolean)
          */
-        public void upsertThreadAndMessagesAsync(final JSONObject thread, final String guid) {
+        public void upsertThreadAndMessagesAsync(final JSONObject thread ) {
             sqlThread.submit( new Runnable() {
                 @Override
                 public void run() {
-                    DataProviderService.this.upsertThreadAndMessages(thread, guid, true);
+                    DataProviderService.this.upsertThreadAndMessages(thread, true);
                 }
             } );
         }
