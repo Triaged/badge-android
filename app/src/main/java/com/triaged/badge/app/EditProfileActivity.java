@@ -399,10 +399,8 @@ public class EditProfileActivity extends BadgeActivity {
         officeId = loggedInUser.primaryOfficeLocationId;
 
         startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Add";
-        // startDate.valueToSave = loggedInUser.startDateString;
 
         birthDate.secondaryValue = loggedInUser.birthDateString != null ? loggedInUser.birthDateString : "Add";
-        // birthDate.valueToSave = loggedInUser.birthDateString;
 
         if (loggedInUser.birthDateString != null) {
             try {
