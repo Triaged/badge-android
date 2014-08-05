@@ -20,6 +20,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -42,6 +43,8 @@ import com.triaged.badge.data.Contact;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -491,23 +494,28 @@ public class EditProfileActivity extends BadgeActivity {
         Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath);
         try {
             ExifInterface exif = new ExifInterface(currentPhotoPath);
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-            Matrix matrix = new Matrix();
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
-                matrix.postRotate(90);
-            }
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
-                matrix.postRotate(180);
-            }
-            else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-                matrix.postRotate(270);
-            }
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+            bitmap = getRotatedBitmap(exif, bitmap);
         }
         catch (Exception e) {
             Log.e(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
         }
 
+        return bitmap;
+    }
+
+    private Bitmap getRotatedBitmap(ExifInterface exif, Bitmap bitmap) {
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+        Matrix matrix = new Matrix();
+        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            matrix.postRotate(90);
+        }
+        else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            matrix.postRotate(180);
+        }
+        else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            matrix.postRotate(270);
+        }
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
         return bitmap;
     }
 
@@ -552,18 +560,41 @@ public class EditProfileActivity extends BadgeActivity {
         if (data.getData() == null) {
             return null;
         } else {
-            currentPhotoPath = getPath(data.getData());
-            if (currentPhotoPath != null) {
-                Bitmap fileSystemBmp = getPhotoFromFileSystem();
-                if (fileSystemBmp != null) {
-                    return fileSystemBmp;
+            if (Build.VERSION.SDK_INT < 19 ) {
+                currentPhotoPath = getPath(data.getData());
+                if (currentPhotoPath != null) {
+                    Bitmap fileSystemBmp = getPhotoFromFileSystem();
+                    if (fileSystemBmp != null) {
+                        return fileSystemBmp;
+                    } else {
+                        return loadPicasaImageFromGallery(data.getData());
+                    }
                 } else {
                     return loadPicasaImageFromGallery(data.getData());
                 }
             } else {
-                return loadPicasaImageFromGallery(data.getData());
+                ParcelFileDescriptor parcelFileDescriptor;
+                try {
+                    parcelFileDescriptor = getContentResolver().openFileDescriptor(data.getData(), "r");
+                    FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                    Bitmap image = BitmapFactory.decodeFileDescriptor(fileDescriptor);
+                    parcelFileDescriptor.close();
+                    String path = getPath(data.getData());
+                    if (path != null) {
+                        ExifInterface exifInterface = new ExifInterface(path);
+                        image = getRotatedBitmap(exifInterface, image);
+                    }
+                    if (image != null) {
+                        return image;
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
+        return null;
     }
 
     /**
@@ -571,17 +602,21 @@ public class EditProfileActivity extends BadgeActivity {
      */
     public String getPath(Uri uri) {
         String[] projection = {  MediaStore.MediaColumns.DATA};
-        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
-        if(cursor != null) {
-            //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
-            //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
-            cursor.moveToFirst();
-            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-            String filePath = cursor.getString(columnIndex);
-            cursor.close();
-            return filePath;
-        } else {
-            return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+        try {
+            Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
+            if (cursor != null) {
+                //HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
+                //THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                String filePath = cursor.getString(columnIndex);
+                cursor.close();
+                return filePath;
+            } else {
+                return uri.getPath(); // FOR OI/ASTRO/Dropbox etc
+            }
+        } catch (Exception e) {
+            return null;
         }
     }
 
