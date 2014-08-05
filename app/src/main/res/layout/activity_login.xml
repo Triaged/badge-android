@@ -59,7 +59,6 @@
                 android:hint="@string/login_email_hint"
                 android:layout_below="@id/login_info"
                 android:textSize="15sp"
-                android:text="\@startupgiraffe.com"
                 android:inputType="textNoSuggestions"
                 custom:font="Roboto-Regular.ttf"
                 />

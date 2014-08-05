@@ -217,13 +217,13 @@ public class EditProfileActivity extends BadgeActivity {
                                         }
                                     }
                                     catch (SecurityException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                     catch (IllegalArgumentException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                     catch (IllegalAccessException e) {
-                                        Log.d("ERROR", e.getMessage());
+                                        Log.e("ERROR", e.getMessage());
                                     }
                                 }
                                 break;
@@ -505,7 +505,7 @@ public class EditProfileActivity extends BadgeActivity {
             bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
         }
         catch (Exception e) {
-            Log.d(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
+            Log.e(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
         }
 
         return bitmap;

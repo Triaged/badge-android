@@ -150,13 +150,13 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                         }
                     }
                     catch (SecurityException e) {
-                        Log.d("ERROR", e.getMessage());
+                        Log.e("ERROR", e.getMessage());
                     }
                     catch (IllegalArgumentException e) {
-                        Log.d("ERROR", e.getMessage());
+                        Log.e("ERROR", e.getMessage());
                     }
                     catch (IllegalAccessException e) {
-                        Log.d("ERROR", e.getMessage());
+                        Log.e("ERROR", e.getMessage());
                     }
                 }
                 return false;
