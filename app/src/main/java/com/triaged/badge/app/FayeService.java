@@ -159,12 +159,8 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             return;
         }
         ensureDataServiceBinding();
-        String guid = "foo";
         try {
-            if (json.has("guid")) {
-                guid = json.getString("guid");
-            }
-            dataProviderServiceBinding.upsertThreadAndMessagesAsync( json.getJSONObject( "message_thread" ), guid );
+            dataProviderServiceBinding.upsertThreadAndMessagesAsync( json.getJSONObject( "message_thread" )  );
             // Do actual work.
 
         }

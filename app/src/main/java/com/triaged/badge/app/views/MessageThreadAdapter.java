@@ -2,19 +2,14 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
@@ -23,7 +18,6 @@ import com.triaged.badge.data.Contact;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -75,7 +69,7 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
         long messageTimeMillis = cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l;
         if( messageTimeMillis > System.currentTimeMillis() ) {
-            messageTimeMillis = System.currentTimeMillis();
+            messageTimeMillis = System.currentTimeMillis() - 5000;
         }
         messageDate.setTime( messageTimeMillis );
         // TODO this is probably not the right timestamp format.
