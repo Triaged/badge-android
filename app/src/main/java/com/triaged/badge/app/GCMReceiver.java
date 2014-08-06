@@ -9,9 +9,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,7 +48,7 @@ public class GCMReceiver extends BroadcastReceiver {
         String syncType = intent.getStringExtra( "type" );
         if (syncType != null) {
             // Send broadcast to DataProviderService
-            int syncId = intent.getIntExtra("id", -1);
+            int syncId = Integer.parseInt(intent.getStringExtra("id"));
             Intent broadcastIntent = new Intent(SYNC_GCM_RECEIVED);
             broadcastIntent.putExtra(SYNC_GCM_DATA_TYPE_KEY, syncType);
             broadcastIntent.putExtra(SYNC_GCM_DATA_ID_KEY, syncId);

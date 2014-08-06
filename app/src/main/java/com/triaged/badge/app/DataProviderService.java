@@ -327,12 +327,13 @@ public class DataProviderService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 // PARSE INTENT
-                String syncType = intent.getStringExtra(GCMReceiver.SYNC_GCM_DATA_TYPE_KEY);
+                final String syncType = intent.getStringExtra(GCMReceiver.SYNC_GCM_DATA_TYPE_KEY);
                 int syncId = intent.getIntExtra(GCMReceiver.SYNC_GCM_DATA_ID_KEY, -1);
+
                 if (syncType.equals("user")) {
                     // Request contact from server, add it to the db.
                     getSingleContact(syncId);
-                } else if (syncType.equals("office")){
+                } else if (syncType.equals("office_location")){
                     // Request office from server, add it to the db.
                     getSingleOffice(syncId);
                 } else if (syncType.equals("department")) {
