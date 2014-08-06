@@ -423,15 +423,7 @@ public class DataProviderService extends Service {
                     if (statusCode == HttpStatus.SC_OK) {
                         ContentValues values = new ContentValues();
                         JSONObject location = parseJSONResponse( response.getEntity());
-                        values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, location.getInt( "id" ) );
-                        setStringContentValueFromJSONUnlessNull( location, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
-                        setStringContentValueFromJSONUnlessNull( location, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
-                        setStringContentValueFromJSONUnlessNull( location, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
-                        setStringContentValueFromJSONUnlessNull( location, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE );
-                        setStringContentValueFromJSONUnlessNull( location, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
-                        setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
-                        setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
-                        setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
+                        setOfficeLocationDBValuesFromJSON(location, values);
                         database.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values );
                         values.clear();
 
@@ -456,9 +448,7 @@ public class DataProviderService extends Service {
                     if (statusCode == HttpStatus.SC_OK) {
                         ContentValues values = new ContentValues();
                         JSONObject dept = parseJSONResponse( response.getEntity());
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "users_count" ));
+                        setDepartmentBValuesFromJSON(dept, values);
                         database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                         values.clear();
                     }
@@ -579,9 +569,7 @@ public class DataProviderService extends Service {
                         int deptsLength = deptsArr.length();
                         for (int i = 0; i < deptsLength; i++) {
                             JSONObject dept = deptsArr.getJSONObject( i );
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
-                            values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "users_count" ));
+                            setDepartmentBValuesFromJSON(dept, values);
                             db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
                             values.clear();
                         }
@@ -592,15 +580,7 @@ public class DataProviderService extends Service {
                         int locationsLength = locations.length();
                         for( int i = 0; i < locationsLength; i++ ) {
                             JSONObject location = locations.getJSONObject( i );
-                            values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, location.getInt( "id" ) );
-                            setStringContentValueFromJSONUnlessNull( location, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
-                            setStringContentValueFromJSONUnlessNull( location, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
-                            setStringContentValueFromJSONUnlessNull( location, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
-                            setStringContentValueFromJSONUnlessNull( location, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE );
-                            setStringContentValueFromJSONUnlessNull( location, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
-                            setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
-                            setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
-                            setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
+                            setOfficeLocationDBValuesFromJSON(location, values);
                             db.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values );
                             values.clear();
                         }
@@ -671,7 +651,25 @@ public class DataProviderService extends Service {
             setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
             setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
         }
+    }
 
+    private void setOfficeLocationDBValuesFromJSON( JSONObject json, ContentValues values) throws JSONException {
+        values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, json.getInt( "id" ) );
+        setStringContentValueFromJSONUnlessNull( json, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+        setStringContentValueFromJSONUnlessNull( json, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
+        setStringContentValueFromJSONUnlessNull( json, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
+        setStringContentValueFromJSONUnlessNull( json, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE );
+        setStringContentValueFromJSONUnlessNull( json, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
+        setStringContentValueFromJSONUnlessNull( json, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
+        setStringContentValueFromJSONUnlessNull( json, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
+        setStringContentValueFromJSONUnlessNull( json, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
+    }
+
+
+    private void setDepartmentBValuesFromJSON( JSONObject json, ContentValues values) throws JSONException {
+        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, json.getInt("id"));
+        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, json.getString("name"));
+        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, json.getString( "users_count" ));
     }
 
     /**
