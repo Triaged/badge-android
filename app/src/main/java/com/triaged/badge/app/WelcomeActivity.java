@@ -100,22 +100,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         birthdayCalendar.set( Calendar.MINUTE, 0 );
         birthdayCalendar.set( Calendar.SECOND, 0 );
 
-        if (account.sharingOfficeLocation == Contact.SHARING_LOCATION_UNAVAILABLE ) {
-            dataProviderServiceBinding.saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
-                @Override
-                public void saveSuccess(int newId) {
-                    prefs = PreferenceManager.getDefaultSharedPreferences(WelcomeActivity.this);
-                    prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
-                    LocationTrackingService.scheduleAlarm(WelcomeActivity.this);
-                }
-
-                @Override
-                public void saveFailed(String reason) {
-                    Toast.makeText( WelcomeActivity.this, reason, Toast.LENGTH_LONG ).show();
-                }
-            });
-        }
-
     }
 
     @Override

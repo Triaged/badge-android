@@ -100,8 +100,8 @@ public class SettingsActivity extends BackButtonActivity {
                     dataProviderServiceBinding.saveSharingLocationAsync(false, new DataProviderService.AsyncSaveCallback() {
                         @Override
                         public void saveSuccess(int newId) {
-                            prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ).commit();
-                            LocationTrackingService.scheduleAlarm( SettingsActivity.this );
+                            prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ).commit();
+                            LocationTrackingService.clearAlarm( dataProviderServiceBinding, SettingsActivity.this );
                         }
 
                         @Override

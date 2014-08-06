@@ -329,7 +329,7 @@ public class DataProviderService extends Service {
                 // PARSE INTENT
                 String syncType = intent.getStringExtra(GCMReceiver.SYNC_GCM_DATA_TYPE_KEY);
                 int syncId = intent.getIntExtra(GCMReceiver.SYNC_GCM_DATA_ID_KEY, -1);
-                if (syncType.equals("contact")) {
+                if (syncType.equals("user")) {
                     // Request contact from server, add it to the db.
                     getSingleContact(syncId);
                 } else if (syncType.equals("office")){
@@ -1340,8 +1340,20 @@ public class DataProviderService extends Service {
                             if( pInfo.versionCode > prefs.getInt( INSTALLED_VERSION_PREFS_KEY, -1 ) ) {
                                 prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode ).commit();
                                 if( prefs.getBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true )  ) {
-                                    LocationTrackingService.scheduleAlarm( DataProviderService.this );
                                     // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
+                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
+                                        @Override
+                                        public void saveSuccess(int newId) {
+                                            prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
+                                            LocationTrackingService.scheduleAlarm(DataProviderService.this);
+                                        }
+
+                                        @Override
+                                        public void saveFailed(String reason) {
+                                            Log.d(LOG_TAG, "Initial attempt to save sharing location pref failed due to: " + reason);
+                                        }
+                                    });
+
                                 }
                             }
                         }
