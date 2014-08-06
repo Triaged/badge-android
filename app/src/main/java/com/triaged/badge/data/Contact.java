@@ -26,6 +26,9 @@ public class Contact {
     public static final String ISO_8601_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss.000Z";
     private static final String LOG_TAG = Contact.class.getName();
 
+    public static final int SHARING_LOCATION_UNAVAILABLE = 0;
+    public static final int SHARING_LOCATION_TRUE = 1;
+    public static final int SHARING_LOCATION_FALSE = 2;
 
     public int id;
     public String firstName;
@@ -45,8 +48,7 @@ public class Contact {
     public int primaryOfficeLocationId;
     public int currentOfficeLocationId;
     public int departmentId;
-    public int sharingOfficeLocationInt;
-    public boolean sharingOfficeLocation;
+    public int sharingOfficeLocation;
     public String initials;
 
     public static String getStringSafelyFromCursor( Cursor contactCursor, String columnName ) {
@@ -128,7 +130,7 @@ public class Contact {
         String managerLastName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME);
         officeName = getStringSafelyFromCursor( contactCursor, CompanySQLiteHelper.JOINED_OFFICE_NAME );
         /** INTEGER FIELDS */
-        sharingOfficeLocationInt = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
+        sharingOfficeLocation = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
         managerId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID );
         primaryOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID );
         currentOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID );
@@ -141,7 +143,6 @@ public class Contact {
         /** DYNAMIC FIELDS */
         constructName();
         initials = constructInitials( firstName, lastName );
-        sharingOfficeLocation = sharingOfficeLocationInt == 1;
     }
 
     public void fromJSON( JSONObject contactJson ) throws JSONException {
