@@ -412,12 +412,63 @@ public class DataProviderService extends Service {
         });
     }
 
-    protected void getSingleOffice(int officeId) {
-        // use same parsing method from syncCompany
+    protected void getSingleOffice(final int syncId) {
+        sqlThread.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.getOffice(syncId);
+                    ensureNotUnauthorized(response);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if (statusCode == HttpStatus.SC_OK) {
+                        ContentValues values = new ContentValues();
+                        JSONObject location = parseJSONResponse( response.getEntity());
+                        values.put( CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, location.getInt( "id" ) );
+                        setStringContentValueFromJSONUnlessNull( location, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME );
+                        setStringContentValueFromJSONUnlessNull( location, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS );
+                        setStringContentValueFromJSONUnlessNull( location, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY );
+                        setStringContentValueFromJSONUnlessNull( location, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE );
+                        setStringContentValueFromJSONUnlessNull( location, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP );
+                        setStringContentValueFromJSONUnlessNull( location, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY );
+                        setStringContentValueFromJSONUnlessNull( location, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT );
+                        setStringContentValueFromJSONUnlessNull( location, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG );
+                        database.insert( CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values );
+                        values.clear();
+
+                    }
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "Network issue getting single office");
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "Couldn't understand response from Badge server", e);
+                }
+            }
+        });
     }
 
-    protected void getSingleDepartment(int departmentId) {
-        // use same parsing method from syncCompany
+    protected void getSingleDepartment(final int syncId) {
+        sqlThread.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    HttpResponse response = apiClient.getDepartment(syncId);
+                    ensureNotUnauthorized(response);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if (statusCode == HttpStatus.SC_OK) {
+                        ContentValues values = new ContentValues();
+                        JSONObject dept = parseJSONResponse( response.getEntity());
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, dept.getInt("id"));
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, dept.getString("name"));
+                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, dept.getString( "users_count" ));
+                        database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
+                        values.clear();
+                    }
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "Network issue getting single department");
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "Couldn't understand response from Badge server", e);
+                }
+            }
+        });
     }
 
     /**
