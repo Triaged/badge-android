@@ -35,7 +35,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     protected static final String STAGING_FAYE_HOST = "ws://badge-messaging-staging.herokuapp.com/streaming";
     protected static final String PROD_FAYE_HOST = "wss://messaging.badge.co/streaming";
-    protected static final String FAYE_HOST = STAGING_FAYE_HOST;
+    protected static final String FAYE_HOST = PROD_FAYE_HOST;
 
     //protected Fa faye;
     protected SharedPreferences prefs;
