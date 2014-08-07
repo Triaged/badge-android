@@ -63,6 +63,9 @@ public class BadgeApiClient extends DefaultHttpClient {
     private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
     private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
 
+    private static final String GET_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d";
+    private static final String GET_DEPARTMENT_URI_PATTERN = "%s://%s/v1/departments/%d";
+
     private static final String REQUEST_RESET_PASSWORD_URI = String.format( "%s://%s/v1/account/reset_password", API_PROTOCOL, API_HOST );
 
     private HttpHost httpHost;
@@ -288,6 +291,18 @@ public class BadgeApiClient extends DefaultHttpClient {
      */
     public HttpResponse getContact( int contactId ) throws IOException {
         HttpGet get = new HttpGet( String.format( GET_CONTACT_URI_PATTERN, API_PROTOCOL, API_HOST, contactId ) );
+        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
+        return execute( get );
+    }
+
+    public HttpResponse getOffice( int officeId ) throws IOException {
+        HttpGet get = new HttpGet( String.format( GET_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
+        return execute( get );
+    }
+
+    public HttpResponse getDepartment( int departmentId ) throws IOException {
+        HttpGet get = new HttpGet( String.format( GET_DEPARTMENT_URI_PATTERN, API_PROTOCOL, API_HOST, departmentId ) );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( get );
     }

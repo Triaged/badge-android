@@ -312,21 +312,26 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 birthDateView.setVisibility(View.GONE);
             }
 
-            // availabilityHeader.setVisibility(View.VISIBLE);
-            // currentLocationView.setVisibility(View.VISIBLE);
-
-            int currentLocationId = contact.currentOfficeLocationId;
-            String officeLocationName = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
-            if( officeLocationName != null ) {
-                currentLocationView.isOn = true;
-                currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName( currentLocationId );
-            }
-            else {
+            if (contact.sharingOfficeLocation == Contact.SHARING_LOCATION_TRUE) {
+                availabilityHeader.setVisibility(View.VISIBLE);
+                currentLocationView.setVisibility(View.VISIBLE);
+                int currentLocationId = contact.currentOfficeLocationId;
+                String officeLocationName = dataProviderServiceBinding.getOfficeLocationName(currentLocationId);
+                if (officeLocationName != null) {
+                    currentLocationView.isOn = true;
+                    currentLocationView.primaryValue = dataProviderServiceBinding.getOfficeLocationName(currentLocationId);
+                } else {
+                    currentLocationView.primaryValue = "Out of office";
+                    currentLocationView.isOn = false;
+                }
+                currentLocationView.invalidate();
+            } else {
+                availabilityHeader.setVisibility(View.GONE);
+                currentLocationView.setVisibility(View.GONE);
                 currentLocationView.primaryValue = "Out of office";
                 currentLocationView.isOn = false;
+                currentLocationView.invalidate();
             }
-            currentLocationView.invalidate();
-
             if ( isNotBlank( contact.startDateString ) ) {
                 startDateView.setVisibility(View.VISIBLE);
                 startDateView.primaryValue = contact.startDateString;

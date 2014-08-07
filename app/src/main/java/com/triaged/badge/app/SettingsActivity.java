@@ -83,12 +83,32 @@ public class SettingsActivity extends BackButtonActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if( isChecked ) {
-                    prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ).commit();
-                    LocationTrackingService.scheduleAlarm( SettingsActivity.this );
+                    dataProviderServiceBinding.saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
+                        @Override
+                        public void saveSuccess(int newId) {
+                            prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true ).commit();
+                            LocationTrackingService.scheduleAlarm( SettingsActivity.this );
+                        }
+
+                        @Override
+                        public void saveFailed(String reason) {
+                            Toast.makeText( SettingsActivity.this, reason, Toast.LENGTH_LONG ).show();
+                        }
+                    });
                 }
                 else {
-                    prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ).commit();
-                    LocationTrackingService.clearAlarm( dataProviderServiceBinding, SettingsActivity.this );
+                    dataProviderServiceBinding.saveSharingLocationAsync(false, new DataProviderService.AsyncSaveCallback() {
+                        @Override
+                        public void saveSuccess(int newId) {
+                            prefs.edit().putBoolean( LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false ).commit();
+                            LocationTrackingService.clearAlarm( dataProviderServiceBinding, SettingsActivity.this );
+                        }
+
+                        @Override
+                        public void saveFailed(String reason) {
+                            Toast.makeText( SettingsActivity.this, reason, Toast.LENGTH_LONG ).show();
+                        }
+                    });
                 }
             }
         });
