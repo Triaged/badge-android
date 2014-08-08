@@ -1,6 +1,5 @@
 package com.triaged.badge.app;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -27,7 +26,6 @@ public class Notifier {
 
     private static SharedPreferences prefs = null;
 
-    @SuppressLint("NewApi")
     public static void newNotification( Context context, String from, String msg, String threadId ) {
         if( prefs == null ) {
             prefs = PreferenceManager.getDefaultSharedPreferences( context );
@@ -85,7 +83,14 @@ public class Notifier {
             NotificationManager mNotificationManager =
                     (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             // We're always updating one consistent notification id. We'll never show more than one.
-            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+
+
+            if (android.os.Build.VERSION.SDK_INT > 15) {
+                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+            } else {
+                Notification notification = mBuilder.getNotification();
+                mNotificationManager.notify(NOTIFICATION_ID, notification);
+            }
 
         }
         prefsEditor.commit();
