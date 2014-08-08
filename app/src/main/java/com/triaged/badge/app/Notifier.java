@@ -1,5 +1,6 @@
 package com.triaged.badge.app;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -26,6 +27,7 @@ public class Notifier {
 
     private static SharedPreferences prefs = null;
 
+    @SuppressLint("NewApi")
     public static void newNotification( Context context, String from, String msg, String threadId ) {
         if( prefs == null ) {
             prefs = PreferenceManager.getDefaultSharedPreferences( context );
