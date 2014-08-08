@@ -58,7 +58,12 @@ public class Notifier {
             NotificationManager mNotificationManager =
                     (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             // mId allows you to update the notification later on.
-            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+            if (android.os.Build.VERSION.SDK_INT > 15) {
+                mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+            } else {
+                Notification notification = mBuilder.getNotification();
+                mNotificationManager.notify(NOTIFICATION_ID, notification);
+            }
         }
         else {
             StringBuilder namesBuilder = new StringBuilder();
