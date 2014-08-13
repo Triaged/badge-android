@@ -42,7 +42,7 @@ public class BadgeApplication extends Application {
             public void onBecameForeground() {
                 MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(BadgeApplication.this, MIXPANEL_TOKEN);
                 JSONObject props = new JSONObject();
-                mixpanelAPI.track("appForeground", props);
+                mixpanelAPI.track("app_foreground", props);
                 mixpanelAPI.flush();
                 startService( fayeServiceIntent );
                 if( dataProviderServiceBinding != null ) {
