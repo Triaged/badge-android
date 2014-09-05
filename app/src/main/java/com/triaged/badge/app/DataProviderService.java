@@ -552,8 +552,7 @@ public class DataProviderService extends Service {
                     db.execSQL(CLEAR_DEPARTMENTS_SQL);
                     db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
 
-                    JSONArray companyArr = parseJSONArrayResponse( response.getEntity() );
-                    JSONObject companyObj = companyArr.getJSONObject(0);
+                    JSONObject companyObj = parseJSONResponse( response.getEntity() );
                     ContentValues values = new ContentValues();
 
                     JSONArray contactsArr = companyObj.getJSONArray("users");
