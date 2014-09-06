@@ -3,6 +3,7 @@ package com.triaged.badge.app;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.views.ButtonWithFont;
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ProfileContactInfoView;
@@ -163,7 +166,13 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                 }
             });
             if( newContact.avatarUrl != null ) {
-                dataProviderServiceBinding.setSmallContactImage(newContact, newView.thumbImage, newView.noPhotoThumb);
+//                dataProviderServiceBinding.setSmallContactImage(newContact, newView.thumbImage, newView.noPhotoThumb);
+                ImageLoader.getInstance().displayImage(newContact.avatarUrl, newView.thumbImage, new SimpleImageLoadingListener(){
+                    @Override
+                    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                        newView.noPhotoThumb.setVisibility(View.GONE);
+                    }
+                });
             }
             viewHolder.addView(newView, indexOfHeader + iterator);
             iterator++;
@@ -244,7 +253,9 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
             if (contact.avatarUrl != null) {
                 profileImage.setVisibility(View.VISIBLE);
                 missingProfileImage.setVisibility(View.GONE);
-                dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
+//                dataProviderServiceBinding.setLargeContactImage( contact, profileImage );
+                ImageLoader.getInstance().displayImage(contact.avatarUrl, profileImage);
+
             } else {
                 missingProfileImage.setVisibility(View.VISIBLE);
                 profileImage.setVisibility(View.GONE);
@@ -372,7 +383,14 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
                     }
                 });
                 if( boss.avatarUrl != null ) {
-                    dataProviderServiceBinding.setSmallContactImage(boss, bossView.thumbImage, bossView.noPhotoThumb);
+//                    dataProviderServiceBinding.setSmallContactImage(boss, bossView.thumbImage, bossView.noPhotoThumb);
+
+                    ImageLoader.getInstance().displayImage(boss.avatarUrl, bossView.thumbImage, new SimpleImageLoadingListener(){
+                        @Override
+                        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                            bossView.noPhotoThumb.setVisibility(View.GONE);
+                        }
+                    });
                 }
 
                 bossView.setVisibility(View.VISIBLE);

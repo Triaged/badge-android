@@ -3,6 +3,7 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -12,6 +13,9 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -71,7 +75,7 @@ public class MessagesListAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        ViewHolder holder = (ViewHolder)view.getTag();
+        final ViewHolder holder = (ViewHolder)view.getTag();
         holder.threadId = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID ) );
         String names = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS ) );
         String avatarUrl = cursor.getString(cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL ) );
@@ -94,7 +98,14 @@ public class MessagesListAdapter extends CursorAdapter {
         try {
             JSONArray users = new JSONArray(usersArrayString);
             if (users.length() == 2) {
-                dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.profilePhoto, holder.missingProfilePhotoView );
+                ImageLoader.getInstance().displayImage(avatarUrl, holder.profilePhoto, new SimpleImageLoadingListener() {
+
+                    @Override
+                    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                        holder.missingProfilePhotoView.setVisibility( View.GONE );
+                    }
+                });
+//                dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.profilePhoto, holder.missingProfilePhotoView );
             }
         } catch (JSONException e) {
             e.printStackTrace();

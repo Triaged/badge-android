@@ -2,6 +2,7 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -67,7 +70,7 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
     }
 
     public void bindView(View view, Context context, Contact c) {
-        ViewHolder holder = (ViewHolder) view.getTag();
+        final ViewHolder holder = (ViewHolder) view.getTag();
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
         if (c.jobTitle == null || c.jobTitle.equals("")) {
@@ -83,7 +86,13 @@ public class ContactsAdapterWithoutHeadings extends CursorAdapter {
         holder.noPhotoThumb.setText(c.initials);
         holder.noPhotoThumb.setVisibility(View.VISIBLE);
         if( c.avatarUrl != null ) {
-            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb );
+//            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb );
+            ImageLoader.getInstance().displayImage(c.avatarUrl, holder.thumbImage, new SimpleImageLoadingListener(){
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    holder.noPhotoThumb.setVisibility(View.GONE);
+                }
+            });
         }
     }
 

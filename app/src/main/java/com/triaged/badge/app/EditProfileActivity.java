@@ -37,6 +37,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.views.EditProfileInfoView;
 import com.triaged.badge.data.Contact;
 
@@ -370,7 +372,13 @@ public class EditProfileActivity extends BadgeActivity {
         profileImageMissingView.setText(loggedInUser.initials);
         profileImageMissingView.setVisibility(View.VISIBLE);
         if (loggedInUser.avatarUrl != null) {
-            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView);
+//            dataProviderServiceBinding.setSmallContactImage(loggedInUser, profileImageView, profileImageMissingView);
+            ImageLoader.getInstance().displayImage(loggedInUser.avatarUrl, profileImageView, new SimpleImageLoadingListener(){
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    profileImageView.setVisibility(View.GONE);
+                }
+            });
         }
 
         firstName.secondaryValue = loggedInUser.firstName;

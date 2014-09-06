@@ -4,11 +4,17 @@ import android.app.Application;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import com.nostra13.universalimageloader.cache.memory.impl.LruMemoryCache;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.triaged.badge.common.Config;
 import com.triaged.badge.logger.ILogger;
 import com.triaged.badge.logger.LoggerImp;
@@ -32,7 +38,7 @@ public class App extends Application {
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
 
-    public static final ILogger gLogger = new LoggerImp(Config.IS_LOG_ENABLE);
+    public static final ILogger gLogger = new LoggerImp(Config.IS_LOGGING_ENABLE);
 
 
     @Override
@@ -79,6 +85,32 @@ public class App extends Application {
             App.gLogger.e( "Couldn't bind to data provider service." );
             unbindService(dataProviderServiceConnnection);
         }
+
+
+        setupULI();
+    }
+
+    private void setupULI() {
+
+        DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
+                .cacheInMemory(true)
+                .cacheOnDisk(true)
+                .bitmapConfig(Bitmap.Config.RGB_565)
+                .imageScaleType(ImageScaleType.IN_SAMPLE_INT)
+                .considerExifParams(true)
+                .build();
+
+        ImageLoaderConfiguration.Builder imageLoaderConfigurationBuilder = new ImageLoaderConfiguration.Builder(this);
+        if (Config.IS_LOGGING_ENABLE) {
+            imageLoaderConfigurationBuilder.writeDebugLogs();
+        }
+        ImageLoaderConfiguration imgLoaderConf =  imageLoaderConfigurationBuilder
+                .defaultDisplayImageOptions(displayOptions)
+                .memoryCache(new LruMemoryCache(8 * 1024 * 1024))
+                .threadPoolSize(1)
+                .tasksProcessingOrder(QueueProcessingType.LIFO)
+                .build();
+        ImageLoader.getInstance().init(imgLoaderConf);
     }
 
     @Override

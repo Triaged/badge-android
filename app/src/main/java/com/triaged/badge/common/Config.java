@@ -9,7 +9,7 @@ public class Config {
 
     private Config() {}
 
-    public static final boolean IS_LOG_ENABLE = true;
+    public static final boolean IS_LOGGING_ENABLE = true;
     public static final boolean IS_ON_STAGING_SERVER = true;
 
 }

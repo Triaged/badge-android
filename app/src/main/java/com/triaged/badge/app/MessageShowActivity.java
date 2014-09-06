@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -29,6 +30,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.views.MessageThreadAdapter;
 import com.triaged.badge.data.Contact;
 
@@ -310,11 +313,17 @@ public class MessageShowActivity extends BadgeActivity {
                         TextView contactTitle = (TextView) contactView.findViewById(R.id.contact_title);
                         contactTitle.setText(c.jobTitle);
                         ImageView thumbImage = (ImageView) contactView.findViewById(R.id.contact_thumb);
-                        TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
+                        final TextView noPhotoThumb = (TextView) contactView.findViewById(R.id.no_photo_thumb);
                         noPhotoThumb.setText(c.initials);
                         noPhotoThumb.setVisibility(View.VISIBLE);
                         if (c.avatarUrl != null) {
-                            dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
+//                            dataProviderServiceBinding.setSmallContactImage(c, thumbImage, noPhotoThumb);
+                            ImageLoader.getInstance().displayImage(c.avatarUrl, thumbImage, new SimpleImageLoadingListener(){
+                                @Override
+                                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                                    noPhotoThumb.setVisibility(View.GONE);
+                                }
+                            });
                         }
                         contactView.setOnClickListener(new View.OnClickListener() {
                             @Override

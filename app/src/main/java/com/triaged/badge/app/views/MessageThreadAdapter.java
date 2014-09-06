@@ -2,6 +2,8 @@ package com.triaged.badge.app.views;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.media.Image;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,8 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -65,7 +69,7 @@ public class MessageThreadAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        MessageHolder holder = (MessageHolder)view.getTag();
+        final MessageHolder holder = (MessageHolder)view.getTag();
         holder.message.setText( cursor.getString( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_BODY ) ) );
         long messageTimeMillis = cursor.getLong( cursor.getColumnIndex( CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP ) ) / 1000l;
         if( messageTimeMillis > System.currentTimeMillis() ) {
@@ -81,7 +85,16 @@ public class MessageThreadAdapter extends CursorAdapter {
         holder.photoPlaceholder.setText( Contact.constructInitials( first, last ) );
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
         String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL));
-        dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
+
+//        dataProviderServiceBinding.setSmallContactImage( avatarUrl, holder.userPhoto, holder.photoPlaceholder );
+        ImageLoader.getInstance().displayImage(avatarUrl, holder.userPhoto, new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                holder.photoPlaceholder.setVisibility(View.GONE);
+            }
+        });
+
+
         if ( cursor.getInt( cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID ) ) == dataProviderServiceBinding.getLoggedInUser().id ) {
             holder.progressBar.setVisibility(View.GONE);
             holder.messageFailedButton.setVisibility(View.GONE);

@@ -3,6 +3,7 @@ package com.triaged.badge.app.views;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.LruCache;
 import android.view.LayoutInflater;
@@ -15,6 +16,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
@@ -120,7 +124,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        ViewHolder holder = (ViewHolder) view.getTag();
+        final ViewHolder holder = (ViewHolder) view.getTag();
         Contact c = getCachedContact( cursor );
         holder.contact = c;
         holder.nameTextView.setText(c.name);
@@ -139,8 +143,29 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         holder.noPhotoThumb.setVisibility(View.VISIBLE);
         if( c.avatarUrl != null ) {
 
-            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb);
-//            holder.noPhotoThumb.setVisibility(View.GONE);
+            ImageLoader.getInstance().displayImage(c.avatarUrl, holder.thumbImage, new ImageLoadingListener() {
+                @Override
+                public void onLoadingStarted(String s, View view) {
+
+                }
+
+                @Override
+                public void onLoadingFailed(String s, View view, FailReason failReason) {
+                    holder.noPhotoThumb.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onLoadingComplete(String s, View view, Bitmap bitmap) {
+                    holder.noPhotoThumb.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onLoadingCancelled(String s, View view) {
+
+                }
+            });
+//            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb);
+
         }
         if( holder.messageButton != null ) {
             holder.messageButton.setTag( c );
