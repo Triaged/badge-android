@@ -78,7 +78,7 @@ public class MessageShowActivity extends BadgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final BadgeApplication app = (BadgeApplication) getApplication();
+        final App app = (App) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
         threadId = getIntent().getStringExtra( THREAD_ID_EXTRA );
         showKeyboard = getIntent().getBooleanExtra( SHOW_KEYBOARD_EXTRA, true );
@@ -363,7 +363,7 @@ public class MessageShowActivity extends BadgeActivity {
                 }
             }
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Malformed users json");
+            App.gLogger.e( "Malformed users json");
         }
     }
 

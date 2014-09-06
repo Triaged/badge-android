@@ -40,6 +40,8 @@ import java.util.List;
 
 import android.util.Log;
 
+import com.triaged.badge.app.App;
+
 public class HybiParser {
 
     private static final String TAG = "HybiParser";
@@ -206,7 +208,7 @@ public class HybiParser {
 
         if (mClosed) return null;
 
-//        Log.i(TAG, "Creating frame for: " + data + " op: " + opcode + " err: " + errorCode);
+//        App.gLogger.i( "Creating frame for: " + data + " op: " + opcode + " err: " + errorCode);
 
         byte[] buffer = (data instanceof String) ? decode((String) data) : (byte[]) data;
         int insert = (errorCode > 0) ? 2 : 0;
@@ -325,7 +327,7 @@ public class HybiParser {
             int    code   = (payload.length >= 2) ? 256 * payload[0] + payload[1] : 0;
             String reason = (payload.length >  2) ? encode(slice(payload, 2))     : null;
 
-            Log.i(TAG, "Got close op! " + code + " " + reason);
+            App.gLogger.i("Got close op! " + code + " " + reason);
 
             mClient.getListener().onDisconnect(code, reason);
 
@@ -333,7 +335,7 @@ public class HybiParser {
 
             if (payload.length > 125) throw new ProtocolError("Ping payload too large");
 
-            Log.i(TAG, "Sending pong!!");
+            App.gLogger.i("Sending pong!!");
 
             mClient.sendFrame(frame(payload, OP_PONG, -1));
 
@@ -341,7 +343,7 @@ public class HybiParser {
 
             String message = encode(payload);
             // FIXME: Fire callback...
-            Log.i(TAG, "Got pong! " + message);
+            App.gLogger.i("Got pong! " + message);
         }
     }
 

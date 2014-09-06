@@ -4,6 +4,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.triaged.badge.app.App;
+
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
@@ -156,13 +159,13 @@ public class WebSocketClient {
 
                 } catch (EOFException ex) {
 
-                    Log.e(TAG, "WebSocket EOF!", ex);
+                   App.gLogger.e( "WebSocket EOF!", ex);
                     onError(ex);
 
                 } catch (SSLException ex) {
 
                     // Connection reset by peer
-                    Log.e(TAG, "Websocket SSL error!", ex);
+                   App.gLogger.e( "Websocket SSL error!", ex);
                     onError(ex);
 
                 } catch (Exception ex) {
@@ -216,10 +219,10 @@ public class WebSocketClient {
                         mSocket.close();
                         mSocket = null;
 
-                        Log.i(TAG, "socket closed");
+                        App.gLogger.i("socket closed");
 
                     } catch (IOException ex) {
-                        Log.e(TAG, "Error while disconnecting", ex);
+                       App.gLogger.e( "Error while disconnecting", ex);
                         onError(ex);
                     }
                 }

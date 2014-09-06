@@ -200,7 +200,7 @@ public class OnboardingMapActivity extends BackButtonActivity implements
                 addresses = geocoder.getFromLocationName(params[0], 1);
             } catch (IOException el) {
                 el.printStackTrace();
-                Log.e(LOG_TAG, "Error retrieving address");
+                App.gLogger.e( "Error retrieving address");
             }
             if (addresses != null && addresses.size() > 0) {
                 Address address = addresses.get(0);
@@ -247,7 +247,7 @@ public class OnboardingMapActivity extends BackButtonActivity implements
                 return strReturnedAddress.toString();
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.e(LOG_TAG, "Error retrieving address");
+                App.gLogger.e( "Error retrieving address");
             }
 
             return null;

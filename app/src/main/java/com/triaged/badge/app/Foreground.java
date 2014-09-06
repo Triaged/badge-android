@@ -133,16 +133,16 @@ public class Foreground implements Application.ActivityLifecycleCallbacks {
             handler.removeCallbacks(check);
 
         if (wasBackground){
-            Log.i(TAG, "went foreground");
+            App.gLogger.i( "went foreground");
             for (Listener l : listeners) {
                 try {
                     l.onBecameForeground();
                 } catch (Exception exc) {
-                    Log.e(TAG, "Listener threw exception!", exc);
+                   App.gLogger.e( "Listener threw exception!", exc);
                 }
             }
         } else {
-            Log.i(TAG, "still foreground");
+            App.gLogger.i( "still foreground");
         }
     }
 
@@ -158,16 +158,16 @@ public class Foreground implements Application.ActivityLifecycleCallbacks {
             public void run() {
                 if (foreground && paused) {
                     foreground = false;
-                    Log.i(TAG, "went background");
+                    App.gLogger.i( "went background");
                     for (Listener l : listeners) {
                         try {
                             l.onBecameBackground();
                         } catch (Exception exc) {
-                            Log.e(TAG, "Listener threw exception!", exc);
+                           App.gLogger.e( "Listener threw exception!", exc);
                         }
                     }
                 } else {
-                    Log.i(TAG, "still foreground");
+                    App.gLogger.i( "still foreground");
                 }
             }
         }, CHECK_DELAY);

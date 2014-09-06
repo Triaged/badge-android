@@ -122,7 +122,7 @@ public class ForgotPasswordActivity extends BackButtonActivity {
 
         @Override
         protected Void doInBackground(String... params) {
-            ((BadgeApplication)getApplication()).dataProviderServiceBinding.requestResetPassword( params[0], saveCallback);
+            ((App)getApplication()).dataProviderServiceBinding.requestResetPassword( params[0], saveCallback);
             return null;
         }
     }

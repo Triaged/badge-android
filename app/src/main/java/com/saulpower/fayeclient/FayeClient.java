@@ -29,6 +29,8 @@ package com.saulpower.fayeclient;
 import android.os.Handler;
 import android.util.Log;
 import com.saulpower.fayeclient.WebSocketClient.Listener;
+import com.triaged.badge.app.App;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -175,7 +177,7 @@ public class FayeClient implements Listener {
 
     public void closeWebSocketConnection() {
 
-        Log.i(TAG, "socket disconnected");
+        App.gLogger.i("socket disconnected");
 
         mClient.disconnect();
     }
@@ -222,7 +224,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -250,7 +252,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -271,7 +273,7 @@ public class FayeClient implements Listener {
      */
     public void disconnect() {
 
-        Log.i(TAG, "socket disconnected");
+        App.gLogger.i("socket disconnected");
 
         try {
 
@@ -282,7 +284,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -315,7 +317,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -343,7 +345,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -398,7 +400,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Handshake Failed", ex);
+           App.gLogger.e( "Handshake Failed", ex);
         }
     }
 
@@ -430,7 +432,7 @@ public class FayeClient implements Listener {
      */
     @Override
     public void onMessage(byte[] data) {
-        Log.i(TAG, "Data message");
+        App.gLogger.i("Data message");
     }
 
     /*
@@ -454,7 +456,7 @@ public class FayeClient implements Listener {
     @Override
     public void onError(Exception error) {
 
-        Log.w(TAG, "resetWebSocketConnection " + error.getMessage(), error);
+        App.gLogger.w( "resetWebSocketConnection " + error.getMessage(), error);
 
         if (!mReconnecting) {
 
@@ -580,7 +582,7 @@ public class FayeClient implements Listener {
             }
 
         } catch (JSONException ex) {
-            Log.e(TAG, "Could not parse faye message", ex);
+           App.gLogger.e( "Could not parse faye message", ex);
         }
     }
 

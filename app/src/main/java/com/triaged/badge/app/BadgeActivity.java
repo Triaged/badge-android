@@ -74,7 +74,7 @@ public abstract class BadgeActivity extends Activity {
         };
         newMessageIntentFilter = new IntentFilter( DataProviderService.NEW_MSG_ACTION );
 
-        mixpanel = MixpanelAPI.getInstance(this, BadgeApplication.MIXPANEL_TOKEN);
+        mixpanel = MixpanelAPI.getInstance(this, App.MIXPANEL_TOKEN);
 
 
 
@@ -82,7 +82,7 @@ public abstract class BadgeActivity extends Activity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if( intent.getAction().equals( DataProviderService.DB_AVAILABLE_ACTION) ) {
-                    dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+                    dataProviderServiceBinding = ((App)getApplication()).dataProviderServiceBinding;
                     onDatabaseReady();
                 }
                 else if( intent.getAction().equals( DataProviderService.DB_UPDATED_ACTION) ) {
@@ -93,7 +93,7 @@ public abstract class BadgeActivity extends Activity {
         IntentFilter dbActionFilter = new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION );
         dbActionFilter.addAction( DataProviderService.DB_UPDATED_ACTION );
         localBroadcastManager.registerReceiver( databaseReadyReceiver, dbActionFilter );
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        dataProviderServiceBinding = ((App)getApplication()).dataProviderServiceBinding;
         if( dataProviderServiceBinding != null ) {
             new Handler().post( new Runnable() {
                 @Override
@@ -191,7 +191,7 @@ public abstract class BadgeActivity extends Activity {
         final SharedPreferences prefs = getGCMPreferences(context);
         String registrationId = prefs.getString(PROPERTY_REG_ID, "");
         if (registrationId.isEmpty()) {
-            Log.i(TAG, "Registration not found!!");
+            App.gLogger.i( "Registration not found!!");
             return "";
         }
         // Check if app was updated; if so, it must clear the registration ID
@@ -200,7 +200,7 @@ public abstract class BadgeActivity extends Activity {
         int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
         int currentVersion = getAppVersion(context);
         if (registeredVersion != currentVersion) {
-            Log.i(TAG, "App version changed.");
+            App.gLogger.i( "App version changed.");
             return "";
         }
         return registrationId;
@@ -263,7 +263,7 @@ public abstract class BadgeActivity extends Activity {
                     // Persist the regID - no need to register again.
                     storeRegistrationId(BadgeActivity.this, regid);
                     // Send it up to the api.
-                    ((BadgeApplication)getApplication()).dataProviderServiceBinding.registerDevice(regid);
+                    ((App)getApplication()).dataProviderServiceBinding.registerDevice(regid);
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.
@@ -290,7 +290,7 @@ public abstract class BadgeActivity extends Activity {
     private void storeRegistrationId(Context context, String regId) {
         final SharedPreferences prefs = getGCMPreferences(context);
         int appVersion = getAppVersion(context);
-        Log.i(TAG, "Saving regId on app version " + appVersion);
+        App.gLogger.i( "Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
@@ -328,7 +328,7 @@ public abstract class BadgeActivity extends Activity {
             }
         } else {
             // TODO should probably disable the UI, but this isn't a priority
-            Log.i(TAG, "No valid Google Play Services APK found.");
+            App.gLogger.i( "No valid Google Play Services APK found.");
         }
 
     }

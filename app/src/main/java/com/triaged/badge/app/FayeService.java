@@ -92,7 +92,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
             }
             catch( JSONException e ) {
                 // Oh, bugger off.
-                Log.e( LOG_TAG, "JSON exception trying to construct the dang faye extension for auth" );
+                App.gLogger.e( "JSON exception trying to construct the dang faye extension for auth" );
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -152,7 +152,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void subscriptionFailedWithError(String error) {
-        Log.e( LOG_TAG, "Couldn't subscribe: " + error );
+        App.gLogger.e( "Couldn't subscribe: " + error );
     }
 
     /**
@@ -187,7 +187,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     protected void ensureDataServiceBinding() {
         if( dataProviderServiceBinding == null ) {
-            dataProviderServiceBinding = ((BadgeApplication) getApplication()).dataProviderServiceBinding;
+            dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
         }
     }
 }

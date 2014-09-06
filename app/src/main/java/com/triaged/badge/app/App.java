@@ -9,18 +9,21 @@ import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import com.triaged.badge.common.Config;
+import com.triaged.badge.logger.ILogger;
+import com.triaged.badge.logger.LoggerImp;
 
 import org.json.JSONObject;
 
 /**
- * Custom implementation of the Anroid Application class that sets up global services and
+ * Custom implementation of the Android Application class that sets up global services and
  * plugins such as Google Analytics and Crashlytics.
  *
  * Created by Will on 7/7/14.
  */
-public class BadgeApplication extends Application {
+public class App extends Application {
 
-    private static final String TAG = BadgeApplication.class.getName();
+    private static final String TAG = App.class.getName();
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -28,6 +31,8 @@ public class BadgeApplication extends Application {
 
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
+
+    public static final ILogger gLogger = new LoggerImp(Config.IS_LOG_ENABLE);
 
 
     @Override
@@ -40,7 +45,7 @@ public class BadgeApplication extends Application {
         foregroundListener = new Foreground.Listener() {
             @Override
             public void onBecameForeground() {
-                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(BadgeApplication.this, MIXPANEL_TOKEN);
+                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(App.this, MIXPANEL_TOKEN);
                 JSONObject props = new JSONObject();
                 mixpanelAPI.track("app_foreground", props);
                 mixpanelAPI.flush();
@@ -71,7 +76,7 @@ public class BadgeApplication extends Application {
         };
 
         if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
-            Log.e( "SEVERE", "Couldn't bind to data provider service." );
+            App.gLogger.e( "Couldn't bind to data provider service." );
             unbindService(dataProviderServiceConnnection);
         }
     }

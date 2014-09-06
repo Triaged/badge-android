@@ -82,7 +82,7 @@ public class LoginActivity extends BadgeActivity {
                 loginButton.setEnabled( false );
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
-                ((BadgeApplication)getApplication()).dataProviderServiceBinding.loginAsync( email, password, loginCallback);
+                ((App)getApplication()).dataProviderServiceBinding.loginAsync( email, password, loginCallback);
 //                Toast.makeText(LoginActivity.this, email, Toast.LENGTH_SHORT).show();
             }
         });

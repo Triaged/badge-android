@@ -114,7 +114,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
 
     @Override
     protected void onDatabaseReady() {
-        dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        dataProviderServiceBinding = ((App)getApplication()).dataProviderServiceBinding;
         new AsyncTask<Void, Void, Void>() {
 
             @Override

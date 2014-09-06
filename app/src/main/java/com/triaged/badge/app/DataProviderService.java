@@ -420,9 +420,9 @@ public class DataProviderService extends Service {
                         values.clear();
                     }
                 } catch (IOException e) {
-                    Log.e( LOG_TAG, "Network issue getting single contact" );
+                    App.gLogger.e( "Network issue getting single contact" );
                 }  catch (JSONException e) {
-                    Log.e( LOG_TAG, "Couldn't understand response from Badge server", e );
+                    App.gLogger.e( "Couldn't understand response from Badge server", e );
                 }
             }
         });
@@ -445,9 +445,9 @@ public class DataProviderService extends Service {
 
                     }
                 } catch (IOException e) {
-                    Log.e(LOG_TAG, "Network issue getting single office");
+                    App.gLogger.e( "Network issue getting single office");
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "Couldn't understand response from Badge server", e);
+                    App.gLogger.e( "Couldn't understand response from Badge server", e);
                 }
             }
         });
@@ -469,9 +469,9 @@ public class DataProviderService extends Service {
                         values.clear();
                     }
                 } catch (IOException e) {
-                    Log.e(LOG_TAG, "Network issue getting single department");
+                    App.gLogger.e( "Network issue getting single department");
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "Couldn't understand response from Badge server", e);
+                    App.gLogger.e( "Couldn't understand response from Badge server", e);
                 }
             }
         });
@@ -528,10 +528,10 @@ public class DataProviderService extends Service {
                     }
                 }
                 catch( IOException e ) {
-                    Log.e( LOG_TAG, "Network issue doing partial contact sync. " );
+                    App.gLogger.e( "Network issue doing partial contact sync. " );
                 }
                 catch( JSONException e ) {
-                    Log.e( LOG_TAG, "Couldn't understand response from Badge server", e );
+                    App.gLogger.e( "Couldn't understand response from Badge server", e );
                 }
             }
         } );
@@ -605,7 +605,7 @@ public class DataProviderService extends Service {
 
                 }
                 else {
-                    Log.e(LOG_TAG, "Got status " + statusCode + " from API. Handle this appropriately!");
+                    App.gLogger.e( "Got status " + statusCode + " from API. Handle this appropriately!");
                 }
             }
             finally {
@@ -619,10 +619,10 @@ public class DataProviderService extends Service {
             updated = true;
         }
         catch( IOException e ) {
-            Log.e( LOG_TAG, "IO exception downloading company that should be handled more softly than this.", e );
+            App.gLogger.e( "IO exception downloading company that should be handled more softly than this.", e );
         }
         catch( JSONException e ) {
-            Log.e( LOG_TAG, "JSON from server not formatted correctly. Either we shouldn't have expected JSON or this is an api bug.", e );
+            App.gLogger.e( "JSON from server not formatted correctly. Either we shouldn't have expected JSON or this is an api bug.", e );
         }
         finally {
             db.endTransaction();
@@ -951,7 +951,7 @@ public class DataProviderService extends Service {
 
 
         // Report the event to mixpanel
-        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, App.MIXPANEL_TOKEN);
         mixpanelAPI.clearSuperProperties();
         apiClient.apiToken = "";
     }
@@ -979,7 +979,7 @@ public class DataProviderService extends Service {
                     user.put( "password_confirmation", newPasswordConfirmation );
                 }
                 catch( JSONException e ) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for change password", e);
+                    App.gLogger.e( "JSON exception creating post body for change password", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -1019,7 +1019,7 @@ public class DataProviderService extends Service {
             postBody.put( "email", email );
         }
         catch( JSONException e ) {
-            Log.e(LOG_TAG, "JSON exception creating post body for forgot password", e);
+            App.gLogger.e( "JSON exception creating post body for forgot password", e);
             fail( "Unexpected issue, please contact Badge HQ", saveCallback );
             return;
         }
@@ -1071,7 +1071,7 @@ public class DataProviderService extends Service {
                     }
                 }
                 catch( IOException e ) {
-                    Log.e(LOG_TAG, "Wasn't able to delete device on api", e);
+                    App.gLogger.e( "Wasn't able to delete device on api", e);
                 }
                 finally {
                     // Do this regardless of whether we can communicate with the cloud or not.
@@ -1103,7 +1103,7 @@ public class DataProviderService extends Service {
                     deviceData.put("application_id", Settings.Secure.getString(DataProviderService.this.getContentResolver(),
                             Settings.Secure.ANDROID_ID));
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for device registration", e);
+                    App.gLogger.e( "JSON exception creating post body for device registration", e);
                     return;
                 }
 
@@ -1125,9 +1125,9 @@ public class DataProviderService extends Service {
                     }
                 } catch (IOException e) {
                     // We'll try again next time the app starts.
-                    Log.e(LOG_TAG, "IOException trying to register device with badge HQ", e);
+                    App.gLogger.e( "IOException trying to register device with badge HQ", e);
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "Response from Badge HQ wasn't parseable, sad panda", e);
+                    App.gLogger.e( "Response from Badge HQ wasn't parseable, sad panda", e);
                 }
 
             }
@@ -1154,7 +1154,7 @@ public class DataProviderService extends Service {
                     creds.put("password", password);
                     postData.put("user_login", creds);
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for login", e);
+                    App.gLogger.e( "JSON exception creating post body for login", e);
                     fail("Unexpected issue, please contact Badge HQ");
                     return;
                 }
@@ -1168,7 +1168,7 @@ public class DataProviderService extends Service {
                             String error = errorObj.getJSONArray("errors").getString(0);
                             fail(error);
                         } catch (JSONException e) {
-                            Log.e(LOG_TAG, "JSON exception parsing error response from 401.", e);
+                            App.gLogger.e( "JSON exception parsing error response from 401.", e);
                             fail("Login failed.");
                         }
                     } else if (statusCode == HttpStatus.SC_OK) {
@@ -1183,7 +1183,7 @@ public class DataProviderService extends Service {
                                     putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
 
                             JSONObject props = constructMixpanelSuperProperties();
-                            MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, BadgeApplication.MIXPANEL_TOKEN);
+                            MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance( DataProviderService.this, App.MIXPANEL_TOKEN);
                             mixpanelAPI.registerSuperProperties(props);
 
                             if (loginCallback != null) {
@@ -1199,14 +1199,14 @@ public class DataProviderService extends Service {
                             syncMessagesSync();
                             startService( new Intent( DataProviderService.this, FayeService.class ) );
                         } catch (JSONException e) {
-                            Log.e(LOG_TAG, "JSON exception parsing login success.", e);
+                            App.gLogger.e( "JSON exception parsing login success.", e);
                             fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
                         }
                     } else {
                         if (response.getEntity() != null) {
                             response.getEntity().consumeContent();
                         }
-                        Log.e(LOG_TAG, "Unexpected http response code " + statusCode + " from api.");
+                        App.gLogger.e( "Unexpected http response code " + statusCode + " from api.");
                         fail("Server responded with " + response.getStatusLine().getReasonPhrase());
                     }
                 } catch (IOException e) {
@@ -1449,7 +1449,7 @@ public class DataProviderService extends Service {
                     }
                 }
                 catch (Throwable t) {
-                    Log.e(LOG_TAG, "UNABLE TO GET DATABASE", t);
+                    App.gLogger.e( "UNABLE TO GET DATABASE", t);
                 }
             }
         }  );
@@ -1512,7 +1512,7 @@ public class DataProviderService extends Service {
                     employeeInfo.put("office_phone", officePhone);
                     employeeInfo.put("job_start_date", startDateString);
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    App.gLogger.e( "JSON exception creating post body for basic profile data", e);
                     fail("Unexpected issue, please contact Badge HQ", saveCallback);
                     return;
                 }
@@ -1600,7 +1600,7 @@ public class DataProviderService extends Service {
                     data.put( "sharing_office_location", sharingLocation);
 
                 } catch( JSONException e ) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    App.gLogger.e( "JSON exception creating post body for basic profile data", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -1673,7 +1673,7 @@ public class DataProviderService extends Service {
                     employeeInfo.put( "cell_phone", cellPhone );
                 }
                 catch( JSONException e ) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for basic profile data", e);
+                    App.gLogger.e( "JSON exception creating post body for basic profile data", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -1746,7 +1746,7 @@ public class DataProviderService extends Service {
                     postData.put("user", user);
                     user.put("primary_office_location_id", primaryLocation);
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
+                    App.gLogger.e( "JSON exception creating post body for create department", e);
                     fail("Unexpected issue, please contact Badge HQ", saveCallback);
                     return;
                 }
@@ -1810,7 +1810,7 @@ public class DataProviderService extends Service {
                     departmentData.put("name", department);
                 }
                 catch( JSONException e ) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for create department", e);
+                    App.gLogger.e( "JSON exception creating post body for create department", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -1891,7 +1891,7 @@ public class DataProviderService extends Service {
                     locationData.put( "country", country );
                 }
                 catch( JSONException e ) {
-                    Log.e(LOG_TAG, "JSON exception creating post body for create office location", e);
+                    App.gLogger.e( "JSON exception creating post body for create office location", e);
                     fail( "Unexpected issue, please contact Badge HQ", saveCallback );
                     return;
                 }
@@ -1981,7 +1981,7 @@ public class DataProviderService extends Service {
                     employeeInfo.put("job_title", jobTitle);
 
                 } catch (JSONException e) {
-                    Log.e(LOG_TAG, "JSON exception creating patch body for position profile data", e);
+                    App.gLogger.e( "JSON exception creating patch body for position profile data", e);
                     fail("Unexpected issue, please contact Badge HQ", saveCallback);
                     return;
                 }
@@ -2060,7 +2060,7 @@ public class DataProviderService extends Service {
                 }
                 catch( JSONException e ) {
                     // Realllllllly shouldn't happen.
-                    Log.e( LOG_TAG, "Severe bug, JSON exception parsing user id array from prefs", e );
+                    App.gLogger.e( "Severe bug, JSON exception parsing user id array from prefs", e );
                     return;
                 }
                 finally {
@@ -2165,7 +2165,7 @@ public class DataProviderService extends Service {
                     try {
                         sendMessageToFaye(timestamp, guid, threadId, body);
                     } catch (JSONException e) {
-                        Log.e(LOG_TAG, "JSON exception preparing message to send to faye", e);
+                        App.gLogger.e( "JSON exception preparing message to send to faye", e);
                     }
                 }
                 else {
@@ -2232,7 +2232,7 @@ public class DataProviderService extends Service {
             Log.w( LOG_TAG, "Can't sync message history at the moment." );
         }
         catch( JSONException e ) {
-            Log.e( LOG_TAG, "Severe issue, message history response unparseable.", e );
+            App.gLogger.e( "Severe issue, message history response unparseable.", e );
         }
     }
 
@@ -2348,10 +2348,10 @@ public class DataProviderService extends Service {
             database.setTransactionSuccessful();
         }
         catch( JSONException e ) {
-            Log.e( LOG_TAG, "Malformed JSON back from faye." );
+            App.gLogger.e( "Malformed JSON back from faye." );
         }
         catch( Throwable wtf ) {
-            Log.e( LOG_TAG, "Couldn't insert message and it's causing all kinds of problems.", wtf );
+            App.gLogger.e( "Couldn't insert message and it's causing all kinds of problems.", wtf );
         }
         finally {
             database.endTransaction();
@@ -2923,7 +2923,7 @@ public class DataProviderService extends Service {
             }
             catch( IOException e ) {
                 // OK... ?
-                Log.e( LOG_TAG, "Error reading from disk cache", e );
+                App.gLogger.e( "Error reading from disk cache", e );
             }
             return null;
         }
@@ -2967,7 +2967,7 @@ public class DataProviderService extends Service {
                         }
                     } catch (URISyntaxException e) {
                         // Womp womp
-                        Log.e(LOG_TAG, "Either we got a bad URL from the api or we did something stupid", e);
+                        App.gLogger.e( "Either we got a bad URL from the api or we did something stupid", e);
                     } catch (IOException e) {
                         Log.w(LOG_TAG, "Network issue reading image data", e);
                     }

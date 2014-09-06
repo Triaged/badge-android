@@ -64,7 +64,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        BadgeApplication app = (BadgeApplication) getApplication();
+        App app = (App) getApplication();
         dataProviderServiceBinding = app.dataProviderServiceBinding;
 
         final Intent intent = getIntent();

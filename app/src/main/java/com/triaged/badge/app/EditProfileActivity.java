@@ -494,7 +494,7 @@ public class EditProfileActivity extends BadgeActivity {
             bitmap = getRotatedBitmap(exif, bitmap);
         }
         catch (Exception e) {
-            Log.e(LOG_TAG, "CRASH WHILE RETRIEVING FILE");
+            App.gLogger.e( "CRASH WHILE RETRIEVING FILE");
         }
 
         return bitmap;

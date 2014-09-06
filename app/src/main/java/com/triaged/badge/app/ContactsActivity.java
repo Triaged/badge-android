@@ -53,7 +53,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
     private Typeface medium = null;
     private Typeface regular = null;
 
-    protected BadgeApplication app;
+    protected App app;
 
     private LocalBroadcastManager localBroadcastManager;
 
@@ -248,7 +248,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             }
         });
 
-        app = (BadgeApplication) getApplication();
+        app = (App) getApplication();
         IntentFilter filter = new IntentFilter();
         filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
         filter.addAction(DataProviderService.DB_UPDATED_ACTION);
@@ -419,7 +419,7 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
             }
             else {
                 // Re-register device
-                ((BadgeApplication) getApplication()).dataProviderServiceBinding.registerDevice( regId );
+                ((App) getApplication()).dataProviderServiceBinding.registerDevice( regId );
             }
             shouldRegister = false;
         }

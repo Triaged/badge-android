@@ -197,7 +197,7 @@ public class LocationTrackingService extends Service implements LocationListener
         }
 
         // Check against each office.
-        final DataProviderService.LocalBinding dataProviderServiceBinding = ((BadgeApplication)getApplication()).dataProviderServiceBinding;
+        final DataProviderService.LocalBinding dataProviderServiceBinding = ((App)getApplication()).dataProviderServiceBinding;
         if( dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() && dataProviderServiceBinding.getLoggedInUser() != null ) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
@@ -271,7 +271,7 @@ public class LocationTrackingService extends Service implements LocationListener
         } else {
             // Google Play services was not available for some reason
             // Display an error dialog
-            Log.e(LOG_TAG, "GMS unavailable");
+            App.gLogger.e( "GMS unavailable");
             return false;
         }
     }
