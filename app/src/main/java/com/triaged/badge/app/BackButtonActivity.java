@@ -6,8 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 /**
  * Inflate custom action bar view with back button.
  * NOTE: Activity requires the "BackButton" theme in AndroidManifest

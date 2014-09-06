@@ -7,22 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.triaged.badge.app.views.MessagesListAdapter;
-
-import org.w3c.dom.Text;
-
-import java.util.List;
 
 /**
  * This is the list of active message threads.

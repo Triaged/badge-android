@@ -10,15 +10,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.views.OfficeLocationsAdapter;
 import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
-
-import org.w3c.dom.Text;
 
 /**
  * Allow the user to select a primary office location.

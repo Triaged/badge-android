@@ -1,14 +1,12 @@
 package com.triaged.badge.app;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.triaged.badge.app.views.OnboardingDotsView;
-import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
 
 /**

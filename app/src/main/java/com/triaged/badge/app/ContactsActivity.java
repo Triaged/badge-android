@@ -2,8 +2,6 @@ package com.triaged.badge.app;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
@@ -14,12 +12,9 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,14 +23,10 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 
 import com.triaged.badge.app.views.ContactsAdapter;
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 import com.triaged.badge.app.views.DepartmentsAdapter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 

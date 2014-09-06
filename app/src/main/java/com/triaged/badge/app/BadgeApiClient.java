@@ -1,7 +1,5 @@
 package com.triaged.badge.app;
 
-import android.net.Uri;
-
 import com.triaged.badge.common.Config;
 
 import org.apache.http.HttpHost;
@@ -16,7 +14,6 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;

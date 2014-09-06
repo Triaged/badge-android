@@ -16,7 +16,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.DataProviderService;
-import com.triaged.badge.app.MessageNewActivity;
 import com.triaged.badge.app.MessageShowActivity;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
@@ -26,7 +25,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 

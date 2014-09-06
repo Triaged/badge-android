@@ -13,7 +13,6 @@ import com.triaged.badge.app.DataProviderService;
 import com.triaged.badge.app.R;
 import com.triaged.badge.data.CompanySQLiteHelper;
 import com.triaged.badge.data.Contact;
-import com.triaged.badge.data.Department;
 
 /**
  * Created by Will on 7/14/14.

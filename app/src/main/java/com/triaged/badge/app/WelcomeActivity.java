@@ -17,11 +17,9 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.app.views.OnboardingDotsView;
 import com.triaged.badge.data.Contact;
 
 import java.lang.reflect.Field;

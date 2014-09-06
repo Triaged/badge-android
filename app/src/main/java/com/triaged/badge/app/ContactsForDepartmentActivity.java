@@ -1,14 +1,11 @@
 package com.triaged.badge.app;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.triaged.badge.app.views.ContactsAdapterWithoutHeadings;
 

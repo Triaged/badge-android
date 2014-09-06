@@ -16,21 +16,19 @@ package com.triaged.badge.app.views;
  * limitations under the License.
  */
 
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.os.Build;
+import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
-
-        import android.annotation.TargetApi;
-        import android.content.Context;
-        import android.content.res.TypedArray;
-        import android.os.Build;
-        import android.util.AttributeSet;
-        import android.view.Gravity;
-        import android.view.View;
-        import android.view.ViewGroup;
 
 import com.triaged.badge.app.R;
 
 import java.util.ArrayList;
-        import java.util.List;
+import java.util.List;
 
 
 public class FlowLayout extends ViewGroup {

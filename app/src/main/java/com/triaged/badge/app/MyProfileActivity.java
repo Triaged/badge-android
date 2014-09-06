@@ -5,9 +5,7 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 /**
  * Profile activity for the logged-in-user.
