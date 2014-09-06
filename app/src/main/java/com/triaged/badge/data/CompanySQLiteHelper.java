@@ -30,6 +30,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID = "current_office_location_id";
     public static final String COLUMN_CONTACT_DEPARTMENT_ID = "department_id";
     public static final String COLUMN_CONTACT_SHARING_OFFICE_LOCATION = "sharing_office_location";
+    public static final String COLUMN_CONTACT_IS_ARCHIVED = "is_archived";
 
     public static final String JOINED_DEPARTMENT_NAME = "department_name";
     public static final String JOINED_MANAGER_FIRST_NAME = "manager_first_name";
@@ -66,8 +67,8 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
 
     protected static final String SQL_DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 20;
-    private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer );",
+    protected static final int DATABASE_VERSION = 21;
+    private static final String CREATE_CONTACTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer, %s boolean );",
             TABLE_CONTACTS,
             COLUMN_CONTACT_ID,
             COLUMN_CONTACT_FIRST_NAME,
@@ -83,7 +84,8 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
             COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
             COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID,
             COLUMN_CONTACT_DEPARTMENT_ID,
-            COLUMN_CONTACT_SHARING_OFFICE_LOCATION
+            COLUMN_CONTACT_SHARING_OFFICE_LOCATION,
+            COLUMN_CONTACT_IS_ARCHIVED
     );
 
     protected static final String CREATE_DEPARTMENTS_TABLE_SQL = String.format( "create table %s (%s  integer primary key, %s text, %s integer );",

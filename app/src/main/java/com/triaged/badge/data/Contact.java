@@ -50,6 +50,7 @@ public class Contact {
     public int departmentId;
     public int sharingOfficeLocation;
     public String initials;
+    public boolean isArchived;
 
     public static String getStringSafelyFromCursor( Cursor contactCursor, String columnName ) {
         int index = contactCursor.getColumnIndex( columnName );
@@ -135,6 +136,7 @@ public class Contact {
         primaryOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID );
         currentOfficeLocationId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID );
         departmentId = getIntSafelyFromCursor( contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+        isArchived = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED) > 0;
 
         if( managerId > 0) {
             managerName = String.format("%s %s", managerFirstName, managerLastName);

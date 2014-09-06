@@ -298,7 +298,7 @@ public class MessageShowActivity extends BadgeActivity {
                 Integer userId = users.getInt(i);
                 if (userId != dataProviderServiceBinding.getLoggedInUser().id) {
                     final Contact c = dataProviderServiceBinding.getContact(userId);
-                    if( c == null ) {
+                    if( c == null || c.isArchived ) {
                         continue;
                     }
                     if (userCount == 2) {

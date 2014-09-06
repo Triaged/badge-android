@@ -106,19 +106,23 @@ public class DataProviderService extends Service {
             );
 
     protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
-            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s = ? ORDER BY contact.%s;",
-                CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
-                CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                CompanySQLiteHelper.TABLE_CONTACTS,
-                CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
+                            " ON contact.%s = department.%s WHERE contact.%s = ? AND contact.%s = 0 ORDER BY contact.%s;",
+                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    CompanySQLiteHelper.TABLE_CONTACTS,
+                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
+                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
+                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
+                    CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED,
+                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
 
     protected static final String QUERY_CONTACT_SQL =
-            String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
+            String.format( "SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM" +
+                            " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
+                            " ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
                 CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
                 CompanySQLiteHelper.JOINED_OFFICE_NAME,
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
@@ -140,7 +144,8 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_ID
             );
     protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
-            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s WHERE contact.%s != ? ORDER BY %s;",
+            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
+                            " ON contact.%s = department.%s WHERE contact.%s != ? AND contact.is_archived = 0  ORDER BY %s;",
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
                 CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
                 CompanySQLiteHelper.TABLE_CONTACTS,
@@ -151,7 +156,8 @@ public class DataProviderService extends Service {
                 CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
             );
     protected static final String QUERY_MANAGED_CONTACTS_SQL =
-            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
+            String.format( "SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
+                            " ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
                 CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
                 CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
                 CompanySQLiteHelper.TABLE_CONTACTS,
@@ -168,7 +174,8 @@ public class DataProviderService extends Service {
                     CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
             );
     protected static final String QUERY_MESSAGES_SQL =
-            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
+            String.format( "SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact" +
+                            " ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
                     CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL,
                     CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
                     CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
@@ -182,9 +189,17 @@ public class DataProviderService extends Service {
 
 
     protected static final String QUERY_MESSAGE_SQL =
-            String.format( "SELECT * FROM %s WHERE %s = ? OR %s = ?", CompanySQLiteHelper.TABLE_MESSAGES, CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID );
+            String.format( "SELECT * FROM %s WHERE %s = ? OR %s = ?",
+                    CompanySQLiteHelper.TABLE_MESSAGES,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_ID,
+                    CompanySQLiteHelper.COLUMN_MESSAGES_GUID );
 
-    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format( "SELECT * FROM %s WHERE %s > ? ORDER BY %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
+    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format(
+            "SELECT * FROM %s WHERE %s > ? ORDER BY %s;",
+            CompanySQLiteHelper.TABLE_DEPARTMENTS,
+            CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS,
+            CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME );
+
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS );
     protected static final String CLEAR_CONTACTS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS );
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format( "DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS );
@@ -628,6 +643,8 @@ public class DataProviderService extends Service {
         setIntContentValueFromJSONUnlessBlank( json, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
         setIntContentValueFromJSONUnlessBlank( json, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
         setIntContentValueFromJSONUnlessBlank( json, "department_id", values, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID );
+        setBooleanContentValueFromJSONUnlessBlank(json, "archived", values, CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED);
+
         if (json.has("sharing_office_location") && !json.isNull("sharing_office_location")) {
             int sharingInt = json.getBoolean("sharing_office_location") ? Contact.SHARING_LOCATION_TRUE : Contact.SHARING_LOCATION_FALSE;
             values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
@@ -699,6 +716,22 @@ public class DataProviderService extends Service {
     private static void setIntContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
         if ( !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
             values.put( column, json.getInt(key));
+        }
+    }
+
+
+    /**
+     * Pulls an int from json and sets it as a content value if the key exists and is not the empty string.
+     *
+     * @param json json object possibly containing key
+     * @param key key in to json object where value should live
+     * @param values database values to add to if the key exists
+     * @param column column name to set in database values
+     * @throws JSONException
+     */
+    private static void setBooleanContentValueFromJSONUnlessBlank( JSONObject json, String key, ContentValues values, String column ) throws JSONException {
+        if ( !json.isNull( key ) && !"".equals( json.getString( key ) ) ) {
+            values.put( column, json.getBoolean(key));
         }
     }
 
