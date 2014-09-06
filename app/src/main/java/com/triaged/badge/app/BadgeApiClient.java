@@ -2,6 +2,8 @@ package com.triaged.badge.app;
 
 import android.net.Uri;
 
+import com.triaged.badge.common.Config;
+
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -32,40 +34,45 @@ import java.net.URISyntaxException;
 public class BadgeApiClient extends DefaultHttpClient {
     public static final String MIME_TYPE_JSON = "application/json";
 
-    private static final String STAGING_API_PROTOCOL = "http";
-    private static final String PROD_API_PROTOCOL = "https";
-    private static final String API_PROTOCOL = PROD_API_PROTOCOL;
-    private static final String PROD_API_HOST = "api.badge.co";
-    private static final String STAGING_API_HOST = "api.badge-staging.com";
-    private static final String PROD_API_MESSAGING_HOST = "messaging.badge.co";
-    private static final String STAGING_API_MESSAGING_HOST = "badge-messaging-staging.herokuapp.com";
-    //private static final String STAGING_API_MESSAGING_HOST = "10.9.8.93";
-    private static final String API_MESSAGING_HOST = PROD_API_MESSAGING_HOST;
+    private static final String PROD_API_HOST = "https://api.badge.co";
+    private static final String PROD_API_MESSAGING_HOST = "https://messaging.badge.co";
 
-    private static final String API_HOST = PROD_API_HOST;
+    private static final String STAGING_API_HOST = "http://api.badge-staging.com";
+    private static final String STAGING_API_MESSAGING_HOST = "http://badge-messaging-staging.herokuapp.com";
+
+    private static final String API_MESSAGING_HOST;
+    private static final String API_HOST;
+    static {
+        if (Config.IS_ON_STAGING_SERVER) {
+            API_MESSAGING_HOST = STAGING_API_MESSAGING_HOST;
+            API_HOST = STAGING_API_HOST;
+        } else {
+            API_MESSAGING_HOST = PROD_API_MESSAGING_HOST;
+            API_HOST = PROD_API_HOST;
+        }
+    }
+
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
-    private static final String PATCH_ACCOUNT_URI = String.format("%s://%s/v1/account", API_PROTOCOL, API_HOST);
-    private static final String POST_AVATAR_URI = String.format("%s://%s/v1/account/avatar", API_PROTOCOL, API_HOST);
-    //private static final String POST_AVATAR_URI = String.format("%s://%s:9000/v1/account/avatar", API_PROTOCOL, "10.9.8.93" );
-    private static final String GET_COMPANY_URI_PATTERN = "%s://%s/v1/company?timestamp=%d";
-    private static final String GET_MSG_HISTORY_URI_FORMAT = "%s://%s/api/v1/user/messages?timestamp=%d";
-    private static final String CREATE_SESSION_URI = String.format( "%s://%s/v1/sessions", API_PROTOCOL, API_HOST );
-    private static final String CREATE_DEPARTMENT_URI = String.format( "%s://%s/v1/departments", API_PROTOCOL, API_HOST );
-    private static final String CREATE_THREAD_URI = String.format( "%s://%s/api/v1/message_threads", API_PROTOCOL, API_MESSAGING_HOST );
-    //private static final String CREATE_THREAD_URI = String.format( "%s://%s:9000/api/v1/message_threads", API_PROTOCOL, API_MESSAGING_HOST );
-    private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s://%s/v1/office_locations", API_PROTOCOL, API_HOST );
-    private static final String REGISTER_DEVICE_URI = String.format( "%s://%s/v1/devices", API_PROTOCOL, API_HOST );
-    private static final String CHANGE_PASSWORD_URI = String.format( "%s://%s/v1/account/update_password", API_PROTOCOL, API_HOST );
-    private static final String DELETE_DEVICE_URI_PATTERN = "%s://%s/v1/devices/%d/sign_out";
-    private static final String ENTER_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/entered";
-    private static final String EXIT_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d/exited";
-    private static final String GET_CONTACT_URI_PATTERN = "%s://%s/v1/users/%d";
+    private static final String PATCH_ACCOUNT_URI = String.format("%s/v1/account", API_HOST);
+    private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
+    private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
+    private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
+    private static final String CREATE_SESSION_URI = String.format( "%s/v1/sessions", API_HOST );
+    private static final String CREATE_DEPARTMENT_URI = String.format( "%s/v1/departments", API_HOST );
+    private static final String CREATE_THREAD_URI = String.format( "%s/api/v1/message_threads", API_MESSAGING_HOST );
+    private static final String CREATE_OFFICE_LOCATION_URI = String.format( "%s/v1/office_locations", API_HOST );
+    private static final String REGISTER_DEVICE_URI = String.format( "%s/v1/devices", API_HOST );
+    private static final String CHANGE_PASSWORD_URI = String.format( "%s/v1/account/update_password", API_HOST );
+    private static final String DELETE_DEVICE_URI_PATTERN = "%s/v1/devices/%d/sign_out";
+    private static final String ENTER_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/entered";
+    private static final String EXIT_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/exited";
+    private static final String GET_CONTACT_URI_PATTERN = "%s/v1/users/%d";
 
-    private static final String GET_OFFICE_URI_PATTERN = "%s://%s/v1/office_locations/%d";
-    private static final String GET_DEPARTMENT_URI_PATTERN = "%s://%s/v1/departments/%d";
+    private static final String GET_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d";
+    private static final String GET_DEPARTMENT_URI_PATTERN = "%s/v1/departments/%d";
 
-    private static final String REQUEST_RESET_PASSWORD_URI = String.format( "%s://%s/v1/account/reset_password", API_PROTOCOL, API_HOST );
+    private static final String REQUEST_RESET_PASSWORD_URI = String.format( "%s/v1/account/reset_password", API_HOST );
 
     private HttpHost httpHost;
     private HttpHost messagingHttpHost;
@@ -73,9 +80,9 @@ public class BadgeApiClient extends DefaultHttpClient {
 
     public BadgeApiClient( String apiToken ) {
         super();
-        URI uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_HOST ) );
+        URI uri = URI.create( String.format("%s", API_HOST ) );
         httpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
-        uri = URI.create( String.format("%s://%s", API_PROTOCOL, API_MESSAGING_HOST ) );
+        uri = URI.create( String.format("%s", API_MESSAGING_HOST ) );
         messagingHttpHost = new HttpHost( uri.getHost(), uri.getPort(), uri.getScheme() );
         this.apiToken = apiToken;
     }
@@ -90,7 +97,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException if network issues occur during the process.
      */
     public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException {
-        HttpGet getCompany = new HttpGet( String.format( GET_COMPANY_URI_PATTERN, API_PROTOCOL, API_HOST, lastSynced ) );
+        HttpGet getCompany = new HttpGet( String.format( GET_COMPANY_URI_PATTERN, API_HOST, lastSynced ) );
         getCompany.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
 
         return execute( httpHost, getCompany );
@@ -212,7 +219,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse unregisterDeviceRequest( int deviceId ) throws IOException {
-        HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_PROTOCOL, API_HOST, deviceId ) );
+        HttpDelete delete = new HttpDelete( String.format( DELETE_DEVICE_URI_PATTERN, API_HOST, deviceId ) );
         delete.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         return execute(httpHost, delete);
     }
@@ -227,7 +234,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @return
      */
     public HttpResponse checkinRequest(int officeId) throws IOException {
-        HttpPut put = new HttpPut( String.format( ENTER_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        HttpPut put = new HttpPut( String.format( ENTER_OFFICE_URI_PATTERN, API_HOST, officeId ) );
         put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
@@ -242,7 +249,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @return
      */
     public HttpResponse checkoutRequest(int officeId) throws IOException {
-        HttpPut put = new HttpPut( String.format( EXIT_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        HttpPut put = new HttpPut( String.format( EXIT_OFFICE_URI_PATTERN, API_HOST, officeId ) );
         put.setHeader( AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( httpHost, put );
     }
@@ -289,19 +296,19 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse getContact( int contactId ) throws IOException {
-        HttpGet get = new HttpGet( String.format( GET_CONTACT_URI_PATTERN, API_PROTOCOL, API_HOST, contactId ) );
+        HttpGet get = new HttpGet( String.format( GET_CONTACT_URI_PATTERN, API_HOST, contactId ) );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( get );
     }
 
     public HttpResponse getOffice( int officeId ) throws IOException {
-        HttpGet get = new HttpGet( String.format( GET_OFFICE_URI_PATTERN, API_PROTOCOL, API_HOST, officeId ) );
+        HttpGet get = new HttpGet( String.format( GET_OFFICE_URI_PATTERN, API_HOST, officeId ) );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( get );
     }
 
     public HttpResponse getDepartment( int departmentId ) throws IOException {
-        HttpGet get = new HttpGet( String.format( GET_DEPARTMENT_URI_PATTERN, API_PROTOCOL, API_HOST, departmentId ) );
+        HttpGet get = new HttpGet( String.format( GET_DEPARTMENT_URI_PATTERN, API_HOST, departmentId ) );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken );
         return execute( get );
     }
@@ -336,7 +343,7 @@ public class BadgeApiClient extends DefaultHttpClient {
      * @throws IOException
      */
     public HttpResponse getMessageHistory( long sinceTimeNano, int userId ) throws IOException {
-        HttpGet get = new HttpGet( String.format(GET_MSG_HISTORY_URI_FORMAT, API_PROTOCOL, API_MESSAGING_HOST, sinceTimeNano / 1000000l )  );
+        HttpGet get = new HttpGet( String.format(GET_MSG_HISTORY_URI_FORMAT, API_MESSAGING_HOST, sinceTimeNano / 1000000l )  );
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         get.setHeader( "Accept", MIME_TYPE_JSON );
         get.setHeader( "User-Id", String.valueOf( userId ) );
