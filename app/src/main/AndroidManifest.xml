@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.triaged.badge.app"
-    android:versionCode="2">
+    android:versionCode="2" >
 
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
@@ -31,7 +31,7 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
 
         <!-- GOOGLE MAPS API KEY AND GMS VERSION -->
         <meta-data
@@ -44,13 +44,12 @@
             android:name="com.crashlytics.ApiKey"
             android:value="2776a41715c04dde4ba5d15b716b66a51e353b0f" />
 
-
         <!-- ACTIVITIES -->
         <activity
             android:name="com.triaged.badge.ui.entrance.LoginActivity"
             android:label="@string/app_name"
-            android:screenOrientation="portrait">
-        <intent-filter>
+            android:screenOrientation="portrait" >
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -64,8 +63,8 @@
         <activity
             android:name="com.triaged.badge.ui.home.ContactsActivity"
             android:label="@string/app_name"
-            android:theme="@style/Tabbed"
             android:screenOrientation="portrait"
+            android:theme="@style/Tabbed"
             android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.triaged.badge.ui.entrance.ForgotPasswordActivity"
@@ -162,7 +161,7 @@
 
         <receiver
             android:name="com.triaged.badge.receivers.GCMReceiver"
-            android:permission="com.google.android.c2dm.permission.SEND">
+            android:permission="com.google.android.c2dm.permission.SEND" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
 
@@ -172,7 +171,7 @@
         <receiver
             android:name="com.triaged.badge.receivers.DeviceBootReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
 
@@ -181,19 +180,46 @@
         </receiver>
         <receiver
             android:name="com.triaged.badge.location.LocationTrackingService$WakeupReceiver"
-            android:enabled="true">
-        <intent-filter>
+            android:enabled="true" >
+            <intent-filter>
                 <action android:name="com.triaged.badge.app.LOCATION_WAKEUP" />
             </intent-filter>
         </receiver>
         <receiver
             android:name="com.triaged.badge.receivers.LogoutReceiver"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false" >
             <intent-filter>
                 <action android:name="com.triaged.badge.LOGOUT" />
             </intent-filter>
         </receiver>
+
+        <!--CONTENT PROVIDERS-->
+
+        <provider
+            android:name="com.triaged.badge.database.provider.ContactProvider"
+            android:authorities="com.triaged.badge.provider.contacts"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.triaged.badge.database.provider.DepartmentProvider"
+            android:authorities="com.triaged.badge.provider.departments"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.triaged.badge.database.provider.MessageProvider"
+            android:authorities="com.triaged.badge.provider.messages"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="com.triaged.badge.database.provider.OfficeLocationProvider"
+            android:authorities="com.triaged.badge.provider.office_location"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>
