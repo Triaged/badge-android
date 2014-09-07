@@ -22,6 +22,8 @@ import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.base.BadgeActivity;
+import com.triaged.badge.ui.home.ContactsActivity;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
 
@@ -48,6 +50,15 @@ public class LoginActivity extends BadgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // If already logged-in, go to main activity.
+        if (isAlreadyLoggedIn()) {
+            Intent mainActivityIntent = new Intent(this, ContactsActivity.class);
+            startActivity(mainActivityIntent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_login);
 
         loginEmail = (EditText) findViewById(R.id.login_email);
@@ -175,5 +186,10 @@ public class LoginActivity extends BadgeActivity {
     @Override
     protected void logout() {
         // Do nothing since we're the UI to log back in.
+    }
+
+
+    private boolean isAlreadyLoggedIn() {
+        return !SharedPreferencesUtil.getString(R.string.pref_api_token, "").equals("");
     }
 }

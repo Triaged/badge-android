@@ -96,6 +96,13 @@ public class LocationTrackingService extends Service implements LocationListener
 
     }
 
+    public static void justClearAlarm(Context context) {
+        Intent alarmIntent = new Intent(LOCATION_ALARM_ACTION);
+        PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        alarmMgr.cancel(scheduledAlarmIntent);
+    }
+
 
     @Override
     public IBinder onBind(Intent intent) {

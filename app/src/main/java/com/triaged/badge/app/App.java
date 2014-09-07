@@ -2,6 +2,7 @@ package com.triaged.badge.app;
 
 import android.app.Application;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
@@ -41,12 +42,17 @@ public class App extends Application {
     public Foreground.Listener foregroundListener;
 
     public static final ILogger gLogger = new LoggerImp(Config.IS_LOGGING_ENABLE);
+    public static Context mContext;
 
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Crashlytics.start(this);
+        if (Config.IS_CRASH_REPORTING) {
+            Crashlytics.start(this);
+        }
+
+        mContext = this;
 
         final Intent fayeServiceIntent = new Intent( getApplicationContext(), FayeService.class );
         appForeground = Foreground.get(this);
@@ -120,5 +126,9 @@ public class App extends Application {
         unbindService(dataProviderServiceConnnection);
         appForeground.removeListener(foregroundListener);
         super.onTerminate();
+    }
+
+    public static Context context() {
+        return mContext;
     }
 }
