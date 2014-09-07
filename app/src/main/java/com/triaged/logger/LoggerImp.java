@@ -50,8 +50,9 @@ public class LoggerImp implements ILogger {
     @Override
     public void e(String msg, Throwable throwable) {
         if (isEnable) {
-            e(msg);
-            e(throwable);
+            out(msg, ERROR_LOG);
+            out(msg, ERROR_LOG);
+            throwable.printStackTrace();
         }
     }
 
