@@ -13,7 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.base.BadgeActivity;
@@ -68,8 +68,8 @@ public class OnboardingLocationActivity extends BadgeActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position != 0) {
                     Cursor officeCursor = (Cursor) officeLocationsAdapter.getItem(position - 1);
-                    officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID);
-                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                    officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_ID);
+                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
                     officeLocationsAdapter.notifyDataSetChanged();
                     noLocationCheck.setVisibility(View.GONE);
                 }

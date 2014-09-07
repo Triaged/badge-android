@@ -4,6 +4,7 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.ContactsTable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,28 +114,28 @@ public class Contact {
      * @param contactCursor cursor in to sql lite db.
      */
     public void fromCursor(Cursor contactCursor) {
-        this.id = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_ID);
+        this.id = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_ID);
         /** STRING FIELDS */
-        firstName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
-        lastName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
-        avatarUrl = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
-        email = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
-        startDateString = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
-        birthDateString = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
-        cellPhone = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
-        officePhone = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
-        jobTitle = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
+        firstName = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+        lastName = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_LAST_NAME);
+        avatarUrl = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_AVATAR_URL);
+        email = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_EMAIL);
+        startDateString = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_START_DATE);
+        birthDateString = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
+        cellPhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
+        officePhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
+        jobTitle = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_JOB_TITLE);
         departmentName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_DEPARTMENT_NAME);
         String managerFirstName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME);
         String managerLastName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME);
         officeName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_OFFICE_NAME);
         /** INTEGER FIELDS */
-        sharingOfficeLocation = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
-        managerId = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
-        primaryOfficeLocationId = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
-        currentOfficeLocationId = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
-        departmentId = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID);
-        isArchived = getIntSafelyFromCursor(contactCursor, CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED) > 0;
+        sharingOfficeLocation = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
+        managerId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_MANAGER_ID);
+        primaryOfficeLocationId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
+        currentOfficeLocationId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
+        departmentId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID);
+        isArchived = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_IS_ARCHIVED) > 0;
 
         if (managerId > 0) {
             managerName = String.format("%s %s", managerFirstName, managerLastName);

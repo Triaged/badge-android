@@ -20,7 +20,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.home.MessageShowActivity;
@@ -180,7 +180,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
     }
 
     public static Contact getCachedContact(Cursor cursor) {
-        int id = Contact.getIntSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID);
+        int id = Contact.getIntSafelyFromCursor(cursor, ContactsTable.COLUMN_ID);
         Contact c = contactCache.get(id);
         if (c == null) {
             c = new Contact();

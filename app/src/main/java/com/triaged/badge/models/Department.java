@@ -2,7 +2,7 @@ package com.triaged.badge.models;
 
 import android.database.Cursor;
 
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.DepartmentsTable;
 
 /**
  * POJO representing a department.
@@ -21,8 +21,8 @@ public class Department {
      * @param deptCursor cursor in to sql lite db.
      */
     public void fromCursor(Cursor deptCursor) {
-        id = Contact.getIntSafelyFromCursor(deptCursor, CompanySQLiteHelper.COLUMN_DEPARTMENT_ID);
-        name = Contact.getStringSafelyFromCursor(deptCursor, CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME);
-        numContacts = Contact.getIntSafelyFromCursor(deptCursor, CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS);
+        id = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_ID);
+        name = Contact.getStringSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NAME);
+        numContacts = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS);
     }
 }

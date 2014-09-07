@@ -35,6 +35,10 @@ import android.widget.Toast;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.database.table.MessagesTable;
+import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
@@ -100,116 +104,116 @@ public class DataProviderService extends Service {
 
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
                     CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.TABLE_NAME,
+                    DepartmentsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    DepartmentsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME
             );
 
     protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON contact.%s = department.%s WHERE contact.%s = ? AND contact.%s = 0 ORDER BY contact.%s;",
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
                     CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.TABLE_NAME,
+                    DepartmentsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    DepartmentsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    ContactsTable.COLUMN_CONTACT_IS_ARCHIVED,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME
             );
 
     protected static final String QUERY_CONTACT_SQL =
             String.format("SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM" +
                             " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
                             " ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
-                    CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME,
+                    OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME,
                     CompanySQLiteHelper.JOINED_OFFICE_NAME,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
                     CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME,
                     CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME,
                     CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_ID,
-                    CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
-                    CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_ID
+                    ContactsTable.TABLE_NAME,
+                    DepartmentsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    DepartmentsTable.COLUMN_ID,
+                    ContactsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_MANAGER_ID,
+                    ContactsTable.COLUMN_ID,
+                    OfficeLocationsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                    OfficeLocationsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_ID
             );
     protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON contact.%s = department.%s WHERE contact.%s != ? AND contact.is_archived = 0  ORDER BY %s;",
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
                     CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.TABLE_NAME,
+                    DepartmentsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    DepartmentsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME
             );
     protected static final String QUERY_MANAGED_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
                     CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.TABLE_DEPARTMENTS,
-                    CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_DEPARTMENT_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.TABLE_NAME,
+                    DepartmentsTable.TABLE_NAME,
+                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    DepartmentsTable.COLUMN_ID,
+                    ContactsTable.COLUMN_CONTACT_MANAGER_ID,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME
             );
     protected static final String QUERY_THREADS_SQL =
             String.format("SELECT * from %s WHERE %s = 1 order by %s DESC",
-                    CompanySQLiteHelper.TABLE_MESSAGES,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+                    MessagesTable.TABLE_NAME,
+                    MessagesTable.COLUMN_MESSAGES_THREAD_HEAD,
+                    MessagesTable.COLUMN_MESSAGES_TIMESTAMP
             );
     protected static final String QUERY_MESSAGES_SQL =
             String.format("SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact" +
                             " ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
-                    CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL,
-                    CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME,
-                    CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME,
-                    CompanySQLiteHelper.TABLE_MESSAGES,
-                    CompanySQLiteHelper.TABLE_CONTACTS,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID,
-                    CompanySQLiteHelper.COLUMN_CONTACT_ID,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP
+                    ContactsTable.COLUMN_CONTACT_AVATAR_URL,
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME,
+                    ContactsTable.COLUMN_CONTACT_LAST_NAME,
+                    MessagesTable.TABLE_NAME,
+                    ContactsTable.TABLE_NAME,
+                    MessagesTable.COLUMN_MESSAGES_FROM_ID,
+                    ContactsTable.COLUMN_ID,
+                    MessagesTable.COLUMN_MESSAGES_THREAD_ID,
+                    MessagesTable.COLUMN_MESSAGES_TIMESTAMP
             );
 
 
     protected static final String QUERY_MESSAGE_SQL =
             String.format("SELECT * FROM %s WHERE %s = ? OR %s = ?",
-                    CompanySQLiteHelper.TABLE_MESSAGES,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_ID,
-                    CompanySQLiteHelper.COLUMN_MESSAGES_GUID);
+                    MessagesTable.TABLE_NAME,
+                    MessagesTable.COLUMN_MESSAGES_ID,
+                    MessagesTable.COLUMN_MESSAGES_GUID);
 
     protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format(
             "SELECT * FROM %s WHERE %s > ? ORDER BY %s;",
-            CompanySQLiteHelper.TABLE_DEPARTMENTS,
-            CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS,
-            CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME);
+            DepartmentsTable.TABLE_NAME,
+            DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS,
+            DepartmentsTable.COLUMN_DEPARTMENT_NAME);
 
-    protected static final String CLEAR_DEPARTMENTS_SQL = String.format("DELETE FROM %s;", CompanySQLiteHelper.TABLE_DEPARTMENTS);
-    protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s;", CompanySQLiteHelper.TABLE_CONTACTS);
-    protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format("DELETE FROM %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS);
-    protected static final String CLEAR_MESSAGES_SQL = String.format("DELETE FROM %s;", CompanySQLiteHelper.TABLE_MESSAGES);
-    protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
-    protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID);
+    protected static final String CLEAR_DEPARTMENTS_SQL = String.format("DELETE FROM %s;", DepartmentsTable.TABLE_NAME);
+    protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s;", ContactsTable.TABLE_NAME);
+    protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format("DELETE FROM %s;", OfficeLocationsTable.TABLE_NAME);
+    protected static final String CLEAR_MESSAGES_SQL = String.format("DELETE FROM %s;", MessagesTable.TABLE_NAME);
+    protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+    protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
     public static final String API_TOKEN_PREFS_KEY = "apiToken";
@@ -412,9 +416,9 @@ public class DataProviderService extends Service {
                         setContactDBValesFromJSON(user, values);
                         Contact newContact = getContact(user.getInt("id"));
                         if (newContact == null) {
-                            database.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
+                            database.insert(ContactsTable.TABLE_NAME, null, values);
                         } else {
-                            database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{user.getString("id")});
+                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{user.getString("id")});
                         }
                         values.clear();
                     }
@@ -439,7 +443,7 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         JSONObject location = parseJSONResponse(response.getEntity());
                         setOfficeLocationDBValuesFromJSON(location, values);
-                        database.insert(CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values);
+                        database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                         values.clear();
 
                     }
@@ -464,7 +468,7 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         JSONObject dept = parseJSONResponse(response.getEntity());
                         setDepartmentBValuesFromJSON(dept, values);
-                        database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
+                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
                         values.clear();
                     }
                 } catch (IOException e) {
@@ -510,9 +514,9 @@ public class DataProviderService extends Service {
                             setContactDBValesFromJSON(newContact, values);
                             Contact c = getContact(newContact.getInt("id"));
                             if (c == null) {
-                                database.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
+                                database.insert(ContactsTable.TABLE_NAME, null, values);
                             } else {
-                                database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{newContact.getString("id")});
+                                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{newContact.getString("id")});
                             }
                             values.clear();
                         }
@@ -570,7 +574,7 @@ public class DataProviderService extends Service {
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
                         setContactDBValesFromJSON(newContact, values);
-                        db.insert(CompanySQLiteHelper.TABLE_CONTACTS, null, values);
+                        db.insert(ContactsTable.TABLE_NAME, null, values);
                         values.clear();
                     }
 
@@ -580,7 +584,7 @@ public class DataProviderService extends Service {
                         for (int i = 0; i < deptsLength; i++) {
                             JSONObject dept = deptsArr.getJSONObject(i);
                             setDepartmentBValuesFromJSON(dept, values);
-                            db.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
+                            db.insert(DepartmentsTable.TABLE_NAME, null, values);
                             values.clear();
                         }
                     }
@@ -591,7 +595,7 @@ public class DataProviderService extends Service {
                         for (int i = 0; i < locationsLength; i++) {
                             JSONObject location = locations.getJSONObject(i);
                             setOfficeLocationDBValuesFromJSON(location, values);
-                            db.insert(CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values);
+                            db.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                             values.clear();
                         }
                     }
@@ -624,59 +628,59 @@ public class DataProviderService extends Service {
 
 
     private void setContactDBValesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(CompanySQLiteHelper.COLUMN_CONTACT_ID, json.getInt("id"));
-        setStringContentValueFromJSONUnlessNull(json, "last_name", values, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "first_name", values, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "avatar_face_url", values, CompanySQLiteHelper.COLUMN_CONTACT_AVATAR_URL);
-        setStringContentValueFromJSONUnlessNull(json, "email", values, CompanySQLiteHelper.COLUMN_CONTACT_EMAIL);
-        setIntContentValueFromJSONUnlessBlank(json, "manager_id", values, CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "primary_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "current_office_location_id", values, CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "department_id", values, CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID);
-        setBooleanContentValueFromJSONUnlessBlank(json, "archived", values, CompanySQLiteHelper.COLUMN_CONTACT_IS_ARCHIVED);
+        values.put(ContactsTable.COLUMN_ID, json.getInt("id"));
+        setStringContentValueFromJSONUnlessNull(json, "last_name", values, ContactsTable.COLUMN_CONTACT_LAST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "first_name", values, ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "avatar_face_url", values, ContactsTable.COLUMN_CONTACT_AVATAR_URL);
+        setStringContentValueFromJSONUnlessNull(json, "email", values, ContactsTable.COLUMN_CONTACT_EMAIL);
+        setIntContentValueFromJSONUnlessBlank(json, "manager_id", values, ContactsTable.COLUMN_CONTACT_MANAGER_ID);
+        setIntContentValueFromJSONUnlessBlank(json, "primary_office_location_id", values, ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank(json, "current_office_location_id", values, ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
+        setIntContentValueFromJSONUnlessBlank(json, "department_id", values, ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID);
+        setBooleanContentValueFromJSONUnlessBlank(json, "archived", values, ContactsTable.COLUMN_CONTACT_IS_ARCHIVED);
 
         if (json.has("sharing_office_location") && !json.isNull("sharing_office_location")) {
             int sharingInt = json.getBoolean("sharing_office_location") ? Contact.SHARING_LOCATION_TRUE : Contact.SHARING_LOCATION_FALSE;
-            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
+            values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
         } else {
-            values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, Contact.SHARING_LOCATION_UNAVAILABLE);
+            values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, Contact.SHARING_LOCATION_UNAVAILABLE);
         }
         if (json.has("employee_info")) {
             JSONObject employeeInfo = json.getJSONObject("employee_info");
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_start_date", values, CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, ContactsTable.COLUMN_CONTACT_JOB_TITLE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_start_date", values, ContactsTable.COLUMN_CONTACT_START_DATE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
             // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
-            String birthDateStr = values.getAsString(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE);
+            String birthDateStr = values.getAsString(ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
             if (birthDateStr != null) {
-                values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateStr));
+                values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateStr));
             }
-            String startDateStr = values.getAsString(CompanySQLiteHelper.COLUMN_CONTACT_START_DATE);
+            String startDateStr = values.getAsString(ContactsTable.COLUMN_CONTACT_START_DATE);
             if (startDateStr != null) {
-                values.put(CompanySQLiteHelper.COLUMN_CONTACT_START_DATE, Contact.convertStartDateString(startDateStr));
+                values.put(ContactsTable.COLUMN_CONTACT_START_DATE, Contact.convertStartDateString(startDateStr));
             }
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, CompanySQLiteHelper.COLUMN_CONTACT_OFFICE_PHONE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
         }
     }
 
     private void setOfficeLocationDBValuesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, json.getInt("id"));
-        setStringContentValueFromJSONUnlessNull(json, "name", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "street_address", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS);
-        setStringContentValueFromJSONUnlessNull(json, "city", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY);
-        setStringContentValueFromJSONUnlessNull(json, "state", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE);
-        setStringContentValueFromJSONUnlessNull(json, "zip_code", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP);
-        setStringContentValueFromJSONUnlessNull(json, "country", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY);
-        setStringContentValueFromJSONUnlessNull(json, "latitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT);
-        setStringContentValueFromJSONUnlessNull(json, "longitude", values, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG);
+        values.put(OfficeLocationsTable.COLUMN_ID, json.getInt("id"));
+        setStringContentValueFromJSONUnlessNull(json, "name", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+        setStringContentValueFromJSONUnlessNull(json, "street_address", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS);
+        setStringContentValueFromJSONUnlessNull(json, "city", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY);
+        setStringContentValueFromJSONUnlessNull(json, "state", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE);
+        setStringContentValueFromJSONUnlessNull(json, "zip_code", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP);
+        setStringContentValueFromJSONUnlessNull(json, "country", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY);
+        setStringContentValueFromJSONUnlessNull(json, "latitude", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
+        setStringContentValueFromJSONUnlessNull(json, "longitude", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
     }
 
 
     private void setDepartmentBValuesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, json.getInt("id"));
-        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, json.getString("name"));
-        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, json.getString("users_count"));
+        values.put(DepartmentsTable.COLUMN_ID, json.getInt("id"));
+        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, json.getString("name"));
+        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, json.getString("users_count"));
     }
 
     /**
@@ -884,7 +888,7 @@ public class DataProviderService extends Service {
         if (database != null) {
             Cursor cursor = database.rawQuery(QUERY_OFFICE_LOCATION_SQL, new String[]{String.valueOf(locationId)});
             if (cursor.moveToFirst()) {
-                String name = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                String name = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
                 cursor.close();
                 return name;
             } else {
@@ -1243,7 +1247,7 @@ public class DataProviderService extends Service {
                             JSONObject contact = parseJSONResponse(response.getEntity());
                             ContentValues values = new ContentValues();
                             setContactDBValesFromJSON(contact, values);
-                            database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(contactId)});
+                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(contactId)});
                             localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
                         } catch (JSONException e) {
                             Log.w(LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e);
@@ -1281,8 +1285,8 @@ public class DataProviderService extends Service {
                         }
                         if (status == HttpStatus.SC_OK) {
                             ContentValues values = new ContentValues();
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
-                            database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                            values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
+                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                             loggedInUser.currentOfficeLocationId = officeId;
                         } else {
                             Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
@@ -1331,8 +1335,8 @@ public class DataProviderService extends Service {
             }
             if (status == HttpStatus.SC_OK) {
                 ContentValues values = new ContentValues();
-                values.put(CompanySQLiteHelper.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
-                database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
+                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                 loggedInUser.currentOfficeLocationId = -1;
             } else {
                 Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
@@ -1521,7 +1525,7 @@ public class DataProviderService extends Service {
                         setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
 
 
-                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1585,9 +1589,9 @@ public class DataProviderService extends Service {
                     int statusCode = response.getStatusLine().getStatusCode();
                     if (statusCode == HttpStatus.SC_OK) {
                         ContentValues values = new ContentValues();
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingLocation ? 1 : 0);
+                        values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingLocation ? 1 : 0);
 
-                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1658,16 +1662,16 @@ public class DataProviderService extends Service {
                     if (statusCode == HttpStatus.SC_OK) {
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME, firstName);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME, lastName);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_CELL_PHONE, cellPhone);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
+                        values.put(ContactsTable.COLUMN_CONTACT_FIRST_NAME, firstName);
+                        values.put(ContactsTable.COLUMN_CONTACT_LAST_NAME, lastName);
+                        values.put(ContactsTable.COLUMN_CONTACT_CELL_PHONE, cellPhone);
+                        values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
 
                         if (birthDateString != null) {
-                            values.put(CompanySQLiteHelper.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateString));
+                            values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateString));
                         }
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1728,9 +1732,9 @@ public class DataProviderService extends Service {
                     if (statusCode == HttpStatus.SC_OK) {
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation);
+                        values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation);
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1792,10 +1796,10 @@ public class DataProviderService extends Service {
                         // Update local data.
                         ContentValues values = new ContentValues();
                         final int departmentId = newDepartment.getInt("id");
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_ID, departmentId);
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put(CompanySQLiteHelper.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
-                        database.insert(CompanySQLiteHelper.TABLE_DEPARTMENTS, null, values);
+                        values.put(DepartmentsTable.COLUMN_ID, departmentId);
+                        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
+                        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
+                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1869,16 +1873,16 @@ public class DataProviderService extends Service {
                         // Update local data.
                         ContentValues values = new ContentValues();
                         final int officeLocationId = newOffice.getInt("id");
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID, officeLocationId);
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME, newOffice.getString("name"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS, newOffice.getString("street_address"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY, newOffice.getString("city"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_STATE, newOffice.getString("state"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP, newOffice.getString("zip_code"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
-                        values.put(CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
-                        database.insert(CompanySQLiteHelper.TABLE_OFFICE_LOCATIONS, null, values);
+                        values.put(OfficeLocationsTable.COLUMN_ID, officeLocationId);
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, newOffice.getString("name"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS, newOffice.getString("street_address"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY, newOffice.getString("city"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE, newOffice.getString("state"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, newOffice.getString("zip_code"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
+                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
+                        database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1956,10 +1960,10 @@ public class DataProviderService extends Service {
                     if (statusCode == HttpStatus.SC_OK) {
                         // Update local data.
                         ContentValues values = new ContentValues();
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_JOB_TITLE, jobTitle);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                        values.put(CompanySQLiteHelper.COLUMN_CONTACT_MANAGER_ID, managerId);
-                        database.update(CompanySQLiteHelper.TABLE_CONTACTS, values, String.format("%s = ?", CompanySQLiteHelper.COLUMN_CONTACT_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        values.put(ContactsTable.COLUMN_CONTACT_JOB_TITLE, jobTitle);
+                        values.put(ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
+                        values.put(ContactsTable.COLUMN_CONTACT_MANAGER_ID, managerId);
+                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -2002,17 +2006,17 @@ public class DataProviderService extends Service {
                     final String guid = UUID.randomUUID().toString();
                     JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
                     //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_BODY, message);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, loggedInUser.id);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_GUID, guid);
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
-                    database.insert(CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, message);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_ID, threadId);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_FROM_ID, loggedInUser.id);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_GUID, guid);
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
+                    database.insert(MessagesTable.TABLE_NAME, null, msgValues);
                     database.setTransactionSuccessful();
                     sendMessageToFaye(timestamp, guid, threadId, message);
 
@@ -2067,13 +2071,13 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 Cursor msgCursor = database.rawQuery(QUERY_MESSAGE_SQL, new String[]{"foo", guid});
-                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
+                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
                     ContentValues values = new ContentValues();
-                    values.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED);
+                    values.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED);
                     int rowsUpdated = database.update(
-                            CompanySQLiteHelper.TABLE_MESSAGES,
+                            MessagesTable.TABLE_NAME,
                             values,
-                            String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID),
+                            String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID),
                             new String[]{guid}
                     );
                     if (rowsUpdated == 1) {
@@ -2107,11 +2111,11 @@ public class DataProviderService extends Service {
                 if (msgCursor.moveToFirst()) {
                     // Flip back to pending status.
                     ContentValues msgValues = new ContentValues();
-                    msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
-                    database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID), new String[]{guid});
-                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID));
-                    String body = msgCursor.getString(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
-                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP));
+                    msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
+                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{guid});
+                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
+                    String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
+                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP));
                     msgCursor.close();
 
                     Intent statusChangeIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
@@ -2142,11 +2146,11 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 ContentValues values = new ContentValues();
-                values.put(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 1);
+                values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
                 database.update(
-                        CompanySQLiteHelper.TABLE_MESSAGES,
+                        MessagesTable.TABLE_NAME,
                         values,
-                        String.format("%s = ? AND %s = 1", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD),
+                        String.format("%s = ? AND %s = 1", MessagesTable.COLUMN_MESSAGES_THREAD_ID, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD),
                         new String[]{threadId}
                 );
             }
@@ -2229,12 +2233,12 @@ public class DataProviderService extends Service {
                 Cursor msgCursor = database.rawQuery(QUERY_MESSAGE_SQL, messageSelector);
                 if (msgCursor.getCount() > 0) {
                     msgCursor.moveToFirst();
-                    if (msgCursor.getInt(msgCursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED) {
-                        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
-                        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ID, messageId);
-                        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, timestamp);
+                    if (msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED) {
+                        msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
+                        msgValues.put(MessagesTable.COLUMN_MESSAGES_ID, messageId);
+                        msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
 
-                        database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ? OR %s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_ID, CompanySQLiteHelper.COLUMN_MESSAGES_GUID), messageSelector);
+                        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ? OR %s = ?", MessagesTable.COLUMN_MESSAGES_ID, MessagesTable.COLUMN_MESSAGES_GUID), messageSelector);
                         // Callback that msg is confirmed?
                         Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
                         ackIntent.putExtra(MESSAGE_ID_EXTRA, messageId);
@@ -2243,10 +2247,10 @@ public class DataProviderService extends Service {
                     }
                 } else {
                     setMessageContentValuesFromJSON(threadId, msg, msgValues);
-                    database.insert(CompanySQLiteHelper.TABLE_MESSAGES, null, msgValues);
+                    database.insert(MessagesTable.TABLE_NAME, null, msgValues);
                     if (broadcast) {
                         Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
-                        Contact fromContact = getContact(msgValues.getAsInteger(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID));
+                        Contact fromContact = getContact(msgValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID));
                         newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
                         newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
                         if (fromContact != null) {
@@ -2255,7 +2259,7 @@ public class DataProviderService extends Service {
                             newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
                         }
 
-                        newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
+                        newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(MessagesTable.COLUMN_MESSAGES_BODY));
                         localBroadcastManager.sendBroadcast(newMessageIntent);
                     }
 
@@ -2272,8 +2276,8 @@ public class DataProviderService extends Service {
             // Get id of most recent msg.
             Cursor messages = getMessages(threadId);
             if (messages.moveToLast()) {
-                String mostRecentGuid = messages.getString(messages.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_GUID));
-                final String mostRecentId = messages.getString(messages.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_ID));
+                String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
+                final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
                 if ("Inf".equals(mostRecentGuid)) {
                     // Dang! Crash the app to get a report.
                     final String finalThreadId = threadId;
@@ -2288,10 +2292,10 @@ public class DataProviderService extends Service {
                 // Unset thread head on all thread messages.
                 clearThreadHead(threadId, msgValues);
 
-                msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
-                msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
-                msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 1);
-                database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_GUID), new String[]{mostRecentGuid});
+                msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
+                msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
+                msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
+                database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{mostRecentGuid});
             } else {
                 messages.close();
             }
@@ -2347,10 +2351,10 @@ public class DataProviderService extends Service {
     }
 
     protected void clearThreadHead(String threadId, ContentValues msgValues) {
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_HEAD, 0);
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL, (String) null);
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String) null);
-        database.update(CompanySQLiteHelper.TABLE_MESSAGES, msgValues, String.format("%s = ?", CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID), new String[]{threadId});
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 0);
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, (String) null);
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String) null);
+        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_THREAD_ID), new String[]{threadId});
         msgValues.clear();
     }
 
@@ -2376,14 +2380,14 @@ public class DataProviderService extends Service {
     }
 
     private static void setMessageContentValuesFromJSON(String threadId, JSONObject msg, ContentValues msgValues) throws JSONException {
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_ID, msg.getString("id"));
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_FROM_ID, msg.getInt("author_id"));
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID, threadId);
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_BODY, msg.getString("body"));
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP, (long) (msg.getDouble("timestamp") * 1000000d));
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_GUID, msg.getString("guid"));
-        msgValues.put(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ, 0);
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_ID, msg.getString("id"));
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_FROM_ID, msg.getInt("author_id"));
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_ID, threadId);
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, msg.getString("body"));
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, (long) (msg.getDouble("timestamp") * 1000000d));
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_GUID, msg.getString("guid"));
+        msgValues.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 0);
     }
 
     /**

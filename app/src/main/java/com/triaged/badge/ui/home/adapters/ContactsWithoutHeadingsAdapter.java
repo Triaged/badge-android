@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 
@@ -121,7 +121,7 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
     }
 
     public Contact getCachedContact(Cursor cursor) {
-        int id = Contact.getIntSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_CONTACT_ID);
+        int id = Contact.getIntSafelyFromCursor(cursor, ContactsTable.COLUMN_ID);
         Contact c = contactCache.get(id);
         if (c == null) {
             c = new Contact();
@@ -171,8 +171,8 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
 
         c.moveToFirst();
         do {
-            String firstName = Contact.getStringSafelyFromCursor(c, CompanySQLiteHelper.COLUMN_CONTACT_FIRST_NAME).toLowerCase();
-            String lastName = Contact.getStringSafelyFromCursor(c, CompanySQLiteHelper.COLUMN_CONTACT_LAST_NAME).toLowerCase();
+            String firstName = Contact.getStringSafelyFromCursor(c, ContactsTable.COLUMN_CONTACT_FIRST_NAME).toLowerCase();
+            String lastName = Contact.getStringSafelyFromCursor(c, ContactsTable.COLUMN_CONTACT_LAST_NAME).toLowerCase();
             if (firstName.indexOf(partialName) > -1 || lastName.indexOf(partialName) > -1) {
                 filteredList.add(getCachedContact(c));
             }

@@ -23,7 +23,7 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.triaged.badge.app.App;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 
@@ -203,10 +203,10 @@ public class LocationTrackingService extends Service implements LocationListener
                     Cursor officeLocations = dataProviderServiceBinding.getOfficeLocationsCursor();
                     Location officeLocation = new Location(LocationManager.NETWORK_PROVIDER);
                     while (officeLocations.moveToNext()) {
-                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LAT);
-                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_LNG);
-                        int officeId = Contact.getIntSafelyFromCursor(officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID);
-                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME);
+                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
+                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
+                        int officeId = Contact.getIntSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_ID);
+                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
                         if (latStr != null && !"".equals(latStr)) {
                             officeLocation.setLatitude(Float.parseFloat(latStr));
                             officeLocation.setLongitude(Float.parseFloat(lngStr));

@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 
@@ -54,15 +54,15 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     }
 
     private void setupView(ViewHolder holder, Cursor cursor) {
-        holder.officeName.setText(Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_NAME));
-        String address = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ADDRESS);
-        String city = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_CITY);
-        String zip = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ZIP);
-        String country = Contact.getStringSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_COUNTRY);
+        holder.officeName.setText(Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME));
+        String address = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS);
+        String city = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY);
+        String zip = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP);
+        String country = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY);
         String details = String.format("%s, %s %s, %s", address, city, zip, country);
         holder.officeDetails.setText(details);
 
-        holder.selectedIcon.setVisibility((usersOffice > 0 && usersOffice == Contact.getIntSafelyFromCursor(cursor, CompanySQLiteHelper.COLUMN_OFFICE_LOCATION_ID)) ? View.VISIBLE : View.INVISIBLE);
+        holder.selectedIcon.setVisibility((usersOffice > 0 && usersOffice == Contact.getIntSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_ID)) ? View.VISIBLE : View.INVISIBLE);
     }
 
     public class ViewHolder {

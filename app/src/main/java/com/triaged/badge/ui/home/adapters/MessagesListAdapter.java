@@ -16,7 +16,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.net.DataProviderService;
 
 import org.json.JSONArray;
@@ -75,11 +75,11 @@ public class MessagesListAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
-        holder.threadId = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_ID));
-        String names = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_THREAD_PARTICIPANTS));
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_AVATAR_URL));
-        String body = cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY));
-        int isRead = cursor.getInt(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_IS_READ));
+        holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
+        String names = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_AVATAR_URL));
+        String body = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
+        int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_IS_READ));
         if (isRead == 1) {
             holder.name.setTextColor(mainBlackColor);
             holder.name.setTypeface(regular);
@@ -109,7 +109,7 @@ public class MessagesListAdapter extends CursorAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        long serverTime = cursor.getLong(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_TIMESTAMP)) / 1000l;
+        long serverTime = cursor.getLong(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP)) / 1000l;
         if (serverTime > System.currentTimeMillis()) {
             serverTime = System.currentTimeMillis() - 5000;
         }
