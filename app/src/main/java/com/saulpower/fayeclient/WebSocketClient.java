@@ -3,7 +3,6 @@ package com.saulpower.fayeclient;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.triaged.badge.app.App;
 
@@ -16,11 +15,6 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.message.BasicLineParser;
 import org.apache.http.message.BasicNameValuePair;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,6 +25,12 @@ import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 
 public class WebSocketClient {
 
@@ -135,7 +135,7 @@ public class WebSocketClient {
 
                         Header header = parseHeader(line);
 
-                        if (header.getName().toLowerCase().equals("sec-websocket-accept" )) {
+                        if (header.getName().toLowerCase().equals("sec-websocket-accept")) {
 
                             String expected = createSecretValidation(secret);
                             String actual = header.getValue().trim();
@@ -159,13 +159,13 @@ public class WebSocketClient {
 
                 } catch (EOFException ex) {
 
-                   App.gLogger.e( "WebSocket EOF!", ex);
+                    App.gLogger.e("WebSocket EOF!", ex);
                     onError(ex);
 
                 } catch (SSLException ex) {
 
                     // Connection reset by peer
-                   App.gLogger.e( "Websocket SSL error!", ex);
+                    App.gLogger.e("Websocket SSL error!", ex);
                     onError(ex);
 
                 } catch (Exception ex) {
@@ -222,7 +222,7 @@ public class WebSocketClient {
                         App.gLogger.i("socket closed");
 
                     } catch (IOException ex) {
-                       App.gLogger.e( "Error while disconnecting", ex);
+                        App.gLogger.e("Error while disconnecting", ex);
                         onError(ex);
                     }
                 }

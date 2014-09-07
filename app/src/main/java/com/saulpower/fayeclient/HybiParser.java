@@ -30,6 +30,8 @@
 
 package com.saulpower.fayeclient;
 
+import com.triaged.badge.app.App;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -37,10 +39,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
-
-import android.util.Log;
-
-import com.triaged.badge.app.App;
 
 public class HybiParser {
 
@@ -50,52 +48,52 @@ public class HybiParser {
 
     private boolean mMasking = true;
 
-    private int     mStage;
+    private int mStage;
 
     private boolean mFinal;
     private boolean mMasked;
-    private int     mOpcode;
-    private int     mLengthSize;
-    private int     mLength;
-    private int     mMode;
+    private int mOpcode;
+    private int mLengthSize;
+    private int mLength;
+    private int mMode;
 
-    private byte[] mMask    = new byte[0];
+    private byte[] mMask = new byte[0];
     private byte[] mPayload = new byte[0];
 
     private boolean mClosed = false;
 
     private ByteArrayOutputStream mBuffer = new ByteArrayOutputStream();
 
-    private static final int BYTE   = 255;
-    private static final int FIN    = 128;
-    private static final int MASK   = 128;
-    private static final int RSV1   =  64;
-    private static final int RSV2   =  32;
-    private static final int RSV3   =  16;
-    private static final int OPCODE =  15;
+    private static final int BYTE = 255;
+    private static final int FIN = 128;
+    private static final int MASK = 128;
+    private static final int RSV1 = 64;
+    private static final int RSV2 = 32;
+    private static final int RSV3 = 16;
+    private static final int OPCODE = 15;
     private static final int LENGTH = 127;
 
-    private static final int MODE_TEXT   = 1;
+    private static final int MODE_TEXT = 1;
     private static final int MODE_BINARY = 2;
 
-    private static final int OP_CONTINUATION =  0;
-    private static final int OP_TEXT         =  1;
-    private static final int OP_BINARY       =  2;
-    private static final int OP_CLOSE        =  8;
-    private static final int OP_PING         =  9;
-    private static final int OP_PONG         = 10;
+    private static final int OP_CONTINUATION = 0;
+    private static final int OP_TEXT = 1;
+    private static final int OP_BINARY = 2;
+    private static final int OP_CLOSE = 8;
+    private static final int OP_PING = 9;
+    private static final int OP_PONG = 10;
 
     private static final List<Integer> OPCODES = Arrays.asList(
-        OP_CONTINUATION,
-        OP_TEXT,
-        OP_BINARY,
-        OP_CLOSE,
-        OP_PING,
-        OP_PONG
+            OP_CONTINUATION,
+            OP_TEXT,
+            OP_BINARY,
+            OP_CLOSE,
+            OP_PING,
+            OP_PONG
     );
 
     private static final List<Integer> FRAGMENTED_OPCODES = Arrays.asList(
-        OP_CONTINUATION, OP_TEXT, OP_BINARY
+            OP_CONTINUATION, OP_TEXT, OP_BINARY
     );
 
     public HybiParser(WebSocketClient client) {
@@ -154,9 +152,9 @@ public class HybiParser {
             throw new ProtocolError("RSV not zero");
         }
 
-        mFinal   = (data & FIN) == FIN;
-        mOpcode  = (data & OPCODE);
-        mMask    = new byte[0];
+        mFinal = (data & FIN) == FIN;
+        mOpcode = (data & OPCODE);
+        mMask = new byte[0];
         mPayload = new byte[0];
 
         if (!OPCODES.contains(mOpcode)) {
@@ -179,13 +177,13 @@ public class HybiParser {
             mStage = mMasked ? 3 : 4;
         } else {
             mLengthSize = (mLength == 126) ? 2 : 8;
-            mStage      = 2;
+            mStage = 2;
         }
     }
 
     private void parseExtendedLength(byte[] buffer) throws ProtocolError {
         mLength = getInteger(buffer);
-        mStage  = mMasked ? 3 : 4;
+        mStage = mMasked ? 3 : 4;
     }
 
     public byte[] frame(String data) {
@@ -196,7 +194,7 @@ public class HybiParser {
         return frame(data, OP_BINARY, -1);
     }
 
-    private byte[] frame(byte[] data, int opcode, int errorCode)  {
+    private byte[] frame(byte[] data, int opcode, int errorCode) {
         return frame((Object) data, opcode, errorCode);
     }
 
@@ -239,7 +237,7 @@ public class HybiParser {
             frame[5] = (byte) (((int) Math.floor(length / Math.pow(2, 32))) & BYTE);
             frame[6] = (byte) (((int) Math.floor(length / Math.pow(2, 24))) & BYTE);
             frame[7] = (byte) (((int) Math.floor(length / Math.pow(2, 16))) & BYTE);
-            frame[8] = (byte) (((int) Math.floor(length / Math.pow(2, 8)))  & BYTE);
+            frame[8] = (byte) (((int) Math.floor(length / Math.pow(2, 8))) & BYTE);
             frame[9] = (byte) (length & BYTE);
         }
 
@@ -253,8 +251,8 @@ public class HybiParser {
         if (mMasking) {
 
             byte[] mask = {
-                (byte) Math.floor(Math.random() * 256), (byte) Math.floor(Math.random() * 256),
-                (byte) Math.floor(Math.random() * 256), (byte) Math.floor(Math.random() * 256)
+                    (byte) Math.floor(Math.random() * 256), (byte) Math.floor(Math.random() * 256),
+                    (byte) Math.floor(Math.random() * 256), (byte) Math.floor(Math.random() * 256)
             };
 
             System.arraycopy(mask, 0, frame, header, mask.length);
@@ -324,8 +322,8 @@ public class HybiParser {
 
         } else if (opcode == OP_CLOSE) {
 
-            int    code   = (payload.length >= 2) ? 256 * payload[0] + payload[1] : 0;
-            String reason = (payload.length >  2) ? encode(slice(payload, 2))     : null;
+            int code = (payload.length >= 2) ? 256 * payload[0] + payload[1] : 0;
+            String reason = (payload.length > 2) ? encode(slice(payload, 2)) : null;
 
             App.gLogger.i("Got close op! " + code + " " + reason);
 
@@ -397,7 +395,7 @@ public class HybiParser {
 
         byte[] copy = new byte[newLength];
         System.arraycopy(original, from, copy, 0,
-                         Math.min(original.length - from, newLength));
+                Math.min(original.length - from, newLength));
 
         return copy;
     }

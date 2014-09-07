@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<com.triaged.badge.app.views.ProfileReportsToView
+<com.triaged.badge.ui.base.views.ProfileReportsToView
     android:id="@+id/boss_view"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="64dp"
+    android:layout_width="match_parent"
+    android:layout_height="64dp"
     android:background="@drawable/tappable_row_bg"
     android:descendantFocusability="blocksDescendants"
     android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    >
+    android:paddingRight="16dp">
 
     <ImageView
         android:id="@+id/contact_thumb"
@@ -18,10 +18,9 @@
         android:layout_marginRight="16dp"
         android:layout_centerVertical="true"
         android:background="@null"
-        android:contentDescription="@string/content_description_thumb"
-        />
+        android:contentDescription="@string/content_description_thumb" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/no_photo_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -31,10 +30,9 @@
         android:gravity="center"
         android:textColor="@color/white"
         android:visibility="gone"
-        android:textSize="15sp"
-        />
+        android:textSize="15sp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/contact_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,10 +40,9 @@
         android:layout_toRightOf="@id/contact_thumb"
         android:layout_marginTop="10dp"
         android:textSize="18sp"
-        custom:font="Roboto-Regular.ttf"
-        />
+        custom:font="Roboto-Regular.ttf" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/contact_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -53,7 +50,6 @@
         android:layout_toRightOf="@id/contact_thumb"
         android:layout_below="@id/contact_name"
         android:textSize="14sp"
-        custom:font="Roboto-Regular.ttf"
-        />
+        custom:font="Roboto-Regular.ttf" />
 
-</com.triaged.badge.app.views.ProfileReportsToView>
+</com.triaged.badge.ui.base.views.ProfileReportsToView>

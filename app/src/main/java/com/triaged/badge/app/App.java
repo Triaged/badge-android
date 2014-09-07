@@ -15,9 +15,11 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
-import com.triaged.badge.common.Config;
-import com.triaged.badge.logger.ILogger;
-import com.triaged.badge.logger.LoggerImp;
+import com.triaged.badge.helpers.Foreground;
+import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.FayeService;
+import com.triaged.logger.ILogger;
+import com.triaged.logger.LoggerImp;
 
 import org.json.JSONObject;
 

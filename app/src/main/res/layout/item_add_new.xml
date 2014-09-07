@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<com.triaged.badge.app.views.ButtonWithFont
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.triaged.badge.ui.base.views.ButtonWithFont xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:id="@+id/add_new"
     android:layout_width="match_parent"
@@ -13,5 +12,4 @@
     android:background="@drawable/tappable_row_bg"
     android:drawableLeft="@drawable/centering_on"
     android:drawablePadding="8dp"
-    android:gravity="center_vertical"
-    />
+    android:gravity="center_vertical" />

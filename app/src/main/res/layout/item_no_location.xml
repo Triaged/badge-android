@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="48dp"
-    android:background="@drawable/profile_row_background"
-    >
+    android:background="@drawable/profile_row_background">
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/no_location_text"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -18,8 +16,7 @@
         android:paddingLeft="8dp"
         android:textSize="18sp"
         android:gravity="center_vertical"
-        android:text="@string/no_office_button"
-        />
+        android:text="@string/no_office_button" />
 
     <ImageView
         android:id="@+id/selected_icon"
@@ -31,7 +28,6 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:contentDescription="@string/check_mark"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
 </RelativeLayout>

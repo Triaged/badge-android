@@ -2,11 +2,11 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="48dp"
-    android:background="@drawable/tappable_row_bg"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="@drawable/tappable_row_bg">
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/office_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,10 +15,9 @@
         android:layout_marginTop="2dp"
         android:paddingLeft="8dp"
         android:textSize="18sp"
-        custom:font="Roboto-Regular.ttf"
-        />
+        custom:font="Roboto-Regular.ttf" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/office_details"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -26,8 +25,7 @@
         android:layout_below="@id/office_title"
         android:paddingLeft="8dp"
         android:textSize="14sp"
-        custom:font="Roboto-Regular.ttf"
-        />
+        custom:font="Roboto-Regular.ttf" />
 
     <ImageView
         android:id="@+id/selected_icon"
@@ -39,7 +37,6 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:contentDescription="@string/check_mark"
-        android:visibility="visible"
-        />
+        android:visibility="visible" />
 
 </RelativeLayout>

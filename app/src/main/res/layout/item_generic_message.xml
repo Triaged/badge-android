@@ -2,12 +2,12 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:paddingTop="16dp"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="16dp">
 
     <!-- LAST TWO ATTRIBUTES CHANGE -->
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,11 +15,10 @@
         android:textColor="@color/light_text_gray"
         android:textSize="14sp"
         android:layout_marginRight="62dp"
-        android:gravity="right"
-        />
+        android:gravity="right" />
 
     <!-- LAST FOUR ATTRIBUTES CHANGE -->
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/message_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,7 +34,6 @@
         android:background="@drawable/my_bubble"
         android:paddingLeft="16dp"
         android:paddingRight="22dp"
-        android:textColor="@color/white"
-        />
+        android:textColor="@color/white" />
 
 </RelativeLayout>

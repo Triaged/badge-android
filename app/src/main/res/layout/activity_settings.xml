@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        >
+        android:layout_marginRight="16dp">
 
         <!-- ACCOUNT -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:id="@+id/account_heading"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -28,10 +27,9 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/settings_account"
-            />
+            android:text="@string/settings_account" />
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/edit_profile_button"
             android:layout_width="match_parent"
             android:layout_height="65dp"
@@ -42,10 +40,9 @@
             android:gravity="center_vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:text="@string/settings_edit_profile"
-            />
+            android:text="@string/settings_edit_profile" />
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/change_password_button"
             android:layout_width="match_parent"
             android:layout_height="65dp"
@@ -56,11 +53,10 @@
             android:gravity="center_vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:text="@string/settings_change_password"
-            />
+            android:text="@string/settings_change_password" />
 
         <!-- NOTIFICATIONS -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:id="@+id/notifications_heading"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -73,17 +69,15 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/settings_notifications"
-            />
+            android:text="@string/settings_notifications" />
 
         <!-- OFFICE LOCATION SWITCH -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="65dp"
-            android:background="@drawable/profile_row_background"
-            >
+            android:background="@drawable/profile_row_background">
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@null"
@@ -100,13 +94,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                />
+                android:layout_centerVertical="true" />
 
         </RelativeLayout>
 
         <!-- MORE -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:id="@+id/more_heading"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -119,10 +112,9 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/settings_more"
-            />
+            android:text="@string/settings_more" />
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/about_button"
             android:layout_width="match_parent"
             android:layout_height="65dp"
@@ -133,10 +125,9 @@
             android:gravity="center_vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:text="@string/settings_feedback"
-            />
+            android:text="@string/settings_feedback" />
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/logout_button"
             android:layout_width="match_parent"
             android:layout_height="65dp"
@@ -147,8 +138,7 @@
             android:gravity="center_vertical"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:text="@string/settings_log_out"
-            />
+            android:text="@string/settings_log_out" />
 
     </LinearLayout>
 </ScrollView>

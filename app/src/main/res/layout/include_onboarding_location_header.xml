@@ -2,14 +2,14 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <com.triaged.badge.app.views.OnboardingDotsView
+    <com.triaged.badge.ui.base.views.OnboardingDotsView
         android:id="@+id/onboarding_dots"
         android:layout_width="44dp"
         android:layout_height="8dp"
-        android:layout_centerHorizontal="true"
-        />
+        android:layout_centerHorizontal="true" />
 
     <ImageView
         android:id="@+id/cityscape"
@@ -18,10 +18,9 @@
         android:src="@drawable/cityscape"
         android:layout_centerHorizontal="true"
         android:layout_below="@id/onboarding_dots"
-        android:layout_marginTop="35dp"
-        />
+        android:layout_marginTop="35dp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/which_location_title"
         android:layout_width="260dp"
         android:layout_height="wrap_content"
@@ -33,7 +32,6 @@
         android:textColor="@color/accent_turquoise"
         android:textSize="31sp"
         custom:font="Roboto-Light.ttf"
-        android:gravity="center"
-        />
+        android:gravity="center" />
 
 </RelativeLayout>

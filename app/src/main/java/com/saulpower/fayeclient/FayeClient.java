@@ -27,7 +27,7 @@
 package com.saulpower.fayeclient;
 
 import android.os.Handler;
-import android.util.Log;
+
 import com.saulpower.fayeclient.WebSocketClient.Listener;
 import com.triaged.badge.app.App;
 
@@ -42,31 +42,31 @@ public class FayeClient implements Listener {
 
     private final String TAG = this.getClass().getSimpleName();
 
-    private static final String HANDSHAKE_CHANNEL       = "/meta/handshake";
-    private static final String CONNECT_CHANNEL         = "/meta/connect";
-    private static final String DISCONNECT_CHANNEL      = "/meta/disconnect";
-    private static final String SUBSCRIBE_CHANNEL       = "/meta/subscribe";
-    private static final String UNSUBSCRIBE_CHANNEL     = "/meta/unsubscribe";
+    private static final String HANDSHAKE_CHANNEL = "/meta/handshake";
+    private static final String CONNECT_CHANNEL = "/meta/connect";
+    private static final String DISCONNECT_CHANNEL = "/meta/disconnect";
+    private static final String SUBSCRIBE_CHANNEL = "/meta/subscribe";
+    private static final String UNSUBSCRIBE_CHANNEL = "/meta/unsubscribe";
 
-    private static final String KEY_CHANNEL             = "channel";
-    private static final String KEY_SUCCESS             = "successful";
-    private static final String KEY_CLIENT_ID           = "clientId";
-    private static final String KEY_VERSION             = "version";
-    private static final String KEY_MIN_VERSION         = "minimumVersion";
-    private static final String KEY_SUBSCRIPTION        = "subscription";
-    private static final String KEY_SUP_CONN_TYPES      = "supportedConnectionTypes";
-    private static final String KEY_CONN_TYPE           = "connectionType";
-    private static final String KEY_DATA                = "data";
-    private static final String KEY_ID                  = "id";
-    private static final String KEY_EXT                 = "ext";
-    private static final String KEY_ERROR               = "error";
+    private static final String KEY_CHANNEL = "channel";
+    private static final String KEY_SUCCESS = "successful";
+    private static final String KEY_CLIENT_ID = "clientId";
+    private static final String KEY_VERSION = "version";
+    private static final String KEY_MIN_VERSION = "minimumVersion";
+    private static final String KEY_SUBSCRIPTION = "subscription";
+    private static final String KEY_SUP_CONN_TYPES = "supportedConnectionTypes";
+    private static final String KEY_CONN_TYPE = "connectionType";
+    private static final String KEY_DATA = "data";
+    private static final String KEY_ID = "id";
+    private static final String KEY_EXT = "ext";
+    private static final String KEY_ERROR = "error";
 
-    private static final String VALUE_VERSION           = "1.0";
-    private static final String VALUE_MIN_VERSION       = "1.0beta";
-    private static final String VALUE_CONN_TYPE         = "websocket";
+    private static final String VALUE_VERSION = "1.0";
+    private static final String VALUE_MIN_VERSION = "1.0beta";
+    private static final String VALUE_CONN_TYPE = "websocket";
 
-    private static final long RECONNECT_WAIT            = 5000;
-    private static final int MAX_CONNECTION_ATTEMPTS    = Integer.MAX_VALUE;
+    private static final long RECONNECT_WAIT = 5000;
+    private static final int MAX_CONNECTION_ATTEMPTS = Integer.MAX_VALUE;
 
     private WebSocketClient mClient;
     private boolean mConnected = false;
@@ -80,7 +80,7 @@ public class FayeClient implements Listener {
 
     private boolean mRunning = false;
     private boolean mReconnecting = false;
-    private boolean destroyed= false;
+    private boolean destroyed = false;
 
     private Handler mHandler;
     private Runnable mConnectionMonitor = new Runnable() {
@@ -141,9 +141,8 @@ public class FayeClient implements Listener {
     /**
      * Connect to a server using the extension authentication object
      *
-     * @param extension
-     *            Bayeux extension authentication that exchanges authentication
-     *            credentials and tokens within Bayeux messages ext fields
+     * @param extension Bayeux extension authentication that exchanges authentication
+     *                  credentials and tokens within Bayeux messages ext fields
      */
     public void connectToServer(JSONObject extension) {
         mConnectionExtension = extension;
@@ -157,8 +156,7 @@ public class FayeClient implements Listener {
     /**
      * Sends events on a channel by sending an event message
      *
-     * @param json
-     *            JSON object containing message to be sent to server
+     * @param json JSON object containing message to be sent to server
      */
     public void sendMessage(JSONObject json) {
         publish(json, mConnectionExtension);
@@ -195,14 +193,14 @@ public class FayeClient implements Listener {
     /**
      * Initiates a connection negotiation by sending a message to the
      * "/meta/handshake" channel.
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL: "/meta/handshake",
-     *      KEY_VERSION: "1.0",
-     *      KEY_MIN_VERSION: "1.0beta",
-     *      KEY_SUP_CONN_TYPES:
-     *          ["long-polling", "callback-polling", "iframe", "websocket]
+     * KEY_CHANNEL: "/meta/handshake",
+     * KEY_VERSION: "1.0",
+     * KEY_MIN_VERSION: "1.0beta",
+     * KEY_SUP_CONN_TYPES:
+     * ["long-polling", "callback-polling", "iframe", "websocket]
      * }
      */
     private void handshake() {
@@ -224,7 +222,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
@@ -232,12 +230,12 @@ public class FayeClient implements Listener {
      * After a Bayeux client has discovered the server's capabilities
      * with a handshake exchange, a connection is established by
      * sending a message to the "/meta/connect" channel.
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL: "/meta/connect",
-     *      KEY_CLIENT_ID: "Un1q31d3nt1f13r",
-     *      KEY_CONN_TYPES: "long-polling"
+     * KEY_CHANNEL: "/meta/connect",
+     * KEY_CLIENT_ID: "Un1q31d3nt1f13r",
+     * KEY_CONN_TYPES: "long-polling"
      * }
      */
     public void connect() {
@@ -252,7 +250,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
@@ -264,11 +262,11 @@ public class FayeClient implements Listener {
     /**
      * Cease operation by sending a request to the "/meta/disconnect"
      * channel for the server to remove any client-related state.
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL: "/meta/disconnect",
-     *      KEY_CLIENT_ID: "Un1q31d3nt1f13r"
+     * KEY_CHANNEL: "/meta/disconnect",
+     * KEY_CLIENT_ID: "Un1q31d3nt1f13r"
      * }
      */
     public void disconnect() {
@@ -284,7 +282,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
@@ -292,12 +290,12 @@ public class FayeClient implements Listener {
     /**
      * Register interest in a channel and request that messages published to
      * that channel are delivered.
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL: "/meta/subscribe",
-     *      KEY_CLIENT_ID: "Un1q31d3nt1f13r",
-     *      KEY_SUBSCRIPTION: "/foo/ **"
+     * KEY_CHANNEL: "/meta/subscribe",
+     * KEY_CLIENT_ID: "Un1q31d3nt1f13r",
+     * KEY_SUBSCRIPTION: "/foo/ **"
      * }
      */
     public void subscribe() {
@@ -317,7 +315,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
@@ -325,12 +323,12 @@ public class FayeClient implements Listener {
     /**
      * Send unsubscribe messages to cancel interest in channel and to request
      * that messages published to that channel are not delivered.
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL: "/meta/unsubscribe",
-     *      KEY_CLIENT_ID: "Un1q31d3nt1f13r",
-     *      KEY_SUBSCRIPTION: "/foo/**"
+     * KEY_CHANNEL: "/meta/unsubscribe",
+     * KEY_CLIENT_ID: "Un1q31d3nt1f13r",
+     * KEY_SUBSCRIPTION: "/foo/**"
      * }
      */
     public void unsubscribe() {
@@ -345,45 +343,41 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
-    public void publish( String channel, JSONObject message ) {
-        publish( channel, message, mConnectionExtension );
+    public void publish(String channel, JSONObject message) {
+        publish(channel, message, mConnectionExtension);
     }
 
-    public void publish( JSONObject message, JSONObject extension ) {
-        publish( null, message, extension );
+    public void publish(JSONObject message, JSONObject extension) {
+        publish(null, message, extension);
     }
 
     /**
      * Publish events on a channel by sending an event message
-     *
+     * <p/>
      * Example JSON
      * {
-     *         KEY_CHANNEL:    "/some/channel",
-     *         KEY_CLIENT_ID:    "Un1q31d3nt1f13r",
-     *         KEY_DATA:        "some application string or JSON encoded object",
-     *         KEY_ID:        "some unique message id"
+     * KEY_CHANNEL:    "/some/channel",
+     * KEY_CLIENT_ID:    "Un1q31d3nt1f13r",
+     * KEY_DATA:        "some application string or JSON encoded object",
+     * KEY_ID:        "some unique message id"
      * }
      *
-     * @param channel
-     *            Channel to publish message to.
-     * @param message
-     *            JSON object containing message to be sent to server
-     *
-     * @param extension
-     *            Bayeux extension authentication that exchanges authentication
-     *            credentials and tokens within Bayeux messages ext fields
+     * @param channel   Channel to publish message to.
+     * @param message   JSON object containing message to be sent to server
+     * @param extension Bayeux extension authentication that exchanges authentication
+     *                  credentials and tokens within Bayeux messages ext fields
      */
-    public void publish( String channel, JSONObject message, JSONObject extension) {
+    public void publish(String channel, JSONObject message, JSONObject extension) {
 
-        if( channel == null ) {
+        if (channel == null) {
             channel = mActiveSubChannel;
         }
-        long number            = (new Date()).getTime();
-        String messageId    = String.format("msg_%d_%d", number, 1);
+        long number = (new Date()).getTime();
+        String messageId = String.format("msg_%d_%d", number, 1);
 
         try {
 
@@ -400,7 +394,7 @@ public class FayeClient implements Listener {
             mClient.send(json.toString());
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Handshake Failed", ex);
+            App.gLogger.e("Handshake Failed", ex);
         }
     }
 
@@ -456,7 +450,7 @@ public class FayeClient implements Listener {
     @Override
     public void onError(Exception error) {
 
-        App.gLogger.w( "resetWebSocketConnection " + error.getMessage(), error);
+        App.gLogger.w("resetWebSocketConnection " + error.getMessage(), error);
 
         if (!mReconnecting) {
 
@@ -582,17 +576,16 @@ public class FayeClient implements Listener {
             }
 
         } catch (JSONException ex) {
-           App.gLogger.e( "Could not parse faye message", ex);
+            App.gLogger.e("Could not parse faye message", ex);
         }
     }
 
     /**
      * Checks to see if we are subscribed to the passed in channel
      *
-     * @param channel
-     *            Name of channel to check
+     * @param channel Name of channel to check
      * @return True if we are connected to the passed in channel, false
-     *         otherwise
+     * otherwise
      */
     private boolean isSubscribedToChannel(String channel) {
 
@@ -632,9 +625,13 @@ public class FayeClient implements Listener {
 
     public interface FayeListener {
         void connectedToServer();
+
         void disconnectedFromServer();
+
         void subscribedToChannel(String subscription);
+
         void subscriptionFailedWithError(String error);
+
         void messageReceived(JSONObject json);
     }
 }

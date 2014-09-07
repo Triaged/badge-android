@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/activity_root"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/activity_root">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/profile_row_background"
-        android:id="@+id/to_box"
-        >
+        android:id="@+id/to_box">
 
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:id="@+id/to_users"
             android:text="@string/to_users"
             android:layout_width="wrap_content"
@@ -22,11 +20,9 @@
             android:gravity="center_vertical"
             android:src="@drawable/ic_action_search"
             android:textSize="15sp"
-            android:textColor="@color/light_text_gray"
-            />
+            android:textColor="@color/light_text_gray" />
 
-        <com.triaged.badge.app.views.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:flowlayout="http://schemas.android.com/apk/res/si.solarb.flowlayout"
+        <com.triaged.badge.ui.base.views.FlowLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/user_tags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,9 +30,7 @@
             android:layout_marginRight="48dp"
             android:layout_marginTop="10dp"
             android:gravity="start"
-            android:visibility="gone"
-            >
-        </com.triaged.badge.app.views.FlowLayout>
+            android:visibility="gone"></com.triaged.badge.ui.base.views.FlowLayout>
 
         <EditText
             android:layout_below="@id/user_tags"
@@ -52,8 +46,7 @@
             android:layout_marginRight="48dp"
             android:layout_marginLeft="0dp"
             android:nextFocusUp="@id/search_bar"
-            android:nextFocusLeft="@id/search_bar"
-            />
+            android:nextFocusLeft="@id/search_bar" />
 
         <ImageButton
             android:id="@+id/clear_search"
@@ -65,8 +58,7 @@
             android:gravity="center"
             android:layout_alignTop="@id/search_bar"
             android:layout_alignParentRight="true"
-            android:visibility="gone"
-            />
+            android:visibility="gone" />
 
     </RelativeLayout>
 
@@ -80,8 +72,7 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
     <ListView
         android:id="@+id/search_results_list"
@@ -94,7 +85,6 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
 </RelativeLayout>

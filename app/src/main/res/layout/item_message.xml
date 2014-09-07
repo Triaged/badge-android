@@ -2,11 +2,11 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="88dp"
+    android:layout_width="match_parent"
+    android:layout_height="88dp"
     android:descendantFocusability="blocksDescendants"
     android:paddingLeft="16dp"
-    android:paddingTop="12dp"
-    >
+    android:paddingTop="12dp">
 
     <ImageView
         android:id="@+id/contact_thumb"
@@ -14,8 +14,7 @@
         android:layout_height="40dp"
         android:layout_marginRight="16dp"
         android:background="@null"
-        android:contentDescription="@string/content_description_thumb"
-    />
+        android:contentDescription="@string/content_description_thumb" />
 
     <ImageView
         android:id="@+id/no_photo_thumb"
@@ -26,10 +25,9 @@
         android:background="@drawable/group_message_icon_bg"
         android:gravity="center"
         android:visibility="gone"
-        android:padding="6dp"
-    />
+        android:padding="6dp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/contact_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,10 +38,9 @@
         custom:font="Roboto-Regular.ttf"
         android:lineSpacingMultiplier="1.1"
         android:ellipsize="end"
-        android:singleLine="true"
-        />
+        android:singleLine="true" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/message_preview_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -55,10 +52,9 @@
         custom:font="Roboto-Regular.ttf"
         android:maxLines="2"
         android:ellipsize="end"
-        android:lineSpacingMultiplier="1.1"
-        />
+        android:lineSpacingMultiplier="1.1" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="72dp"
         android:layout_height="wrap_content"
@@ -69,8 +65,7 @@
         custom:font="Roboto-Regular.ttf"
         android:ellipsize="end"
         android:singleLine="true"
-        android:layout_alignParentRight="true"
-        />
+        android:layout_alignParentRight="true" />
 
     <View
         android:layout_width="match_parent"
@@ -78,7 +73,6 @@
         android:background="@color/light_divider"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginLeft="56dp"
-        />
+        android:layout_marginLeft="56dp" />
 
 </RelativeLayout>

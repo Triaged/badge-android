@@ -2,9 +2,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:paddingTop="16dp"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="16dp">
 
 
     <ImageView
@@ -14,11 +14,10 @@
         android:layout_marginRight="16dp"
         android:layout_alignTop="@+id/message_text"
         android:background="@null"
-        android:contentDescription="@string/content_description_thumb"
-    />
+        android:contentDescription="@string/content_description_thumb" />
 
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/no_photo_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -28,20 +27,18 @@
         android:gravity="center"
         android:textColor="@color/white"
         android:visibility="gone"
-        android:textSize="15sp"
-    />
+        android:textSize="15sp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         custom:font="Roboto-Regular.ttf"
         android:textColor="@color/light_text_gray"
         android:textSize="14sp"
-        android:layout_marginLeft="62dp"
-        />
+        android:layout_marginLeft="62dp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/message_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -57,7 +54,6 @@
         android:layout_below="@id/timestamp"
         android:layout_marginTop="3dp"
         android:background="@drawable/other_bubble"
-        android:lineSpacingMultiplier="1.2"
-        />
+        android:lineSpacingMultiplier="1.2" />
 
 </RelativeLayout>

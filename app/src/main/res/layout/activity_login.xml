@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/activity_root"
-    >
+    android:id="@+id/activity_root">
 
     <ScrollView
         android:id="@+id/login_scrollview"
@@ -14,16 +12,15 @@
         xmlns:custom="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="40dp"
-        >
+        android:layout_marginBottom="40dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingLeft="24dp"
-            android:paddingRight="24dp"
-            >
-            <com.triaged.badge.app.views.TextViewWithFont
+            android:paddingRight="24dp">
+
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:id="@+id/login_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -32,10 +29,9 @@
                 android:text="@string/login_title"
                 android:textColor="@color/accent_turquoise"
                 android:textSize="31sp"
-                custom:font="Roboto-Light.ttf"
-                />
+                custom:font="Roboto-Light.ttf" />
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:id="@+id/login_info"
                 android:layout_width="190dp"
                 android:layout_height="wrap_content"
@@ -47,10 +43,9 @@
                 android:textSize="14sp"
                 android:gravity="center"
                 android:layout_below="@id/login_title"
-                custom:font="Roboto-Regular.ttf"
-                />
+                custom:font="Roboto-Regular.ttf" />
 
-            <com.triaged.badge.app.views.EditTextWithFont
+            <com.triaged.badge.ui.base.views.EditTextWithFont
                 android:id="@+id/login_email"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -60,10 +55,9 @@
                 android:layout_below="@id/login_info"
                 android:textSize="15sp"
                 android:inputType="textNoSuggestions"
-                custom:font="Roboto-Regular.ttf"
-                />
+                custom:font="Roboto-Regular.ttf" />
 
-            <com.triaged.badge.app.views.EditTextWithFont
+            <com.triaged.badge.ui.base.views.EditTextWithFont
                 android:id="@+id/login_password"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -73,10 +67,9 @@
                 android:layout_below="@id/login_email"
                 android:textSize="15sp"
                 android:inputType="textPassword"
-                custom:font="Roboto-Regular.ttf"
-                />
+                custom:font="Roboto-Regular.ttf" />
 
-            <com.triaged.badge.app.views.ButtonWithFont
+            <com.triaged.badge.ui.base.views.ButtonWithFont
                 android:id="@+id/login_button"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
@@ -87,10 +80,9 @@
                 android:layout_below="@id/login_password"
                 android:layout_marginTop="35dp"
                 android:textSize="16sp"
-                custom:font="Roboto-Regular.ttf"
-                />
+                custom:font="Roboto-Regular.ttf" />
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:id="@+id/forgot_password_button"
                 android:layout_width="190dp"
                 android:layout_height="wrap_content"
@@ -103,14 +95,13 @@
                 android:gravity="center"
                 android:layout_below="@id/login_button"
                 custom:font="Roboto-Regular.ttf"
-                android:background="@drawable/white_button_bg"
-                />
+                android:background="@drawable/white_button_bg" />
 
         </RelativeLayout>
 
     </ScrollView>
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/sign_up_for_account"
         android:layout_width="match_parent"
         android:layout_height="40dp"
@@ -122,7 +113,6 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
         custom:font="Roboto-Regular.ttf"
-        android:background="@drawable/white_button_bg"
-        />
+        android:background="@drawable/white_button_bg" />
 
 </RelativeLayout>

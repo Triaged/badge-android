@@ -5,17 +5,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.triaged.badge.app.ContactsActivity"
-    android:id="@+id/activity_root"
-    >
+    tools:context="com.triaged.badge.ui.home.ContactsActivity"
+    android:id="@+id/activity_root">
 
     <ProgressBar
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginTop="100dp"
         android:layout_centerHorizontal="true"
-        android:id="@+id/loading_spinner"
-        />
+        android:id="@+id/loading_spinner" />
 
     <include layout="@layout/include_search" />
 
@@ -30,8 +28,7 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
     <ListView
         android:id="@+id/departments_list"
@@ -45,8 +42,7 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
     <ListView
         android:id="@+id/search_results_list"
@@ -59,17 +55,15 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_alignParentBottom="true"
-        android:id="@+id/contacts_departments_tab"
-        >
+        android:id="@+id/contacts_departments_tab">
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/contacts_tab"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -81,10 +75,9 @@
             android:textSize="15sp"
             android:textAllCaps="true"
             android:textColor="@drawable/contacts_tab_text"
-            custom:font="Roboto-Medium.ttf"
-            />
+            custom:font="Roboto-Medium.ttf" />
 
-        <com.triaged.badge.app.views.ButtonWithFont
+        <com.triaged.badge.ui.base.views.ButtonWithFont
             android:id="@+id/departments_tab"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -96,8 +89,7 @@
             android:textSize="15sp"
             android:textAllCaps="true"
             android:textColor="@drawable/contacts_tab_text"
-            custom:font="Roboto-Regular.ttf"
-            />
+            custom:font="Roboto-Regular.ttf" />
 
     </LinearLayout>
 

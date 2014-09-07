@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -12,11 +12,10 @@
         android:gravity="center_horizontal"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:id="@+id/edit_fields_wrapper"
-        >
+        android:id="@+id/edit_fields_wrapper">
 
         <!-- YOUR PROFILE -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:paddingLeft="8dp"
@@ -28,18 +27,16 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/edit_profile_your"
-            />
+            android:text="@string/edit_profile_your" />
 
         <RelativeLayout
             android:id="@+id/update_profile_photo_button"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:paddingTop="10dp"
-            android:background="@drawable/tappable_row_bg"
-            >
+            android:background="@drawable/tappable_row_bg">
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:id="@+id/no_photo_thumb"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -48,8 +45,7 @@
                 android:gravity="center"
                 android:textColor="@color/white"
                 android:visibility="gone"
-                android:textSize="15sp"
-                />
+                android:textSize="15sp" />
 
             <ImageView
                 android:id="@+id/contact_thumb"
@@ -58,8 +54,7 @@
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="2dp"
                 android:background="@null"
-                android:contentDescription="@string/content_description_thumb"
-                />
+                android:contentDescription="@string/content_description_thumb" />
 
             <ProgressBar
                 android:id="@+id/pending_upload"
@@ -67,20 +62,18 @@
                 android:layout_height="40dp"
                 android:layout_marginRight="16dp"
                 android:layout_marginTop="2dp"
-                android:visibility="gone"
-                />
+                android:visibility="gone" />
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:id="@+id/profile_picture_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="56dp"
                 android:textColor="@color/main_text_black"
                 android:textSize="18sp"
-                android:text="@string/profile_picture_title"
-                />
+                android:text="@string/profile_picture_title" />
 
-            <com.triaged.badge.app.views.TextViewWithFont
+            <com.triaged.badge.ui.base.views.TextViewWithFont
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="56dp"
@@ -88,29 +81,26 @@
                 android:textSize="14sp"
                 android:layout_below="@id/profile_picture_title"
                 android:text="@string/profile_picture_details"
-                android:layout_marginTop="-1dp"
-                />
+                android:layout_marginTop="-1dp" />
 
         </RelativeLayout>
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_first_name"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_first_name"
-            />
+            custom:primaryValue="@string/edit_profile_first_name" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_last_name"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_last_name"
-            />
+            custom:primaryValue="@string/edit_profile_last_name" />
 
         <!-- CONTACT INFORMATION -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:paddingLeft="8dp"
@@ -122,27 +112,24 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/edit_profile_contact_info"
-            />
+            android:text="@string/edit_profile_contact_info" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_cell_phone"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_cell_phone"
-            />
+            custom:primaryValue="@string/edit_profile_cell_phone" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_office_phone"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_office_phone"
-            />
+            custom:primaryValue="@string/edit_profile_office_phone" />
 
         <!-- YOUR POSITION -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:paddingLeft="8dp"
@@ -154,51 +141,45 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/edit_profile_your_position"
-            />
+            android:text="@string/edit_profile_your_position" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_job_title"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_job_title"
-            />
+            custom:primaryValue="@string/edit_profile_job_title" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_department"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_department"
-            />
+            custom:primaryValue="@string/edit_profile_department" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_reporting_to"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_reporting_to"
-            />
+            custom:primaryValue="@string/edit_profile_reporting_to" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_office_location"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_office_location"
-            />
+            custom:primaryValue="@string/edit_profile_office_location" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_start_date"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_start_date"
-            />
+            custom:primaryValue="@string/edit_profile_start_date" />
 
         <!-- PERSONAL -->
-        <com.triaged.badge.app.views.TextViewWithFont
+        <com.triaged.badge.ui.base.views.TextViewWithFont
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:paddingLeft="8dp"
@@ -210,16 +191,14 @@
             android:gravity="bottom"
             custom:font="Roboto-Bold.ttf"
             android:background="@drawable/section_header_background"
-            android:text="@string/edit_profile_personal"
-            />
+            android:text="@string/edit_profile_personal" />
 
-        <com.triaged.badge.app.views.EditProfileInfoView
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
             android:id="@+id/edit_birth_date"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:background="@drawable/tappable_row_bg"
-            custom:primaryValue="@string/edit_profile_birth_date"
-            />
+            custom:primaryValue="@string/edit_profile_birth_date" />
 
     </LinearLayout>
 </ScrollView>

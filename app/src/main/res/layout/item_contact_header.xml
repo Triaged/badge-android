@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="48dp"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:descendantFocusability="blocksDescendants"
     android:background="@drawable/section_header_background_padded"
     android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    >
+    android:paddingRight="16dp">
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/section_heading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -19,7 +19,6 @@
         android:textColor="@color/sub_text_gray"
         android:textAllCaps="true"
         android:textSize="14sp"
-        custom:font="Roboto-Bold.ttf"
-        />
+        custom:font="Roboto-Bold.ttf" />
 
 </RelativeLayout>

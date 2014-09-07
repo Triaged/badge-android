@@ -2,7 +2,8 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <ListView
         android:id="@+id/office_locations_list"
@@ -17,10 +18,9 @@
         android:fastScrollEnabled="true"
         android:overScrollMode="never"
         android:divider="@null"
-        android:dividerHeight="0dp"
-        />
+        android:dividerHeight="0dp" />
 
-    <com.triaged.badge.app.views.ButtonWithFont
+    <com.triaged.badge.ui.base.views.ButtonWithFont
         android:id="@+id/continue_button"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -30,7 +30,6 @@
         android:background="@drawable/full_width_button"
         android:layout_alignParentBottom="true"
         android:textSize="16sp"
-        custom:font="Roboto-Regular.ttf"
-        />
+        custom:font="Roboto-Regular.ttf" />
 
 </RelativeLayout>

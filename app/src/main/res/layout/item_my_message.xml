@@ -2,9 +2,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:paddingTop="16dp"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="16dp">
 
     <ImageView
         android:id="@+id/contact_thumb"
@@ -14,10 +14,9 @@
         android:layout_alignTop="@+id/message_text"
         android:background="@null"
         android:contentDescription="@string/content_description_thumb"
-        android:layout_alignParentRight="true"
-    />
+        android:layout_alignParentRight="true" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/no_photo_thumb"
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -28,8 +27,7 @@
         android:textColor="@color/white"
         android:visibility="gone"
         android:textSize="15sp"
-        android:layout_alignParentRight="true"
-    />
+        android:layout_alignParentRight="true" />
 
     <ProgressBar
         android:id="@+id/pending_status"
@@ -38,8 +36,7 @@
         android:layout_marginLeft="16dp"
         android:layout_alignTop="@+id/message_text"
         android:layout_alignParentRight="true"
-        android:visibility="gone"
-        />
+        android:visibility="gone" />
 
     <ImageButton
         android:id="@+id/failed_status"
@@ -51,11 +48,10 @@
         android:layout_alignParentRight="true"
         android:visibility="gone"
         android:background="@drawable/message_failed_bg"
-        android:contentDescription="@string/message_failed"
-        />
+        android:contentDescription="@string/message_failed" />
 
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/timestamp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -63,10 +59,9 @@
         android:textColor="@color/light_text_gray"
         android:textSize="14sp"
         android:layout_marginRight="62dp"
-        android:gravity="right"
-        />
+        android:gravity="right" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/message_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -82,7 +77,6 @@
         android:background="@drawable/my_bubble"
         android:layout_below="@id/timestamp"
         android:layout_marginTop="3dp"
-        android:lineSpacingMultiplier="1.2"
-        />
+        android:lineSpacingMultiplier="1.2" />
 
 </RelativeLayout>

@@ -2,14 +2,14 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="48dp"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
     android:background="@drawable/padded_listview_row_bg"
     android:descendantFocusability="blocksDescendants"
     android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    >
+    android:paddingRight="16dp">
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/dept_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -17,10 +17,9 @@
         android:textColor="@color/main_text_black"
         android:layout_centerVertical="true"
         android:layout_marginLeft="8dp"
-        android:textSize="18sp"
-        />
+        android:textSize="18sp" />
 
-    <com.triaged.badge.app.views.TextViewWithFont
+    <com.triaged.badge.ui.base.views.TextViewWithFont
         android:id="@+id/dept_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -29,7 +28,6 @@
         android:layout_centerVertical="true"
         android:layout_marginRight="8dp"
         android:layout_alignParentRight="true"
-        android:textSize="18sp"
-        />
+        android:textSize="18sp" />
 
 </RelativeLayout>
