@@ -43,6 +43,7 @@ import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.receivers.GCMReceiver;
+import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.enterance.LoginActivity;
 
 import org.apache.http.HttpEntity;
@@ -315,7 +316,7 @@ public class DataProviderService extends Service {
         String apiToken = prefs.getString(API_TOKEN_PREFS_KEY, "");
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
-        databaseHelper = new CompanySQLiteHelper(this);
+        databaseHelper = new CompanySQLiteHelper(this, this);
         apiClient = new ApiClient(apiToken);
         contactList = new ArrayList(250);
         handler = new Handler();
@@ -919,34 +920,40 @@ public class DataProviderService extends Service {
      * <p/>
      * This should only be called on the sql thread.
      */
-    protected void loggedOut() {
-        if (loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals(apiClient.apiToken)) {
-            // User initiated logout, make sure they don't get "stuck"
-            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
-        }
-        loggedInUser = null;
-        prefs.edit().clear().commit();
+    protected void loggedOut(boolean restartApplication) {
 
-        // Stop tracking location
-        LocationTrackingService.clearAlarm(localBinding, this);
-
-        // Wipe DB, we're not logged in anymore.
-        database.execSQL(CLEAR_CONTACTS_SQL);
-        database.execSQL(CLEAR_DEPARTMENTS_SQL);
-        database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
-        database.execSQL(CLEAR_MESSAGES_SQL);
-        notifyUILoggedOut();
+        Intent logoutIntent = new Intent(LogoutReceiver.ACTION_LOGOUT);
+        logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, restartApplication);
+        DataProviderService.this.sendBroadcast(logoutIntent);
 
 
-        // Stop the messaging service.
-        Intent fayeIntent = new Intent(this, FayeService.class);
-        stopService(fayeIntent);
-
-
-        // Report the event to mixpanel
-        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
-        mixpanelAPI.clearSuperProperties();
-        apiClient.apiToken = "";
+//        if (loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals(apiClient.apiToken)) {
+//            // User initiated logout, make sure they don't get "stuck"
+//            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
+//        }
+//        loggedInUser = null;
+//        prefs.edit().clear().commit();
+//
+//        // Stop tracking location
+//        LocationTrackingService.clearAlarm(localBinding, this);
+//
+//        // Wipe DB, we're not logged in anymore.
+//        database.execSQL(CLEAR_CONTACTS_SQL);
+//        database.execSQL(CLEAR_DEPARTMENTS_SQL);
+//        database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
+//        database.execSQL(CLEAR_MESSAGES_SQL);
+//        notifyUILoggedOut();
+//
+//
+//        // Stop the messaging service.
+//        Intent fayeIntent = new Intent(this, FayeService.class);
+//        stopService(fayeIntent);
+//
+//
+//        // Report the event to mixpanel
+//        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
+//        mixpanelAPI.clearSuperProperties();
+//        apiClient.apiToken = "";
     }
 
     private void notifyUILoggedOut() {
@@ -1059,7 +1066,7 @@ public class DataProviderService extends Service {
                     App.gLogger.e("Wasn't able to delete device on api", e);
                 } finally {
                     // Do this regardless of whether we can communicate with the cloud or not.
-                    loggedOut();
+                    loggedOut(false);
                 }
             }
         });
@@ -1222,7 +1229,7 @@ public class DataProviderService extends Service {
      */
     protected boolean ensureNotUnauthorized(HttpResponse response) {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            loggedOut();
+            loggedOut(true);
             return false;
         }
         return true;
@@ -1421,7 +1428,7 @@ public class DataProviderService extends Service {
                         }
 
                     } else {
-                        notifyUILoggedOut();
+//                        notifyUILoggedOut();
                     }
                 } catch (Throwable t) {
                     App.gLogger.e("UNABLE TO GET DATABASE", t);
@@ -2648,7 +2655,7 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#loggedOut()
+         * @see DataProviderService#loggedOut(boolean)
          */
         public void logout() {
             DataProviderService.this.unregisterDevice();

@@ -12,5 +12,7 @@ public class Config {
 
     public static final boolean IS_LOGGING_ENABLE = true;
     public static final boolean IS_ON_STAGING_SERVER = true;
+    public static final boolean IS_CRASH_REPORTING = false;
+
 
 }

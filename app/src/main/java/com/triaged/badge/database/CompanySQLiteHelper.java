@@ -1,5 +1,6 @@
 package com.triaged.badge.database;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -15,23 +16,24 @@ import com.triaged.badge.net.DataProviderService;
 
 public class CompanySQLiteHelper extends SQLiteOpenHelper {
 
+    protected static final String DATABASE_NAME = "badge.db";
+    protected static final int DATABASE_VERSION = 21;
+
+    private static Context mContext;
+
     public static final String JOINED_DEPARTMENT_NAME = "department_name";
     public static final String JOINED_MANAGER_FIRST_NAME = "manager_first_name";
     public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
     public static final String JOINED_OFFICE_NAME = "office_name";
 
-
-    protected static final String SQL_DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 21;
-
-
     private SQLiteDatabase openDatabase;
     private DataProviderService dataProviderService;
 
-    public CompanySQLiteHelper(DataProviderService dataProviderService) {
-        super(dataProviderService, SQL_DATABASE_NAME, null, DATABASE_VERSION);
+    public CompanySQLiteHelper(DataProviderService dataProviderService, Context context) {
+        super(dataProviderService, DATABASE_NAME, null, DATABASE_VERSION);
         openDatabase = null;
         this.dataProviderService = dataProviderService;
+        this.mContext = context;
     }
 
     @Override
@@ -58,5 +60,9 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public SQLiteDatabase getWritableDatabase() {
         openDatabase = super.getWritableDatabase();
         return openDatabase;
+    }
+
+    public static void deleteDatabase() {
+        mContext.deleteDatabase(DATABASE_NAME);
     }
 }
