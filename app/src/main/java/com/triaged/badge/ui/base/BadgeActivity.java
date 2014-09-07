@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,6 +19,7 @@ import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.notification.Notifier;
+import com.triaged.utils.GeneralUtils;
 
 import java.io.IOException;
 
@@ -199,7 +198,7 @@ public abstract class BadgeActivity extends Activity {
         // since the existing regID is not guaranteed to work with the new
         // app version.
         int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
-        int currentVersion = getAppVersion(context);
+        int currentVersion = GeneralUtils.getAppVersion(context);
         if (registeredVersion != currentVersion) {
             App.gLogger.i("App version changed.");
             return "";
@@ -290,26 +289,12 @@ public abstract class BadgeActivity extends Activity {
      */
     private void storeRegistrationId(Context context, String regId) {
         final SharedPreferences prefs = getGCMPreferences(context);
-        int appVersion = getAppVersion(context);
+        int appVersion = GeneralUtils.getAppVersion(context);
         App.gLogger.i("Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
         editor.commit();
-    }
-
-    /**
-     * @return Application's version code from the {@code PackageManager}.
-     */
-    private static int getAppVersion(Context context) {
-        try {
-            PackageInfo packageInfo = context.getPackageManager()
-                    .getPackageInfo(context.getPackageName(), 0);
-            return packageInfo.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            // should never happen
-            throw new RuntimeException("Could not get package name: " + e);
-        }
     }
 
     /**

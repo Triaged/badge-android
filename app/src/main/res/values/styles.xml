@@ -24,6 +24,14 @@
         <item name="android:actionBarDivider">@drawable/tab_divider</item>
     </style>
 
+    <style name="Badge" parent="android:Theme.Holo.Light.DarkActionBar">
+        <item name="android:windowTitleStyle">@style/CustomWindowTitleStyle</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
+        <item name="android:actionBarTabBarStyle">@style/ActionBarStyle</item>
+        <item name="android:actionBarDivider">@drawable/tab_divider</item>
+    </style>
+
     <style name="BackTheme" parent="AppTheme">
         <item name="android:windowNoTitle">false</item>
         <item name="android:actionBarStyle">@style/BackThemeBG</item>

@@ -3,7 +3,7 @@ package com.triaged.badge.models;
 import android.database.Cursor;
 import android.util.Log;
 
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.table.ContactsTable;
 
 import org.json.JSONException;
@@ -125,10 +125,10 @@ public class Contact {
         cellPhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
         officePhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
         jobTitle = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_JOB_TITLE);
-        departmentName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_DEPARTMENT_NAME);
-        String managerFirstName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME);
-        String managerLastName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME);
-        officeName = getStringSafelyFromCursor(contactCursor, CompanySQLiteHelper.JOINED_OFFICE_NAME);
+        departmentName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_DEPARTMENT_NAME);
+        String managerFirstName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_MANAGER_FIRST_NAME);
+        String managerLastName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_MANAGER_LAST_NAME);
+        officeName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_OFFICE_NAME);
         /** INTEGER FIELDS */
         sharingOfficeLocation = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
         managerId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_MANAGER_ID);

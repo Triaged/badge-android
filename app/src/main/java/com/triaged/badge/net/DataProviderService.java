@@ -34,7 +34,7 @@ import android.widget.Toast;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
@@ -106,7 +106,7 @@ public class DataProviderService extends Service {
     protected static final String QUERY_ALL_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
                     DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
@@ -118,7 +118,7 @@ public class DataProviderService extends Service {
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON contact.%s = department.%s WHERE contact.%s = ? AND contact.%s = 0 ORDER BY contact.%s;",
                     DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
@@ -133,13 +133,13 @@ public class DataProviderService extends Service {
                             " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
                             " ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
                     OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME,
-                    CompanySQLiteHelper.JOINED_OFFICE_NAME,
+                    DatabaseHelper.JOINED_OFFICE_NAME,
                     DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
                     ContactsTable.COLUMN_CONTACT_FIRST_NAME,
-                    CompanySQLiteHelper.JOINED_MANAGER_FIRST_NAME,
+                    DatabaseHelper.JOINED_MANAGER_FIRST_NAME,
                     ContactsTable.COLUMN_CONTACT_LAST_NAME,
-                    CompanySQLiteHelper.JOINED_MANAGER_LAST_NAME,
+                    DatabaseHelper.JOINED_MANAGER_LAST_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
@@ -156,7 +156,7 @@ public class DataProviderService extends Service {
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON contact.%s = department.%s WHERE contact.%s != ? AND contact.is_archived = 0  ORDER BY %s;",
                     DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
@@ -168,7 +168,7 @@ public class DataProviderService extends Service {
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
                     DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    CompanySQLiteHelper.JOINED_DEPARTMENT_NAME,
+                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
@@ -231,7 +231,7 @@ public class DataProviderService extends Service {
 
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
-    protected CompanySQLiteHelper databaseHelper;
+    protected DatabaseHelper databaseHelper;
     protected SQLiteDatabase database = null;
     protected long lastSynced;
     protected SharedPreferences prefs;
@@ -316,7 +316,7 @@ public class DataProviderService extends Service {
         String apiToken = prefs.getString(API_TOKEN_PREFS_KEY, "");
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
-        databaseHelper = new CompanySQLiteHelper(this, this);
+        databaseHelper = new DatabaseHelper(this);
         apiClient = new ApiClient(apiToken);
         contactList = new ArrayList(250);
         handler = new Handler();

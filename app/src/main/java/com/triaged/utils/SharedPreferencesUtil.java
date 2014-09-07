@@ -9,7 +9,7 @@ import com.triaged.badge.app.App;
 
 /**
  * Util class which provides easy access to shared preferences.
- * <p/>
+ * 
  * Created by Sadegh Kazemy on 9/7/14.
  */
 public class SharedPreferencesUtil {

@@ -6,6 +6,8 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -16,7 +18,7 @@ import java.util.List;
 
 /**
  * Provides some general utility methods for android.
- * <p/>
+ *
  * Created by Sadegh Kazemy on 9/7/14.
  */
 public class GeneralUtils {
@@ -99,5 +101,19 @@ public class GeneralUtils {
         }
 
 
+    }
+
+    /**
+     * @return Application's version code from the {@code PackageManager}.
+     */
+    public static int getAppVersion(Context context) {
+        try {
+            PackageInfo packageInfo = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), 0);
+            return packageInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            // should never happen
+            throw new RuntimeException("Could not get package name: " + e);
+        }
     }
 }
