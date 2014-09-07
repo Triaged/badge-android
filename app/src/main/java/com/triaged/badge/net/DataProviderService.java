@@ -44,7 +44,7 @@ import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
-import com.triaged.badge.ui.enterance.LoginActivity;
+import com.triaged.badge.ui.entrance.LoginActivity;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;

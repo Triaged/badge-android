@@ -47,7 +47,7 @@
 
         <!-- ACTIVITIES -->
         <activity
-            android:name="com.triaged.badge.ui.enterance.LoginActivity"
+            android:name="com.triaged.badge.ui.entrance.LoginActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
         <intent-filter>
@@ -68,12 +68,12 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name="com.triaged.badge.ui.enterance.ForgotPasswordActivity"
+            android:name="com.triaged.badge.ui.entrance.ForgotPasswordActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme" />
         <activity
-            android:name="com.triaged.badge.ui.enterance.WelcomeActivity"
+            android:name="com.triaged.badge.ui.entrance.WelcomeActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden" />

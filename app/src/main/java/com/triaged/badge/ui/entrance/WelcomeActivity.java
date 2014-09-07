@@ -1,4 +1,4 @@
-package com.triaged.badge.ui.enterance;
+package com.triaged.badge.ui.entrance;
 
 import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
