@@ -11,7 +11,7 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.database.CompanySQLiteHelper;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.ui.enterance.LoginActivity;
+import com.triaged.badge.ui.entrance.LoginActivity;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
