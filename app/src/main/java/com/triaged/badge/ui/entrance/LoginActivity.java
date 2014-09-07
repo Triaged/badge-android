@@ -22,7 +22,7 @@ import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.base.BadgeActivity;
-import com.triaged.badge.ui.home.ContactsActivity;
+import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
@@ -53,7 +53,7 @@ public class LoginActivity extends BadgeActivity {
 
         // If already logged-in, go to main activity.
         if (isAlreadyLoggedIn()) {
-            Intent mainActivityIntent = new Intent(this, ContactsActivity.class);
+            Intent mainActivityIntent = new Intent(this, MainActivity.class);
             startActivity(mainActivityIntent);
             finish();
             return;

@@ -8,7 +8,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
-import com.triaged.badge.database.CompanySQLiteHelper;
+import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.entrance.LoginActivity;
@@ -43,7 +43,7 @@ public class LogoutReceiver extends BroadcastReceiver {
 
         // Clear application data
         SharedPreferencesUtil.clearSharedPref();
-        CompanySQLiteHelper.deleteDatabase();
+        DatabaseHelper.deleteDatabase();
         MixpanelAPI.getInstance(context, App.MIXPANEL_TOKEN).clearSuperProperties();
 
 

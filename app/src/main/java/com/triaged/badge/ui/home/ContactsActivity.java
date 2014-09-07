@@ -249,9 +249,9 @@ public class ContactsActivity extends BadgeActivity implements ActionBar.TabList
         });
 
         app = (App) getApplication();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
-        filter.addAction(DataProviderService.DB_UPDATED_ACTION);
+//        IntentFilter filter = new IntentFilter();
+//        filter.addAction(DataProviderService.DB_AVAILABLE_ACTION);
+//        filter.addAction(DataProviderService.DB_UPDATED_ACTION);
 
         final View activityRootView = findViewById(R.id.activity_root);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {

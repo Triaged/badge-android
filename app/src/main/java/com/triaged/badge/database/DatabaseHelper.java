@@ -8,13 +8,12 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
-import com.triaged.badge.net.DataProviderService;
 
 /**
  * @author Created by jc on 7/10/14.
  */
 
-public class CompanySQLiteHelper extends SQLiteOpenHelper {
+public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String DATABASE_NAME = "badge.db";
     protected static final int DATABASE_VERSION = 21;
@@ -26,14 +25,12 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
     public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
     public static final String JOINED_OFFICE_NAME = "office_name";
 
-    private SQLiteDatabase openDatabase;
-    private DataProviderService dataProviderService;
+//    private DataProviderService dataProviderService;
 
-    public CompanySQLiteHelper(DataProviderService dataProviderService, Context context) {
-        super(dataProviderService, DATABASE_NAME, null, DATABASE_VERSION);
-        openDatabase = null;
-        this.dataProviderService = dataProviderService;
-        this.mContext = context;
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+//        this.dataProviderService = dataProviderService;
+        mContext = context;
     }
 
     @Override
@@ -43,7 +40,7 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
 
-        dataProviderService.dataClearedCallback();
+//        dataProviderService.dataClearedCallback();
     }
 
     @Override
@@ -56,11 +53,6 @@ public class CompanySQLiteHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    @Override
-    public SQLiteDatabase getWritableDatabase() {
-        openDatabase = super.getWritableDatabase();
-        return openDatabase;
-    }
 
     public static void deleteDatabase() {
         mContext.deleteDatabase(DATABASE_NAME);
