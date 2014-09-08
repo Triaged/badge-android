@@ -43,7 +43,6 @@
     <string name="your_department">Choose Department</string>
     <string name="reporting_to">Reporting to</string>
 
-
     <!-- SETTINGS -->
     <string name="settings_button">Settings</string>
     <string name="settings_account">Account</string>
@@ -105,7 +104,7 @@
     <string name="message_new">New Message</string>
     <string name="to_users">To:</string>
     <string name="content_description_send_message">Send Message</string>
-    <string name="write_message">Write a message...</string>
+    <string name="write_message">Write a message…</string>
     <string name="enter_recipients_hint">Enter Recipients</string>
     <string name="content_description_empty_chat_bubble">Empty Chat Bubble</string>
     <string name="no_messages_title">No Messages Yet</string>
@@ -117,6 +116,7 @@
     <string name="sign_up_for_account">Not yet registered? Sign up for Beta.</string>
     <string name="settings_feedback">Feedback</string>
     <string name="message_failed">Message Failed</string>
-
+    <string name="search_contacts">Search contacts</string>
+    <string name="search_departments">Search departments</string>
 
 </resources>

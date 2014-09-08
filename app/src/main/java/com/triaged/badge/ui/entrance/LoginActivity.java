@@ -21,7 +21,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.ui.base.BadgeActivity;
+import com.triaged.badge.ui.base.MixpanelActivity;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
@@ -32,7 +32,7 @@ import org.json.JSONObject;
  * <p/>
  * Created by Will on 7/7/14.
  */
-public class LoginActivity extends BadgeActivity {
+public class LoginActivity extends MixpanelActivity {
 
 
     private static final String LOG_TAG = LoginActivity.class.getName();
@@ -80,7 +80,7 @@ public class LoginActivity extends BadgeActivity {
 
                 mixpanel.track("login", new JSONObject());
 
-                ensureGcmRegistration();
+//                ensureGcmRegistration();
                 LocationTrackingService.scheduleAlarm(LoginActivity.this);
 
 
@@ -176,16 +176,6 @@ public class LoginActivity extends BadgeActivity {
                 startActivity(browserIntent);
             }
         });
-    }
-
-    @Override
-    protected void onDatabaseReady() {
-
-    }
-
-    @Override
-    protected void logout() {
-        // Do nothing since we're the UI to log back in.
     }
 
 

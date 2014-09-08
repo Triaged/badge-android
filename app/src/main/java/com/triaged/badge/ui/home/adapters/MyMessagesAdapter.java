@@ -1,11 +1,9 @@
 package com.triaged.badge.ui.home.adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +15,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.MessagesTable;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,7 +31,6 @@ import butterknife.InjectView;
  */
 public class MyMessagesAdapter extends CursorAdapter {
 
-    private SharedPreferences prefs;
     private LayoutInflater inflater;
     private PrettyTime prettyTime;
     private Date dateToFormat;
@@ -46,7 +43,6 @@ public class MyMessagesAdapter extends CursorAdapter {
     public MyMessagesAdapter(Context context, Cursor c) {
         super(context, c, false);
         inflater = LayoutInflater.from(context);
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
         prettyTime = new PrettyTime();
         dateToFormat = new Date();
         mainBlackColor = context.getResources().getColor(R.color.main_text_black);
@@ -88,7 +84,7 @@ public class MyMessagesAdapter extends CursorAdapter {
         holder.missingProfilePhotoView.setVisibility(View.VISIBLE);
         holder.name.setText(names);
         holder.messagePreview.setText(body);
-        String usersArrayString = prefs.getString(holder.threadId, "");
+        String usersArrayString = SharedPreferencesUtil.getString(holder.threadId, "");
         try {
             JSONArray users = new JSONArray(usersArrayString);
             if (users.length() == 2) {

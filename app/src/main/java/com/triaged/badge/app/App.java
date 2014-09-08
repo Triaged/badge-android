@@ -35,7 +35,7 @@ public class App extends Application {
     private static final String TAG = App.class.getName();
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
-    public volatile DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
     public ServiceConnection dataProviderServiceConnnection = null;
 
     public Foreground appForeground;

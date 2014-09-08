@@ -84,7 +84,8 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI,
-                null, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1", null, null);
+                null, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1", null,
+                MessagesTable.COLUMN_MESSAGES_TIMESTAMP + " DESC");
     }
 
     @Override
