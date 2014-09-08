@@ -1,8 +1,10 @@
 package com.triaged.badge.ui.home.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,12 +13,21 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.models.Contact;
+import com.triaged.badge.ui.home.MessageShowActivity;
+
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -45,18 +56,55 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         View row = inflater.inflate(R.layout.item_contact_with_msg, parent, false);
         final ViewHolder holder = new ViewHolder(row);
         row.setTag(holder);
+
+        holder.messageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final Integer[] recipientIds = new Integer[] {holder.contactId,
+                        App.dataProviderServiceBinding.getLoggedInUser().id};
+                Arrays.sort(recipientIds);
+                new AsyncTask<Void, Void, String>() {
+                    @Override
+                    protected String doInBackground(Void... params) {
+                        try {
+                            return App.dataProviderServiceBinding.createThreadSync(recipientIds);
+                        } catch (JSONException e) {
+                            Toast.makeText(context, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                        } catch (IOException e) {
+                            Toast.makeText(context, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(String threadId) {
+                        if (threadId != null) {
+                            Intent intent = new Intent(context, MessageShowActivity.class);
+                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            context.startActivity(intent);
+                        }
+                    }
+                }.execute();
+
+            }
+        });
+
         return row;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
 
+        final ViewHolder holder = (ViewHolder) view.getTag();
+
+        holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID));
         String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_FIRST_NAME));
         String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_LAST_NAME));
         String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_JOB_TITLE));
         String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
 
-        final ViewHolder holder = (ViewHolder) view.getTag();
+
         holder.nameTextView.setText(firstName + " " + lastName);
         holder.titleTextView.setText(jobTitle);
         if (jobTitle == null || jobTitle.equals("")) {
@@ -69,7 +117,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
             holder.nameTextView.setLayoutParams(layoutParams);
         }
         holder.thumbImage.setImageBitmap(null);
-//        holder.noPhotoThumb.setText(c.initials);
+        holder.noPhotoThumb.setText(Contact.constructInitials(firstName, lastName));
         holder.noPhotoThumb.setVisibility(View.VISIBLE);
         if (avatarUrl != null) {
 
@@ -120,7 +168,8 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         }
     }
 
-    class ViewHolder {
+    public class ViewHolder {
+        public int contactId;
         @InjectView(R.id.contact_name) TextView nameTextView;
         @InjectView(R.id.contact_title) TextView titleTextView;
         @InjectView(R.id.contact_thumb) ImageView thumbImage;

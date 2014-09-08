@@ -1,6 +1,5 @@
 package com.triaged.badge.ui.base;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,11 +14,12 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.R;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import java.io.IOException;
 
@@ -29,13 +29,15 @@ import java.io.IOException;
  *
  * @author Created by Will on 7/7/14.
  */
-public abstract class BadgeActivity extends Activity {
+public abstract class BadgeActivity extends MixpanelActivity {
 
     protected static final String TAG = BadgeActivity.class.getName();
 
     public static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
+    protected static int myUserId = SharedPreferencesUtil.getInteger(R.string.pref_my_user_id_key, -1);
 
     /**
      * Badge Sender ID. This is the project number you got
@@ -52,7 +54,7 @@ public abstract class BadgeActivity extends Activity {
     private BroadcastReceiver newMessageReceiver;
     IntentFilter newMessageIntentFilter;
 
-    protected MixpanelAPI mixpanel = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,9 +77,6 @@ public abstract class BadgeActivity extends Activity {
             }
         };
         newMessageIntentFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
-
-        mixpanel = MixpanelAPI.getInstance(this, App.MIXPANEL_TOKEN);
-
 
         databaseReadyReceiver = new BroadcastReceiver() {
             @Override
@@ -108,7 +107,6 @@ public abstract class BadgeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        mixpanel.flush();
         localBroadcastManager.unregisterReceiver(databaseReadyReceiver);
         localBroadcastManager.unregisterReceiver(logoutListener);
         super.onDestroy();

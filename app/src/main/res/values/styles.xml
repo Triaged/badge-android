@@ -25,6 +25,9 @@
     </style>
 
     <style name="Badge" parent="android:Theme.Holo.Light.DarkActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:listViewStyle">@style/ListView</item>
+
         <item name="android:windowTitleStyle">@style/CustomWindowTitleStyle</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:actionBarTabStyle">@style/ActionBarBG</item>
