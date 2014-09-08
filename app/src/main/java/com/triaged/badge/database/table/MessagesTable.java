@@ -3,6 +3,7 @@ package com.triaged.badge.database.table;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
+ *
  * Created by Sadegh Kazemy on 9/7/14.
  */
 public class MessagesTable extends AbstractTable {
@@ -23,34 +24,36 @@ public class MessagesTable extends AbstractTable {
     public static final String COLUMN_MESSAGES_GUID = "guid";
 
 
-    protected static final String CREATE_MESSAGES_TABLE_SQL = String.format(
-            "create table %s (%s integer primary key autoincrement, %s text, %s text," +
-                    " %s integer, %s text, %s integer, %s integer, %s integer, %s text, %s text, %s integer, %s text);",
-            TABLE_NAME,
-            COLUMN_ID,
-            COLUMN_MESSAGES_ID,
-            COLUMN_MESSAGES_THREAD_ID,
-            COLUMN_MESSAGES_FROM_ID,
-            COLUMN_MESSAGES_BODY,
-            COLUMN_MESSAGES_TIMESTAMP,
-            COLUMN_MESSAGES_ACK,
-            COLUMN_MESSAGES_THREAD_HEAD,
-            COLUMN_MESSAGES_THREAD_PARTICIPANTS,
-            COLUMN_MESSAGES_AVATAR_URL,
-            COLUMN_MESSAGES_IS_READ,
-            COLUMN_MESSAGES_GUID
-    );
-
-    protected static final String DROP_MESSAGES_TABLE_SQL = String.format("DROP TABLE IF EXISTS %s", TABLE_NAME);
-
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(CREATE_MESSAGES_TABLE_SQL);
+
+        StringBuilder createSql = new StringBuilder();
+        createSql.append("CREATE TABLE ").append(TABLE_NAME).append("(")
+                .append(COLUMN_ID).append(" INTEGER PRIMARY KEY AUTOINCREMENT, ")
+                .append(COLUMN_MESSAGES_ID).append(" TEXT, ")
+                .append(COLUMN_MESSAGES_THREAD_ID).append(" TEXT, ")
+                .append(COLUMN_MESSAGES_FROM_ID).append(" INTEGER, ")
+                .append(COLUMN_MESSAGES_BODY).append(" TEXT, ")
+                .append(COLUMN_MESSAGES_TIMESTAMP).append(" INTEGER, ")
+                .append(COLUMN_MESSAGES_ACK).append(" INTEGER, ")
+                .append(COLUMN_MESSAGES_THREAD_HEAD).append(" INTEGER, ")
+                .append(COLUMN_MESSAGES_THREAD_PARTICIPANTS).append(" TEXT, ")
+                .append(COLUMN_MESSAGES_AVATAR_URL).append(" TEXT, ")
+                .append(COLUMN_MESSAGES_IS_READ).append(" INTEGER, ")
+                .append(COLUMN_MESSAGES_GUID).append(" TEXT")
+                .append(");");
+
+        db.execSQL(createSql.toString());
+
+        db.execSQL("CREATE INDEX message_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
+        db.execSQL("CREATE INDEX message_thread_id_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_THREAD_ID + ");");
+        db.execSQL("CREATE INDEX message_thread_head_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_THREAD_HEAD + ");");
+        db.execSQL("CREATE INDEX message_thread_body_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_BODY + ");");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(DROP_MESSAGES_TABLE_SQL);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
 }

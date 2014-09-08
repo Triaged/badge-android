@@ -3,6 +3,7 @@ package com.triaged.badge.database.table;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
+ *
  * Created by Sadegh Kazemy on 9/7/14.
  */
 public class ContactsTable extends AbstractTable {
@@ -26,38 +27,42 @@ public class ContactsTable extends AbstractTable {
     public static final String COLUMN_CONTACT_IS_ARCHIVED = "is_archived";
 
 
-    private static final String CREATE_CONTACTS_TABLE_SQL = String.format("create table %s " +
-                    "(%s  integer primary key autoincrement, %s text, %s text, %s text, %s text, %s text," +
-                    " %s text, %s text, %s text, %s text, %s integer, %s integer, %s integer, %s integer, %s integer, %s boolean);",
-            TABLE_NAME,
-            COLUMN_ID,
-            COLUMN_CONTACT_FIRST_NAME,
-            COLUMN_CONTACT_LAST_NAME,
-            COLUMN_CONTACT_AVATAR_URL,
-            COLUMN_CONTACT_JOB_TITLE,
-            COLUMN_CONTACT_EMAIL,
-            COLUMN_CONTACT_START_DATE,
-            COLUMN_CONTACT_BIRTH_DATE,
-            COLUMN_CONTACT_CELL_PHONE,
-            COLUMN_CONTACT_OFFICE_PHONE,
-            COLUMN_CONTACT_MANAGER_ID,
-            COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
-            COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID,
-            COLUMN_CONTACT_DEPARTMENT_ID,
-            COLUMN_CONTACT_SHARING_OFFICE_LOCATION,
-            COLUMN_CONTACT_IS_ARCHIVED
-    );
-
-    protected static final String DROP_CONTACTS_TABLE_SQL = String.format("DROP TABLE IF EXISTS %s", TABLE_NAME);
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(CREATE_CONTACTS_TABLE_SQL);
+        StringBuilder createSql = new StringBuilder();
+        createSql.append("CREATE TABLE ").append(TABLE_NAME).append("(")
+                .append(COLUMN_ID).append(" INTEGER PRIMARY KEY AUTOINCREMENT, ")
+                .append(COLUMN_CONTACT_FIRST_NAME).append(" TEXT, ")
+                .append(COLUMN_CONTACT_LAST_NAME).append(" TEXT, ")
+                .append(COLUMN_CONTACT_AVATAR_URL).append(" TEXT, ")
+                .append(COLUMN_CONTACT_JOB_TITLE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_EMAIL).append(" TEXT, ")
+                .append(COLUMN_CONTACT_START_DATE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_BIRTH_DATE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_CELL_PHONE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_OFFICE_PHONE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_MANAGER_ID).append(" INTEGER, ")
+                .append(COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID).append(" INTEGER, ")
+                .append(COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID).append(" INTEGER, ")
+                .append(COLUMN_CONTACT_DEPARTMENT_ID).append(" INTEGER, ")
+                .append(COLUMN_CONTACT_SHARING_OFFICE_LOCATION).append(" INTEGER, ")
+                .append(COLUMN_CONTACT_IS_ARCHIVED).append(" BOOLEAN")
+                .append(");");
+
+        db.execSQL(createSql.toString());
+
+        db.execSQL("CREATE INDEX contact_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
+        db.execSQL("CREATE INDEX contact_first_name_index ON " + TABLE_NAME + "(" + COLUMN_CONTACT_FIRST_NAME + ");");
+        db.execSQL("CREATE INDEX contact_last_name_index ON " + TABLE_NAME + "(" + COLUMN_CONTACT_LAST_NAME + ");");
+        db.execSQL("CREATE INDEX contact_manager_id_index ON " + TABLE_NAME + "(" + COLUMN_CONTACT_MANAGER_ID + ");");
+        db.execSQL("CREATE INDEX contact_department_id_index ON " + TABLE_NAME + "(" + COLUMN_CONTACT_DEPARTMENT_ID + ");");
+        db.execSQL("CREATE INDEX contact_is_archived_index ON " + TABLE_NAME + "(" + COLUMN_CONTACT_IS_ARCHIVED + ");");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(DROP_CONTACTS_TABLE_SQL);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
     }
 
 }
