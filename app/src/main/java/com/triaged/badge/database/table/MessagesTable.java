@@ -40,7 +40,7 @@ public class MessagesTable extends AbstractTable {
                 .append(COLUMN_MESSAGES_THREAD_PARTICIPANTS).append(" TEXT, ")
                 .append(COLUMN_MESSAGES_AVATAR_URL).append(" TEXT, ")
                 .append(COLUMN_MESSAGES_IS_READ).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_GUID).append(" TEXT")
+                .append(COLUMN_MESSAGES_GUID).append(" TEXT UNIQUE")
                 .append(");");
 
         db.execSQL(createSql.toString());

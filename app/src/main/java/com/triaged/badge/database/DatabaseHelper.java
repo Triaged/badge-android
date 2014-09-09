@@ -16,7 +16,7 @@ import com.triaged.badge.database.table.OfficeLocationsTable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 21;
+    protected static final int DATABASE_VERSION = 22;
 
     private static Context mContext;
 
