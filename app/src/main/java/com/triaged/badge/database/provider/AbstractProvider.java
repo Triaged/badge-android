@@ -164,7 +164,7 @@ public abstract class AbstractProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Unknow URI: " + uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        notifyUris(uri);
 
         return updatedRows;
     }
@@ -206,8 +206,8 @@ public abstract class AbstractProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
+        notifyUris(uri);
 
-        getContext().getContentResolver().notifyChange(uri, null);
         return rowsDeleted;
     }
 
@@ -233,6 +233,10 @@ public abstract class AbstractProvider extends ContentProvider {
                 return null;
         }
         return result;
+    }
+
+    protected void notifyUris(Uri uri) {
+        getContext().getContentResolver().notifyChange(uri, null);
     }
 
 
