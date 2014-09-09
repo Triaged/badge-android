@@ -18,7 +18,7 @@ import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;
-import com.triaged.badge.ui.home.ContactsActivity;
+import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.badge.ui.profile.adapters.OfficeLocationsAdapter;
 
 /**
@@ -37,7 +37,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
     protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
         @Override
         public void saveSuccess(int newId) {
-            Intent intent = new Intent(OnboardingLocationActivity.this, ContactsActivity.class);
+            Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);
             startActivity(intent);
             localBroadcastManager.sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
             finish();
