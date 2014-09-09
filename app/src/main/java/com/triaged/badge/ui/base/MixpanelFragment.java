@@ -1,18 +1,11 @@
 package com.triaged.badge.ui.base;
 
 
-
-import android.os.Bundle;
 import android.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.os.Bundle;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
-import com.triaged.badge.app.R;
-
 
 public abstract class MixpanelFragment extends Fragment {
 
