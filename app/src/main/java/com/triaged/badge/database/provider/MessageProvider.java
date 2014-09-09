@@ -1,6 +1,8 @@
 package com.triaged.badge.database.provider;
 
+import android.content.ContentValues;
 import android.content.UriMatcher;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 import com.triaged.badge.database.table.MessagesTable;
@@ -12,7 +14,7 @@ import com.triaged.badge.database.table.MessagesTable;
 public class MessageProvider extends AbstractProvider {
     public MessageProvider() { }
 
-    static final String AUTHORITY = "com.triaged.badge.provider.messages";
+    public static final String AUTHORITY = "com.triaged.badge.provider.messages";
     static final String TABLE_NAME = MessagesTable.TABLE_NAME;
     static final String URI = "content://" + AUTHORITY + "/" + TABLE_NAME;
     public static final Uri CONTENT_URI = Uri.parse(URI);
@@ -26,6 +28,22 @@ public class MessageProvider extends AbstractProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(AUTHORITY, TABLE_NAME, RECORDS);
         uriMatcher.addURI(AUTHORITY, TABLE_NAME + "/#", RECORD_ID);
+    }
+
+    @Override
+    public synchronized Uri insert(Uri uri, ContentValues values) {
+        int uriType = uriType(uri);
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        long id;
+        switch (uriType) {
+            case RECORDS:
+                id = database.insertWithOnConflict(basePath(), null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return Uri.parse(basePath() + "/" + id);
     }
 
     @Override

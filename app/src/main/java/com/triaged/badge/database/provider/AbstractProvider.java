@@ -25,7 +25,7 @@ public abstract class AbstractProvider extends ContentProvider {
     static final int RECORDS = 1;
     static final int RECORD_ID = 2;
 
-    private DatabaseHelper mDatabaseHelper;
+    protected DatabaseHelper databaseHelper;
 
 
     /**
@@ -38,8 +38,8 @@ public abstract class AbstractProvider extends ContentProvider {
      */
     @Override
     public boolean onCreate() {
-        mDatabaseHelper = new DatabaseHelper(getContext());
-        return (mDatabaseHelper.getWritableDatabase() != null);
+        databaseHelper = new DatabaseHelper(getContext());
+        return (databaseHelper.getWritableDatabase() != null);
     }
 
     /**
@@ -53,7 +53,7 @@ public abstract class AbstractProvider extends ContentProvider {
     @Override
     public synchronized Uri insert(Uri uri, ContentValues values) {
         int uriType = uriType(uri);
-        SQLiteDatabase database = mDatabaseHelper.getWritableDatabase();
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
         long id;
         switch (uriType) {
             case RECORDS:
@@ -114,7 +114,7 @@ public abstract class AbstractProvider extends ContentProvider {
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
 
-        SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
         Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -137,7 +137,7 @@ public abstract class AbstractProvider extends ContentProvider {
     public synchronized int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         int uriType = uriType(uri);
         int updatedRows;
-        SQLiteDatabase database = mDatabaseHelper.getWritableDatabase();
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
         switch (uriType) {
             case RECORDS:
@@ -183,7 +183,7 @@ public abstract class AbstractProvider extends ContentProvider {
     @Override
     public synchronized int delete(Uri uri, String selection, String[] selectionArgs) {
         int uriType = uriType(uri);
-        SQLiteDatabase database = mDatabaseHelper.getWritableDatabase();
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
         int rowsDeleted;
 
         switch (uriType) {
