@@ -12,6 +12,8 @@ apply plugin: 'crashlytics'
 
 repositories {
     maven { url 'http://download.crashlytics.com/maven' }
+    maven { url 'https://raw.githubusercontent.com/Goddchen/mvn-repo/master/' }
+
 }
 
 
@@ -49,4 +51,5 @@ dependencies {
     compile 'org.ocpsoft.prettytime:prettytime:3.2.5.Final'
     compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.2'
     compile 'com.jakewharton:butterknife:5.1.2'
+    compile 'com.jeremyfeinstein.slidingmenu:slidingmenu:1.3-SNAPSHOT'
 }

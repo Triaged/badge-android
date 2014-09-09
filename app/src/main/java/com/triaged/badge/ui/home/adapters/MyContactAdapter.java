@@ -23,6 +23,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.ui.home.MessageShowActivity;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 
@@ -31,6 +32,8 @@ import java.util.Arrays;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
+import butterknife.Optional;
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
 /**
@@ -43,9 +46,13 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
     private float densityMultiplier = 1;
     private LayoutInflater inflater;
+    private int mResourceId;
+    private Context mContext;
 
-    public MyContactAdapter(Context context, Cursor cursor) {
+    public MyContactAdapter(Context context, Cursor cursor, int resourceId) {
         super(context, cursor, false);
+        mResourceId = resourceId;
+        mContext = context;
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
     }
@@ -53,42 +60,9 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
     @Override
     public View newView(final Context context, Cursor cursor, ViewGroup parent) {
-        View row = inflater.inflate(R.layout.item_contact_with_msg, parent, false);
+        View row = inflater.inflate(mResourceId, parent, false);
         final ViewHolder holder = new ViewHolder(row);
         row.setTag(holder);
-
-        holder.messageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Integer[] recipientIds = new Integer[] {holder.contactId,
-                        App.dataProviderServiceBinding.getLoggedInUser().id};
-                Arrays.sort(recipientIds);
-                new AsyncTask<Void, Void, String>() {
-                    @Override
-                    protected String doInBackground(Void... params) {
-                        try {
-                            return App.dataProviderServiceBinding.createThreadSync(recipientIds);
-                        } catch (JSONException e) {
-                            Toast.makeText(context, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                        } catch (IOException e) {
-                            Toast.makeText(context, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    protected void onPostExecute(String threadId) {
-                        if (threadId != null) {
-                            Intent intent = new Intent(context, MessageShowActivity.class);
-                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            context.startActivity(intent);
-                        }
-                    }
-                }.execute();
-
-            }
-        });
 
         return row;
     }
@@ -173,8 +147,41 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         @InjectView(R.id.contact_name) TextView nameTextView;
         @InjectView(R.id.contact_title) TextView titleTextView;
         @InjectView(R.id.contact_thumb) ImageView thumbImage;
-        @InjectView(R.id.message_contact) ImageButton messageButton;
+        @Optional @InjectView(R.id.message_contact) ImageButton messageButton;
         @InjectView(R.id.no_photo_thumb) TextView noPhotoThumb;
+
+        @Optional
+        @OnClick(R.id.message_contact)
+        void sendMessage() {
+            final Integer[] recipientIds = new Integer[]{contactId,
+                    App.dataProviderServiceBinding.getLoggedInUser().id};
+            Arrays.sort(recipientIds);
+            new AsyncTask<Void, Void, String>() {
+                @Override
+                protected String doInBackground(Void... params) {
+                    try {
+                        return App.dataProviderServiceBinding.createThreadSync(recipientIds);
+                    } catch (JSONException e) {
+                        Toast.makeText(mContext, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                    } catch (IOException e) {
+                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(String threadId) {
+                    if (threadId != null) {
+                        //TODO: should not create new activity,
+                        // just update the thread id and refresh the fragment.
+                        Intent intent = new Intent(mContext, MessagingActivity.class);
+                        intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        mContext.startActivity(intent);
+                    }
+                }
+            }.execute();
+        }
 
         ViewHolder(View row) {
             ButterKnife.inject(this, row);

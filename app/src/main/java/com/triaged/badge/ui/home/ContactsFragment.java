@@ -115,7 +115,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
         View root =  inflater.inflate(R.layout.fragment_contacts, container, false);
         ButterKnife.inject(this, root);
 
-        contactsAdapter = new MyContactAdapter(getActivity(), null);
+        contactsAdapter = new MyContactAdapter(getActivity(), null, R.layout.item_contact_with_msg);
         departmentAdapter = new MyDepartmentAdapter(getActivity(), null);
 
         contactsListView.setAdapter(contactsAdapter);
