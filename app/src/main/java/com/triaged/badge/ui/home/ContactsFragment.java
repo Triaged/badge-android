@@ -150,6 +150,17 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
             }
         });
 
+        departmentsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MyDepartmentAdapter.ViewHolder viewHolder = (MyDepartmentAdapter.ViewHolder) view.getTag();
+                Intent intent = new Intent(getActivity(), ContactsForDepartmentActivity.class);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_ID_EXTRA, viewHolder.id);
+                intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_NAME_EXTRA, viewHolder.name);
+                startActivity(intent);
+            }
+        });
+
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 

@@ -45,16 +45,21 @@ public class MyDepartmentAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        String name = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.COLUMN_DEPARTMENT_NAME));
+        ViewHolder holder = (ViewHolder) view.getTag();
+
+        holder.name = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.COLUMN_DEPARTMENT_NAME));
+        holder.id = cursor.getInt(cursor.getColumnIndexOrThrow(DepartmentsTable.COLUMN_ID));
         String numberOfContacts = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS));
 
-        ViewHolder holder = (ViewHolder) view.getTag();
-        holder.deptNameView.setText(name);
+        holder.deptNameView.setText(holder.name);
         holder.deptCountView.setText(String.valueOf(numberOfContacts));
     }
 
 
-    class ViewHolder {
+    public class ViewHolder {
+        public String name;
+        public int id;
+
         @InjectView(R.id.dept_name) TextView deptNameView;
         @InjectView(R.id.dept_count) TextView deptCountView;
 

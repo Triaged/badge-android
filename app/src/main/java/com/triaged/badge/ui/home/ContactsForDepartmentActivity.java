@@ -24,6 +24,8 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
     public static final String DEPARTMENT_NAME_EXTRA = "DEPARTMENT_NAME";
     public static final String DEPARTMENT_ID_EXTRA = "DEPARTMENT_ID";
 
+    private int departmentId;
+
     private ListView contactsForDepartmentList;
     private ContactsWithoutHeadingsAdapter adapter;
 
@@ -51,16 +53,15 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
             }
         });
 
-        Intent intent = getIntent();
-        String departmentName = intent.getStringExtra(DEPARTMENT_NAME_EXTRA);
+        Bundle extra = getIntent().getExtras();
+        String departmentName = extra.getString(DEPARTMENT_NAME_EXTRA);
+        departmentId = extra.getInt(DEPARTMENT_ID_EXTRA);
         backButton.setText(departmentName);
 
     }
 
     @Override
     protected void onDatabaseReady() {
-        Intent intent = getIntent();
-        int departmentId = intent.getIntExtra(DEPARTMENT_ID_EXTRA, 0);
         Cursor deptCursor = dataProviderServiceBinding.getContactsByDepartmentCursor(departmentId);
         adapter = new ContactsWithoutHeadingsAdapter(this, deptCursor, dataProviderServiceBinding);
         contactsForDepartmentList.setAdapter(adapter);
