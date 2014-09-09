@@ -19,6 +19,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.ui.home.adapters.MyMessagesAdapter;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 import com.triaged.badge.ui.notification.Notifier;
 
 import butterknife.ButterKnife;
@@ -39,10 +40,8 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
 
     @OnItemClick(R.id.messages_list)
     void messageItemClicked(AdapterView<?> parent, View view, int position, long id) {
-        Intent intent = new Intent(getActivity(), MessageShowActivity.class);
-        intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).threadId);
-        intent.putExtra(MessageShowActivity.SHOW_KEYBOARD_EXTRA, false);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        Intent intent = new Intent(getActivity(), MessagingActivity.class);
+        intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).threadId);
         startActivity(intent);
     }
 

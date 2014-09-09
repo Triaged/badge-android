@@ -21,7 +21,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
@@ -71,6 +70,13 @@
             android:screenOrientation="portrait"
             android:theme="@style/Tabbed"
             android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.triaged.badge.ui.messaging.MessagingActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Badge"
+            android:windowSoftInputMode="stateHidden">
+        </activity>
+
         <activity
             android:name="com.triaged.badge.ui.entrance.ForgotPasswordActivity"
             android:label="@string/app_name"
@@ -199,26 +205,23 @@
             </intent-filter>
         </receiver>
 
-        <!--CONTENT PROVIDERS-->
+        <!-- CONTENT PROVIDERS -->
 
         <provider
             android:name="com.triaged.badge.database.provider.ContactProvider"
             android:authorities="com.triaged.badge.provider.contacts"
             android:enabled="true"
             android:exported="false" />
-
         <provider
             android:name="com.triaged.badge.database.provider.DepartmentProvider"
             android:authorities="com.triaged.badge.provider.departments"
             android:enabled="true"
             android:exported="false" />
-
         <provider
             android:name="com.triaged.badge.database.provider.MessageProvider"
             android:authorities="com.triaged.badge.provider.messages"
             android:enabled="true"
             android:exported="false" />
-
         <provider
             android:name="com.triaged.badge.database.provider.OfficeLocationProvider"
             android:authorities="com.triaged.badge.provider.office_location"
