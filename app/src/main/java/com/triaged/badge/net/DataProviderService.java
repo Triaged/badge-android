@@ -3,6 +3,7 @@ package com.triaged.badge.net;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +15,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -27,14 +27,17 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.util.LruCache;
-import android.view.View;
 import android.webkit.MimeTypeMap;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
+import com.triaged.badge.database.helper.MessageHelper;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.DepartmentProvider;
+import com.triaged.badge.database.provider.MessageProvider;
+import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
@@ -44,26 +47,19 @@ import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
-import com.triaged.badge.ui.entrance.LoginActivity;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
@@ -210,7 +206,7 @@ public class DataProviderService extends Service {
             DepartmentsTable.COLUMN_DEPARTMENT_NAME);
 
     protected static final String CLEAR_DEPARTMENTS_SQL = String.format("DELETE FROM %s;", DepartmentsTable.TABLE_NAME);
-    protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s;", ContactsTable.TABLE_NAME);
+    //    protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s;", ContactsTable.TABLE_NAME);
     protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format("DELETE FROM %s;", OfficeLocationsTable.TABLE_NAME);
     protected static final String CLEAR_MESSAGES_SQL = String.format("DELETE FROM %s;", MessagesTable.TABLE_NAME);
     protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
@@ -417,9 +413,14 @@ public class DataProviderService extends Service {
                         setContactDBValesFromJSON(user, values);
                         Contact newContact = getContact(user.getInt("id"));
                         if (newContact == null) {
-                            database.insert(ContactsTable.TABLE_NAME, null, values);
+                            getContentResolver().insert(ContactProvider.CONTENT_URI, values);
+//                            database.insert(ContactsTable.TABLE_NAME, null, values);
                         } else {
-                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{user.getString("id")});
+                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                    ContactsTable.COLUMN_ID + " = ?",
+                                    new String[]{user.getString("id")});
+//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID),
+//                                    new String[]{user.getString("id")});
                         }
                         values.clear();
                     }
@@ -444,7 +445,8 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         JSONObject location = parseJSONResponse(response.getEntity());
                         setOfficeLocationDBValuesFromJSON(location, values);
-                        database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
+                        getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
+//                                database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                         values.clear();
 
                     }
@@ -469,7 +471,8 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         JSONObject dept = parseJSONResponse(response.getEntity());
                         setDepartmentBValuesFromJSON(dept, values);
-                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
+                        getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
+//                                database.insert(DepartmentsTable.TABLE_NAME, null, values);
                         values.clear();
                     }
                 } catch (IOException e) {
@@ -515,9 +518,13 @@ public class DataProviderService extends Service {
                             setContactDBValesFromJSON(newContact, values);
                             Contact c = getContact(newContact.getInt("id"));
                             if (c == null) {
-                                database.insert(ContactsTable.TABLE_NAME, null, values);
+                                getContentResolver().insert(ContactProvider.CONTENT_URI, values);
+//                                database.insert(ContactsTable.TABLE_NAME, null, values);
                             } else {
-                                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{newContact.getString("id")});
+                                getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                        ContactsTable.COLUMN_ID + " =?",
+                                        new String[] { newContact.getString("id")});
+//                                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{newContact.getString("id")});
                             }
                             values.clear();
                         }
@@ -542,9 +549,8 @@ public class DataProviderService extends Service {
      * <p/>
      * Notifies listeners via local broadcast that data has been updated with the {@link #DB_UPDATED_ACTION}
      *
-     * @param db
      */
-    protected void syncCompany(SQLiteDatabase db) {
+    protected void syncCompany() {
         ConnectivityManager cMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cMgr.getActiveNetworkInfo();
         if (info == null || !info.isConnected()) {
@@ -557,15 +563,19 @@ public class DataProviderService extends Service {
         lastSynced = System.currentTimeMillis();
         prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
         try {
-            db.beginTransaction();
+//            db.beginTransaction();
             HttpResponse response = apiClient.downloadCompanyRequest(0 /* Get all contacts */);
             ensureNotUnauthorized(response);
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
-                    db.execSQL(CLEAR_CONTACTS_SQL);
-                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
-                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
+                    getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
+                    getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
+                    getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
+
+//                    db.execSQL(CLEAR_CONTACTS_SQL);
+//                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
+//                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
 
                     JSONObject companyObj = parseJSONResponse(response.getEntity());
                     ContentValues values = new ContentValues();
@@ -575,7 +585,8 @@ public class DataProviderService extends Service {
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
                         setContactDBValesFromJSON(newContact, values);
-                        db.insert(ContactsTable.TABLE_NAME, null, values);
+                        getContentResolver().insert(ContactProvider.CONTENT_URI, values);
+//                        db.insert(ContactsTable.TABLE_NAME, null, values);
                         values.clear();
                     }
 
@@ -585,7 +596,8 @@ public class DataProviderService extends Service {
                         for (int i = 0; i < deptsLength; i++) {
                             JSONObject dept = deptsArr.getJSONObject(i);
                             setDepartmentBValuesFromJSON(dept, values);
-                            db.insert(DepartmentsTable.TABLE_NAME, null, values);
+                            getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
+//                            db.insert(DepartmentsTable.TABLE_NAME, null, values);
                             values.clear();
                         }
                     }
@@ -596,7 +608,8 @@ public class DataProviderService extends Service {
                         for (int i = 0; i < locationsLength; i++) {
                             JSONObject location = locations.getJSONObject(i);
                             setOfficeLocationDBValuesFromJSON(location, values);
-                            db.insert(OfficeLocationsTable.TABLE_NAME, null, values);
+                            getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
+//                            db.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                             values.clear();
                         }
                     }
@@ -613,14 +626,14 @@ public class DataProviderService extends Service {
                 }
             }
 
-            db.setTransactionSuccessful();
+//            db.setTransactionSuccessful();
             updated = true;
         } catch (IOException e) {
             App.gLogger.e("IO exception downloading company that should be handled more softly than this.", e);
         } catch (JSONException e) {
             App.gLogger.e("JSON from server not formatted correctly. Either we shouldn't have expected JSON or this is an api bug.", e);
         } finally {
-            db.endTransaction();
+//            db.endTransaction();
         }
         if (updated && initialized) {
             localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
@@ -784,52 +797,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Draws the contact's thumb as a bitmap in to the specified image view.
-     * <p/>
-     * First, a small in memory cache is consulted to see if the bitmap is available, and if
-     * so, the bitmap is synchronously drawn in to the image view.
-     * <p/>
-     * If not, a much larger disk cache is consulted asynchronously, and if it is, the bitmap is decoded
-     * and stored in the memory cache before being drawn back on the main thread.
-     * <p/>
-     * If not in the disk cache, as a last resort, the image is downloaded in the BG and
-     * placed in to the disk and memory caches.
-     * <p/>
-     * If a placeholder view is specified, it will be hidden
-     *
-     * @param avatarUrl       url of avatar img
-     * @param thumbImageView  the view to set the image on.
-     * @param placeholderView null or a view that should be hidden once the image has been set.
-     */
-    protected void setSmallContactImage(String avatarUrl, View thumbImageView, View placeholderView) {
-        if (avatarUrl == null) {
-            return;
-        }
-        Bitmap b = thumbCache.get(avatarUrl);
-        if (b != null) {
-            // Hooray!
-            assignBitmapToView(b, thumbImageView);
-            if (placeholderView != null) {
-                placeholderView.setVisibility(View.GONE);
-            }
-        } else {
-            new LoadImageAsyncTask(avatarUrl, thumbImageView, placeholderView, thumbCache).execute();
-        }
-    }
-
-    /**
-     * Downloads the image each time it's called and sets the bitmap resource on the imageview.
-     * <p/>
-     * TODO This should use the same disk cache as the small contact image once that's implemented.
-     *
-     * @param c         contact
-     * @param imageView
-     */
-    protected void setLargeContactImage(Contact c, ImageView imageView) {
-        new LoadImageAsyncTask(c.avatarUrl, imageView, null).execute();
-    }
-
-    /**
      * Query the db to get a cursor to the latest set of all contacts.
      * Caller is responsible for closing the cursor when finished.
      *
@@ -900,18 +867,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Helper that sets a bitmap to a plain ole {@link android.widget.ImageView}
-     *
-     * @param b
-     * @param v
-     */
-    protected void assignBitmapToView(Bitmap b, View v) {
-        if (v instanceof ImageView) {
-            ((ImageView) v).setImageBitmap(b);
-        }
-    }
-
-    /**
      * When the service detects that there is no active user
      * or api token, it calls this function.
      * <p/>
@@ -954,16 +909,6 @@ public class DataProviderService extends Service {
 //        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
 //        mixpanelAPI.clearSuperProperties();
 //        apiClient.apiToken = "";
-    }
-
-    private void notifyUILoggedOut() {
-        // Start the login activity
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-
-        // Tell other activities to close.
-        localBroadcastManager.sendBroadcast(new Intent(LOGGED_OUT_ACTION));
     }
 
     protected void changePassword(final String currentPassword, final String newPassword, final String newPasswordConfirmation, final AsyncSaveCallback saveCallback) {
@@ -1186,7 +1131,7 @@ public class DataProviderService extends Service {
                                 });
                             }
 
-                            syncCompany(database);
+                            syncCompany();
                             syncMessagesSync();
                             startService(new Intent(DataProviderService.this, FayeService.class));
                         } catch (JSONException e) {
@@ -1254,7 +1199,10 @@ public class DataProviderService extends Service {
                             JSONObject contact = parseJSONResponse(response.getEntity());
                             ContentValues values = new ContentValues();
                             setContactDBValesFromJSON(contact, values);
-                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(contactId)});
+                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                    ContactsTable.COLUMN_ID + " =?",
+                                    new String[]{contactId + ""});
+//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(contactId)});
                             localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
                         } catch (JSONException e) {
                             Log.w(LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e);
@@ -1293,7 +1241,10 @@ public class DataProviderService extends Service {
                         if (status == HttpStatus.SC_OK) {
                             ContentValues values = new ContentValues();
                             values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
-                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                    ContactsTable.COLUMN_ID + " =?",
+                                    new String[] { loggedInUser.id + ""});
+//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                             loggedInUser.currentOfficeLocationId = officeId;
                         } else {
                             Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
@@ -1343,7 +1294,12 @@ public class DataProviderService extends Service {
             if (status == HttpStatus.SC_OK) {
                 ContentValues values = new ContentValues();
                 values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
-                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+
+                getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                        ContactsTable.COLUMN_ID + " =?",
+                        new String[] { loggedInUser + ""});
+
+//                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                 loggedInUser.currentOfficeLocationId = -1;
             } else {
                 Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
@@ -1364,7 +1320,7 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 try {
-                    database = databaseHelper.getWritableDatabase();
+                    database = databaseHelper.getReadableDatabase();
 
                     int loggedInContactId = prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1);
                     if (loggedInContactId > 0) {
@@ -1381,7 +1337,7 @@ public class DataProviderService extends Service {
 
                     // If there's a logged in user, sync the whole company.
                     if (!apiClient.apiToken.isEmpty()) {
-                        syncCompany(database);
+                        syncCompany();
 
                         // Edge case avoided here, user was unauthorized
                         // and now db is empty, this is null.
@@ -1532,7 +1488,11 @@ public class DataProviderService extends Service {
                         setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
 
 
-                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { loggedInUser.id + ""});
+
+//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1598,7 +1558,11 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingLocation ? 1 : 0);
 
-                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { loggedInUser.id + ""});
+
+//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1678,7 +1642,11 @@ public class DataProviderService extends Service {
                             values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateString));
                         }
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { loggedInUser.id + ""});
+
+//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1741,7 +1709,11 @@ public class DataProviderService extends Service {
                         ContentValues values = new ContentValues();
                         values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation);
                         //values.put( CompanySQLiteHelper.COL)
-                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { loggedInUser.id + ""});
+
+//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -1806,7 +1778,8 @@ public class DataProviderService extends Service {
                         values.put(DepartmentsTable.COLUMN_ID, departmentId);
                         values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
                         values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
-                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
+                        getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
+//                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1889,7 +1862,9 @@ public class DataProviderService extends Service {
                         values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
                         values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
                         values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
-                        database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
+
+                        getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
+//                                database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
                                 @Override
@@ -1970,7 +1945,11 @@ public class DataProviderService extends Service {
                         values.put(ContactsTable.COLUMN_CONTACT_JOB_TITLE, jobTitle);
                         values.put(ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
                         values.put(ContactsTable.COLUMN_CONTACT_MANAGER_ID, managerId);
-                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { loggedInUser.id + ""});
+
+//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
                         loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                         if (saveCallback != null) {
                             handler.post(new Runnable() {
@@ -2005,9 +1984,9 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 ContentValues msgValues = new ContentValues();
-                database.beginTransaction();
+//                database.beginTransaction();
                 try {
-                    clearThreadHead(threadId, msgValues);
+                    clearThreadHead(threadId);
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     final String guid = UUID.randomUUID().toString();
@@ -2023,8 +2002,10 @@ public class DataProviderService extends Service {
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_GUID, guid);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
-                    database.insert(MessagesTable.TABLE_NAME, null, msgValues);
-                    database.setTransactionSuccessful();
+
+                    getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
+//                            database.insert(MessagesTable.TABLE_NAME, null, msgValues);
+//                    database.setTransactionSuccessful();
                     sendMessageToFaye(timestamp, guid, threadId, message);
 
                 } catch (JSONException e) {
@@ -2032,7 +2013,7 @@ public class DataProviderService extends Service {
                     App.gLogger.e("Severe bug, JSON exception parsing user id array from prefs", e);
                     return;
                 } finally {
-                    database.endTransaction();
+//                    database.endTransaction();
                 }
                 Intent newMsgIntent = new Intent(NEW_MSG_ACTION);
                 newMsgIntent.putExtra(THREAD_ID_EXTRA, threadId);
@@ -2081,12 +2062,18 @@ public class DataProviderService extends Service {
                 if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
                     ContentValues values = new ContentValues();
                     values.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED);
-                    int rowsUpdated = database.update(
-                            MessagesTable.TABLE_NAME,
-                            values,
-                            String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID),
-                            new String[]{guid}
-                    );
+
+
+                    int rowsUpdated = getContentResolver().update(MessageProvider.CONTENT_URI, values,
+                            MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                            new String[] { guid});
+
+//                    int rowsUpdated = database.update(
+//                            MessagesTable.TABLE_NAME,
+//                            values,
+//                            String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID),
+//                            new String[]{guid}
+//                    );
                     if (rowsUpdated == 1) {
                         Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
                         ackIntent.putExtra(MESSAGE_ID_EXTRA, guid);
@@ -2119,7 +2106,11 @@ public class DataProviderService extends Service {
                     // Flip back to pending status.
                     ContentValues msgValues = new ContentValues();
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
-                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{guid});
+                    getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
+                            MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                            new String[] { guid});
+
+//                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{guid});
                     String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
                     String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
                     long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP));
@@ -2154,12 +2145,18 @@ public class DataProviderService extends Service {
             public void run() {
                 ContentValues values = new ContentValues();
                 values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
-                database.update(
-                        MessagesTable.TABLE_NAME,
-                        values,
-                        String.format("%s = ? AND %s = 1", MessagesTable.COLUMN_MESSAGES_THREAD_ID, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD),
-                        new String[]{threadId}
-                );
+
+                getContentResolver().update(MessageProvider.CONTENT_URI, values,
+                        MessagesTable.COLUMN_MESSAGES_THREAD_ID +   " =? AND " +
+                                MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1",
+                        new String[] { threadId});
+
+//                database.update(
+//                        MessagesTable.TABLE_NAME,
+//                        values,
+//                        String.format("%s = ? AND %s = 1", MessagesTable.COLUMN_MESSAGES_THREAD_ID, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD),
+//                        new String[]{threadId}
+//                );
             }
         });
     }
@@ -2214,7 +2211,7 @@ public class DataProviderService extends Service {
      */
     protected void upsertThreadAndMessages(final JSONObject thread, final boolean broadcast) {
         String threadId;
-        database.beginTransaction();
+//        database.beginTransaction();
         try {
             threadId = thread.getString("id");
             JSONArray userIds = thread.getJSONArray("user_ids");
@@ -2224,55 +2221,29 @@ public class DataProviderService extends Service {
             prefs.edit().putString(userIdsList, threadId).putString(threadId, userIds.toString()).commit();
 
             JSONArray msgArray = thread.getJSONArray("messages");
-            int numMessages = msgArray.length();
-            ContentValues msgValues = new ContentValues();
-            msgValues.clear();
             long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
-            for (int i = 0; i < numMessages; i++) {
+
+            ArrayList<ContentProviderOperation> dbOperations =
+                    new ArrayList<ContentProviderOperation>(msgArray.length());
+            for (int i = 0; i < msgArray.length(); i++) {
                 JSONObject msg = msgArray.getJSONObject(i);
+                //TODO: why nano? those zeros at the end of timestamp
+                // does not make it unique number!
                 long timestamp = (long) (msg.getDouble("timestamp") * 1000000d) /* nanos */;
                 if (timestamp > mostRecentMsgTimestamp) {
                     mostRecentMsgTimestamp = timestamp;
                 }
-                String messageId = msg.getString("id");
-                String guid = msg.getString("guid");
-                String[] messageSelector = new String[]{messageId, guid};
-                Cursor msgCursor = database.rawQuery(QUERY_MESSAGE_SQL, messageSelector);
-                if (msgCursor.getCount() > 0) {
-                    msgCursor.moveToFirst();
-                    if (msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) != MSG_STATUS_ACKNOWLEDGED) {
-                        msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
-                        msgValues.put(MessagesTable.COLUMN_MESSAGES_ID, messageId);
-                        msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
-
-                        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ? OR %s = ?", MessagesTable.COLUMN_MESSAGES_ID, MessagesTable.COLUMN_MESSAGES_GUID), messageSelector);
-                        // Callback that msg is confirmed?
-                        Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
-                        ackIntent.putExtra(MESSAGE_ID_EXTRA, messageId);
-                        ackIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                        localBroadcastManager.sendBroadcast(ackIntent);
-                    }
-                } else {
-                    setMessageContentValuesFromJSON(threadId, msg, msgValues);
-                    database.insert(MessagesTable.TABLE_NAME, null, msgValues);
-                    if (broadcast) {
-                        Intent newMessageIntent = new Intent(NEW_MSG_ACTION);
-                        Contact fromContact = getContact(msgValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID));
-                        newMessageIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                        newMessageIntent.putExtra(IS_INCOMING_MSG_EXTRA, true);
-                        if (fromContact != null) {
-                            newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, fromContact.firstName);
-                        } else {
-                            newMessageIntent.putExtra(MESSAGE_FROM_EXTRA, "Someone");
-                        }
-
-                        newMessageIntent.putExtra(MESSAGE_BODY_EXTRA, msgValues.getAsString(MessagesTable.COLUMN_MESSAGES_BODY));
-                        localBroadcastManager.sendBroadcast(newMessageIntent);
-                    }
-
-                }
-                msgValues.clear();
+                ContentValues contentValues = MessageHelper.setMessageContentValuesFromJSON(threadId, msg);
+                dbOperations.add(ContentProviderOperation.newInsert(
+                        MessageProvider.CONTENT_URI).
+                        withValues(contentValues).
+                        build());
+//                getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
             }
+
+            getContentResolver().applyBatch(MessageProvider.AUTHORITY, dbOperations);
+
+
             // If I'm honest, this switch isn't intended to be used this way,
             // but the idea here is only update the timestamp on history sync
             // so that all messages will eventually be dl'd no matter what.
@@ -2297,22 +2268,24 @@ public class DataProviderService extends Service {
                 }
                 messages.close();
                 // Unset thread head on all thread messages.
-                clearThreadHead(threadId, msgValues);
+                clearThreadHead(threadId);
 
+                ContentValues msgValues = new ContentValues();
                 msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
                 msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
                 msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
-                database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{mostRecentGuid});
+
+                getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
+                        MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                        new String[] { mostRecentGuid});
+
             } else {
                 messages.close();
             }
-            database.setTransactionSuccessful();
         } catch (JSONException e) {
             App.gLogger.e("Malformed JSON back from faye.");
         } catch (Throwable wtf) {
             App.gLogger.e("Couldn't insert message and it's causing all kinds of problems.", wtf);
-        } finally {
-            database.endTransaction();
         }
     }
 
@@ -2357,11 +2330,16 @@ public class DataProviderService extends Service {
         return null;
     }
 
-    protected void clearThreadHead(String threadId, ContentValues msgValues) {
+    protected void clearThreadHead(String threadId) {
+        ContentValues msgValues = new ContentValues();
         msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 0);
         msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, (String) null);
         msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String) null);
-        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_THREAD_ID), new String[]{threadId});
+        getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
+                MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
+                new String[] { threadId});
+
+//        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_THREAD_ID), new String[]{threadId});
         msgValues.clear();
     }
 
@@ -2384,17 +2362,6 @@ public class DataProviderService extends Service {
         }
         throw new IllegalStateException("getMessages() called before database available.");
 
-    }
-
-    private static void setMessageContentValuesFromJSON(String threadId, JSONObject msg, ContentValues msgValues) throws JSONException {
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_ACKNOWLEDGED);
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_ID, msg.getString("id"));
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_FROM_ID, msg.getInt("author_id"));
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_ID, threadId);
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, msg.getString("body"));
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, (long) (msg.getDouble("timestamp") * 1000000d));
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_GUID, msg.getString("guid"));
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 0);
     }
 
     /**
@@ -2551,27 +2518,6 @@ public class DataProviderService extends Service {
          */
         public Contact getContact(int contactId) {
             return DataProviderService.this.getContact(contactId);
-        }
-
-        /**
-         * @see DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
-         */
-        public void setSmallContactImage(Contact c, View thumbImageView, View placeholderView) {
-            DataProviderService.this.setSmallContactImage(c.avatarUrl, thumbImageView, placeholderView);
-        }
-
-        /**
-         * @see DataProviderService#setSmallContactImage(String, android.view.View, android.view.View)
-         */
-        public void setSmallContactImage(String avatarUrl, View thumbImageView, View placeholderView) {
-            DataProviderService.this.setSmallContactImage(avatarUrl, thumbImageView, placeholderView);
-        }
-
-        /**
-         * @see DataProviderService#setLargeContactImage(com.triaged.badge.models.Contact, android.widget.ImageView)
-         */
-        public void setLargeContactImage(Contact c, ImageView imageView) {
-            DataProviderService.this.setLargeContactImage(c, imageView);
         }
 
         /**
@@ -2811,147 +2757,6 @@ public class DataProviderService extends Service {
             DataProviderService.this.saveSharingLocationAsync(sharingLocation, saveCallback);
         }
 
-    }
-
-
-    /**
-     * Background task to fetch an image first from a disk cache,
-     * and if not there yet, the server, set it as the resource
-     * for an image view, and keep it in disk and mem cache for the future
-     */
-    private class LoadImageAsyncTask extends AsyncTask<Void, Void, Void> {
-        private String urlStr = null;
-        private View thumbView = null;
-        private View placeholderView;
-        private LruCache<String, Bitmap> memoryCache = null;
-
-
-        /**
-         * Task won't save images in a memory cache.
-         *
-         * @param url
-         * @param thumbView
-         */
-        protected LoadImageAsyncTask(String url, View thumbView, View placeholderView) {
-            this(url, thumbView, placeholderView, null);
-        }
-
-        /**
-         * Task will save images in a memory cache.
-         *
-         * @param url             img url.
-         * @param thumbView       view on which to set the bitmap once downloaded.
-         * @param placeholderView view to hide if we successfully download the image and set it on the view.
-         * @param memoryCache     cache to put image in to after downloading.
-         */
-        protected LoadImageAsyncTask(String url, View thumbView, View placeholderView, LruCache<String, Bitmap> memoryCache) {
-            this.urlStr = url;
-            this.thumbView = thumbView;
-            this.memoryCache = memoryCache;
-            this.placeholderView = placeholderView;
-        }
-
-        protected String getUrlHash() {
-            return String.valueOf(urlStr.hashCode());
-        }
-
-        protected Bitmap loadBitmapFromDisk() {
-            try {
-                synchronized (mDiskCacheLock) {
-                    // Wait while disk cache is started from background thread
-                    while (mDiskCacheStarting) {
-                        try {
-                            mDiskCacheLock.wait();
-                        } catch (InterruptedException e) {
-                            return null;
-                        }
-                    }
-                    if (mDiskLruCache != null) {
-                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(getUrlHash());
-                        if (snapshot != null) {
-                            BufferedInputStream stream = new BufferedInputStream(snapshot.getInputStream(0));
-                            Bitmap bitmap = BitmapFactory.decodeStream(stream);
-                            stream.close();
-                            return bitmap;
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // OK... ?
-                App.gLogger.e("Error reading from disk cache", e);
-            }
-            return null;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // Is it in disk cache?
-
-            Bitmap bitmap = loadBitmapFromDisk();
-
-
-            if (bitmap == null) {
-                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-                if (info != null && info.isConnected()) {
-
-                    try {
-                        URI uri = new URI(urlStr);
-                        HttpGet imageGet = new HttpGet(uri);
-                        HttpHost host = new HttpHost(uri.getHost());
-                        HttpResponse response = httpClient.execute(host, imageGet);
-                        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                            // Add full sized img to disk cache.
-                            synchronized (mDiskCacheLock) {
-                                if (mDiskLruCache != null && !mDiskCacheStarting) {
-                                    DiskLruCache.Editor editor = mDiskLruCache.edit(getUrlHash());
-                                    OutputStream out = editor.newOutputStream(0);
-                                    if (out != null) {
-                                        response.getEntity().writeTo(out);
-                                        out.close();
-                                        editor.commit();
-                                        bitmap = loadBitmapFromDisk();
-                                    }
-                                }
-                            }
-                        } else {
-                            if (response.getEntity() != null) {
-                                response.getEntity().consumeContent();
-                            }
-                        }
-                    } catch (URISyntaxException e) {
-                        // Womp womp
-                        App.gLogger.e("Either we got a bad URL from the api or we did something stupid", e);
-                    } catch (IOException e) {
-                        Log.w(LOG_TAG, "Network issue reading image data", e);
-                    }
-                }
-            }
-
-            if (bitmap != null) {
-                final Bitmap scaledBitmap = thumbView.getWidth() > 0 ? Bitmap.createScaledBitmap(bitmap, thumbView.getWidth(), thumbView.getHeight(), false) : bitmap;
-
-                if (memoryCache != null) {
-                    memoryCache.put(urlStr, scaledBitmap);
-                }
-
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        assignBitmapToView(scaledBitmap, thumbView);
-                        if (placeholderView != null) {
-                            placeholderView.setVisibility(View.GONE);
-                        }
-
-                    }
-                });
-
-            } else {
-                Log.w(LOG_TAG, "Bitmap from " + urlStr + " was null. No network? Bad image data?");
-            }
-
-            return null;
-        }
     }
 
     /**
