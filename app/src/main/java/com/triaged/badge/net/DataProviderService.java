@@ -107,7 +107,7 @@ public class DataProviderService extends Service {
                     DepartmentsTable.TABLE_NAME,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
 
     protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
@@ -121,7 +121,7 @@ public class DataProviderService extends Service {
                     DepartmentsTable.COLUMN_ID,
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
                     ContactsTable.COLUMN_CONTACT_IS_ARCHIVED,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
 
     protected static final String QUERY_CONTACT_SQL =
@@ -158,7 +158,7 @@ public class DataProviderService extends Service {
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
                     ContactsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
     protected static final String QUERY_MANAGED_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
@@ -170,7 +170,7 @@ public class DataProviderService extends Service {
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
                     ContactsTable.COLUMN_CONTACT_MANAGER_ID,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME
+                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
     protected static final String QUERY_THREADS_SQL =
             String.format("SELECT * from %s WHERE %s = 1 order by %s DESC",

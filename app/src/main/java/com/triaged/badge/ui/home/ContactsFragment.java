@@ -189,7 +189,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
             if (mSearchTerm == null) {
                 return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
                         null, ContactsTable.COLUMN_CONTACT_IS_ARCHIVED + " = 0", null,
-                        ContactsTable.COLUMN_CONTACT_LAST_NAME);
+                        ContactsTable.COLUMN_CONTACT_FIRST_NAME);
             } else {
                 String filterString = "%" + mSearchTerm + "%";
                 return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
@@ -198,7 +198,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
                         ContactsTable.COLUMN_CONTACT_FIRST_NAME + " LIKE ?  AND " +
                         ContactsTable.COLUMN_CONTACT_IS_ARCHIVED + " = 0"
                         , new String[] { filterString, filterString},
-                        ContactsTable.COLUMN_CONTACT_LAST_NAME);
+                        ContactsTable.COLUMN_CONTACT_FIRST_NAME);
             }
 
         } else if (id == DEPARTMENTS_TAB_ID) {

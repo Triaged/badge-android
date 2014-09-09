@@ -67,7 +67,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
         }
 
         Contact c = getCachedContact(position);
-        String headerText = "" + c.lastName.subSequence(0, 1).charAt(0);
+        String headerText = "" + c.firstName.subSequence(0, 1).charAt(0);
         holder.textView.setText(headerText);
 
         return convertView;
@@ -172,7 +172,7 @@ public class ContactsAdapter extends CursorAdapter implements StickyListHeadersA
 
     @Override
     public long getHeaderId(int position) {
-        return getCachedContact(position).lastName.subSequence(0, 1).charAt(0);
+        return getCachedContact(position).firstName.subSequence(0, 1).charAt(0);
     }
 
     public Contact getCachedContact(int position) {
