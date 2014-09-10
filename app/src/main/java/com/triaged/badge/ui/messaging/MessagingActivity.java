@@ -54,7 +54,7 @@ public class MessagingActivity extends SlidingActivity {
             SlidingMenu sm = getSlidingMenu();
             sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
             sm.setShadowWidthRes(R.dimen.shadow_width);
-            sm.setShadowDrawable(R.drawable.shadow);
+            sm.setShadowDrawable(R.drawable.shadowright);
             sm.setBehindScrollScale(0.25f);
             sm.setFadeDegree(0.25f);
         }
