@@ -1,7 +1,10 @@
 package com.triaged.badge.ui.home;
 
 
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -17,6 +20,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.ui.base.MixpanelFragment;
 import com.triaged.badge.ui.base.views.ButtonWithFont;
@@ -24,7 +29,6 @@ import com.triaged.badge.ui.base.views.ProfileContactInfoView;
 import com.triaged.badge.ui.base.views.ProfileCurrentLocationView;
 import com.triaged.badge.ui.base.views.ProfileManagesUserView;
 import com.triaged.badge.ui.base.views.ProfileReportsToView;
-import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 import com.triaged.badge.ui.profile.MyProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
 import com.triaged.utils.GeneralUtils;
@@ -36,9 +40,11 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
-public class ProfileFragment extends MixpanelFragment {
+public class ProfileFragment extends MixpanelFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String CONTACT_ID_ARG = "contact_id_arg";
+    private static final int CONTACT_LOAD_REQUEST_ID = 0;
+    private static final int MANAGES_LOAD_REQUEST_ID = 1;
 
     private int mContactId;
     protected Contact contact = null;
@@ -122,9 +128,8 @@ public class ProfileFragment extends MixpanelFragment {
         ButterKnife.inject(this, root);
 
         contact =  App.dataProviderServiceBinding.getContact(mContactId);
-        setupProfile();
-        Cursor reportsCursor = getNewManagesContactsCursor();
-        replaceAndCreateManagedContacts(reportsCursor);
+        getLoaderManager().initLoader(CONTACT_LOAD_REQUEST_ID, null, this);
+        getLoaderManager().initLoader(MANAGES_LOAD_REQUEST_ID, null, this);
 
         return root;
     }
@@ -319,11 +324,12 @@ public class ProfileFragment extends MixpanelFragment {
 
         int iterator = 0;
         final int userId = App.dataProviderServiceBinding.getLoggedInUser().id;
-        while (reportsCursor.moveToNext()) {
+        if (reportsCursor.moveToFirst()) do {
             final ProfileManagesUserView newView = (ProfileManagesUserView) LayoutInflater.from(getActivity())
                     .inflate(R.layout.item_manages_contact, viewHolder, false);
             Contact newContact = new Contact();
-            newContact = ContactsAdapter.getCachedContact(reportsCursor);
+//            newContact = ContactsAdapter.getCachedContact(reportsCursor);
+            newContact.fromCursor(reportsCursor);
             newView.userId = userId;
             newView.setupView(newContact);
             newView.noPhotoThumb.setText(newContact.initials);
@@ -361,7 +367,7 @@ public class ProfileFragment extends MixpanelFragment {
             }
             viewHolder.addView(newView, indexOfHeader + iterator);
             iterator++;
-        }
+        } while (reportsCursor.moveToNext());
 
         if (reportsCursor.getCount() > 0) {
             managesHeader.setVisibility(View.VISIBLE);
@@ -371,8 +377,35 @@ public class ProfileFragment extends MixpanelFragment {
 
     }
 
-    protected Cursor getNewManagesContactsCursor() {
-        Cursor managedContactsCursor = App.dataProviderServiceBinding.getContactsManaged(contact.id);
-        return managedContactsCursor;
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (id == CONTACT_LOAD_REQUEST_ID) {
+            return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
+                    null, ContactsTable.COLUMN_ID + "=?",
+                    new String[]{mContactId + ""}, null);
+        } else {
+            return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
+                    null, ContactsTable.COLUMN_CONTACT_MANAGER_ID + "=?",
+                    new String[]{mContactId + ""}, null);
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (loader.getId() == CONTACT_LOAD_REQUEST_ID) {
+            if (data != null && data.getCount() > 0) {
+                data.moveToFirst();
+                contact = new Contact();
+                contact.fromCursor(data);
+                setupProfile();
+            }
+        } else {
+            replaceAndCreateManagedContacts(data);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }
