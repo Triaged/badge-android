@@ -51,6 +51,7 @@ public class ProfileCurrentLocationView extends View {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         Rect bounds = new Rect();
+        if (primaryPaint == null || primaryValue == null) return;
         primaryPaint.getTextBounds(primaryValue, 0, primaryValue.length(), bounds);
         if (isOn) {
             primaryPaint.setColor(onColor);
