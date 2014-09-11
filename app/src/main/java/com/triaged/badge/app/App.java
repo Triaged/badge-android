@@ -16,23 +16,31 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
+import com.triaged.badge.events.hasLogedinAndDatabaseIsReadyEvent;
 import com.triaged.badge.helpers.Foreground;
+import com.triaged.badge.models.Contact;
+import com.triaged.badge.net.ApiClient;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
+
+import de.greenrobot.event.EventBus;
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
+import retrofit.android.AndroidLog;
 
 /**
  * Custom implementation of the Android Application class that sets up global services and
  * plugins such as Google Analytics and Crashlytics.
- *
+ * <p/>
  * Created by Will on 7/7/14.
  */
 public class App extends Application {
 
-    private static final String TAG = App.class.getName();
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
@@ -43,7 +51,7 @@ public class App extends Application {
 
     public static final ILogger gLogger = new LoggerImp(Config.IS_LOGGING_ENABLE);
     public static Context mContext;
-
+    public static RestAdapter restAdapter;
 
     @Override
     public void onCreate() {
@@ -51,32 +59,15 @@ public class App extends Application {
         if (Config.IS_CRASH_REPORTING) {
             Crashlytics.start(this);
         }
-
+        EventBus.getDefault().register(this);
         mContext = this;
 
-        final Intent fayeServiceIntent = new Intent( getApplicationContext(), FayeService.class );
-        appForeground = Foreground.get(this);
-        foregroundListener = new Foreground.Listener() {
-            @Override
-            public void onBecameForeground() {
-                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(App.this, MIXPANEL_TOKEN);
-                JSONObject props = new JSONObject();
-                mixpanelAPI.track("app_foreground", props);
-                mixpanelAPI.flush();
-                startService( fayeServiceIntent );
-                if( dataProviderServiceBinding != null ) {
-                    dataProviderServiceBinding.syncMessagesAsync();
-                    dataProviderServiceBinding.partialSyncContactsAsync();
-                }
-            }
+        setupDataProviderServicebinding();
+        initForeground();
+        setupULI();
+    }
 
-            @Override
-            public void onBecameBackground() {
-                stopService( fayeServiceIntent );
-            }
-        };
-        appForeground.addListener(foregroundListener);
-
+    private void setupDataProviderServicebinding() {
         dataProviderServiceConnnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -90,12 +81,57 @@ public class App extends Application {
         };
 
         if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
-            App.gLogger.e( "Couldn't bind to data provider service." );
+            App.gLogger.e("Couldn't bind to data provider service.");
             unbindService(dataProviderServiceConnnection);
         }
+    }
 
+    private void initForeground() {
+        appForeground = Foreground.get(this);
 
-        setupULI();
+        foregroundListener = new Foreground.Listener() {
+            @Override
+            public void onBecameForeground() {
+                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(App.this, MIXPANEL_TOKEN);
+                JSONObject props = new JSONObject();
+                mixpanelAPI.track("app_foreground", props);
+                mixpanelAPI.flush();
+
+                startService(new Intent(getApplicationContext(), FayeService.class));
+                if (dataProviderServiceBinding != null) {
+                    dataProviderServiceBinding.syncMessagesAsync();
+                    dataProviderServiceBinding.partialSyncContactsAsync();
+                }
+            }
+
+            @Override
+            public void onBecameBackground() {
+                stopService(new Intent(getApplicationContext(), FayeService.class));
+            }
+        };
+        appForeground.addListener(foregroundListener);
+    }
+
+    private void setupRestAdapter() {
+        final Contact myuser = App.dataProviderServiceBinding.getLoggedInUser();
+        if (myuser != null) {
+            final String authorization = SharedPreferencesUtil.getString("apiToken", "");
+
+            restAdapter = new RestAdapter.Builder()
+                    .setRequestInterceptor(new RequestInterceptor() {
+                        @Override
+                        public void intercept(RequestInterceptor.RequestFacade request) {
+                            request.addHeader("User-Agent", "Badge-agent");
+                            request.addHeader("User-Id", myuser.id + "");
+                            request.addHeader("Authorization", authorization);
+                            request.addHeader("Accept", "*/*");
+                        }
+                    })
+                    .setEndpoint(ApiClient.API_MESSAGING_HOST)
+                    .setLogLevel(RestAdapter.LogLevel.FULL)
+                    .setLog(new AndroidLog("retrofit"))
+                    .build();
+        }
     }
 
     private void setupULI() {
@@ -112,7 +148,7 @@ public class App extends Application {
         if (Config.IS_LOGGING_ENABLE) {
             imageLoaderConfigurationBuilder.writeDebugLogs();
         }
-        ImageLoaderConfiguration imgLoaderConf =  imageLoaderConfigurationBuilder
+        ImageLoaderConfiguration imgLoaderConf = imageLoaderConfigurationBuilder
                 .defaultDisplayImageOptions(displayOptions)
                 .memoryCache(new LruMemoryCache(8 * 1024 * 1024))
                 .threadPoolSize(1)
@@ -121,14 +157,13 @@ public class App extends Application {
         ImageLoader.getInstance().init(imgLoaderConf);
     }
 
-    @Override
-    public void onTerminate() {
-        unbindService(dataProviderServiceConnnection);
-        appForeground.removeListener(foregroundListener);
-        super.onTerminate();
-    }
-
     public static Context context() {
         return mContext;
     }
+
+    // Received events from Event Bus.
+    public void onEvent(hasLogedinAndDatabaseIsReadyEvent event) {
+        setupRestAdapter();
+    }
+
 }

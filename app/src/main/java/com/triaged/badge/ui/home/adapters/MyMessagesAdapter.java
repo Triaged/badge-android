@@ -84,6 +84,8 @@ public class MyMessagesAdapter extends CursorAdapter {
         holder.missingProfilePhotoView.setVisibility(View.VISIBLE);
         holder.name.setText(names);
         holder.messagePreview.setText(body);
+        //TODO: It's very bad idea to try to access shared preferences,
+        // In bindView, Doing IO is expensive and make list laggy.
         String usersArrayString = SharedPreferencesUtil.getString(holder.threadId, "");
         try {
             JSONArray users = new JSONArray(usersArrayString);
@@ -95,6 +97,12 @@ public class MyMessagesAdapter extends CursorAdapter {
                         holder.missingProfilePhotoView.setVisibility(View.GONE);
                     }
                 });
+            } else { // It's a group message
+                //TODO: It's bad idea, to access share preferences,
+                // in bindVeiw, but since we don't have proper database design,
+                // it's okay for now.
+                String groupName = SharedPreferencesUtil.getString("name_" + holder.threadId, "Group");
+                holder.name.setText(groupName);
             }
         } catch (JSONException e) {
             e.printStackTrace();

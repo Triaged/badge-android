@@ -37,7 +37,7 @@ public class ApiClient extends DefaultHttpClient {
     private static final String STAGING_API_HOST = "http://api.badge-staging.com";
     private static final String STAGING_API_MESSAGING_HOST = "http://badge-messaging-staging.herokuapp.com";
 
-    private static final String API_MESSAGING_HOST;
+    public static final String API_MESSAGING_HOST;
     private static final String API_HOST;
 
     static {

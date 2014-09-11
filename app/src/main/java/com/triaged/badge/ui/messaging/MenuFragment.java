@@ -1,20 +1,30 @@
 package com.triaged.badge.ui.messaging;
 
 
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.MatrixCursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
+import com.triaged.badge.models.MessageThread;
+import com.triaged.badge.net.api.MessageThreadApi;
+import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 import com.triaged.badge.ui.profile.AbstractProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
@@ -29,6 +39,9 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnItemClick;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -46,6 +59,8 @@ public class MenuFragment extends Fragment  {
     MatrixCursor cursor;
 
     @InjectView(R.id.participantsList) ListView participantsListView;
+    View menuHeader;
+    TextView groupNameTextView;
 
     @OnItemClick(R.id.participantsList)
     void goToProfile(AdapterView<?> parent, View view, int position, long id) {
@@ -54,6 +69,7 @@ public class MenuFragment extends Fragment  {
         profileIntent.putExtra(AbstractProfileActivity.PROFILE_ID_EXTRA, contactId);
         startActivity(profileIntent);
     }
+
 
 
     /**
@@ -87,7 +103,7 @@ public class MenuFragment extends Fragment  {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View root = inflater.inflate(R.layout.fragment_menu, container, false);
+        View root = inflater.inflate(R.layout.fragment_messaging_right_menu, container, false);
         ButterKnife.inject(this, root);
 
         String usersJsonString = SharedPreferencesUtil.getString(mThreadId, "[]");
@@ -121,7 +137,84 @@ public class MenuFragment extends Fragment  {
         adapter = new MyContactAdapter(getActivity(), cursor, R.layout.item_contact_with_msg);
         participantsListView.setAdapter(adapter);
 
+        setupMenuListHeaderItems();
+
         return root;
+    }
+
+    String groupName = null;
+    private void setupMenuListHeaderItems() {
+        menuHeader = LayoutInflater.from(getActivity()).inflate(R.layout.header_view_for_participants,
+                participantsListView, false );
+        participantsListView.addHeaderView(menuHeader);
+
+        groupNameTextView = (TextView) menuHeader.findViewById(R.id.group_name_text);
+
+        groupName = SharedPreferencesUtil.getString("name_" + mThreadId, "Group");
+        groupNameTextView.setText(groupName);
+
+
+        View groupNameRow = menuHeader.findViewById(R.id.group_name_row);
+        if (participants.size() > 1) {
+            groupNameRow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showEditGroupNameDialog();
+                }
+            });
+        } else {
+            groupNameRow.setVisibility(View.GONE);
+        }
+
+    }
+
+
+    private void showEditGroupNameDialog() {
+        final EditText input = new EditText(getActivity());
+        if (groupName != null) {
+            input.setText(groupName);
+        }
+        input.setHint("Enter a name");
+
+        new AlertDialog.Builder(getActivity())
+                .setTitle("Group name")
+                .setView(input)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!TextUtils.isEmpty(input.getText())) {
+                            sendRenameRequest(input.getText().toString());
+
+                        } else {
+                            Toast.makeText(getActivity(), "Group name could not be empty!", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    private void sendRenameRequest(String newName) {
+                        MessageThreadRequest request = new MessageThreadRequest(new MessageThread(newName));
+                        MessageThreadApi messageThreadApi = App.restAdapter.create(MessageThreadApi.class);
+                        messageThreadApi.setName(mThreadId, request, new Callback<Response>() {
+                                    @Override
+                                    public void success(Response response, Response response2) {
+                                        App.gLogger.i("response:: success:: " + response);
+                                        groupName = input.getText().toString();
+                                        SharedPreferencesUtil.store("name_" + mThreadId, groupName);
+                                        groupNameTextView.setText(groupName);
+                                        // Since right now we don't have table for thread,
+                                        // should notify observers in the following way.
+                                        getActivity().getContentResolver().notifyChange(MessageProvider.CONTENT_URI, null);
+                                    }
+
+                                    @Override
+                                    public void failure(RetrofitError error) {
+                                        Toast.makeText(getActivity(), "A problem occurred during sending the request.", Toast.LENGTH_LONG).show();
+                                        App.gLogger.e("response:: error", error);
+                                    }
+                                });
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create().show();
     }
 
 

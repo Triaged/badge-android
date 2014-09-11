@@ -42,11 +42,13 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.events.hasLogedinAndDatabaseIsReadyEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -66,6 +68,8 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * This service abstracts access to contact and company
@@ -1328,6 +1332,7 @@ public class DataProviderService extends Service {
                         if ((loggedInUser = getContact(loggedInContactId)) != null) {
                             initialized = true;
                             localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
+                            EventBus.getDefault().post(new hasLogedinAndDatabaseIsReadyEvent());
                         }
                     } else {
                         // If there's no logged in user, nothing else will happen so we're done here.
@@ -2222,6 +2227,9 @@ public class DataProviderService extends Service {
 
             JSONArray msgArray = thread.getJSONArray("messages");
             long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
+
+            if (!thread.isNull("muted")) SharedPreferencesUtil.store("is_mute_" + threadId, true);
+            if (!thread.isNull("name")) SharedPreferencesUtil.store("name_" + threadId, thread.getString("name"));
 
             ArrayList<ContentProviderOperation> dbOperations =
                     new ArrayList<ContentProviderOperation>(msgArray.length());

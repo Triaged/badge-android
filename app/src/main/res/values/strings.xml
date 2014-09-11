@@ -118,5 +118,6 @@
     <string name="message_failed">Message Failed</string>
     <string name="search_contacts">Search contacts</string>
     <string name="search_departments">Search departments</string>
+    <string name="name">Name</string>
 
 </resources>

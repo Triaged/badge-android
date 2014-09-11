@@ -35,6 +35,7 @@ public class Notifier {
             prefs = PreferenceManager.getDefaultSharedPreferences(context);
         }
 
+
         int numMessages = prefs.getInt(MESSAGE_COUNT_PREFS_KEY, 0) + 1;
         SharedPreferences.Editor prefsEditor = prefs.edit();
         prefsEditor.putInt(MESSAGE_COUNT_PREFS_KEY, numMessages);
