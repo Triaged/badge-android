@@ -54,6 +54,8 @@ public class ProfileContactInfoView extends View {
         super.onDraw(canvas);
         if (secondaryValue == null) {
             canvas.drawText(primaryValue, leftTextOffset, noTitleTextOffset, primaryPaint);
+        } else if(primaryValue == null) {
+            canvas.drawText(secondaryValue, leftTextOffset, secondaryTextTopOffset, secondaryPaint);
         } else {
             canvas.drawText(primaryValue, leftTextOffset, primaryTextTopOffset, primaryPaint);
             canvas.drawText(secondaryValue, leftTextOffset, secondaryTextTopOffset, secondaryPaint);
