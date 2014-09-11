@@ -10,6 +10,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.view.inputmethod.InputMethodManager;
 
 import com.triaged.badge.app.App;
@@ -115,5 +116,21 @@ public class GeneralUtils {
             // should never happen
             throw new RuntimeException("Could not get package name: " + e);
         }
+    }
+
+
+    /**
+     * Opens a url with Android default browser
+     * @param context Application context.
+     * @param url The website address we want to open.
+     */
+    public static void openWebsite(Context context, String url) {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "http://" + url;
+        }
+
+        i.setData(Uri.parse(url));
+        context.startActivity(i);
     }
 }

@@ -679,6 +679,8 @@ public class DataProviderService extends Service {
             }
             setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
             setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "website", values, ContactsTable.COLUMN_CONTACT_WEBSITE);
+            setStringContentValueFromJSONUnlessNull(employeeInfo, "linkedin", values, ContactsTable.COLUMN_CONTACT_LINKEDIN);
         }
     }
 
@@ -1425,6 +1427,8 @@ public class DataProviderService extends Service {
             final int primaryOfficeId,
             final String startDateString,
             final String birthDateString,
+            final String website,
+            final String linkedin,
             final byte[] newAvatarFile,
             final AsyncSaveCallback saveCallback
     ) {
@@ -1453,6 +1457,8 @@ public class DataProviderService extends Service {
                     employeeInfo.put("cell_phone", cellPhone);
                     employeeInfo.put("job_title", jobTitle);
                     employeeInfo.put("office_phone", officePhone);
+                    employeeInfo.put("website", website);
+                    employeeInfo.put("linkedin", linkedin);
                     employeeInfo.put("job_start_date", startDateString);
                 } catch (JSONException e) {
                     App.gLogger.e("JSON exception creating post body for basic profile data", e);
@@ -2583,8 +2589,17 @@ public class DataProviderService extends Service {
         /**
          * @see DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, byte[], DataProviderService.AsyncSaveCallback)
          */
-        public void saveAllProfileDataAsync(String firstName, String lastName, String cellPhone, String officePhone, String jobTitle, int departmentId, int managerId, int primaryOfficeId, String startDateString, String birthDateString, byte[] newAvatarFile, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName, cellPhone, officePhone, jobTitle, departmentId, managerId, primaryOfficeId, startDateString, birthDateString, newAvatarFile, saveCallback);
+        public void saveAllProfileDataAsync(String firstName, String lastName, String cellPhone,
+                                            String officePhone, String jobTitle, int departmentId,
+                                            int managerId, int primaryOfficeId, String startDateString,
+                                            String birthDateString, String website, String linkedin,
+                                            byte[] newAvatarFile,
+                                            AsyncSaveCallback saveCallback) {
+            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName,
+                    cellPhone, officePhone, jobTitle,
+                    departmentId, managerId, primaryOfficeId,
+                    startDateString, birthDateString, website, linkedin,
+                    newAvatarFile, saveCallback);
         }
 
         /**

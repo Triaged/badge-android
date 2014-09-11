@@ -168,6 +168,27 @@
         android:visibility="gone" />
 
     <com.triaged.badge.ui.base.views.ProfileContactInfoView
+        android:id="@+id/profile_website"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/tappable_row_bg"
+        android:visibility="gone" />
+
+
+    <com.triaged.badge.ui.base.views.ProfileContactInfoView
+        android:id="@+id/profile_linkedin"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@drawable/tappable_row_bg"
+        android:visibility="gone" />
+
+
+
+    <com.triaged.badge.ui.base.views.ProfileContactInfoView
         android:id="@+id/profile_primary_office"
         android:layout_width="match_parent"
         android:layout_height="56dp"

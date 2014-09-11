@@ -19,6 +19,8 @@ public class ContactsTable extends AbstractTable {
     public static final String COLUMN_CONTACT_BIRTH_DATE = "birth_date";
     public static final String COLUMN_CONTACT_CELL_PHONE = "cell_phone";
     public static final String COLUMN_CONTACT_OFFICE_PHONE = "office_phone";
+    public static final String COLUMN_CONTACT_WEBSITE = "website";
+    public static final String COLUMN_CONTACT_LINKEDIN = "linkedin";
     public static final String COLUMN_CONTACT_MANAGER_ID = "manager_id";
     public static final String COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID = "primary_office_location_id";
     public static final String COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID = "current_office_location_id";
@@ -42,6 +44,8 @@ public class ContactsTable extends AbstractTable {
                 .append(COLUMN_CONTACT_BIRTH_DATE).append(" TEXT, ")
                 .append(COLUMN_CONTACT_CELL_PHONE).append(" TEXT, ")
                 .append(COLUMN_CONTACT_OFFICE_PHONE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_WEBSITE).append(" TEXT, ")
+                .append(COLUMN_CONTACT_LINKEDIN).append(" TEXT, ")
                 .append(COLUMN_CONTACT_MANAGER_ID).append(" INTEGER, ")
                 .append(COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID).append(" INTEGER, ")
                 .append(COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID).append(" INTEGER, ")

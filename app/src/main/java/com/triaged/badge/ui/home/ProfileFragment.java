@@ -27,6 +27,7 @@ import com.triaged.badge.ui.base.views.ProfileReportsToView;
 import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 import com.triaged.badge.ui.profile.MyProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
+import com.triaged.utils.GeneralUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,9 @@ public class ProfileFragment extends MixpanelFragment {
     @InjectView(R.id.profile_email)  ProfileContactInfoView emailView ;
     @InjectView(R.id.profile_office_phone)  ProfileContactInfoView officePhoneView;
     @InjectView(R.id.profile_cell_phone)  ProfileContactInfoView cellPhoneView;
+    @InjectView(R.id.profile_website)  ProfileContactInfoView websiteView;
+    @InjectView(R.id.profile_linkedin)  ProfileContactInfoView linkedinView;
+
     @InjectView(R.id.profile_birth_date)  ProfileContactInfoView birthDateView;
     @InjectView(R.id.profile_primary_office)  ProfileContactInfoView primaryOfficeView;
     @InjectView(R.id.profile_start_date)  ProfileContactInfoView startDateView ;
@@ -74,6 +78,12 @@ public class ProfileFragment extends MixpanelFragment {
         intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_ID_EXTRA, contact.departmentId);
         intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_NAME_EXTRA, contact.departmentName);
         startActivity(intent);
+    }
+
+    @OnClick({R.id.profile_linkedin, R.id.profile_website})
+    void openBrowser(View view) {
+        String url = ((ProfileContactInfoView) view).primaryValue;
+        GeneralUtils.openWebsite(getActivity(), url);
     }
 
 
@@ -171,6 +181,25 @@ public class ProfileFragment extends MixpanelFragment {
             } else {
                 cellPhoneView.setVisibility(View.GONE);
             }
+
+            if (!TextUtils.isEmpty(contact.website)) {
+                websiteView.setVisibility(View.VISIBLE);
+                websiteView.primaryValue = contact.website;
+                websiteView.secondaryValue = "Website";
+                websiteView.invalidate();
+            } else {
+                websiteView.setVisibility(View.GONE);
+            }
+
+            if (!TextUtils.isEmpty(contact.linkedin)) {
+                linkedinView.setVisibility(View.VISIBLE);
+                linkedinView.primaryValue = contact.linkedin;
+                linkedinView.secondaryValue = "LinkedIn";
+                linkedinView.invalidate();
+            } else {
+                linkedinView.setVisibility(View.GONE);
+            }
+
 
             if (!TextUtils.isEmpty(contact.birthDateString)) {
                 birthDateView.setVisibility(View.VISIBLE);

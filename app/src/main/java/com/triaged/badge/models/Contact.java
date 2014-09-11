@@ -45,6 +45,8 @@ public class Contact {
     public String cellPhone;
     public String officePhone;
     public String officeName;
+    public String website;
+    public String linkedin;
     public int managerId;
     public int primaryOfficeLocationId;
     public int currentOfficeLocationId;
@@ -124,11 +126,15 @@ public class Contact {
         birthDateString = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
         cellPhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
         officePhone = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
+        website = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_WEBSITE);
+        linkedin = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_LINKEDIN);
+
         jobTitle = getStringSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_JOB_TITLE);
         departmentName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_DEPARTMENT_NAME);
         String managerFirstName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_MANAGER_FIRST_NAME);
         String managerLastName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_MANAGER_LAST_NAME);
         officeName = getStringSafelyFromCursor(contactCursor, DatabaseHelper.JOINED_OFFICE_NAME);
+
         /** INTEGER FIELDS */
         sharingOfficeLocation = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION);
         managerId = getIntSafelyFromCursor(contactCursor, ContactsTable.COLUMN_CONTACT_MANAGER_ID);

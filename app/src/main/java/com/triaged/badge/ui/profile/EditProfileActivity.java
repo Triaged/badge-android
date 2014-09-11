@@ -87,6 +87,8 @@ public class EditProfileActivity extends BadgeActivity {
     private EditProfileInfoView officeLocation = null;
     private EditProfileInfoView startDate = null;
     private EditProfileInfoView birthDate = null;
+    private EditProfileInfoView website;
+    private EditProfileInfoView linkedin;
 
     private String currentPhotoPath;
 
@@ -163,6 +165,8 @@ public class EditProfileActivity extends BadgeActivity {
                         officeId,
                         startDate.valueToSave,
                         birthDate.valueToSave,
+                        website.valueToSave,
+                        linkedin.valueToSave,
                         newProfilePhotoData,
                         saveCallback
                 );
@@ -187,6 +191,8 @@ public class EditProfileActivity extends BadgeActivity {
         officeLocation = (EditProfileInfoView) findViewById(R.id.edit_office_location);
         startDate = (EditProfileInfoView) findViewById(R.id.edit_start_date);
         birthDate = (EditProfileInfoView) findViewById(R.id.edit_birth_date);
+        website = (EditProfileInfoView) findViewById(R.id.edit_website);
+        linkedin = (EditProfileInfoView) findViewById(R.id.edit_linkedin);
 
         LinearLayout editFieldsWrapper = (LinearLayout) findViewById(R.id.edit_fields_wrapper);
         for (int i = 0; i < editFieldsWrapper.getChildCount(); i++) {
@@ -412,6 +418,13 @@ public class EditProfileActivity extends BadgeActivity {
         startDate.secondaryValue = loggedInUser.startDateString != null ? loggedInUser.startDateString : "Add";
 
         birthDate.secondaryValue = loggedInUser.birthDateString != null ? loggedInUser.birthDateString : "Add";
+
+        website.secondaryValue = loggedInUser.website != null ? loggedInUser.website : "Add";
+        website.valueToSave = loggedInUser.website;
+
+        linkedin.secondaryValue = loggedInUser.linkedin != null ? loggedInUser.linkedin : "Add";
+        linkedin.valueToSave = loggedInUser.linkedin;
+
 
         if (loggedInUser.birthDateString != null) {
             try {

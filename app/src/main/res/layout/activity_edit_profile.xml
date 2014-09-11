@@ -200,5 +200,19 @@
             android:background="@drawable/tappable_row_bg"
             custom:primaryValue="@string/edit_profile_birth_date" />
 
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
+            android:id="@+id/edit_website"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@drawable/tappable_row_bg"
+            custom:primaryValue="@string/edit_profile_website" />
+
+        <com.triaged.badge.ui.base.views.EditProfileInfoView
+            android:id="@+id/edit_linkedin"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@drawable/tappable_row_bg"
+            custom:primaryValue="@string/edit_profile_linkedin" />
+
     </LinearLayout>
 </ScrollView>
