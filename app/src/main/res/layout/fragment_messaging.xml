@@ -55,7 +55,7 @@
             android:layout_width="54dp"
             android:layout_height="48dp"
             android:layout_marginTop="1dp"
-            android:src="@drawable/ic_action_send_now"
+            android:src="@drawable/send_button"
             android:contentDescription="@string/content_description_send_message"
             android:background="@drawable/white_button_bg"
             android:gravity="center"

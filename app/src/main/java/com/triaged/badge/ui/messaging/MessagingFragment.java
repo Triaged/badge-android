@@ -4,7 +4,6 @@ package com.triaged.badge.ui.messaging;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
-import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -14,9 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ScrollView;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -24,7 +21,6 @@ import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.ui.base.MixpanelFragment;
 import com.triaged.badge.ui.notification.Notifier;
-import com.triaged.badge.ui.profile.OtherProfileActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +29,6 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
-import butterknife.Optional;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -49,38 +44,20 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     private String mThreadId;
     private MessagingAdapter adapter;
     private int soleCounterpartId = 0;
+    private int userCount = 2;
 
     //    @InjectView(R.id.post_box_wrapper) RelativeLayout postBoxWrapper;
     @InjectView(R.id.send_now_button) ImageButton sendButton;
     @InjectView(R.id.message_thread) ListView threadList;
     @InjectView(R.id.input_box) EditText postBox;
-    @InjectView(R.id.thread_members_wrapper) ScrollView threadMembersWrapper ;
-    @InjectView(R.id.thread_members) LinearLayout threadMembersScrollView ;
 
     @OnTextChanged(R.id.input_box)
     void onTextChanged(CharSequence s, int start, int before, int count) {
 
         if (TextUtils.isEmpty(s)) {
-            sendButton.setActivated(false);
+            sendButton.setEnabled(false);
         } else  {
-            sendButton.setActivated(true);
-        }
-    }
-
-    @Optional
-    @OnClick(R.id.thread_members_button)
-    void showProfile(View v) {
-        if (userCount > 2) {
-            if (threadMembersScrollView.getVisibility() == View.VISIBLE) {
-                threadMembersScrollView.setVisibility(View.GONE);
-            } else {
-                threadMembersScrollView.setVisibility(View.VISIBLE);
-            }
-        } else {
-            Intent intent = new Intent(getActivity(), OtherProfileActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", soleCounterpartId);
-            startActivity(intent);
+            sendButton.setEnabled(true);
         }
     }
 
@@ -136,6 +113,8 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
         adapter = new MessagingAdapter(getActivity(), null);
         threadList.setAdapter(adapter);
+        sendButton.setEnabled(false);
+
         getLoaderManager().initLoader(0, null, this);
         return root;
     }
@@ -146,8 +125,6 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         Notifier.clearNotifications(getActivity());
         super.onResume();
     }
-
-    private int userCount = 2;
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
