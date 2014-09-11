@@ -62,7 +62,7 @@ public abstract class AbstractProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        notifyUris(uri);
         return Uri.parse(basePath() + "/" + id);
     }
 
