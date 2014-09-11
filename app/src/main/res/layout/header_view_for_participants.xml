@@ -31,6 +31,35 @@
             android:textColor="#aaaaaa" />
     </LinearLayout>
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="64dp"
+        android:background="@drawable/tappable_row_bg"
+        android:id="@+id/group_mute_row"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Mute"
+            android:singleLine="true" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/mute_checkbox"
+            android:layout_marginRight="8dp"
+            android:focusable="false"
+            android:clickable="false" />
+
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="fill_parent"

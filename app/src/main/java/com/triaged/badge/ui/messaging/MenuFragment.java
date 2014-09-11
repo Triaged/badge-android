@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -61,6 +62,7 @@ public class MenuFragment extends Fragment  {
     @InjectView(R.id.participantsList) ListView participantsListView;
     View menuHeader;
     TextView groupNameTextView;
+    CheckBox muteCheckBox;
 
     @OnItemClick(R.id.participantsList)
     void goToProfile(AdapterView<?> parent, View view, int position, long id) {
@@ -149,10 +151,13 @@ public class MenuFragment extends Fragment  {
         participantsListView.addHeaderView(menuHeader);
 
         groupNameTextView = (TextView) menuHeader.findViewById(R.id.group_name_text);
+        muteCheckBox = (CheckBox) menuHeader.findViewById(R.id.mute_checkbox);
 
         groupName = SharedPreferencesUtil.getString("name_" + mThreadId, "Group");
         groupNameTextView.setText(groupName);
 
+        Boolean isMute = SharedPreferencesUtil.getBoolean("is_mute_" + mThreadId, false);
+        muteCheckBox.setChecked(isMute);
 
         View groupNameRow = menuHeader.findViewById(R.id.group_name_row);
         if (participants.size() > 1) {
@@ -166,8 +171,37 @@ public class MenuFragment extends Fragment  {
             groupNameRow.setVisibility(View.GONE);
         }
 
+        View groupMuteRow = menuHeader.findViewById(R.id.group_mute_row);
+        groupMuteRow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requestMute();
+            }
+        });
     }
 
+    private void requestMute() {
+        MessageThreadApi messageThreadApi = App.restAdapter.create(MessageThreadApi.class);
+        Callback<Response> muteCallback = new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {
+                muteCheckBox.toggle();
+                SharedPreferencesUtil.store("is_mute_" + mThreadId, muteCheckBox.isChecked());
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Toast.makeText(getActivity(), "A problem occurred during sending the request.",
+                        Toast.LENGTH_LONG).show();
+            }
+        };
+
+        if (muteCheckBox.isChecked()) {
+            messageThreadApi.unMute(mThreadId, muteCallback);
+        } else {
+            messageThreadApi.mute(mThreadId, muteCallback);
+        }
+    }
 
     private void showEditGroupNameDialog() {
         final EditText input = new EditText(getActivity());
