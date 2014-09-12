@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -22,6 +23,7 @@ import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
@@ -581,44 +583,47 @@ public class DataProviderService extends Service {
 //                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
 
                     JSONObject companyObj = parseJSONResponse(response.getEntity());
-                    ContentValues values = new ContentValues();
 
                     JSONArray contactsArr = companyObj.getJSONArray("users");
                     int contactsLength = contactsArr.length();
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
+                        ContentValues values = new ContentValues();
                         setContactDBValesFromJSON(newContact, values);
 
                         clearCachedAvatarIfChanged(values.getAsInteger(ContactsTable.COLUMN_ID) + "",
                                 values.getAsString(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
 
                         getContentResolver().insert(ContactProvider.CONTENT_URI, values);
-//                        db.insert(ContactsTable.TABLE_NAME, null, values);
-                        values.clear();
                     }
 
+                    ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
                     if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
                         JSONArray deptsArr = companyObj.getJSONArray("departments");
                         int deptsLength = deptsArr.length();
                         for (int i = 0; i < deptsLength; i++) {
+                            ContentValues values = new ContentValues();
                             JSONObject dept = deptsArr.getJSONObject(i);
                             setDepartmentBValuesFromJSON(dept, values);
-                            getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
-//                            db.insert(DepartmentsTable.TABLE_NAME, null, values);
-                            values.clear();
+                            dbOperations.add(ContentProviderOperation.newInsert(
+                                    DepartmentProvider.CONTENT_URI).withValues(values).build());
                         }
+                        getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
+                        dbOperations.clear();
                     }
 
                     if (companyObj.has("office_locations")) {
                         JSONArray locations = companyObj.getJSONArray("office_locations");
                         int locationsLength = locations.length();
                         for (int i = 0; i < locationsLength; i++) {
+                            ContentValues values = new ContentValues();
                             JSONObject location = locations.getJSONObject(i);
                             setOfficeLocationDBValuesFromJSON(location, values);
-                            getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
-//                            db.insert(OfficeLocationsTable.TABLE_NAME, null, values);
-                            values.clear();
+                            dbOperations.add(ContentProviderOperation.newInsert(
+                                    OfficeLocationProvider.CONTENT_URI).withValues(values).build());
                         }
+                        getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
+                        dbOperations.clear();
                     }
 
                     loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
@@ -626,6 +631,10 @@ public class DataProviderService extends Service {
                 } else {
                     App.gLogger.e("Got status " + statusCode + " from API. Handle this appropriately!");
                 }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (OperationApplicationException e) {
+                e.printStackTrace();
             } finally {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
