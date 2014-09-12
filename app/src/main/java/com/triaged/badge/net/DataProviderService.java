@@ -31,6 +31,8 @@ import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.utils.MemoryCacheUtils;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.helper.MessageHelper;
@@ -570,7 +572,7 @@ public class DataProviderService extends Service {
             try {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK) {
-                    getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
+//                    getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
                     getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
                     getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
 
@@ -586,6 +588,10 @@ public class DataProviderService extends Service {
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
                         setContactDBValesFromJSON(newContact, values);
+
+                        clearCachedAvatarIfChanged(values.getAsInteger(ContactsTable.COLUMN_ID) + "",
+                                values.getAsString(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
+
                         getContentResolver().insert(ContactProvider.CONTENT_URI, values);
 //                        db.insert(ContactsTable.TABLE_NAME, null, values);
                         values.clear();
@@ -641,6 +647,20 @@ public class DataProviderService extends Service {
         }
     }
 
+    private void clearCachedAvatarIfChanged(String userId, String avatarUrl) {
+        Cursor cursor = getContentResolver().query(ContactProvider.CONTENT_URI,
+                new String [] {ContactsTable.COLUMN_CONTACT_AVATAR_URL},
+                ContactsTable.COLUMN_ID + "=?",
+                new String[]{userId}, null);
+        if (cursor!= null && cursor.moveToFirst()) {
+            String dbAvatar = cursor.getString(1);
+            if (!dbAvatar.equals(avatarUrl)) {
+                MemoryCacheUtils.removeFromCache(dbAvatar, ImageLoader.getInstance().getMemoryCache());
+            }
+            cursor.close();
+        }
+
+    }
 
     private void setContactDBValesFromJSON(JSONObject json, ContentValues values) throws JSONException {
         values.put(ContactsTable.COLUMN_ID, json.getInt("id"));
