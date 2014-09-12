@@ -9,6 +9,9 @@ import android.graphics.Bitmap;
 import android.os.IBinder;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.nostra13.universalimageloader.cache.memory.impl.LruMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
@@ -31,6 +34,7 @@ import de.greenrobot.event.EventBus;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.android.AndroidLog;
+import retrofit.converter.GsonConverter;
 
 /**
  * Custom implementation of the Android Application class that sets up global services and
@@ -115,6 +119,9 @@ public class App extends Application {
     private void setupRestAdapter() {
         final String authorization = SharedPreferencesUtil.getString("apiToken", "");
         final int userId = SharedPreferencesUtil.getInteger(R.string.pref_my_user_id_key, -1);
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create();
 
         restAdapter = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
@@ -128,6 +135,7 @@ public class App extends Application {
                 })
                 .setEndpoint(ApiClient.API_MESSAGING_HOST)
                 .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setConverter(new GsonConverter(gson))
                 .setLog(new AndroidLog("retrofit"))
                 .build();
     }
