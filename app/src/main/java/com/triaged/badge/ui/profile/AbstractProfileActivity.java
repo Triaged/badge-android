@@ -346,10 +346,11 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
             } else {
                 primaryOfficeView.setVisibility(View.GONE);
             }
-            if (isNotBlank(contact.managerName)) {
-                bossHeader.setVisibility(View.VISIBLE);
+            Contact boss = null;
+            if (isNotBlank(contact.managerName) &&
+                    (boss = dataProviderServiceBinding.getContact(contact.managerId)) != null )  {
 
-                final Contact boss = dataProviderServiceBinding.getContact(contact.managerId);
+                bossHeader.setVisibility(View.VISIBLE);
                 bossView.userId = dataProviderServiceBinding.getLoggedInUser().id;
                 bossView.setupView(boss);
                 bossView.noPhotoThumb.setText(boss.initials);
@@ -388,7 +389,6 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
                         }
                     });
                 }
-
                 bossView.setVisibility(View.VISIBLE);
 
             } else {
