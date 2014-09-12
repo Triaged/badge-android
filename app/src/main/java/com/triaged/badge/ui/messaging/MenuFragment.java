@@ -53,8 +53,10 @@ import retrofit.client.Response;
 public class MenuFragment extends Fragment  {
     // the fragment initialization thread_id parameter.
     private static final String ARG_THREAD_ID = "thread_id";
+    private static final String ARG_THREAD_NAME = "thread_name";
 
     private String mThreadId;
+    private String mThreadName;
     MyContactAdapter adapter;
     List<Contact> participants;
     MatrixCursor cursor;
@@ -81,10 +83,11 @@ public class MenuFragment extends Fragment  {
      * @param threadId Id of the the thread we want to show its messages.
      * @return A new instance of fragment MessagingFragment.
      */
-    public static MenuFragment newInstance(String threadId) {
+    public static MenuFragment newInstance(String threadId, String threadName) {
         MenuFragment fragment = new MenuFragment();
         Bundle args = new Bundle();
         args.putString(ARG_THREAD_ID, threadId);
+        args.putString(ARG_THREAD_NAME, threadName);
         fragment.setArguments(args);
         return fragment;
     }
@@ -98,6 +101,7 @@ public class MenuFragment extends Fragment  {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
+            mThreadName = getArguments().getString(ARG_THREAD_NAME);
         }
     }
 
@@ -144,7 +148,6 @@ public class MenuFragment extends Fragment  {
         return root;
     }
 
-    String groupName = null;
     private void setupMenuListHeaderItems() {
         menuHeader = LayoutInflater.from(getActivity()).inflate(R.layout.header_view_for_participants,
                 participantsListView, false );
@@ -153,8 +156,7 @@ public class MenuFragment extends Fragment  {
         groupNameTextView = (TextView) menuHeader.findViewById(R.id.group_name_text);
         muteCheckBox = (CheckBox) menuHeader.findViewById(R.id.mute_checkbox);
 
-        groupName = SharedPreferencesUtil.getString("name_" + mThreadId, "Group");
-        groupNameTextView.setText(groupName);
+        groupNameTextView.setText(mThreadName);
 
         Boolean isMute = SharedPreferencesUtil.getBoolean("is_mute_" + mThreadId, false);
         muteCheckBox.setChecked(isMute);
@@ -205,8 +207,8 @@ public class MenuFragment extends Fragment  {
 
     private void showEditGroupNameDialog() {
         final EditText input = new EditText(getActivity());
-        if (groupName != null) {
-            input.setText(groupName);
+        if (mThreadName != null) {
+            input.setText(mThreadName);
         }
         input.setHint("Enter a name");
 
@@ -231,9 +233,10 @@ public class MenuFragment extends Fragment  {
                                     @Override
                                     public void success(Response response, Response response2) {
                                         App.gLogger.i("response:: success:: " + response);
-                                        groupName = input.getText().toString();
-                                        SharedPreferencesUtil.store("name_" + mThreadId, groupName);
-                                        groupNameTextView.setText(groupName);
+                                        mThreadName = input.getText().toString();
+                                        SharedPreferencesUtil.store("name_" + mThreadId, mThreadName);
+                                        groupNameTextView.setText(mThreadName);
+                                        getActivity().getActionBar().setTitle(mThreadName);
                                         // Since right now we don't have table for thread,
                                         // should notify observers in the following way.
                                         getActivity().getContentResolver().notifyChange(MessageProvider.CONTENT_URI, null);

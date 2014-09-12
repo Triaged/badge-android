@@ -7,20 +7,22 @@ import android.view.MenuItem;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivity;
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 
 
 public class MessagingActivity extends SlidingActivity {
 
     public static final String THREAD_ID_EXTRA = "thread_id_extra";
+    public static final String THREAD_NAME_EXTRA = "thread_name_extra";
 
     private String mThreadId;
+    private String mThreadName;
 
     @Override
      public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mThreadId = getIntent().getExtras().getString(THREAD_ID_EXTRA);
+        mThreadName = getIntent().getExtras().getString(THREAD_NAME_EXTRA);
 
         setupActionbar();
 
@@ -46,7 +48,7 @@ public class MessagingActivity extends SlidingActivity {
                     .commit();
 
             getFragmentManager().beginTransaction()
-                    .replace(R.id.menu_frame, MenuFragment.newInstance(mThreadId))
+                    .replace(R.id.menu_frame, MenuFragment.newInstance(mThreadId, mThreadName))
                     .commit();
 
 
@@ -64,7 +66,8 @@ public class MessagingActivity extends SlidingActivity {
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(false);
-        actionBar.setTitle(App.dataProviderServiceBinding.getRecipientNames(mThreadId));
+
+        actionBar.setTitle(mThreadName);
     }
 
     @Override

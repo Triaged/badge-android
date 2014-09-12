@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -101,8 +102,10 @@ public class MyMessagesAdapter extends CursorAdapter {
                 //TODO: It's bad idea, to access share preferences,
                 // in bindVeiw, but since we don't have proper database design,
                 // it's okay for now.
-                String groupName = SharedPreferencesUtil.getString("name_" + holder.threadId, "Group");
-                holder.name.setText(groupName);
+                String groupName = SharedPreferencesUtil.getString("name_" + holder.threadId, null);
+                if (!TextUtils.isEmpty(groupName)) {
+                    holder.name.setText(groupName);
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
