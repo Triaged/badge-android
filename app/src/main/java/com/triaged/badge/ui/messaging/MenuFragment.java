@@ -68,6 +68,9 @@ public class MenuFragment extends Fragment  {
 
     @OnItemClick(R.id.participantsList)
     void goToProfile(AdapterView<?> parent, View view, int position, long id) {
+        if (id < 0) { // If the header-view clicked somehow, do nothing
+            return;
+        }
         int contactId = ((MyContactAdapter.ViewHolder)view.getTag()).contactId;
         Intent profileIntent = new Intent(getActivity(), OtherProfileActivity.class);
         profileIntent.putExtra(AbstractProfileActivity.PROFILE_ID_EXTRA, contactId);
@@ -149,6 +152,9 @@ public class MenuFragment extends Fragment  {
     }
 
     private void setupMenuListHeaderItems() {
+        if (participants.size() < 2) {
+            return;
+        }
         menuHeader = LayoutInflater.from(getActivity()).inflate(R.layout.header_view_for_participants,
                 participantsListView, false );
         participantsListView.addHeaderView(menuHeader);
@@ -160,18 +166,15 @@ public class MenuFragment extends Fragment  {
 
         Boolean isMute = SharedPreferencesUtil.getBoolean("is_mute_" + mThreadId, false);
         muteCheckBox.setChecked(isMute);
-
         View groupNameRow = menuHeader.findViewById(R.id.group_name_row);
-        if (participants.size() > 1) {
-            groupNameRow.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showEditGroupNameDialog();
-                }
-            });
-        } else {
-            groupNameRow.setVisibility(View.GONE);
-        }
+
+        groupNameRow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showEditGroupNameDialog();
+            }
+        });
+
 
         View groupMuteRow = menuHeader.findViewById(R.id.group_mute_row);
         groupMuteRow.setOnClickListener(new View.OnClickListener() {
