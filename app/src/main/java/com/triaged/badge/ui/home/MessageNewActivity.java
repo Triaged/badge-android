@@ -28,6 +28,7 @@ import com.triaged.badge.ui.base.views.CustomLayoutParams;
 import com.triaged.badge.ui.base.views.FlowLayout;
 import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 
@@ -114,11 +115,14 @@ public class MessageNewActivity extends BadgeActivity {
                         @Override
                         protected void onPostExecute(String threadId) {
                             if (threadId != null) {
-                                Intent intent = new Intent(MessageNewActivity.this, MessageShowActivity.class);
-                                intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+
+                                Intent intent = new Intent(MessageNewActivity.this, MessagingActivity.class);
+                                intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
+                                intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, dataProviderServiceBinding.getRecipientNames(threadId));
                                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                                 startActivity(intent);
                                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                                finish();
                             }
                         }
                     }.execute();
