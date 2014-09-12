@@ -13,7 +13,7 @@ public class OfficeLocationProvider extends AbstractProvider {
     public OfficeLocationProvider() { }
 
 
-    static final String AUTHORITY = "com.triaged.badge.provider.office_location";
+    public static final String AUTHORITY = "com.triaged.badge.provider.office_location";
     static final String TABLE_NAME = OfficeLocationsTable.TABLE_NAME;
     static final String URI = "content://" + AUTHORITY + "/" + TABLE_NAME;
     public static final Uri CONTENT_URI = Uri.parse(URI);

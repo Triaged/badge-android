@@ -57,7 +57,7 @@ public abstract class AbstractProvider extends ContentProvider {
         long id;
         switch (uriType) {
             case RECORDS:
-                id = database.insert(basePath(), null, values);
+                id = database.insertWithOnConflict(basePath(), null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);

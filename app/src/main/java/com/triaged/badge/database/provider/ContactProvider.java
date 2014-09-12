@@ -12,7 +12,7 @@ import com.triaged.badge.database.table.ContactsTable;
 public class ContactProvider extends AbstractProvider {
     public ContactProvider() { }
 
-    static final String AUTHORITY = "com.triaged.badge.provider.contacts";
+    public static final String AUTHORITY = "com.triaged.badge.provider.contacts";
     static final String TABLE_NAME = ContactsTable.TABLE_NAME;
     static final String URI = "content://" + AUTHORITY + "/" + TABLE_NAME;
     public static final Uri CONTENT_URI = Uri.parse(URI);

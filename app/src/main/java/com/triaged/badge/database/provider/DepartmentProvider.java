@@ -12,7 +12,7 @@ import com.triaged.badge.database.table.DepartmentsTable;
 public class DepartmentProvider extends AbstractProvider {
     public DepartmentProvider() { }
 
-    static final String AUTHORITY = "com.triaged.badge.provider.departments";
+    public static final String AUTHORITY = "com.triaged.badge.provider.departments";
     static final String TABLE_NAME = DepartmentsTable.TABLE_NAME;
     static final String URI = "content://" + AUTHORITY + "/" + TABLE_NAME;
     public static final Uri CONTENT_URI = Uri.parse(URI);
