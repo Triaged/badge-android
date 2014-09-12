@@ -42,7 +42,6 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
-import com.triaged.badge.events.hasLogedinAndDatabaseIsReadyEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
@@ -68,8 +67,6 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * This service abstracts access to contact and company
@@ -1334,7 +1331,6 @@ public class DataProviderService extends Service {
                         if ((loggedInUser = getContact(loggedInContactId)) != null) {
                             initialized = true;
                             localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
-                            EventBus.getDefault().post(new hasLogedinAndDatabaseIsReadyEvent());
                         }
                     } else {
                         // If there's no logged in user, nothing else will happen so we're done here.

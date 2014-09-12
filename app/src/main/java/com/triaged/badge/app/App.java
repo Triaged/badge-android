@@ -16,9 +16,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
-import com.triaged.badge.events.hasLogedinAndDatabaseIsReadyEvent;
+import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.helpers.Foreground;
-import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.ApiClient;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
@@ -62,6 +61,7 @@ public class App extends Application {
         EventBus.getDefault().register(this);
         mContext = this;
 
+        setupRestAdapter();
         setupDataProviderServicebinding();
         initForeground();
         setupULI();
@@ -113,25 +113,23 @@ public class App extends Application {
     }
 
     private void setupRestAdapter() {
-        final Contact myuser = App.dataProviderServiceBinding.getLoggedInUser();
-        if (myuser != null) {
-            final String authorization = SharedPreferencesUtil.getString("apiToken", "");
+        final String authorization = SharedPreferencesUtil.getString("apiToken", "");
+        final int userId = SharedPreferencesUtil.getInteger(R.string.pref_my_user_id_key, -1);
 
-            restAdapter = new RestAdapter.Builder()
-                    .setRequestInterceptor(new RequestInterceptor() {
-                        @Override
-                        public void intercept(RequestInterceptor.RequestFacade request) {
-                            request.addHeader("User-Agent", "Badge-agent");
-                            request.addHeader("User-Id", myuser.id + "");
-                            request.addHeader("Authorization", authorization);
-                            request.addHeader("Accept", "*/*");
-                        }
-                    })
-                    .setEndpoint(ApiClient.API_MESSAGING_HOST)
-                    .setLogLevel(RestAdapter.LogLevel.FULL)
-                    .setLog(new AndroidLog("retrofit"))
-                    .build();
-        }
+        restAdapter = new RestAdapter.Builder()
+                .setRequestInterceptor(new RequestInterceptor() {
+                    @Override
+                    public void intercept(RequestInterceptor.RequestFacade request) {
+                        request.addHeader("User-Agent", "Badge-agent");
+                        request.addHeader("User-Id", userId + "");
+                        request.addHeader("Authorization", authorization);
+                        request.addHeader("Accept", "*/*");
+                    }
+                })
+                .setEndpoint(ApiClient.API_MESSAGING_HOST)
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setLog(new AndroidLog("retrofit"))
+                .build();
     }
 
     private void setupULI() {
@@ -161,8 +159,9 @@ public class App extends Application {
         return mContext;
     }
 
-    // Received events from Event Bus.
-    public void onEvent(hasLogedinAndDatabaseIsReadyEvent event) {
+    // Received events from the Event Bus.
+
+    public void onEvent(LogedinSuccessfully event) {
         setupRestAdapter();
     }
 

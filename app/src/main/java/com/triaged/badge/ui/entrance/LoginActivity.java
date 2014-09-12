@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
@@ -26,6 +27,8 @@ import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * Activity for authentication.
@@ -77,6 +80,7 @@ public class LoginActivity extends MixpanelActivity {
             public void loginSuccess(Contact user) {
                 // Now seems like a good time to make sure we have a GCM id since
                 // we know the network was working at least well enough to log the user in.
+                EventBus.getDefault().post(new LogedinSuccessfully());
 
                 mixpanel.track("login", new JSONObject());
 
@@ -99,7 +103,6 @@ public class LoginActivity extends MixpanelActivity {
                 String email = loginEmail.getText().toString();
                 String password = loginPassword.getText().toString();
                 ((App) getApplication()).dataProviderServiceBinding.loginAsync(email, password, loginCallback);
-//                Toast.makeText(LoginActivity.this, email, Toast.LENGTH_SHORT).show();
             }
         });
 
