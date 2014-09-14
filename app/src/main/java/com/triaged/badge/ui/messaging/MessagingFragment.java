@@ -103,6 +103,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
         }
+        App.dataProviderServiceBinding.markAsRead(mThreadId);
     }
 
     @Override
@@ -124,6 +125,12 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     public void onResume() {
         Notifier.clearNotifications(getActivity());
         super.onResume();
+    }
+
+    @Override
+    public void onStop() {
+        App.dataProviderServiceBinding.markAsRead(mThreadId);
+        super.onStop();
     }
 
     @Override
