@@ -2259,7 +2259,7 @@ public class DataProviderService extends Service {
             JSONArray msgArray = thread.getJSONArray("messages");
             long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
-            if (!thread.isNull("muted")) SharedPreferencesUtil.store("is_mute_" + threadId, true);
+            if (!thread.isNull("muted")) SharedPreferencesUtil.store("is_mute_" + threadId, thread.getBoolean("muted"));
             if (!thread.isNull("name")) SharedPreferencesUtil.store("name_" + threadId, thread.getString("name"));
 
             ArrayList<ContentProviderOperation> dbOperations =
