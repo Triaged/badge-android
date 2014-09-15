@@ -30,6 +30,12 @@
 -keep class javax.inject.* { *; }
 
 
+
+-keep class com.example.testobfuscation.** { *; }
+-keepattributes Signature
+-keep class sun.misc.Unsafe { *; }
+
+
 #################### prettytime #######################
 -keep class org.ocpsoft.prettytime.i18n.**
 
@@ -42,11 +48,15 @@
 #################### retrofit #######################
 -dontwarn retrofit.**
 -dontwarn rx.**
+#-dontwarn rx.*
 -keepattributes *Annotation*
 -keep class retrofit.** { *; }
+#-keep class retrofit.* { ; }
 -keepclasseswithmembers class * {
     @retrofit.http.* <methods>;
 }
+
+
 
 
 #################### butterknife #######################
