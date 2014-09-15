@@ -319,7 +319,7 @@ public class DataProviderService extends Service {
         sqlThread = Executors.newSingleThreadScheduledExecutor();
         databaseHelper = new DatabaseHelper(this);
         apiClient = new ApiClient(apiToken);
-        contactList = new ArrayList(250);
+        contactList = new ArrayList<Contact>(250);
         handler = new Handler();
         localBinding = new LocalBinding();
         mimeTypeMap = MimeTypeMap.getSingleton();
