@@ -70,6 +70,7 @@ public class Notifier {
             if (android.os.Build.VERSION.SDK_INT > 15) {
                 mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             } else {
+                @SuppressWarnings("deprecation")
                 Notification notification = mBuilder.getNotification();
                 mNotificationManager.notify(NOTIFICATION_ID, notification);
             }
@@ -101,6 +102,7 @@ public class Notifier {
             if (android.os.Build.VERSION.SDK_INT > 15) {
                 mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             } else {
+                @SuppressWarnings("deprecation")
                 Notification notification = mBuilder.getNotification();
                 mNotificationManager.notify(NOTIFICATION_ID, notification);
             }
