@@ -27,12 +27,46 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    buildTypes {
+
+    signingConfigs {
+
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            storeFile file(RELEASE_KEYSTORE_FILE)
+            storePassword RELEASE_KEYSTORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_ALIAS_PASSWORD
+        }
+
+        debug {
         }
     }
+
+    buildTypes {
+
+        release {
+            debuggable false
+            jniDebugBuild false
+            runProguard false
+            proguardFile '../proguard-project.txt'
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            debuggable true
+            jniDebugBuild true
+            runProguard false
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    productFlavors {
+
+        badge {
+            applicationId "com.triaged.badge.app"
+            proguardFile 'proguard-rules.txt'
+        }
+    }
+
     packagingOptions {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
