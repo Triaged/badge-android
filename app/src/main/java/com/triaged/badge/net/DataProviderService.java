@@ -36,6 +36,7 @@ import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.utils.MemoryCacheUtils;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.R;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.provider.ContactProvider;
@@ -625,7 +626,7 @@ public class DataProviderService extends Service {
                         getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
                         dbOperations.clear();
                     }
-
+                    SharedPreferencesUtil.store(R.string.pref_has_fetch_company, true);
                     loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
 
                 } else {

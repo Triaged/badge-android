@@ -2,4 +2,5 @@
 <resources>
     <string name="pref_api_token">apiToken</string>
     <string name="pref_my_user_id_key">loggedInUserId</string>
+    <string name="pref_has_fetch_company">has_fetched_company</string>
 </resources>

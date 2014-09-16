@@ -26,6 +26,7 @@ import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.profile.OnboardingPositionActivity;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -218,6 +219,10 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
     @Override
     protected void onResume() {
+        if ( SharedPreferencesUtil.getBoolean(R.string.pref_has_fetch_company, false) ) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
         super.onResume();
     }
 
