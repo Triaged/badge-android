@@ -123,7 +123,7 @@ public class App extends Application {
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
 
-        restAdapter = new RestAdapter.Builder()
+        RestAdapter.Builder restBuilder = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
@@ -134,10 +134,16 @@ public class App extends Application {
                     }
                 })
                 .setEndpoint(ApiClient.API_MESSAGING_HOST)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
+//                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setConverter(new GsonConverter(gson))
-                .setLog(new AndroidLog("retrofit"))
-                .build();
+                .setLog(new AndroidLog("retrofit"));
+        if (Config.IS_LOGGING_ENABLE) {
+            restBuilder.setLogLevel(RestAdapter.LogLevel.FULL);
+        } else {
+            restBuilder.setLogLevel(RestAdapter.LogLevel.NONE);
+        }
+
+        restAdapter = restBuilder.build();
     }
 
     private void setupULI() {
