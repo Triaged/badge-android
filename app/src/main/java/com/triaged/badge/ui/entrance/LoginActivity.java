@@ -183,6 +183,6 @@ public class LoginActivity extends MixpanelActivity {
 
 
     private boolean isAlreadyLoggedIn() {
-        return !SharedPreferencesUtil.getString(R.string.pref_api_token, "").equals("");
+        return SharedPreferencesUtil.getBoolean(R.string.pref_has_fetch_company, false);
     }
 }
