@@ -1,6 +1,8 @@
 package com.triaged.badge.net;
 
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.Config;
+import com.triaged.utils.GeneralUtils;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -14,6 +16,8 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpProtocolParams;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -72,12 +76,16 @@ public class ApiClient extends DefaultHttpClient {
 
     private static final String REQUEST_RESET_PASSWORD_URI = String.format("%s/v1/account/reset_password", API_HOST);
 
+    public static final String USER_AGENT = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
+
     private HttpHost httpHost;
     private HttpHost messagingHttpHost;
     String apiToken;
 
     public ApiClient(String apiToken) {
         super();
+        this.getParams().setParameter( CoreProtocolPNames.USER_AGENT, USER_AGENT);
+
         URI uri = URI.create(String.format("%s", API_HOST));
         httpHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
         uri = URI.create(String.format("%s", API_MESSAGING_HOST));
@@ -220,6 +228,7 @@ public class ApiClient extends DefaultHttpClient {
         delete.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         return execute(httpHost, delete);
     }
+
 
     /**
      * PUTS to /offices/:id/entered to check in to an office

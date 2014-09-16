@@ -107,11 +107,25 @@ public class GeneralUtils {
     /**
      * @return Application's version code from the {@code PackageManager}.
      */
-    public static int getAppVersion(Context context) {
+    public static int getAppVersionCode(Context context) {
         try {
             PackageInfo packageInfo = context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0);
             return packageInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            // should never happen
+            throw new RuntimeException("Could not get package name: " + e);
+        }
+    }
+
+    /**
+     * @return Application's version code from the {@code PackageManager}.
+     */
+    public static String getAppVersionName(Context context) {
+        try {
+            PackageInfo packageInfo = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), 0);
+            return packageInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             // should never happen
             throw new RuntimeException("Could not get package name: " + e);

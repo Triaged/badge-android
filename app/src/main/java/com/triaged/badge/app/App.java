@@ -127,7 +127,7 @@ public class App extends Application {
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
-                        request.addHeader("User-Agent", "Badge-agent");
+                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
                         request.addHeader("User-Id", userId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");

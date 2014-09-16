@@ -196,7 +196,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
         // since the existing regID is not guaranteed to work with the new
         // app version.
         int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
-        int currentVersion = GeneralUtils.getAppVersion(context);
+        int currentVersion = GeneralUtils.getAppVersionCode(context);
         if (registeredVersion != currentVersion) {
             App.gLogger.i("App version changed.");
             return "";
@@ -287,7 +287,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
      */
     private void storeRegistrationId(Context context, String regId) {
         final SharedPreferences prefs = getGCMPreferences(context);
-        int appVersion = GeneralUtils.getAppVersion(context);
+        int appVersion = GeneralUtils.getAppVersionCode(context);
         App.gLogger.i("Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(PROPERTY_REG_ID, regId);
