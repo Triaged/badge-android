@@ -24,6 +24,6 @@ public interface MessageThreadApi {
     @POST("/api/v1/message_threads/{message_thread_id}/unmute")
     void unMute(@Path("message_thread_id") String threadId, Callback<Response> callback);
 
-    @POST("/api/v1/message_threads/{message_thread_id}/unmute")
+    @POST("/api/v1/message_threads/{message_thread_id}/mute")
     void mute(@Path("message_thread_id") String threadId, Callback<Response> callback);
 }
