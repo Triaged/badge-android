@@ -44,7 +44,7 @@ android {
         release {
             debuggable false
             jniDebugBuild false
-            runProguard false
+            runProguard true
             proguardFile '../proguard-project.txt'
             signingConfig signingConfigs.release
         }
