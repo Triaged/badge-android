@@ -43,13 +43,17 @@ import com.triaged.badge.database.provider.ContactProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
+import com.triaged.badge.database.provider.ReceiptProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
+import com.triaged.badge.models.Receipt;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -72,6 +76,8 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * This service abstracts access to contact and company
@@ -1148,7 +1154,7 @@ public class DataProviderService extends Service {
                             loggedInUser.fromJSON(account.getJSONObject("current_user"));
                             prefs.edit().putInt(COMPANY_ID_PREFS_KEY, account.getInt("company_id")).
                                     putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).
-                                    putString(COMPANY_NAME_PREFS_KEY, account.getString("company_name")).
+//                                    putString(COMPANY_NAME_PREFS_KEY, account.getString("company_name")).
                                     putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
 
                             JSONObject props = constructMixpanelSuperProperties();
@@ -2278,7 +2284,19 @@ public class DataProviderService extends Service {
                         MessageProvider.CONTENT_URI).
                         withValues(contentValues).
                         build());
-//                getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
+
+                if (contentValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID) != loggedInUser.id) {
+                    ContentValues receiptValues = new ContentValues();
+                    receiptValues.put(ReceiptTable.COLUMN_MESSAGE_ID, contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID));
+                    receiptValues.put(ReceiptTable.COLUMN_THREAD_ID, threadId);
+                    receiptValues.put(ReceiptTable.COLUMN_USER_ID, loggedInUser.id);
+                    receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
+
+                    getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
+
+                    EventBus.getDefault().post(new NewMessageEvent(threadId,
+                            contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID)));
+                }
             }
 
             getContentResolver().applyBatch(MessageProvider.AUTHORITY, dbOperations);

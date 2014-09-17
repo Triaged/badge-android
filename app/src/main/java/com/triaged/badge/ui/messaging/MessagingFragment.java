@@ -3,6 +3,7 @@ package com.triaged.badge.ui.messaging;
 
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
@@ -17,18 +18,33 @@ import android.widget.ListView;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.ReceiptHelper;
 import com.triaged.badge.database.provider.MessageProvider;
+import com.triaged.badge.database.provider.ReceiptProvider;
 import com.triaged.badge.database.table.MessagesTable;
+import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.events.NewMessageEvent;
+import com.triaged.badge.models.Receipt;
+import com.triaged.badge.net.api.ReceiptApi;
+import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
 import com.triaged.badge.ui.notification.Notifier;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -99,6 +115,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
 
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
@@ -130,6 +147,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     @Override
     public void onStop() {
         App.dataProviderServiceBinding.markAsRead(mThreadId);
+        EventBus.getDefault().unregister(this);
         super.onStop();
     }
 
@@ -145,10 +163,79 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         adapter.swapCursor(data);
+        prepareAndSendReceipts();
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
+    }
+
+    ReceiptApi receiptApi = App.restAdapter.create(ReceiptApi.class);
+    private void prepareAndSendReceipts() {
+        if (ReceiptHelper.setTimestamp(getActivity(), mThreadId) > 0) {
+            List<Receipt> receiptList = ReceiptHelper.fetchReceiptReportCandidates(getActivity(), mThreadId);
+            if (receiptList.size() > 0) {
+                ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
+                receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
+                    @Override
+                    public void success(Response response, Response response2) {
+                        ReceiptHelper.setReceiptSync(getActivity(), mThreadId);
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+
+                    }
+                });
+            }
+        }
+    }
+
+
+    public void onEvent(final NewMessageEvent newMessageEvent) {
+        if (mThreadId.equals(newMessageEvent.threadId)) {
+
+            final Receipt receipt = new Receipt();
+            receipt.setThreadId(newMessageEvent.threadId);
+            receipt.setMessageId(newMessageEvent.messageId);
+            receipt.setUserId(App.dataProviderServiceBinding.getLoggedInUser().id + "");
+            receipt.setTimestamp(System.currentTimeMillis() + "");
+            receipt.setSyncStatus(Receipt.SYNCED);
+
+            ArrayList<Receipt> receiptArrayList = new ArrayList<Receipt>(1);
+            receiptArrayList.add(receipt);
+            ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptArrayList);
+
+            receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
+                @Override
+                public void success(Response response, Response response2) {
+                    App.gLogger.i(response.getReason());
+
+                    ContentValues receiptSyncedValues = new ContentValues(2);
+                    receiptSyncedValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
+                    receiptSyncedValues.put(ReceiptTable.COLUMN_TIMESTAMP, receipt.getTimestamp());
+
+                    getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
+                            receiptSyncedValues,
+                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.COLUMN_USER_ID + "=?",
+                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                }
+
+                @Override
+                public void failure(RetrofitError error) {
+                    App.gLogger.e(error.getMessage());
+                    ContentValues receiptSyncedValues = new ContentValues(1);
+                    receiptSyncedValues.put(ReceiptTable.COLUMN_TIMESTAMP, receipt.getTimestamp());
+
+                    getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
+                            receiptSyncedValues,
+                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.COLUMN_USER_ID + "=?",
+                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                }
+            });
+        }
     }
 }
