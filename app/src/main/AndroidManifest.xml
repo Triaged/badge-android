@@ -226,6 +226,11 @@
             android:authorities="com.triaged.badge.provider.office_location"
             android:enabled="true"
             android:exported="false" />
+        <provider
+            android:name="com.triaged.badge.database.provider.ReceiptProvider"
+            android:authorities="com.triaged.badge.provider.receipts"
+            android:enabled="true"
+            android:exported="false" />
 
     </application>
 

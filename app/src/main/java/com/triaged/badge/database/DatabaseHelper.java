@@ -8,6 +8,7 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.database.table.ReceiptTable;
 
 /**
  * @author Created by jc on 7/10/14.
@@ -16,7 +17,7 @@ import com.triaged.badge.database.table.OfficeLocationsTable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 23;
+    protected static final int DATABASE_VERSION = 24;
 
     private static Context mContext;
 
@@ -35,10 +36,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+//        db.execSQL("PRAGMA foreign_keys=ON;");
+
         new ContactsTable().onCreate(db);
         new DepartmentsTable().onCreate(db);
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
+        new ReceiptTable().onCreate(db);
 
 //        dataProviderService.dataClearedCallback();
     }
@@ -49,6 +53,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         new DepartmentsTable().onUpgrade(db, oldVersion, newVersion);
         new MessagesTable().onUpgrade(db, oldVersion, newVersion);
         new OfficeLocationsTable().onUpgrade(db, oldVersion, newVersion);
+        new ReceiptTable().onUpgrade(db, oldVersion, newVersion);
 
         onCreate(db);
     }
