@@ -61,6 +61,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     private MessagingAdapter adapter;
     private int soleCounterpartId = 0;
     private int userCount = 2;
+    private boolean reportsReceipts = false;
 
     //    @InjectView(R.id.post_box_wrapper) RelativeLayout postBoxWrapper;
     @InjectView(R.id.send_now_button) ImageButton sendButton;
@@ -163,7 +164,10 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         adapter.swapCursor(data);
-        prepareAndSendReceipts();
+        if (!reportsReceipts) {
+            reportsReceipts = true;
+            prepareAndSendReceipts();
+        }
     }
 
     @Override
