@@ -70,7 +70,7 @@ public class Receipt {
         cv.put(ReceiptTable.COLUMN_THREAD_ID, receipt.threadId);
         cv.put(ReceiptTable.COLUMN_MESSAGE_ID, receipt.messageId);
         cv.put(ReceiptTable.COLUMN_USER_ID, receipt.userId);
-        cv.put(ReceiptTable.COLUMN_TIMESTAMP, receipt.timestamp);
+        cv.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.timestamp);
         cv.put(ReceiptTable.COLUMN_SYNC_STATUS, receipt.syncStatus);
         return cv;
     }
@@ -92,7 +92,7 @@ public class Receipt {
         receipt.setMessageId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_MESSAGE_ID)));
         receipt.setThreadId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_THREAD_ID)));
         receipt.setUserId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_USER_ID)));
-        receipt.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_TIMESTAMP)));
+        receipt.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_SEEN_TIMESTAMP)));
         receipt.setSyncStatus(cursor.getInt(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_SYNC_STATUS)));
         return receipt;
     }

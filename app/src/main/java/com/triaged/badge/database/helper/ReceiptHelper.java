@@ -19,12 +19,12 @@ public class ReceiptHelper {
 
     public static int setTimestamp(Context context, String threadId) {
         ContentValues cv = new ContentValues(1);
-        cv.put(ReceiptTable.COLUMN_TIMESTAMP, System.currentTimeMillis() + "");
+        cv.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, System.currentTimeMillis() + "");
         int updateCount = context.getContentResolver().update(
                 ReceiptProvider.CONTENT_URI, cv,
                 ReceiptTable.COLUMN_THREAD_ID + "=? AND " +
                         ReceiptTable.COLUMN_SYNC_STATUS + " =? AND " +
-                        ReceiptTable.COLUMN_TIMESTAMP + " is NULL",
+                        ReceiptTable.COLUMN_SEEN_TIMESTAMP + " is NULL",
                 new String[]{threadId + "", Receipt.NOT_SYNCED + "" }
         );
         return updateCount;

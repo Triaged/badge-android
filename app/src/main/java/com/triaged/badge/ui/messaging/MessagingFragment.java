@@ -33,7 +33,6 @@ import com.triaged.badge.ui.notification.Notifier;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -218,7 +217,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
                     ContentValues receiptSyncedValues = new ContentValues(2);
                     receiptSyncedValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
@@ -231,7 +230,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                 public void failure(RetrofitError error) {
                     App.gLogger.e(error.getMessage());
                     ContentValues receiptSyncedValues = new ContentValues(1);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
