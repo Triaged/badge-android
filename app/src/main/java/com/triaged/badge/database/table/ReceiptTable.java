@@ -28,6 +28,9 @@ public class ReceiptTable extends AbstractTable {
                 + ");");
 
         db.execSQL("CREATE INDEX receipt_message_id_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGE_ID + ");");
+        db.execSQL("CREATE INDEX receipt_thread_id_index ON " + TABLE_NAME + "(" + COLUMN_THREAD_ID + ");");
+        db.execSQL("CREATE INDEX receipt_seen_timestamp_index ON " + TABLE_NAME + "(" + COLUMN_TIMESTAMP + ");");
+        db.execSQL("CREATE INDEX receipt_sync_status_index ON " + TABLE_NAME + "(" + COLUMN_SYNC_STATUS + ");");
     }
 
     @Override
