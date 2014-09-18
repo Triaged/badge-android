@@ -180,7 +180,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                 receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
                     @Override
                     public void success(Response response, Response response2) {
-                        ReceiptHelper.setReceiptSync(getActivity(), mThreadId);
+                        ReceiptHelper.setReceiptSync(App.mContext, mThreadId);
                     }
 
                     @Override
