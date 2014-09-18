@@ -42,7 +42,18 @@ public class ReceiptHelper {
     }
 
 
-    public static int setReceiptSync(Context context, String threadId) {
+    public static List<Receipt> fetchAllReceiptReportCandidates(Context context) {
+        Cursor cursor = context.getContentResolver().query(
+                ReceiptProvider.CONTENT_URI, null,
+                ReceiptTable.COLUMN_SEEN_TIMESTAMP + " IS NOT NULL AND " +
+                        ReceiptTable.COLUMN_SYNC_STATUS + " =? ",
+                new String[]{Receipt.NOT_SYNCED + ""},
+                null);
+        return Receipt.getCursorEntities(cursor);
+    }
+
+
+    public static int setReceiptsSync(Context context, String threadId) {
         ContentValues cv = new ContentValues(1);
         cv.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
         return  context.getContentResolver().update(
@@ -50,6 +61,18 @@ public class ReceiptHelper {
                 ReceiptTable.COLUMN_THREAD_ID + "=? AND " +
                         ReceiptTable.COLUMN_SYNC_STATUS + " =? ",
                 new String[]{threadId + "", Receipt.NOT_SYNCED + ""}
+        );
+    }
+
+
+    public static int setAllSeenReceiptsSync(Context context) {
+        ContentValues cv = new ContentValues(1);
+        cv.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
+        return  context.getContentResolver().update(
+                ReceiptProvider.CONTENT_URI, cv,
+                ReceiptTable.COLUMN_SEEN_TIMESTAMP + " IS NOT NULL AND "
+                        + ReceiptTable.COLUMN_SYNC_STATUS + " =? ",
+                new String[]{ Receipt.NOT_SYNCED + ""}
         );
     }
 

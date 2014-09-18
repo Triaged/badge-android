@@ -176,23 +176,23 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     ReceiptApi receiptApi = App.restAdapter.create(ReceiptApi.class);
     private void prepareAndSendReceipts() {
-        if (ReceiptHelper.setTimestamp(getActivity(), mThreadId) > 0) {
-            List<Receipt> receiptList = ReceiptHelper.fetchReceiptReportCandidates(getActivity(), mThreadId);
-            if (receiptList.size() > 0) {
-                ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
-                receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
-                    @Override
-                    public void success(Response response, Response response2) {
-                        ReceiptHelper.setReceiptSync(App.mContext, mThreadId);
-                    }
+        ReceiptHelper.setTimestamp(getActivity(), mThreadId);
+        List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.mContext);
+        if (receiptList.size() > 0) {
+            ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
+            receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
+                @Override
+                public void success(Response response, Response response2) {
+                    ReceiptHelper.setAllSeenReceiptsSync(App.mContext);
+                }
 
-                    @Override
-                    public void failure(RetrofitError error) {
+                @Override
+                public void failure(RetrofitError error) {
 
-                    }
-                });
-            }
+                }
+            });
         }
+
     }
 
 
