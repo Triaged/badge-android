@@ -21,7 +21,7 @@ public class Receipt {
     String messageId;
     String userId;
     String timestamp;
-    int syncStatus;
+    transient int syncStatus;
 
 
     public String getThreadId() {
