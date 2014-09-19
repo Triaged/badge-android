@@ -120,7 +120,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
         }
-        App.dataProviderServiceBinding.markAsRead(mThreadId);
+        markMessagesAsRead();
     }
 
     @Override
@@ -146,7 +146,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     @Override
     public void onStop() {
-        App.dataProviderServiceBinding.markAsRead(mThreadId);
+        markMessagesAsRead();
         EventBus.getDefault().unregister(this);
         super.onStop();
     }
@@ -193,6 +193,16 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
             });
         }
 
+    }
+
+    private void markMessagesAsRead() {
+        ContentValues values = new ContentValues();
+        values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
+
+        getActivity().getContentResolver().update(MessageProvider.CONTENT_URI, values,
+                MessagesTable.COLUMN_MESSAGES_THREAD_ID +   " =? AND " +
+                        MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1",
+                new String[] { mThreadId});
     }
 
 

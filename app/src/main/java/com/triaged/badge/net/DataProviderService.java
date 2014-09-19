@@ -267,16 +267,6 @@ public class DataProviderService extends Service {
 
     private BroadcastReceiver syncGCMReceiver;
 
-    public static void logCursor(Cursor c) {
-        while (c.moveToNext()) {
-            Log.d(LOG_TAG, "-------------------------------------------------------------------");
-            for (String column : c.getColumnNames()) {
-                Log.d(LOG_TAG, String.format("%s: %s", column, c.getString(c.getColumnIndex(column))));
-            }
-            Log.d(LOG_TAG, "-------------------------------------------------------------------");
-        }
-    }
-
     class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
         @Override
         protected Void doInBackground(File... params) {
@@ -293,7 +283,6 @@ public class DataProviderService extends Service {
             return null;
         }
     }
-
 
     /**
      * @param context
@@ -397,16 +386,6 @@ public class DataProviderService extends Service {
             }
         }
         database = null;
-    }
-
-    /**
-     * Call this function to cause a full refresh of site data
-     * next time we sync, rather than a delta. Primary use case
-     * is when an app upgrade causes a DB schema change.
-     */
-    public void dataClearedCallback() {
-        lastSynced = 0l;
-        prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0).commit();
     }
 
     /**
@@ -926,10 +905,10 @@ public class DataProviderService extends Service {
      * <p/>
      * This should only be called on the sql thread.
      */
-    protected void loggedOut(boolean restartApplication) {
+    protected void loggedOut() {
 
         Intent logoutIntent = new Intent(LogoutReceiver.ACTION_LOGOUT);
-        logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, restartApplication);
+        logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, true);
         DataProviderService.this.sendBroadcast(logoutIntent);
 
 
@@ -1040,35 +1019,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * This method is for when a user elects to log out. It DELETES /devices/:id/sign_out
-     * and on success wipes local data on the phone and removes tokens.
-     */
-    protected void unregisterDevice() {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this);
-                    int deviceId = prefs.getInt(REGISTERED_DEVICE_ID_PREFS_KEY, -1);
-                    if (deviceId != -1) {
-                        HttpResponse response = apiClient.unregisterDeviceRequest(deviceId);
-                        ensureNotUnauthorized(response);
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-
-                    }
-                } catch (IOException e) {
-                    App.gLogger.e("Wasn't able to delete device on api", e);
-                } finally {
-                    // Do this regardless of whether we can communicate with the cloud or not.
-                    loggedOut(false);
-                }
-            }
-        });
-    }
-
-    /**
      * Posts to /devices to register upon login.
      *
      * @param pushToken GCM device registration
@@ -1122,100 +1072,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Attempt to create a new persistent app session by exchanging email
-     * and password credentials for an api token over the network.
-     *
-     * @param email
-     * @param password
-     * @param loginCallback if non null, {@link DataProviderService.LoginCallback#loginFailed(String)} on this obj will be called on auth failure.
-     */
-    protected void loginAsync(final String email, final String password, final LoginCallback loginCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                JSONObject postData = new JSONObject();
-                JSONObject creds = new JSONObject();
-
-                try {
-                    creds.put("email", email);
-                    creds.put("password", password);
-                    postData.put("user_login", creds);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for login", e);
-                    fail("Unexpected issue, please contact Badge HQ");
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.createSessionRequest(postData);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                        try {
-                            JSONObject errorObj = parseJSONResponse(response.getEntity());
-                            String error = errorObj.getJSONArray("errors").getString(0);
-                            fail(error);
-                        } catch (JSONException e) {
-                            App.gLogger.e("JSON exception parsing error response from 401.", e);
-                            fail("Login failed.");
-                        }
-                    } else if (statusCode == HttpStatus.SC_OK) {
-                        try {
-                            JSONObject account = parseJSONResponse(response.getEntity());
-                            apiClient.apiToken = account.getString("authentication_token");
-                            loggedInUser = new Contact();
-                            loggedInUser.fromJSON(account.getJSONObject("current_user"));
-                            prefs.edit().putInt(COMPANY_ID_PREFS_KEY, account.getInt("company_id")).
-                                    putString(API_TOKEN_PREFS_KEY, apiClient.apiToken).
-//                                    putString(COMPANY_NAME_PREFS_KEY, account.getString("company_name")).
-                                    putInt(LOGGED_IN_USER_ID_PREFS_KEY, loggedInUser.id).commit();
-
-                            JSONObject props = constructMixpanelSuperProperties();
-                            MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
-                            mixpanelAPI.registerSuperProperties(props);
-
-                            if (loginCallback != null) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        loginCallback.loginSuccess(loggedInUser);
-                                    }
-                                });
-                            }
-
-                            syncCompany();
-                            syncMessagesSync();
-                            startService(new Intent(DataProviderService.this, FayeService.class));
-                        } catch (JSONException e) {
-                            App.gLogger.e("JSON exception parsing login success.", e);
-                            fail("Credentials were OK, but the response couldn't be understood. Please notify Badge HQ.");
-                        }
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        App.gLogger.e("Unexpected http response code " + statusCode + " from api.");
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase());
-                    }
-                } catch (IOException e) {
-                    fail("We had trouble connecting to Badge to authenticate. Check your phone's network connection and try again.");
-                }
-
-            }
-
-            private void fail(final String reason) {
-                if (loginCallback != null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            loginCallback.loginFailed(reason);
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    /**
      * Every time we hit the API, we should make sure the status code
      * returned wasn't unauthorized. If it was, we assume
      * the user has been logged out or termed or something and we reset
@@ -1225,7 +1081,7 @@ public class DataProviderService extends Service {
      */
     protected boolean ensureNotUnauthorized(HttpResponse response) {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            loggedOut(true);
+            loggedOut();
             return false;
         }
         return true;
@@ -2189,33 +2045,6 @@ public class DataProviderService extends Service {
         });
     }
 
-    /**
-     * Marks the head msg of this thread as read.
-     *
-     * @param threadId
-     */
-    protected void markAsRead(final String threadId) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                ContentValues values = new ContentValues();
-                values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
-
-                getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                        MessagesTable.COLUMN_MESSAGES_THREAD_ID +   " =? AND " +
-                                MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1",
-                        new String[] { threadId});
-
-//                database.update(
-//                        MessagesTable.TABLE_NAME,
-//                        values,
-//                        String.format("%s = ? AND %s = 1", MessagesTable.COLUMN_MESSAGES_THREAD_ID, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD),
-//                        new String[]{threadId}
-//                );
-            }
-        });
-    }
-
     protected void syncMessagesAsync() {
         sqlThread.submit(new Runnable() {
             @Override
@@ -2413,19 +2242,6 @@ public class DataProviderService extends Service {
         msgValues.clear();
     }
 
-    /**
-     * Get a cursor to the list of active thread ids with most
-     * recent thread first.
-     *
-     * @return
-     */
-    protected Cursor getThreads() {
-        if (database != null) {
-            return database.rawQuery(QUERY_THREADS_SQL, EMPTY_STRING_ARRAY);
-        }
-        throw new IllegalStateException("getThreads() called before database available.");
-    }
-
     protected Cursor getMessages(String threadId) {
         if (database != null) {
             return database.rawQuery(QUERY_MESSAGES_SQL, new String[]{threadId});
@@ -2536,23 +2352,6 @@ public class DataProviderService extends Service {
         return new JSONObject();
     }
 
-    protected JSONObject constructMixpanelSuperProperties() {
-        JSONObject mixpanelData = new JSONObject();
-        try {
-            mixpanelData.put("firstName", loggedInUser.firstName);
-            mixpanelData.put("lastName", loggedInUser.lastName);
-            mixpanelData.put("email", loggedInUser.email);
-            mixpanelData.put("company.name", prefs.getString(COMPANY_NAME_PREFS_KEY, ""));
-            mixpanelData.put("company.identifier", prefs.getInt(COMPANY_ID_PREFS_KEY, -1));
-            return mixpanelData;
-        } catch (JSONException e) {
-            Log.w(LOG_TAG, "Couldn't construct mix panel super property json");
-        }
-        return new JSONObject();
-    }
-
-
-
     public void onEvent(LogedinSuccessfully logedinSuccessfully) {
 
         String apiToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
@@ -2571,13 +2370,6 @@ public class DataProviderService extends Service {
          */
         public void initDatabase() {
             DataProviderService.this.initDatabase();
-        }
-
-        /**
-         * @see DataProviderService#getContactsCursor()
-         */
-        public Cursor getContactsCursor() {
-            return DataProviderService.this.getContactsCursor();
         }
 
         /**
@@ -2615,13 +2407,6 @@ public class DataProviderService extends Service {
          */
         public Cursor getContactsManaged(int contactId) {
             return DataProviderService.this.getContactsManaged(contactId);
-        }
-
-        /**
-         * @see DataProviderService#loginAsync(String, String, DataProviderService.LoginCallback)
-         */
-        public void loginAsync(String email, String password, LoginCallback loginCallback) {
-            DataProviderService.this.loginAsync(email, password, loginCallback);
         }
 
         /**
@@ -2746,13 +2531,6 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#loggedOut(boolean)
-         */
-        public void logout() {
-            DataProviderService.this.unregisterDevice();
-        }
-
-        /**
          * @see DataProviderService#createNewDepartmentAsync(String, DataProviderService.AsyncSaveCallback)
          */
         public void createNewDepartmentAsync(String department, AsyncSaveCallback saveCallback) {
@@ -2817,12 +2595,6 @@ public class DataProviderService extends Service {
             });
         }
 
-        /**
-         * @see DataProviderService#getThreads()
-         */
-        public Cursor getThreads() {
-            return DataProviderService.this.getThreads();
-        }
 
         /**
          * @see DataProviderService#getMessages(String)
@@ -2858,13 +2630,6 @@ public class DataProviderService extends Service {
             } catch (JSONException e) {
                 return null;
             }
-        }
-
-        /**
-         * @see DataProviderService#markAsRead(String)
-         */
-        public void markAsRead(String threadId) {
-            DataProviderService.this.markAsRead(threadId);
         }
 
         /**
@@ -2934,27 +2699,6 @@ public class DataProviderService extends Service {
         jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONArray(json);
-    }
-
-    /**
-     * Simple callback interface to handle login response asynchronously.
-     * Callbacks are always invoked on main UI thread.
-     */
-    public interface LoginCallback {
-        /**
-         * Called if login was unsuccessful.
-         *
-         * @param reason Human readable message describing the failure.
-         */
-        public void loginFailed(String reason);
-
-        /**
-         * Login was successful, {@link DataProviderService.LocalBinding#getLoggedInUser()}
-         * is now guaranteed to return non null.
-         *
-         * @param user the now logged in user
-         */
-        public void loginSuccess(Contact user);
     }
 
     /**
