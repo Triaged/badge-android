@@ -32,7 +32,6 @@ import android.util.LruCache;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
-import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.utils.MemoryCacheUtils;
 import com.triaged.badge.app.App;
@@ -941,48 +940,6 @@ public class DataProviderService extends Service {
 //        apiClient.apiToken = "";
     }
 
-    protected void changePassword(final String currentPassword, final String newPassword, final String newPasswordConfirmation, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                JSONObject postBody = new JSONObject();
-                try {
-                    JSONObject user = new JSONObject();
-                    postBody.put("user", user);
-                    user.put("current_password", currentPassword);
-                    user.put("password", newPassword);
-                    user.put("password_confirmation", newPasswordConfirmation);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for change password", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.changePasswordRequest(postBody);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (response.getEntity() != null) {
-                        response.getEntity().consumeContent();
-                    }
-                    if (statusCode == HttpStatus.SC_OK) {
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        fail("Got unexpected response from server. Please contact Badge HQ.", saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue changing password, please check your connection and try again.", saveCallback);
-                }
-
-            }
-        });
-    }
 
     protected void requestResetPassword(final String email, final AsyncSaveCallback saveCallback) {
         JSONObject postBody = new JSONObject();
@@ -2565,12 +2522,6 @@ public class DataProviderService extends Service {
             DataProviderService.this.checkOutOfOfficeAsync(officeId);
         }
 
-        /**
-         * @see DataProviderService#changePassword(String, String, String, DataProviderService.AsyncSaveCallback)
-         */
-        public void changePassword(String oldPassword, String newPassword, String newPasswordConfirmation, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.changePassword(oldPassword, newPassword, newPasswordConfirmation, saveCallback);
-        }
 
         /**
          * @see DataProviderService#getBasicMixpanelData() (int)
