@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.view.inputmethod.InputMethodManager;
 
 import com.triaged.badge.app.App;
@@ -146,5 +147,9 @@ public class GeneralUtils {
 
         i.setData(Uri.parse(url));
         context.startActivity(i);
+    }
+
+    public static int sdkNumber() {
+        return Build.VERSION.SDK_INT;
     }
 }
