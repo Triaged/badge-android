@@ -1,7 +1,7 @@
 package com.triaged.badge.net;
 
 import com.triaged.badge.app.App;
-import com.triaged.badge.app.Config;
+import com.triaged.badge.app.BuildConfig;
 import com.triaged.utils.GeneralUtils;
 
 import org.apache.http.HttpHost;
@@ -17,7 +17,6 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpProtocolParams;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -35,24 +34,8 @@ import java.net.URISyntaxException;
 public class ApiClient extends DefaultHttpClient {
     public static final String MIME_TYPE_JSON = "application/json";
 
-    private static final String PROD_API_HOST = "https://api.badge.co";
-    private static final String PROD_API_MESSAGING_HOST = "https://messaging.badge.co";
-
-    private static final String STAGING_API_HOST = "http://api.badge-staging.com";
-    private static final String STAGING_API_MESSAGING_HOST = "http://badge-messaging-staging.herokuapp.com";
-
-    public static final String API_MESSAGING_HOST;
-    private static final String API_HOST;
-
-    static {
-        if (Config.IS_ON_STAGING_SERVER) {
-            API_MESSAGING_HOST = STAGING_API_MESSAGING_HOST;
-            API_HOST = STAGING_API_HOST;
-        } else {
-            API_MESSAGING_HOST = PROD_API_MESSAGING_HOST;
-            API_HOST = PROD_API_HOST;
-        }
-    }
+    public static final String API_MESSAGING_HOST = BuildConfig.API_MESSAGING_SERVER_URL;
+    private static final String API_HOST = BuildConfig.API_URL;
 
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 

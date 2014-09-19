@@ -11,7 +11,7 @@ import android.util.Log;
 
 import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
-import com.triaged.badge.app.Config;
+import com.triaged.badge.app.BuildConfig;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,18 +33,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     protected static final String LOG_TAG = FayeService.class.getName();
 
-    protected static final String STAGING_FAYE_HOST = "ws://badge-messaging-staging.herokuapp.com/streaming";
-    protected static final String PROD_FAYE_HOST = "wss://messaging.badge.co/streaming";
-
-    protected static final String FAYE_HOST;
-
-    static {
-        if (Config.IS_ON_STAGING_SERVER) {
-            FAYE_HOST = STAGING_FAYE_HOST;
-        } else {
-            FAYE_HOST = PROD_FAYE_HOST;
-        }
-    }
+    protected static final String FAYE_HOST = BuildConfig.FAY_SERVER_URL;
 
     //protected Fa faye;
     protected SharedPreferences prefs;

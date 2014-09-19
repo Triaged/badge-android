@@ -50,6 +50,9 @@ android {
             runProguard true
             proguardFile '../proguard-project.txt'
             signingConfig signingConfigs.release
+            buildConfigField "String", "FAY_SERVER_URL", '"ws://badge-messaging-staging.herokuapp.com/streaming"'
+            buildConfigField "String", "API_MESSAGING_SERVER_URL", '""http://badge-messaging-staging.herokuapp.com"'
+            buildConfigField "String", "API_URL", '"http://api.badge-staging.com"'
         }
 
         debug {
@@ -57,6 +60,11 @@ android {
             jniDebugBuild true
             runProguard false
             signingConfig signingConfigs.debug
+            apply plugin: 'checkstyle'
+            apply plugin: 'findbugs'
+            buildConfigField "String", "FAY_SERVER_URL", '"wss://messaging.badge.co/streaming"'
+            buildConfigField "String", "API_MESSAGING_SERVER_URL", '"https://messaging.badge.co"'
+            buildConfigField "String", "API_URL", '"https://api.badge.co"'
         }
     }
 

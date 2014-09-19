@@ -52,14 +52,14 @@ public class App extends Application {
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
 
-    public static final ILogger gLogger = new LoggerImp(Config.IS_LOGGING_ENABLE);
+    public static final ILogger gLogger = new LoggerImp(BuildConfig.DEBUG);
     public static Context mContext;
     public static RestAdapter restAdapter;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        if (Config.IS_CRASH_REPORTING) {
+        if (!BuildConfig.DEBUG) {
             Crashlytics.start(this);
         }
         EventBus.getDefault().register(this);
@@ -137,7 +137,7 @@ public class App extends Application {
 //                .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setConverter(new GsonConverter(gson))
                 .setLog(new AndroidLog("retrofit"));
-        if (Config.IS_LOGGING_ENABLE) {
+        if (BuildConfig.DEBUG) {
             restBuilder.setLogLevel(RestAdapter.LogLevel.FULL);
         } else {
             restBuilder.setLogLevel(RestAdapter.LogLevel.NONE);
@@ -157,7 +157,7 @@ public class App extends Application {
                 .build();
 
         ImageLoaderConfiguration.Builder imageLoaderConfigurationBuilder = new ImageLoaderConfiguration.Builder(this);
-        if (Config.IS_LOGGING_ENABLE) {
+        if (BuildConfig.DEBUG) {
             imageLoaderConfigurationBuilder.writeDebugLogs();
         }
         ImageLoaderConfiguration imgLoaderConf = imageLoaderConfigurationBuilder
