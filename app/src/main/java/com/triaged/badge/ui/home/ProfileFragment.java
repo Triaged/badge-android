@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -29,7 +30,6 @@ import com.triaged.badge.ui.base.views.ProfileContactInfoView;
 import com.triaged.badge.ui.base.views.ProfileCurrentLocationView;
 import com.triaged.badge.ui.base.views.ProfileManagesUserView;
 import com.triaged.badge.ui.base.views.ProfileReportsToView;
-import com.triaged.badge.ui.profile.MyProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
 import com.triaged.utils.GeneralUtils;
 
@@ -70,6 +70,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     @InjectView(R.id.department_header)  TextView departmentHeader ;
     @InjectView(R.id.availability_header)  TextView availabilityHeader ;
     @InjectView(R.id.view_holder) LinearLayout viewHolder;
+    @InjectView(R.id.profile_scrollview) ScrollView scrollView;
 
     @OnClick(R.id.settings_button)
     void openSettings(){
@@ -271,15 +272,16 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        Intent intent;
+
                         if (bossView.userId == bossView.profileId) {
-                            intent = new Intent(getActivity(), MyProfileActivity.class);
+                            // Normally won't happen
+                            scrollView.smoothScrollBy(0, 0);
                         } else {
-                            intent = new Intent(getActivity(), OtherProfileActivity.class);
+                            Intent intent = new Intent(getActivity(), OtherProfileActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            intent.putExtra("PROFILE_ID", bossView.profileId);
+                            startActivity(intent);
                         }
-                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        intent.putExtra("PROFILE_ID", bossView.profileId);
-                        startActivity(intent);
                     }
                 });
                 if (boss.avatarUrl != null) {
@@ -345,15 +347,16 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                         e.printStackTrace();
                     }
 
-                    Intent intent;
+
                     if (userId == newView.profileId) {
-                        intent = new Intent(getActivity(), MyProfileActivity.class);
+                        // Normally won't happen
+                        scrollView.smoothScrollBy(0, 0);
                     } else {
-                        intent = new Intent(getActivity(), OtherProfileActivity.class);
+                        Intent intent = new Intent(getActivity(), OtherProfileActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        intent.putExtra("PROFILE_ID", newView.profileId);
+                        startActivity(intent);
                     }
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("PROFILE_ID", newView.profileId);
-                    startActivity(intent);
                 }
             });
             if (newContact.avatarUrl != null) {

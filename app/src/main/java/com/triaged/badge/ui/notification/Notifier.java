@@ -11,8 +11,8 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import com.triaged.badge.app.R;
+import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.badge.ui.home.MessageShowActivity;
-import com.triaged.badge.ui.home.MessagesIndexActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.util.HashSet;
@@ -91,7 +91,9 @@ public class Notifier {
                             .setAutoCancel(true);
 
             // Creates an explicit intent for an Activity in your app
-            Intent resultIntent = new Intent(context, MessagesIndexActivity.class);
+            //TODO should open messages list fragment,
+            // or it could be better to open the exact thread.
+            Intent resultIntent = new Intent(context, MainActivity.class);
             PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
             NotificationManager mNotificationManager =

@@ -11,7 +11,6 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
 import com.triaged.badge.ui.profile.AbstractProfileActivity;
-import com.triaged.badge.ui.profile.MyProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
 
 /**
@@ -39,11 +38,12 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
         contactsForDepartmentList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int userId = dataProviderServiceBinding.getLoggedInUser().id;
                 int clickedId = adapter.getCachedContact(position).id;
                 Intent intent;
-                if (userId == clickedId) {
-                    intent = new Intent(ContactsForDepartmentActivity.this, MyProfileActivity.class);
+                if (clickedId == dataProviderServiceBinding.getLoggedInUser().id) {
+                    //TODO, use profile fragment
+                    intent = new Intent(ContactsForDepartmentActivity.this, MainActivity.class);
+//                    intent = new Intent(ContactsForDepartmentActivity.this, MyProfileActivity.class);
                 } else {
                     intent = new Intent(ContactsForDepartmentActivity.this, OtherProfileActivity.class);
                 }

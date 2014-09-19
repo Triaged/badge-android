@@ -27,7 +27,6 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 import com.triaged.badge.ui.home.adapters.MyDepartmentAdapter;
-import com.triaged.badge.ui.profile.MyProfileActivity;
 import com.triaged.badge.ui.profile.OtherProfileActivity;
 
 import butterknife.ButterKnife;
@@ -134,18 +133,16 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (App.dataProviderServiceBinding.getLoggedInUser() != null) {
-                    int userId = App.dataProviderServiceBinding.getLoggedInUser().id;
-//                  int clickedId = contactsAdapter.getCachedContact(position).id;
                     int clickedId = ((MyContactAdapter.ViewHolder) view.getTag()).contactId;
-                    Intent intent;
-                    if (userId == clickedId) {
-                        intent = new Intent(getActivity(), MyProfileActivity.class);
+                    if (clickedId != App.dataProviderServiceBinding.getLoggedInUser().id) {
+                        Intent intent = new Intent(getActivity(), OtherProfileActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        intent.putExtra("PROFILE_ID", clickedId);
+                        startActivity(intent);
                     } else {
-                        intent = new Intent(getActivity(), OtherProfileActivity.class);
+                        // Normally won't happen.
                     }
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("PROFILE_ID", clickedId);
-                    startActivity(intent);
+
                 }
             }
         });

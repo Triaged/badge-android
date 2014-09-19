@@ -31,6 +31,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+import hugo.weaving.DebugLog;
+
 /**
  * Generic abstract class for my own profile and other profiles
  * <p/>
@@ -156,17 +158,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
                         e.printStackTrace();
                     }
 
-                    Intent intent;
                     if (userId == newView.profileId) {
-                        intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                        finish();
                     } else {
-                        intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-                    }
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    intent.putExtra("PROFILE_ID", newView.profileId);
-                    backStackIds.add(contact.id);
-                    intent.putExtra("BACK_STACK_IDS", backStackIds);
+                        Intent intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        intent.putExtra("PROFILE_ID", newView.profileId);
+                        backStackIds.add(contact.id);
+                        intent.putExtra("BACK_STACK_IDS", backStackIds);
                     startActivity(intent);
+                }
                 }
             });
             if (newContact.avatarUrl != null) {
@@ -216,26 +217,31 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
     }
 
     @Override
+    @DebugLog
     public void onBackPressed() {
         if (backStackIds.size() > 0) {
             int profileId = backStackIds.get(backStackIds.size() - 1);
-            Intent intent;
+
             if (profileId == dataProviderServiceBinding.getLoggedInUser().id) {
-                intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
-            } else {
-                intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-            }
-            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("PROFILE_ID", profileId);
-            backStackIds.remove(backStackIds.size() - 1);
-            intent.putExtra("BACK_STACK_IDS", backStackIds);
-            startActivity(intent);
-            if (this instanceof MyProfileActivity && !backStackIds.contains(profileId)) {
                 finish();
+            } else {
+                Intent intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                intent.putExtra("PROFILE_ID", profileId);
+                backStackIds.remove(backStackIds.size() - 1);
+                intent.putExtra("BACK_STACK_IDS", backStackIds);
+                startActivity(intent);
+                // TODO don't forget this case
+//            if (this instanceof MyProfileActivity && !backStackIds.contains(profileId)) {
+//                finish();
+//            }
+
             }
         } else {
             super.onBackPressed();
         }
+
     }
 
     @Override
@@ -366,17 +372,16 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        Intent intent;
                         if (bossView.userId == bossView.profileId) {
-                            intent = new Intent(AbstractProfileActivity.this, MyProfileActivity.class);
+                            finish();
                         } else {
-                            intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
-                        }
-                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        intent.putExtra("PROFILE_ID", bossView.profileId);
-                        backStackIds.add(contact.id);
-                        intent.putExtra("BACK_STACK_IDS", backStackIds);
-                        startActivity(intent);
+                            Intent intent = new Intent(AbstractProfileActivity.this, OtherProfileActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            intent.putExtra("PROFILE_ID", bossView.profileId);
+                            backStackIds.add(contact.id);
+                            intent.putExtra("BACK_STACK_IDS", backStackIds);
+                            startActivity(intent);
+                    }
                     }
                 });
                 if (boss.avatarUrl != null) {
