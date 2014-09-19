@@ -12,7 +12,7 @@ import android.preference.PreferenceManager;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.home.MainActivity;
-import com.triaged.badge.ui.home.MessageShowActivity;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.util.HashSet;
@@ -59,9 +59,9 @@ public class Notifier {
                             .setAutoCancel(true);
 
             // Creates an explicit intent for an Activity in your app
-            Intent resultIntent = new Intent(context, MessageShowActivity.class);
-            resultIntent.putExtra(MessageShowActivity.SHOW_KEYBOARD_EXTRA, false);
-            resultIntent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+            Intent resultIntent = new Intent(context, MessagingActivity.class);
+            resultIntent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
+            resultIntent.putExtra(MessagingActivity.THREAD_NAME_EXTRA , from);
             PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
             NotificationManager mNotificationManager =

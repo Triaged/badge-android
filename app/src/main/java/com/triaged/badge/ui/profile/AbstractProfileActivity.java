@@ -24,7 +24,6 @@ import com.triaged.badge.ui.base.views.ProfileCurrentLocationView;
 import com.triaged.badge.ui.base.views.ProfileManagesUserView;
 import com.triaged.badge.ui.base.views.ProfileReportsToView;
 import com.triaged.badge.ui.home.ContactsForDepartmentActivity;
-import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -142,7 +141,7 @@ public abstract class AbstractProfileActivity extends BadgeActivity {
         while (reportsCursor.moveToNext()) {
             final ProfileManagesUserView newView = (ProfileManagesUserView) inflater.inflate(R.layout.item_manages_contact, viewHolder, false);
             Contact newContact = new Contact();
-            newContact = ContactsAdapter.getCachedContact(reportsCursor);
+            newContact.fromCursor(reportsCursor);
             newView.userId = userId;
             newView.setupView(newContact);
             newView.noPhotoThumb.setText(newContact.initials);

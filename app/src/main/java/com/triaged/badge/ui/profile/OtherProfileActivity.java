@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.ui.home.MessageShowActivity;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -81,8 +81,9 @@ public class OtherProfileActivity extends AbstractProfileActivity {
                     @Override
                     protected void onPostExecute(String threadId) {
                         if (threadId != null) {
-                            Intent intent = new Intent(OtherProfileActivity.this, MessageShowActivity.class);
-                            intent.putExtra(MessageShowActivity.THREAD_ID_EXTRA, threadId);
+                            Intent intent = new Intent(OtherProfileActivity.this, MessagingActivity.class);
+                            intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
+                            intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, contact.name);
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                         }
