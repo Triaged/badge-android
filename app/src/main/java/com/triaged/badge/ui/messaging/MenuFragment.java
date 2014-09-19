@@ -186,7 +186,7 @@ public class MenuFragment extends Fragment  {
     }
 
     private void requestMute() {
-        MessageThreadApi messageThreadApi = App.restAdapter.create(MessageThreadApi.class);
+        MessageThreadApi messageThreadApi = App.restAdapterMessaging.create(MessageThreadApi.class);
         Callback<Response> muteCallback = new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
@@ -231,7 +231,7 @@ public class MenuFragment extends Fragment  {
 
                     private void sendRenameRequest(String newName) {
                         MessageThreadRequest request = new MessageThreadRequest(new MessageThread(newName));
-                        MessageThreadApi messageThreadApi = App.restAdapter.create(MessageThreadApi.class);
+                        MessageThreadApi messageThreadApi = App.restAdapterMessaging.create(MessageThreadApi.class);
                         messageThreadApi.setName(mThreadId, request, new Callback<Response>() {
                                     @Override
                                     public void success(Response response, Response response2) {

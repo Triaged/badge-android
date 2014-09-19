@@ -54,6 +54,7 @@ public class App extends Application {
 
     public static final ILogger gLogger = new LoggerImp(BuildConfig.DEBUG);
     public static Context mContext;
+    public static RestAdapter restAdapterMessaging;
     public static RestAdapter restAdapter;
 
     @Override
@@ -118,10 +119,24 @@ public class App extends Application {
 
     private void setupRestAdapter() {
         final String authorization = SharedPreferencesUtil.getString("apiToken", "");
-        final int userId = SharedPreferencesUtil.getInteger(R.string.pref_my_user_id_key, -1);
+        final int userId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
+
+        RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
+                .setRequestInterceptor(new RequestInterceptor() {
+                    @Override
+                    public void intercept(RequestInterceptor.RequestFacade request) {
+                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
+                        request.addHeader("User-Id", userId + "");
+                        request.addHeader("Authorization", authorization);
+                        request.addHeader("Accept", "*/*");
+                    }
+                })
+                .setEndpoint(BuildConfig.API_MESSAGING_SERVER_URL)
+                .setConverter(new GsonConverter(gson))
+                .setLog(new AndroidLog("retrofit"));
 
         RestAdapter.Builder restBuilder = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
@@ -133,16 +148,19 @@ public class App extends Application {
                         request.addHeader("Accept", "*/*");
                     }
                 })
-                .setEndpoint(ApiClient.API_MESSAGING_HOST)
-//                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setEndpoint(BuildConfig.API_URL)
                 .setConverter(new GsonConverter(gson))
                 .setLog(new AndroidLog("retrofit"));
+
         if (BuildConfig.DEBUG) {
+            restBuilderMessaging.setLogLevel(RestAdapter.LogLevel.FULL);
             restBuilder.setLogLevel(RestAdapter.LogLevel.FULL);
         } else {
+            restBuilderMessaging.setLogLevel(RestAdapter.LogLevel.NONE);
             restBuilder.setLogLevel(RestAdapter.LogLevel.NONE);
         }
 
+        restAdapterMessaging = restBuilderMessaging.build();
         restAdapter = restBuilder.build();
     }
 

@@ -174,7 +174,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     }
 
-    ReceiptApi receiptApi = App.restAdapter.create(ReceiptApi.class);
+    ReceiptApi receiptApi = App.restAdapterMessaging.create(ReceiptApi.class);
     private void prepareAndSendReceipts() {
         ReceiptHelper.setTimestamp(getActivity(), mThreadId);
         List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.mContext);

@@ -10,8 +10,8 @@ import com.triaged.badge.net.api.ReceiptApi;
  */
 public interface RestClient {
 
-    public final DeviceApi deviceApi = App.restAdapter.create(DeviceApi.class);
-    public final MessageThreadApi messageThreadApi = App.restAdapter.create(MessageThreadApi.class);
-    public final ReceiptApi receiptApi = App.restAdapter.create(ReceiptApi.class);
+    public final DeviceApi deviceApi = App.restAdapterMessaging.create(DeviceApi.class);
+    public final MessageThreadApi messageThreadApi = App.restAdapterMessaging.create(MessageThreadApi.class);
+    public final ReceiptApi receiptApi = App.restAdapterMessaging.create(ReceiptApi.class);
 
 }
