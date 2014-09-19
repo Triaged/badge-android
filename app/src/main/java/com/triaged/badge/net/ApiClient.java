@@ -43,13 +43,10 @@ public class ApiClient extends DefaultHttpClient {
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
     private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
     private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
-    private static final String CREATE_SESSION_URI = String.format("%s/v1/sessions", API_HOST);
     private static final String CREATE_DEPARTMENT_URI = String.format("%s/v1/departments", API_HOST);
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
     private static final String CREATE_OFFICE_LOCATION_URI = String.format("%s/v1/office_locations", API_HOST);
     private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
-    private static final String CHANGE_PASSWORD_URI = String.format("%s/v1/account/update_password", API_HOST);
-    private static final String DELETE_DEVICE_URI_PATTERN = "%s/v1/devices/%d/sign_out";
     private static final String ENTER_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/entered";
     private static final String EXIT_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/exited";
     private static final String GET_CONTACT_URI_PATTERN = "%s/v1/users/%d";
@@ -142,17 +139,6 @@ public class ApiClient extends DefaultHttpClient {
         return execute(post);
     }
 
-    /**
-     * Make an api POST request to /sessions to log in.
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param postData json object of form { "user_login": { "email": "foo@blah.com", "password" : "not4u" } }
-     */
-    public HttpResponse createSessionRequest(JSONObject postData) throws IOException {
-        return postHelper(postData, CREATE_SESSION_URI);
-    }
 
     /**
      * Make a POST /departments request
@@ -196,22 +182,6 @@ public class ApiClient extends DefaultHttpClient {
         return postHelper(device, REGISTER_DEVICE_URI);
     }
 
-    /**
-     * Make a DELETE /devices/:id/sign_out request
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param deviceId device id returned from POST /devices previously
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse unregisterDeviceRequest(int deviceId) throws IOException {
-        HttpDelete delete = new HttpDelete(String.format(DELETE_DEVICE_URI_PATTERN, API_HOST, deviceId));
-        delete.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(httpHost, delete);
-    }
-
 
     /**
      * PUTS to /offices/:id/entered to check in to an office
@@ -240,24 +210,6 @@ public class ApiClient extends DefaultHttpClient {
     public HttpResponse checkoutRequest(int officeId) throws IOException {
         HttpPut put = new HttpPut(String.format(EXIT_OFFICE_URI_PATTERN, API_HOST, officeId));
         put.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(httpHost, put);
-    }
-
-    /**
-     * PUTS to /account/update_password
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param postBody
-     * @return
-     */
-    public HttpResponse changePasswordRequest(JSONObject postBody) throws IOException {
-        HttpPut put = new HttpPut(CHANGE_PASSWORD_URI);
-        put.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        StringEntity body = new StringEntity(postBody.toString(), "UTF-8");
-        body.setContentType(MIME_TYPE_JSON);
-        put.setEntity(body);
         return execute(httpHost, put);
     }
 
