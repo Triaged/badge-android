@@ -37,7 +37,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-    protected static int myUserId = SharedPreferencesUtil.getInteger(R.string.pref_my_user_id_key, -1);
+    protected static int myUserId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
 
     /**
      * Badge Sender ID. This is the project number you got
