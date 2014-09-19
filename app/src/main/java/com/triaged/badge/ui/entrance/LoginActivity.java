@@ -1,10 +1,12 @@
 package com.triaged.badge.ui.entrance;
 
-import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -16,19 +18,30 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mixpanel.android.mpmetrics.MixpanelAPI;
+import com.triaged.badge.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.models.Account;
+import com.triaged.badge.models.User;
+import com.triaged.badge.net.FayeService;
+import com.triaged.badge.net.api.SessionApi;
 import com.triaged.badge.ui.base.MixpanelActivity;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
+import butterknife.OnEditorAction;
 import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
 
 /**
  * Activity for authentication.
@@ -37,24 +50,109 @@ import de.greenrobot.event.EventBus;
  */
 public class LoginActivity extends MixpanelActivity {
 
+    @InjectView(R.id.login_email) EditText loginEmail;
+    @InjectView(R.id.login_password) EditText loginPassword;
+    @InjectView(R.id.login_button) Button loginButton;
 
-    private static final String LOG_TAG = LoginActivity.class.getName();
-    private BroadcastReceiver dataSyncedListener;
-    private EditText loginEmail = null;
-    private EditText loginPassword = null;
+    @InjectView(R.id.login_title) TextView loginTitle;
+    @InjectView(R.id.login_info) TextView loginInfo;
+    @InjectView(R.id.activity_root) RelativeLayout rootView;
+    @InjectView(R.id.sign_up_for_account) TextView singUpButton;
+
+    @OnClick(R.id.login_button)
+    void tryToLogin() {
+        loginButton.setEnabled(false);
+
+        JSONObject postData = new JSONObject();
+        JSONObject credentials = new JSONObject();
+        try {
+            credentials.put("email", loginEmail.getText().toString());
+            credentials.put("password", loginPassword.getText().toString());
+            postData.put("user_login", credentials);
+        } catch (JSONException e) {
+            App.gLogger.e("JSON exception creating post body for login", e);
+        }
+        TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
+
+        App.restAdapter.create(SessionApi.class).login(typedJsonString, new Callback<Account>() {
+            @Override
+            public void success(Account account, retrofit.client.Response response) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+                sharedPreferences.edit()
+                        .putString(getString(R.string.pref_account_company_id_key), account.getCompanyId())
+                        .putString(getString(R.string.pref_api_token), account.getAuthenticationToken())
+//                                    putString(COMPANY_NAME_PREFS_KEY, account.getString("company_name")).
+                        .putInt(getString(R.string.pref_account_id_key), account.getId()).commit();
+
+                App.dataProviderServiceBinding.setLoggedInUser(account.getCurrentUser());
+                EventBus.getDefault().post(new LogedinSuccessfully());
+
+                // register mixpanel
+                MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(LoginActivity.this, App.MIXPANEL_TOKEN);
+                mixpanelAPI.registerSuperProperties(constructMixpanelSuperProperties(account.getCurrentUser()));
+
+                startService(new Intent(LoginActivity.this, FayeService.class));
+
+                // Now seems like a good time to make sure we have a GCM id since
+                // we know the network was working at least well enough to log the user in.
+//                ensureGcmRegistration();
+
+
+                mixpanel.track("login", new JSONObject());
+
+                LocationTrackingService.scheduleAlarm(LoginActivity.this);
+
+                Intent activityIntent = new Intent(LoginActivity.this, WelcomeActivity.class);
+                activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(activityIntent);
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                finish();
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                loginButton.setEnabled(true);
+                // TODO surface in designed error state UI.
+                if (error.getMessage() != null) {
+                    Toast.makeText(LoginActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Something went wrong!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+    }
+
+    @OnClick(R.id.forgot_password_button)
+    void openForgetPassword() {
+        Intent resetPasswordIntent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+        startActivity(resetPasswordIntent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @OnClick(R.id.sign_up_for_account)
+    void openSignUpPage() {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.badge.co"));
+        startActivity(browserIntent);
+    }
+
+    @OnEditorAction(R.id.login_password)
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
+            tryToLogin();
+        }
+        return false;
+    }
+
+
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
-    private TextView loginTitle = null;
-    private TextView loginInfo = null;
-
-    private TextView signupForBeta = null;
-    private ScrollView loginScrollView = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // If already logged-in, go to main activity.
+        // If already logged-in, go to the main activity.
         if (isAlreadyLoggedIn()) {
             Intent mainActivityIntent = new Intent(this, MainActivity.class);
             startActivity(mainActivityIntent);
@@ -63,63 +161,13 @@ public class LoginActivity extends MixpanelActivity {
         }
 
         setContentView(R.layout.activity_login);
+        ButterKnife.inject(this);
 
-        loginEmail = (EditText) findViewById(R.id.login_email);
-        loginPassword = (EditText) findViewById(R.id.login_password);
-        final Button loginButton = (Button) findViewById(R.id.login_button);
+        setupLayoutChangeListener();
+    }
 
-        final DataProviderService.LoginCallback loginCallback = new DataProviderService.LoginCallback() {
-            @Override
-            public void loginFailed(String reason) {
-                loginButton.setEnabled(true);
-                // TODO surface in designed error state UI.
-                Toast.makeText(LoginActivity.this, reason, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void loginSuccess(Contact user) {
-                // Now seems like a good time to make sure we have a GCM id since
-                // we know the network was working at least well enough to log the user in.
-                EventBus.getDefault().post(new LogedinSuccessfully());
-
-                mixpanel.track("login", new JSONObject());
-
-//                ensureGcmRegistration();
-                LocationTrackingService.scheduleAlarm(LoginActivity.this);
-
-
-                Intent activityIntent = new Intent(LoginActivity.this, WelcomeActivity.class);
-                activityIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(activityIntent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-                finish();
-            }
-        };
-
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loginButton.setEnabled(false);
-                String email = loginEmail.getText().toString();
-                String password = loginPassword.getText().toString();
-                ((App) getApplication()).dataProviderServiceBinding.loginAsync(email, password, loginCallback);
-            }
-        });
-
-        loginPassword.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    loginButton.performClick();
-                }
-                return false;
-            }
-        });
-
+    private void setupLayoutChangeListener() {
         densityMultiplier = getResources().getDisplayMetrics().density;
-        loginTitle = (TextView) findViewById(R.id.login_title);
-        loginInfo = (TextView) findViewById(R.id.login_info);
-        loginScrollView = (ScrollView) findViewById(R.id.login_scrollview);
 
         final View activityRootView = findViewById(R.id.activity_root);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -140,10 +188,10 @@ public class LoginActivity extends MixpanelActivity {
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
                     lp2.setMargins(0, (int) (15 * densityMultiplier), 0, (int) (15 * densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
-                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) loginScrollView.getLayoutParams();
+                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) rootView.getLayoutParams();
                     scrollParams.setMargins(0, 0, 0, 0);
-                    loginScrollView.setLayoutParams(scrollParams);
-                    signupForBeta.setVisibility(View.GONE);
+                    rootView.setLayoutParams(scrollParams);
+                    singUpButton.setVisibility(View.GONE);
                 } else if (keyboardVisible) {
                     keyboardVisible = false;
                     RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) loginTitle.getLayoutParams();
@@ -152,37 +200,31 @@ public class LoginActivity extends MixpanelActivity {
                     RelativeLayout.LayoutParams lp2 = (RelativeLayout.LayoutParams) loginInfo.getLayoutParams();
                     lp2.setMargins(0, (int) (30 * densityMultiplier), 0, (int) (68 * densityMultiplier));
                     loginInfo.setLayoutParams(lp2);
-                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) loginScrollView.getLayoutParams();
+                    ScrollView.MarginLayoutParams scrollParams = (ScrollView.MarginLayoutParams) rootView.getLayoutParams();
                     scrollParams.setMargins(0, 0, 0, (int) (40 * densityMultiplier));
-                    loginScrollView.setLayoutParams(scrollParams);
-                    signupForBeta.setVisibility(View.VISIBLE);
+                    rootView.setLayoutParams(scrollParams);
+                    singUpButton.setVisibility(View.VISIBLE);
                 }
-            }
-        });
-
-        TextView forgotPasswordButton = (TextView) findViewById(R.id.forgot_password_button);
-        signupForBeta = (TextView) findViewById(R.id.sign_up_for_account);
-
-        forgotPasswordButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent resetPasswordIntent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
-                startActivity(resetPasswordIntent);
-                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-            }
-        });
-
-        signupForBeta.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.badge.co"));
-                startActivity(browserIntent);
             }
         });
     }
 
-
     private boolean isAlreadyLoggedIn() {
         return SharedPreferencesUtil.getBoolean(R.string.pref_has_fetch_company, false);
+    }
+
+    protected JSONObject constructMixpanelSuperProperties(User user) {
+        JSONObject mixpanelData = new JSONObject();
+        try {
+            mixpanelData.put("firstName", user.getFirstName());
+            mixpanelData.put("lastName", user.getLastName());
+            mixpanelData.put("email", user.getEmail());
+            mixpanelData.put("company.identifier",
+                    SharedPreferencesUtil.getString(R.string.pref_account_company_id_key, ""));
+            return mixpanelData;
+        } catch (JSONException e) {
+            Log.w("LoginActivity", "Couldn't construct mix panel super property json");
+        }
+        return new JSONObject();
     }
 }

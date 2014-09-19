@@ -49,11 +49,13 @@ import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.models.Receipt;
+import com.triaged.badge.models.User;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -317,6 +319,7 @@ public class DataProviderService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        EventBus.getDefault().register(this);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
@@ -661,6 +664,15 @@ public class DataProviderService extends Service {
         if (updated && initialized) {
             localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
         }
+    }
+
+    protected void syncCompanyAsync() {
+        sqlThread.submit(new Runnable() {
+            @Override
+            public void run() {
+                syncCompany();
+            }
+        });
     }
 
     private void clearCachedAvatarIfChanged(String userId, String avatarUrl) {
@@ -2539,6 +2551,17 @@ public class DataProviderService extends Service {
         return new JSONObject();
     }
 
+
+
+    public void onEvent(LogedinSuccessfully logedinSuccessfully) {
+
+        String apiToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
+        apiClient = new ApiClient(apiToken);
+        syncCompanyAsync();
+        syncMessagesAsync();
+    }
+
+
     /**
      * Local, non rpc interface for this service.
      */
@@ -2607,6 +2630,61 @@ public class DataProviderService extends Service {
         public Contact getLoggedInUser() {
             return loggedInUser;
         }
+
+        /**
+         * Just a temporary method, for this refactoring
+         */
+        public void setLoggedInUser(User currentUser) {
+            loggedInUser = new Contact();
+            loggedInUser.id = currentUser.getId();
+            loggedInUser.firstName = currentUser.getFirstName();
+            loggedInUser.lastName = currentUser.getLastName();
+            loggedInUser.avatarUrl = currentUser.getAvatarUrl();
+            loggedInUser.linkedin = currentUser.getEmployeeInfo().getLinkedin();
+            loggedInUser.website = currentUser.getEmployeeInfo().getWebsite();
+
+            if (currentUser.getEmployeeInfo().getBirthDate() != null) {
+                loggedInUser.birthDateString = Contact.convertBirthDateString(currentUser.getEmployeeInfo().getBirthDate());
+            }
+            loggedInUser.cellPhone = currentUser.getEmployeeInfo().getCellPhone();
+
+            try {
+                loggedInUser.currentOfficeLocationId = Integer.valueOf(currentUser.getCurrentOfficeLocaitonId());
+            } catch (NumberFormatException e) {
+                loggedInUser.currentOfficeLocationId = -1;
+            }
+
+            try {
+                loggedInUser.departmentId = Integer.valueOf(currentUser.getDepartmentId());
+            } catch (NumberFormatException e) {
+                loggedInUser.departmentId = -1;
+            }
+
+            try {
+                loggedInUser.managerId = Integer.valueOf(currentUser.getManagerId());
+            } catch (NumberFormatException e) {
+                loggedInUser.managerId = -1;
+            }
+
+            try {
+                loggedInUser.primaryOfficeLocationId = Integer.valueOf(currentUser.getPrimaryOfficeLocationid());
+            } catch (NumberFormatException e) {
+                loggedInUser.primaryOfficeLocationId = -1;
+            }
+
+            loggedInUser.isArchived = currentUser.isArchived();
+            loggedInUser.jobTitle = currentUser.getEmployeeInfo().getJobTitle();
+
+            loggedInUser.name = currentUser.getFirstName() + " " + currentUser.getLastName();
+
+            if (currentUser.getEmployeeInfo().getJobStartDate() != null) {
+                loggedInUser.startDateString = Contact.convertStartDateString(currentUser.getEmployeeInfo().getJobStartDate());
+            }
+//            loggedInUser.sharingOfficeLocation = currentUser.isSharingOfficeLocation();
+            loggedInUser.officePhone = currentUser.getEmployeeInfo().getOfficePhone();
+
+        }
+
 
         /**
          * @see DataProviderService#saveBasicProfileDataAsync(String, String, String, String, DataProviderService.AsyncSaveCallback)
