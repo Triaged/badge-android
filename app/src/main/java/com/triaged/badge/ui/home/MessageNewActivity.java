@@ -26,8 +26,8 @@ import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.ButtonWithFont;
 import com.triaged.badge.ui.base.views.CustomLayoutParams;
 import com.triaged.badge.ui.base.views.FlowLayout;
-import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
+import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
@@ -47,7 +47,7 @@ public class MessageNewActivity extends BadgeActivity {
     public static final String RECIPIENT_IDS_EXTRA = "recipient_id";
 
     private StickyListHeadersListView contactsListView = null;
-    private ContactsAdapter contactsAdapter = null;
+    private MyContactAdapter contactsAdapter = null;
     private ContactsWithoutHeadingsAdapter searchResultsAdapter = null;
 
     private EditText searchBar = null;
@@ -140,19 +140,20 @@ public class MessageNewActivity extends BadgeActivity {
         recipients = new HashMap<Integer, String>();
         userTagsWrapper = (FlowLayout) findViewById(R.id.user_tags);
 
+        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
+        contactsListView.setAdapter(contactsAdapter);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                addRecipient(contactsAdapter.getCachedContact(position).id, contactsAdapter.getCachedContact(position).name);
+                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
+                addRecipient(holder.contactId, holder.name);
                 searchBar.setText("");
             }
-
         });
 
         searchResultsList = (ListView) findViewById(R.id.search_results_list);
-
         searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -237,9 +238,6 @@ public class MessageNewActivity extends BadgeActivity {
         if (searchResultsAdapter != null) {
             searchResultsAdapter.destroy();
         }
-        if (contactsAdapter != null) {
-            contactsAdapter.destroy();
-        }
         super.onDestroy();
     }
 
@@ -264,18 +262,7 @@ public class MessageNewActivity extends BadgeActivity {
                                 }
                             });
                         }
-                        if (contactsAdapter != null) {
-                            contactsAdapter.changeCursor(contactsCursor);
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    contactsAdapter = new ContactsAdapter(MessageNewActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_no_msg);
-                                    contactsListView.setAdapter(contactsAdapter);
-                                }
-                            });
-                        }
-
+                        contactsAdapter.changeCursor(contactsCursor);
                     }
                 });
                 return null;

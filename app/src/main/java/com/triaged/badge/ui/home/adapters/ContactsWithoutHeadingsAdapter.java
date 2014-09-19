@@ -71,6 +71,8 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
 
     public void bindView(View view, Context context, Contact c) {
         final ViewHolder holder = (ViewHolder) view.getTag();
+        holder.name = c.name;
+        holder.id = c.id ;
         holder.nameTextView.setText(c.name);
         holder.titleTextView.setText(c.jobTitle);
         if (c.jobTitle == null || c.jobTitle.equals("")) {
@@ -113,7 +115,9 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
         }
     }
 
-    class ViewHolder {
+    public class ViewHolder {
+        public int id;
+        public String name;
         TextView nameTextView;
         TextView titleTextView;
         ImageView thumbImage;

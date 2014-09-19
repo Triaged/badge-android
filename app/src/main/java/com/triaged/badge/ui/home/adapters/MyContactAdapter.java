@@ -22,7 +22,6 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.ui.home.MessageShowActivity;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
@@ -72,14 +71,14 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
         final ViewHolder holder = (ViewHolder) view.getTag();
 
-        holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID));
         String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_FIRST_NAME));
         String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_LAST_NAME));
         String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_JOB_TITLE));
         String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
 
-
-        holder.nameTextView.setText(firstName + " " + lastName);
+        holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID));
+        holder.name = firstName + " " + lastName;
+        holder.nameTextView.setText(holder.name);
         holder.titleTextView.setText(jobTitle);
         if (jobTitle == null || jobTitle.equals("")) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
@@ -144,6 +143,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
     public class ViewHolder {
         public int contactId;
+        public String name;
         @InjectView(R.id.contact_name) TextView nameTextView;
         @InjectView(R.id.contact_title) TextView titleTextView;
         @InjectView(R.id.contact_thumb) ImageView thumbImage;

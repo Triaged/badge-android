@@ -16,8 +16,8 @@ import android.widget.ListView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BackButtonActivity;
-import com.triaged.badge.ui.home.adapters.ContactsAdapter;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
+import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
@@ -30,8 +30,8 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
 
     public static final String MGR_NAME_EXTRA = "mgrName";
     private StickyListHeadersListView contactsListView = null;
-    private ContactsAdapter contactsAdapter = null;
-    private ContactsWithoutHeadingsAdapter searchResultsAdapter = null;
+    private MyContactAdapter contactsAdapter;
+    private ContactsWithoutHeadingsAdapter searchResultsAdapter;
 
     private EditText searchBar = null;
     private ImageButton clearButton = null;
@@ -45,27 +45,30 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_reporting_to);
         backButton.setText("Reporting To");
+        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
-
+        contactsListView.setAdapter(contactsAdapter);
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
                 Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra(MGR_NAME_EXTRA, contactsAdapter.getCachedContact(position).name);
-                setResult(contactsAdapter.getCachedContact(position).id, intent);
+                intent.putExtra(MGR_NAME_EXTRA, holder.name);
+                setResult(holder.contactId, intent);
                 finish();
             }
-
         });
 
+        searchResultsAdapter = new ContactsWithoutHeadingsAdapter(this, null, null);
         searchResultsList = (ListView) findViewById(R.id.search_results_list);
-
+        searchResultsList.setAdapter(searchResultsAdapter);
         searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ContactsWithoutHeadingsAdapter.ViewHolder holder = (ContactsWithoutHeadingsAdapter.ViewHolder) view.getTag();
                 Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra(MGR_NAME_EXTRA, searchResultsAdapter.getCachedContact(position).name);
-                setResult(contactsAdapter.getCachedContact(position).id, intent);
+                intent.putExtra(MGR_NAME_EXTRA, holder.name);
+                setResult(holder.id, intent);
                 finish();
             }
         });
@@ -160,18 +163,7 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
                                 }
                             });
                         }
-                        if (contactsAdapter != null) {
-                            contactsAdapter.changeCursor(contactsCursor);
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    contactsAdapter = new ContactsAdapter(OnboardingReportingToActivity.this, dataProviderServiceBinding, contactsCursor, R.layout.item_contact_no_msg);
-                                    contactsListView.setAdapter(contactsAdapter);
-                                }
-                            });
-                        }
-
+                        contactsAdapter.changeCursor(contactsCursor);
                     }
                 });
                 return null;
@@ -183,9 +175,6 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
     protected void onDestroy() {
         if (searchResultsAdapter != null) {
             searchResultsAdapter.destroy();
-        }
-        if (contactsAdapter != null) {
-            contactsAdapter.destroy();
         }
         super.onDestroy();
     }
