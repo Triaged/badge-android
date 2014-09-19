@@ -13,9 +13,12 @@ import android.widget.Toast;
 import com.triaged.badge.app.R;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.RestClient;
+import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.ChangePasswordActivity;
 import com.triaged.badge.ui.profile.EditProfileActivity;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
 
@@ -61,7 +64,19 @@ public class SettingsActivity extends BackButtonActivity {
                 JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
                 mixpanel.track("logout", props);
 
-                dataProviderServiceBinding.logout();
+                int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);
+                if (deviceId > -1) {
+                    RestClient.deviceApi.signOut(deviceId);
+                }
+
+                /**
+                 * send a broadcast for logout receiver to handle
+                 * application data cleanup and exit.
+                 */
+                Intent logoutIntent = new Intent(LogoutReceiver.ACTION_LOGOUT);
+                logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, false);
+                sendBroadcast(logoutIntent);
+
             }
         });
         Button aboutButton = (Button) findViewById(R.id.about_button);
