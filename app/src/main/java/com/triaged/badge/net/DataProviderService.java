@@ -50,6 +50,7 @@ import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
+import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.DiskLruCache;
@@ -372,6 +373,7 @@ public class DataProviderService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        EventBus.getDefault().unregister(this);
         localBroadcastManager.unregisterReceiver(syncGCMReceiver);
         sqlThread.shutdownNow();
         databaseHelper.close();
@@ -1252,134 +1254,6 @@ public class DataProviderService extends Service {
                     }
                 } catch (Throwable t) {
                     App.gLogger.e("UNABLE TO GET DATABASE", t);
-                }
-            }
-        });
-    }
-
-    /**
-     * Update the user's entire profile at once.
-     *
-     * @param firstName
-     * @param lastName
-     * @param cellPhone
-     * @param officePhone
-     * @param jobTitle
-     * @param departmentId
-     * @param managerId
-     * @param primaryOfficeId
-     * @param startDateString
-     * @param birthDateString
-     * @param newAvatarFile
-     * @param saveCallback    null or a callback that will be invoked on the main thread on success or failure
-     */
-    protected void saveAllProfileDataAsync(
-            final String firstName,
-            final String lastName,
-            final String cellPhone,
-            final String officePhone,
-            final String jobTitle,
-            final int departmentId,
-            final int managerId,
-            final int primaryOfficeId,
-            final String startDateString,
-            final String birthDateString,
-            final String website,
-            final String linkedin,
-            final byte[] newAvatarFile,
-            final AsyncSaveCallback saveCallback
-    ) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-                JSONObject user = new JSONObject();
-                try {
-                    JSONObject data = new JSONObject();
-                    JSONObject employeeInfo = new JSONObject();
-
-                    user.put("user", data);
-                    data.put("employee_info_attributes", employeeInfo);
-                    data.put("first_name", firstName);
-                    data.put("last_name", lastName);
-                    data.put("department_id", departmentId);
-                    data.put("manager_id", managerId);
-                    data.put("primary_office_location_id", primaryOfficeId);
-
-                    employeeInfo.put("birth_date", birthDateString);
-                    employeeInfo.put("cell_phone", cellPhone);
-                    employeeInfo.put("job_title", jobTitle);
-                    employeeInfo.put("office_phone", officePhone);
-                    employeeInfo.put("website", website);
-                    employeeInfo.put("linkedin", linkedin);
-                    employeeInfo.put("job_start_date", startDateString);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-
-                try {
-                    HttpResponse response = apiClient.patchAccountRequest(user);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        JSONObject account = null;
-
-
-                        // OK now send avatar if there was a new one specified
-                        if (newAvatarFile != null) {
-                            HttpResponse avatarResponse = apiClient.uploadNewAvatar(newAvatarFile);
-                            int avatarStatusCode = avatarResponse.getStatusLine().getStatusCode();
-                            if (avatarStatusCode == HttpStatus.SC_OK) {
-                                // avatar response should have both profile changes and avatar change.
-                                account = parseJSONResponse(avatarResponse.getEntity());
-                            } else {
-                                if (avatarResponse.getEntity() != null) {
-                                    avatarResponse.getEntity().consumeContent();
-                                }
-
-                                fail("Save avatar response was '" + avatarResponse.getStatusLine().getReasonPhrase() + "'", saveCallback);
-                            }
-                        }
-
-                        if (account == null) {
-                            account = parseJSONResponse(response.getEntity());
-                        }
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON(account.getJSONObject("current_user"), values);
-
-
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
-                                new String[] { loggedInUser.id + ""});
-
-//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                } catch (JSONException e) {
-                    fail("We didn't understand the server response, please contact Badge HQ.", saveCallback);
                 }
             }
         });
@@ -2317,6 +2191,10 @@ public class DataProviderService extends Service {
         syncMessagesAsync();
     }
 
+    public void onEvent(UpdateAccountEvent updateAccountEvent) {
+        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
+    }
+
 
     /**
      * Local, non rpc interface for this service.
@@ -2447,23 +2325,6 @@ public class DataProviderService extends Service {
          */
         public void savePrimaryLocationASync(int primaryLocation, AsyncSaveCallback saveCallback) {
             DataProviderService.this.savePrimaryLocationAsync(primaryLocation, saveCallback);
-        }
-
-
-        /**
-         * @see DataProviderService#saveAllProfileDataAsync(String, String, String, String, String, int, int, int, String, String, byte[], DataProviderService.AsyncSaveCallback)
-         */
-        public void saveAllProfileDataAsync(String firstName, String lastName, String cellPhone,
-                                            String officePhone, String jobTitle, int departmentId,
-                                            int managerId, int primaryOfficeId, String startDateString,
-                                            String birthDateString, String website, String linkedin,
-                                            byte[] newAvatarFile,
-                                            AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveAllProfileDataAsync(firstName, lastName,
-                    cellPhone, officePhone, jobTitle,
-                    departmentId, managerId, primaryOfficeId,
-                    startDateString, birthDateString, website, linkedin,
-                    newAvatarFile, saveCallback);
         }
 
         /**

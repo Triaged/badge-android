@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,12 +40,21 @@ import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+import com.triaged.badge.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.UserHelper;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.events.UpdateAccountEvent;
+import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.AccountApi;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.EditProfileInfoView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -59,6 +69,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.mime.TypedFile;
 
 /**
  * Allow user to modify info after they've already gone through onboarding flow.
@@ -114,18 +129,6 @@ public class EditProfileActivity extends BadgeActivity {
 
     private TextView saveButton;
 
-    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
-        @Override
-        public void saveSuccess(int newId) {
-            finish();
-        }
-
-        @Override
-        public void saveFailed(String reason) {
-            Toast.makeText(EditProfileActivity.this, reason, Toast.LENGTH_SHORT).show();
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -150,22 +153,65 @@ public class EditProfileActivity extends BadgeActivity {
             @Override
             public void onClick(View v) {
                 changesAwaitingSave = false;
-                dataProviderServiceBinding.saveAllProfileDataAsync(
-                        firstName.valueToSave,
-                        lastName.valueToSave,
-                        cellPhone.valueToSave,
-                        officePhone.valueToSave,
-                        jobTitle.valueToSave,
-                        departmentId,
-                        managerId,
-                        officeId,
-                        startDate.valueToSave,
-                        birthDate.valueToSave,
-                        website.valueToSave,
-                        linkedin.valueToSave,
-                        newProfilePhotoData,
-                        saveCallback
-                );
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+
+                    user.put("user", data);
+                    data.put("employee_info_attributes", employeeInfo);
+                    data.put("first_name", firstName.valueToSave);
+                    data.put("last_name", lastName.valueToSave);
+                    data.put("department_id", departmentId);
+                    data.put("manager_id", managerId);
+                    data.put("primary_office_location_id", officeId);
+
+                    employeeInfo.put("birth_date", birthDate.valueToSave);
+                    employeeInfo.put("cell_phone", cellPhone.valueToSave);
+                    employeeInfo.put("job_title", jobTitle.valueToSave);
+                    employeeInfo.put("office_phone", officePhone.valueToSave);
+                    employeeInfo.put("website", website.valueToSave);
+                    employeeInfo.put("linkedin", linkedin.valueToSave);
+                    employeeInfo.put("job_start_date", startDate.valueToSave);
+                } catch (JSONException e) {
+                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
+                    return;
+                }
+
+                TypedJsonString updateDate = new TypedJsonString(user.toString());
+                final AccountApi accountApi = App.restAdapter.create(AccountApi.class);
+                accountApi.update(updateDate, new Callback<Account>() {
+
+                    @Override
+                    public void success(final Account account, retrofit.client.Response response) {
+
+                        // OK now send avatar if there was a new one specified
+                        if (newProfilePhotoData != null) {
+                            TypedFile typedFile = new TypedFile("image/png", new File(currentPhotoPath));
+                            accountApi.postAvatar(typedFile, new Callback<Account>() {
+                                @Override
+                                public void success(Account accountWithAvatar, retrofit.client.Response response) {
+                                    saveNewAccountAndFinish(accountWithAvatar);
+                                }
+
+                                @Override
+                                public void failure(RetrofitError error) {
+                                    saveNewAccountAndFinish(account);
+                                    Toast.makeText(EditProfileActivity.this,
+                                            "Cannot save your avatar", Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        } else {
+                            saveNewAccountAndFinish(account);
+                        }
+                    }
+
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        Toast.makeText(EditProfileActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
 
@@ -369,6 +415,16 @@ public class EditProfileActivity extends BadgeActivity {
 
         pendingUploadBar = (ProgressBar) findViewById(R.id.pending_upload);
 
+    }
+
+    private void saveNewAccountAndFinish(Account account) {
+        ContentValues values = UserHelper.toContentValue(account.getCurrentUser());
+        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                ContactsTable.COLUMN_ID + " =?",
+                new String[]{account.getCurrentUser().getId() + ""});
+        // Notify DataProviderService to update its model of current account
+        EventBus.getDefault().post(new UpdateAccountEvent());
+        finish();
     }
 
     @Override
