@@ -200,7 +200,7 @@ public class App extends Application {
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
-        accountId();
+        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
     }
 
