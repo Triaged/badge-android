@@ -56,6 +56,7 @@ public class App extends Application {
     public static Context mContext;
     public static RestAdapter restAdapterMessaging;
     public static RestAdapter restAdapter;
+    private static int mAccountId;
 
     @Override
     public void onCreate() {
@@ -66,6 +67,7 @@ public class App extends Application {
         EventBus.getDefault().register(this);
         mContext = this;
 
+        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
         setupDataProviderServicebinding();
         initForeground();
@@ -119,7 +121,7 @@ public class App extends Application {
 
     private void setupRestAdapter() {
         final String authorization = SharedPreferencesUtil.getString("apiToken", "");
-        final int userId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+
         Gson gson = new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                 .create();
@@ -129,7 +131,7 @@ public class App extends Application {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
                         request.addHeader("User-Agent", ApiClient.USER_AGENT);
-                        request.addHeader("User-Id", userId + "");
+                        request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
                     }
@@ -143,7 +145,7 @@ public class App extends Application {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
                         request.addHeader("User-Agent", ApiClient.USER_AGENT);
-                        request.addHeader("User-Id", userId + "");
+                        request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
                     }
@@ -189,6 +191,10 @@ public class App extends Application {
 
     public static Context context() {
         return mContext;
+    }
+
+    public static int accountId() {
+        return mAccountId;
     }
 
     // Received events from the Event Bus.

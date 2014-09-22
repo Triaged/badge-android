@@ -2,13 +2,12 @@ package com.triaged.badge.ui.entrance;
 
 import android.app.DatePickerDialog;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,19 +19,35 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
+import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
+import com.triaged.badge.models.User;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.AccountApi;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.profile.OnboardingPositionActivity;
 import com.triaged.utils.SharedPreferencesUtil;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Allow user to setup first name, last name, cell number and birthday.
@@ -56,7 +71,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
-    protected SharedPreferences prefs;
 
     protected BroadcastReceiver onboardingFinishedReceiver = new BroadcastReceiver() {
         @Override
@@ -104,17 +118,36 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         birthdayCalendar.set(Calendar.SECOND, 0);
 
         if (account.sharingOfficeLocation == Contact.SHARING_LOCATION_UNAVAILABLE) {
-            dataProviderServiceBinding.saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
+
+            JSONObject user = new JSONObject();
+            try {
+                JSONObject data = new JSONObject();
+                user.put("user", data);
+                data.put("sharing_office_location", true);
+
+            } catch (JSONException e) {
+                App.gLogger.e("JSON exception creating post body for basic profile data", e);
+                return;
+            }
+            TypedJsonString typedJsonString = new TypedJsonString(user.toString());
+            App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
                 @Override
-                public void saveSuccess(int newId) {
-                    prefs = PreferenceManager.getDefaultSharedPreferences(WelcomeActivity.this);
-                    prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
+                public void success(Account account, Response response) {
+                    SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true);
+
+                    ContentValues values = new ContentValues(1);
+                    values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, User.SHARING_LOCATION_ONE);
+                    getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                            ContactsTable.COLUMN_ID + " =?",
+                            new String[] { App.accountId() + ""});
+                    EventBus.getDefault().post(new UpdateAccountEvent());
+
                     LocationTrackingService.scheduleAlarm(WelcomeActivity.this);
                 }
 
                 @Override
-                public void saveFailed(String reason) {
-                    Toast.makeText(WelcomeActivity.this, reason, Toast.LENGTH_LONG).show();
+                public void failure(RetrofitError error) {
+                    Toast.makeText(WelcomeActivity.this, error.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
         }

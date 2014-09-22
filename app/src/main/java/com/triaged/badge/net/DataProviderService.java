@@ -1175,70 +1175,6 @@ public class DataProviderService extends Service {
         });
     }
 
-    /**
-     * Save whether the user wants to share their location or not.
-     * <p/>
-     * Operation is atomic, local values will not save if the account
-     * can't be updated in the cloud.
-     *
-     * @param sharingLocation
-     * @param saveCallback
-     */
-    protected void saveSharingLocationAsync(final boolean sharingLocation, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-                JSONObject user = new JSONObject();
-                try {
-                    JSONObject data = new JSONObject();
-                    user.put("user", data);
-                    data.put("sharing_office_location", sharingLocation);
-
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.patchAccountRequest(user);
-                    ensureNotUnauthorized(response);
-                    if (response.getEntity() != null) {
-                        response.getEntity().consumeContent();
-                    }
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        ContentValues values = new ContentValues();
-                        values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingLocation ? 1 : 0);
-
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
-                                new String[] { loggedInUser.id + ""});
-
-//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                }
-            }
-        });
-    }
 
     /**
      * Save first name, last name, cell phone, and birth date in local DB
@@ -2386,13 +2322,6 @@ public class DataProviderService extends Service {
          */
         public void partialSyncContactsAsync() {
             DataProviderService.this.partialSyncContactsAsync();
-        }
-
-        /**
-         * See DataProviderService#saveSharingLocationAsync
-         */
-        public void saveSharingLocationAsync(boolean sharingLocation, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveSharingLocationAsync(sharingLocation, saveCallback);
         }
 
     }

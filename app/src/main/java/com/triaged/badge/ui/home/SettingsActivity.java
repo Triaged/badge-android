@@ -1,26 +1,38 @@
 package com.triaged.badge.ui.home;
 
+import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.models.Account;
+import com.triaged.badge.models.User;
 import com.triaged.badge.net.RestClient;
+import com.triaged.badge.net.api.AccountApi;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.ChangePasswordActivity;
 import com.triaged.badge.ui.profile.EditProfileActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * User settings view
@@ -32,8 +44,6 @@ public class SettingsActivity extends BackButtonActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         setContentView(R.layout.activity_settings);
         backButton.setText("Settings");
@@ -91,37 +101,48 @@ public class SettingsActivity extends BackButtonActivity {
         });
 
         Switch broadcastOfficeLocationSwitch = (Switch) findViewById(R.id.office_location_switch);
-        broadcastOfficeLocationSwitch.setChecked(prefs.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
+        broadcastOfficeLocationSwitch.setChecked(SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
         broadcastOfficeLocationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    dataProviderServiceBinding.saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
-                        @Override
-                        public void saveSuccess(int newId) {
-                            prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
-                            LocationTrackingService.scheduleAlarm(SettingsActivity.this);
-                        }
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
 
-                        @Override
-                        public void saveFailed(String reason) {
-                            Toast.makeText(SettingsActivity.this, reason, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                } else {
-                    dataProviderServiceBinding.saveSharingLocationAsync(false, new DataProviderService.AsyncSaveCallback() {
-                        @Override
-                        public void saveSuccess(int newId) {
-                            prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, false).commit();
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    user.put("user", data);
+                    data.put("sharing_office_location", isChecked);
+
+                } catch (JSONException e) {
+                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
+                    return;
+                }
+                TypedJsonString typedJsonString = new TypedJsonString(user.toString());
+                App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
+                    @Override
+                    public void success(Account account, Response response) {
+                        SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
+
+                        ContentValues values = new ContentValues(1);
+                        values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION,
+                                isChecked ? User.SHARING_LOCATION_ONE : User.SHARING_LOCATION_OFF);
+
+                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                ContactsTable.COLUMN_ID + " =?",
+                                new String[] { App.accountId() + ""});
+
+                        if (isChecked) {
+                            LocationTrackingService.scheduleAlarm(SettingsActivity.this);
+                        } else {
                             LocationTrackingService.clearAlarm(dataProviderServiceBinding, SettingsActivity.this);
                         }
+                        EventBus.getDefault().post(new UpdateAccountEvent());
+                    }
 
-                        @Override
-                        public void saveFailed(String reason) {
-                            Toast.makeText(SettingsActivity.this, reason, Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
+                    @Override
+                    public void failure(RetrofitError error) {
+                        Toast.makeText(SettingsActivity.this, error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
     }
