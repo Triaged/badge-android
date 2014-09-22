@@ -1154,85 +1154,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Saves department, job title, and manager info.
-     * <p/>
-     * Operation is atomic, local values will not save if the account
-     * can't be updated in the cloud.
-     *
-     * @param jobTitle
-     * @param departmentId
-     * @param managerId
-     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
-     */
-    protected void savePositionProfileDataAsync(final String jobTitle, final int departmentId, final int managerId, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    if (saveCallback != null) {
-                        saveCallback.saveFailed("Database not ready yet. Please report to Badge HQ");
-                    }
-                    return;
-                }
-
-                // Wrap entire operation in the transaction so if syncing over http fails
-                // the tx will roll back.
-
-                JSONObject user = new JSONObject();
-                try {
-                    JSONObject data = new JSONObject();
-                    JSONObject employeeInfo = new JSONObject();
-                    user.put("user", data);
-                    data.put("employee_info_attributes", employeeInfo);
-                    data.put("department_id", departmentId);
-                    data.put("manager_id", managerId);
-                    employeeInfo.put("job_title", jobTitle);
-
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating patch body for position profile data", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-
-                    HttpResponse response = apiClient.patchAccountRequest(user);
-                    ensureNotUnauthorized(response);
-                    if (response.getEntity() != null) {
-                        response.getEntity().consumeContent();
-                    }
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        values.put(ContactsTable.COLUMN_CONTACT_JOB_TITLE, jobTitle);
-                        values.put(ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID, departmentId);
-                        values.put(ContactsTable.COLUMN_CONTACT_MANAGER_ID, managerId);
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
-                                new String[] { loggedInUser.id + ""});
-
-//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                }
-            }
-        });
-    }
-
-    /**
      * Create a message in the database and send it async to faye
      * for sending over websocket.
      * <p/>
@@ -1825,15 +1746,6 @@ public class DataProviderService extends Service {
             loggedInUser.officePhone = currentUser.getEmployeeInfo().getOfficePhone();
 
         }
-
-
-        /**
-         * @see DataProviderService#savePositionProfileDataAsync(String, int, int, DataProviderService.AsyncSaveCallback)
-         */
-        public void savePositionProfileDataAsync(String jobTitle, int departmentId, int managerId, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.savePositionProfileDataAsync(jobTitle, departmentId, managerId, saveCallback);
-        }
-
 
         /**
          * @see DataProviderService#getOfficeLocationName(int)
