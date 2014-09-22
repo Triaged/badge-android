@@ -256,49 +256,7 @@ public class DataProviderService extends Service {
     private LocalBinding localBinding;
     private LocalBroadcastManager localBroadcastManager;
 
-    // Img cache related stuffs
-
-    private DiskLruCache mDiskLruCache;
-    private final Object mDiskCacheLock = new Object();
-    private boolean mDiskCacheStarting = true;
-    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB
-    private static final String DISK_CACHE_SUBDIR = "thumbnails";
-    protected LruCache<String, Bitmap> thumbCache;
-
     private BroadcastReceiver syncGCMReceiver;
-
-    class InitDiskCacheTask extends AsyncTask<File, Void, Void> {
-        @Override
-        protected Void doInBackground(File... params) {
-            synchronized (mDiskCacheLock) {
-                try {
-                    File cacheDir = params[0];
-                    mDiskLruCache = DiskLruCache.open(cacheDir, 1, 1, DISK_CACHE_SIZE);
-                    mDiskCacheStarting = false; // Finished initialization
-                    mDiskCacheLock.notifyAll(); // Wake any waiting threads
-                } catch (IOException e) {
-                    Log.w(LOG_TAG, "Couldn't open disk image cache.", e);
-                }
-            }
-            return null;
-        }
-    }
-
-    /**
-     * @param context
-     * @param uniqueName
-     * @return
-     */
-    protected File getDiskCacheDir(Context context, String uniqueName) {
-        // Check if media is mounted or storage is built-in, if so, try and use external cache dir
-        // otherwise use internal cache dir
-        final String cachePath =
-                Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
-                        !Environment.isExternalStorageRemovable() ? getExternalCacheDir().getPath() :
-                        context.getCacheDir().getPath();
-
-        return new File(cachePath + File.separator + uniqueName);
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -323,27 +281,7 @@ public class DataProviderService extends Service {
         localBinding = new LocalBinding();
         mimeTypeMap = MimeTypeMap.getSingleton();
 
-        // Get max available VM memory, exceeding this amount will throw an
-        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
-        // int in its constructor.
-        int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-        // Use 1/8th of the available memory for this memory cache.
-        int cacheSize = maxMemory / 8;
-        thumbCache = new LruCache<String, Bitmap>(cacheSize) {
-            @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                // The cache size will be measured in kilobytes rather than
-                // number of items.
-                return bitmap.getByteCount() / 1024;
-            }
-        };
-
         httpClient = new DefaultHttpClient();
-
-        // Initialize disk cache on background thread
-        File cacheDir = getDiskCacheDir(this, DISK_CACHE_SUBDIR);
-        new InitDiskCacheTask().execute(cacheDir);
 
         syncGCMReceiver = new BroadcastReceiver() {
             @Override
@@ -379,13 +317,6 @@ public class DataProviderService extends Service {
         databaseHelper.close();
         apiClient.getConnectionManager().shutdown();
         httpClient.getConnectionManager().shutdown();
-        if (!mDiskCacheStarting && mDiskLruCache != null) {
-            try {
-                mDiskLruCache.close();
-            } catch (IOException e) {
-                Log.w(LOG_TAG, "IOException closing disk cache", e);
-            }
-        }
         database = null;
     }
 
@@ -1230,18 +1161,18 @@ public class DataProviderService extends Service {
                                 prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode).commit();
                                 if (prefs.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
                                     // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
-                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
-                                        @Override
-                                        public void saveSuccess(int newId) {
-                                            prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
-                                            LocationTrackingService.scheduleAlarm(DataProviderService.this);
-                                        }
-
-                                        @Override
-                                        public void saveFailed(String reason) {
-                                            Log.d(LOG_TAG, "Initial attempt to save sharing location pref failed due to: " + reason);
-                                        }
-                                    });
+//                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
+//                                        @Override
+//                                        public void saveSuccess(int newId) {
+//                                            prefs.edit().putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true).commit();
+//                                            LocationTrackingService.scheduleAlarm(DataProviderService.this);
+//                                        }
+//
+//                                        @Override
+//                                        public void saveFailed(String reason) {
+//                                            Log.d(LOG_TAG, "Initial attempt to save sharing location pref failed due to: " + reason);
+//                                        }
+//                                    });
 
                                 }
                             }
