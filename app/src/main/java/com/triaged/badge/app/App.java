@@ -200,6 +200,7 @@ public class App extends Application {
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
+        accountId();
         setupRestAdapter();
     }
 

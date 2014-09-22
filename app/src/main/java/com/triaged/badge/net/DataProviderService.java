@@ -15,12 +15,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -28,12 +25,9 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.util.LruCache;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.utils.MemoryCacheUtils;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.DatabaseHelper;
@@ -53,7 +47,6 @@ import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.models.DiskLruCache;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
 import com.triaged.badge.receivers.GCMReceiver;
@@ -70,7 +63,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1262,76 +1254,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Saves the id of the primary location for the logged in user locally
-     * and via the API.
-     * <p/>
-     * Operation is atomic, local values will not save if the account
-     * can't be updated in the cloud.
-     *
-     * @param primaryLocation
-     * @param saveCallback
-     */
-    protected void savePrimaryLocationAsync(final int primaryLocation, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-                JSONObject postData = new JSONObject();
-                JSONObject user = new JSONObject();
-                try {
-                    postData.put("user", user);
-                    user.put("primary_office_location_id", primaryLocation);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for create department", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.patchAccountRequest(postData);
-                    ensureNotUnauthorized(response);
-                    if (response.getEntity() != null) {
-                        response.getEntity().consumeContent();
-                    }
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID, primaryLocation);
-                        //values.put( CompanySQLiteHelper.COL)
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
-                                new String[] { loggedInUser.id + ""});
-
-//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                }
-
-            }
-        });
-    }
-
-    /**
      * Create a new department and persist it to the database. Database row
      * only created if api create option successful.
      *
@@ -2172,12 +2094,6 @@ public class DataProviderService extends Service {
             DataProviderService.this.savePositionProfileDataAsync(jobTitle, departmentId, managerId, saveCallback);
         }
 
-        /**
-         * @see DataProviderService#savePrimaryLocationAsync(int, DataProviderService.AsyncSaveCallback)
-         */
-        public void savePrimaryLocationASync(int primaryLocation, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.savePrimaryLocationAsync(primaryLocation, saveCallback);
-        }
 
         /**
          * @see DataProviderService#getOfficeLocationName(int)

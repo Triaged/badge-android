@@ -1,5 +1,6 @@
 package com.triaged.badge.ui.profile;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -12,14 +13,29 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.events.UpdateAccountEvent;
+import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.AccountApi;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.badge.ui.profile.adapters.OfficeLocationsAdapter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Allow the user to select a primary office location.
@@ -34,20 +50,6 @@ public class OnboardingLocationActivity extends BadgeActivity {
     protected ListView officeLocationsList = null;
     protected ImageView noLocationCheck = null;
     protected OfficeLocationsAdapter officeLocationsAdapter = null;
-    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
-        @Override
-        public void saveSuccess(int newId) {
-            Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);
-            startActivity(intent);
-            localBroadcastManager.sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
-            finish();
-        }
-
-        @Override
-        public void saveFailed(String reason) {
-            Toast.makeText(OnboardingLocationActivity.this, reason, Toast.LENGTH_SHORT).show();
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +146,39 @@ public class OnboardingLocationActivity extends BadgeActivity {
      * Called when the "Continue" Button is clicked. Subclasses may override
      */
     protected void onContinue() {
-        dataProviderServiceBinding.savePrimaryLocationASync(officeLocationsAdapter.usersOffice, saveCallback);
+
+        JSONObject postData = new JSONObject();
+        JSONObject user = new JSONObject();
+        try {
+            postData.put("user", user);
+            user.put("primary_office_location_id", officeLocationsAdapter.usersOffice);
+        } catch (JSONException e) {
+            App.gLogger.e("JSON exception creating post body for create department", e);
+            return;
+        }
+        TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
+        App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
+            @Override
+            public void success(Account account, Response response) {
+                ContentValues values = new ContentValues();
+                values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                        officeLocationsAdapter.usersOffice);
+                getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                        ContactsTable.COLUMN_ID + " =?",
+                        new String[] { App.accountId() + ""});
+                EventBus.getDefault().post(new UpdateAccountEvent());
+
+                Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);
+                startActivity(intent);
+                localBroadcastManager.sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
+                finish();
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Toast.makeText(OnboardingLocationActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
