@@ -1154,92 +1154,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Create a new office location via the API and save it to the local db if successful
-     * <p/>
-     * Operation is atomic, local values will not save if the account
-     * can't be updated in the cloud.
-     *
-     * @param address
-     * @param city
-     * @param state
-     * @param zip
-     * @param country
-     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure. if success, new office location id will be provided as arg
-     */
-    protected void createNewOfficeLocationAsync(final String address, final String city, final String state, final String zip, final String country, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-                // { “office_location” : { “street_address” : , “city” : , “zip_code” : , “state” : , “country” : , } }
-                JSONObject postData = new JSONObject();
-                JSONObject locationData = new JSONObject();
-                try {
-                    postData.put("office_location", locationData);
-                    locationData.put("street_address", address);
-                    locationData.put("city", city);
-                    locationData.put("zip_code", zip);
-                    locationData.put("state", state);
-                    locationData.put("country", country);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for create office location", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.createLocationRequest(postData);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED) {
-                        // Get new department id
-                        JSONObject newOffice = parseJSONResponse(response.getEntity());
-
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        final int officeLocationId = newOffice.getInt("id");
-                        values.put(OfficeLocationsTable.COLUMN_ID, officeLocationId);
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, newOffice.getString("name"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS, newOffice.getString("street_address"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY, newOffice.getString("city"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE, newOffice.getString("state"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, newOffice.getString("zip_code"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, newOffice.getString("country"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, newOffice.getString("latitude"));
-                        values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, newOffice.getString("longitude"));
-
-                        getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
-//                                database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(officeLocationId);
-                                }
-                            });
-                        }
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                } catch (JSONException e) {
-                    fail("We didn't understand the server response, please contact Badge HQ.", saveCallback);
-                }
-            }
-        });
-
-
-    }
-
-    /**
      * Saves department, job title, and manager info.
      * <p/>
      * Operation is atomic, local values will not save if the account
@@ -1940,13 +1854,6 @@ public class DataProviderService extends Service {
          */
         public Cursor getOfficeLocationsCursor() {
             return DataProviderService.this.getOfficeLocationsCursor();
-        }
-
-        /**
-         * @see DataProviderService#createNewOfficeLocationAsync(String, String, String, String, String, DataProviderService.AsyncSaveCallback)
-         */
-        public void createNewOfficeLocationAsync(String address, String city, String state, String zip, String country, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.createNewOfficeLocationAsync(address, city, state, zip, country, saveCallback);
         }
 
         /**

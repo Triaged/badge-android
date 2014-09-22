@@ -44,7 +44,6 @@ public class ApiClient extends DefaultHttpClient {
     private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
     private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
-    private static final String CREATE_OFFICE_LOCATION_URI = String.format("%s/v1/office_locations", API_HOST);
     private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
     private static final String ENTER_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/entered";
     private static final String EXIT_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/exited";
@@ -137,20 +136,6 @@ public class ApiClient extends DefaultHttpClient {
         return execute(post);
     }
 
-
-    /**
-     * Make a POST /office_locations request
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param location json object of form { "office_location" : {  "street_address" : "394 Broadway", "city" : "New York", ... } }
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse createLocationRequest(JSONObject location) throws IOException {
-        return postHelper(location, CREATE_OFFICE_LOCATION_URI);
-    }
 
     /**
      * Make a POST /devices request

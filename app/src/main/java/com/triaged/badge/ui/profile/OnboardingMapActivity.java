@@ -1,5 +1,6 @@
 package com.triaged.badge.ui.profile;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -25,15 +26,27 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.triaged.badge.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.OfficeLocationProvider;
+import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.adapters.PlacesAutocompleteAdapter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Allow user to add a new office location during onboarding flow.
@@ -61,19 +74,6 @@ public class OnboardingMapActivity extends BackButtonActivity implements
     // Stores the current instantiation of the location client in this object
     private LocationClient mLocationClient;
 
-    private DataProviderService.AsyncSaveCallback addNewAddressCallback = new DataProviderService.AsyncSaveCallback() {
-        @Override
-        public void saveSuccess(int newId) {
-            setResult(newId);
-            finish();
-        }
-
-        @Override
-        public void saveFailed(String reason) {
-            Toast.makeText(OnboardingMapActivity.this, reason, Toast.LENGTH_SHORT).show();
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,14 +92,47 @@ public class OnboardingMapActivity extends BackButtonActivity implements
             @Override
             public void onClick(View v) {
                 if (addressToAdd != null) {
-                    dataProviderServiceBinding.createNewOfficeLocationAsync(
-                            addressToAdd.getAddressLine(0).toString(),
-                            addressToAdd.getLocality(),
-                            addressToAdd.getAdminArea(),
-                            addressToAdd.getPostalCode(),
-                            addressToAdd.getCountryCode(),
-                            addNewAddressCallback
-                    );
+                    // { “office_location” : { “street_address” : , “city” : , “zip_code” : , “state” : , “country” : , } }
+                    JSONObject postData = new JSONObject();
+                    JSONObject locationData = new JSONObject();
+                    try {
+                        postData.put("office_location", locationData);
+                        locationData.put("street_address", addressToAdd.getAddressLine(0));
+                        locationData.put("city", addressToAdd.getLocality());
+                        locationData.put("state", addressToAdd.getAdminArea());
+                        locationData.put("zip_code", addressToAdd.getPostalCode());
+                        locationData.put("country", addressToAdd.getCountryCode());
+                        TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
+                        RestService.instance().badge().createOfficeLocation(typedJsonString, new Callback<OfficeLocation>() {
+                            @Override
+                            public void success(OfficeLocation officeLocation, Response response) {
+                                // Save into database.
+                                ContentValues values = new ContentValues();
+                                values.put(OfficeLocationsTable.COLUMN_ID, officeLocation.getId());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, officeLocation.getName());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS, officeLocation.getStreetAddress());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY, officeLocation.getCity());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE, officeLocation.getState());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, officeLocation.getZipCode());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, officeLocation.getCountry());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, officeLocation.getLatitude());
+                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, officeLocation.getLongitude());
+                                getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
+
+                                setResult(officeLocation.getId());
+                                finish();
+                            }
+
+                            @Override
+                            public void failure(RetrofitError error) {
+                                Toast.makeText(OnboardingMapActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                    } catch (JSONException e) {
+                        App.gLogger.e("JSON exception creating post body for create office location", e);
+                    }
+
                 }
             }
         });
