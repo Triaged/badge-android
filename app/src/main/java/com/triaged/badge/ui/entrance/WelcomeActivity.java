@@ -79,20 +79,6 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
         }
     };
 
-    protected DataProviderService.AsyncSaveCallback saveCallback = new DataProviderService.AsyncSaveCallback() {
-        @Override
-        public void saveSuccess(int newId) {
-            Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
-        }
-
-        @Override
-        public void saveFailed(String reason) {
-            Toast.makeText(WelcomeActivity.this, reason, Toast.LENGTH_LONG).show();
-        }
-    };
-
     @Override
     protected void onDatabaseReady() {
         Contact account = dataProviderServiceBinding.getLoggedInUser();
@@ -178,7 +164,52 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 } else {
                     birthDateValue = iso8601Format.format(birthdayCalendar.getTime());
                 }
-                dataProviderServiceBinding.saveBasicProfileDataAsync(firstName.getText().toString(), lastName.getText().toString(), birthDateValue, cellNumber.getText().toString(), saveCallback);
+//                dataProviderServiceBinding.saveBasicProfileDataAsync(firstName.getText().toString(),
+//                        lastName.getText().toString(), birthDateValue, cellNumber.getText().toString(), saveCallback);
+
+                JSONObject user = new JSONObject();
+                try {
+                    JSONObject data = new JSONObject();
+                    JSONObject employeeInfo = new JSONObject();
+
+                    user.put("user", data);
+                    data.put("employee_info_attributes", employeeInfo);
+                    data.put("first_name", firstName.getText().toString());
+                    data.put("last_name", lastName.getText().toString());
+                    employeeInfo.put("birth_date", birthDateValue);
+                    employeeInfo.put("cell_phone", cellNumber.getText().toString());
+                    App.restAdapter.create(AccountApi.class).update(new TypedJsonString(user.toString()), new Callback<Account>() {
+                        @Override
+                        public void success(Account account, Response response) {
+                            // Update account info in database.
+                            ContentValues values = new ContentValues();
+                            values.put(ContactsTable.COLUMN_CONTACT_FIRST_NAME, account.getCurrentUser().getFirstName());
+                            values.put(ContactsTable.COLUMN_CONTACT_LAST_NAME, account.getCurrentUser().getLastName());
+                            values.put(ContactsTable.COLUMN_CONTACT_CELL_PHONE, account.getCurrentUser().getEmployeeInfo().getCellPhone());
+                            if (account.getCurrentUser().getEmployeeInfo().getBirthDate() != null) {
+                                values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE,
+                                        Contact.convertBirthDateString(account.getCurrentUser().getEmployeeInfo().getBirthDate()));
+                            }
+                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                                    ContactsTable.COLUMN_ID + " =?",
+                                    new String[] { App.accountId() + ""});
+                            EventBus.getDefault().post(new UpdateAccountEvent());
+                            // Start next activity.
+                            Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);
+                            startActivity(intent);
+                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+                        }
+
+                        @Override
+                        public void failure(RetrofitError error) {
+                            Toast.makeText(WelcomeActivity.this, error.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+
+                } catch (JSONException e) {
+                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
+                }
             }
         });
 

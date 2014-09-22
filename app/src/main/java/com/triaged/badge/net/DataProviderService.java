@@ -1153,92 +1153,6 @@ public class DataProviderService extends Service {
         });
     }
 
-
-    /**
-     * Save first name, last name, cell phone, and birth date in local DB
-     * and PATCH these values on account in the cloud.
-     * <p/>
-     * Operation is atomic, local values will not save if the account
-     * can't be updated in the cloud.
-     *
-     * @param firstName
-     * @param lastName
-     * @param birthDateString
-     * @param cellPhone
-     * @param saveCallback    null or a callback that will be invoked on the main thread on success or failure
-     */
-    protected void saveBasicProfileDataAsync(final String firstName, final String lastName, final String birthDateString, final String cellPhone, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-
-                JSONObject user = new JSONObject();
-                try {
-                    JSONObject data = new JSONObject();
-                    JSONObject employeeInfo = new JSONObject();
-
-                    user.put("user", data);
-                    data.put("employee_info_attributes", employeeInfo);
-                    data.put("first_name", firstName);
-                    data.put("last_name", lastName);
-                    employeeInfo.put("birth_date", birthDateString);
-                    employeeInfo.put("cell_phone", cellPhone);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for basic profile data", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-
-                try {
-                    HttpResponse response = apiClient.patchAccountRequest(user);
-                    ensureNotUnauthorized(response);
-                    if (response.getEntity() != null) {
-                        response.getEntity().consumeContent();
-                    }
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        values.put(ContactsTable.COLUMN_CONTACT_FIRST_NAME, firstName);
-                        values.put(ContactsTable.COLUMN_CONTACT_LAST_NAME, lastName);
-                        values.put(ContactsTable.COLUMN_CONTACT_CELL_PHONE, cellPhone);
-                        values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, birthDateString);
-
-                        if (birthDateString != null) {
-                            values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateString));
-                        }
-                        //values.put( CompanySQLiteHelper.COL)
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
-                                new String[] { loggedInUser.id + ""});
-
-//                        database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(-1);
-                                }
-                            });
-                        }
-                    } else {
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                }
-            }
-
-        });
-    }
-
     /**
      * Create a new office location via the API and save it to the local db if successful
      * <p/>
@@ -1998,13 +1912,6 @@ public class DataProviderService extends Service {
 
         }
 
-
-        /**
-         * @see DataProviderService#saveBasicProfileDataAsync(String, String, String, String, DataProviderService.AsyncSaveCallback)
-         */
-        public void saveBasicProfileDataAsync(String firstName, String lastName, String birthDateString, String cellPhone, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.saveBasicProfileDataAsync(firstName, lastName, birthDateString, cellPhone, saveCallback);
-        }
 
         /**
          * @see DataProviderService#savePositionProfileDataAsync(String, int, int, DataProviderService.AsyncSaveCallback)
