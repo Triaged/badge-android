@@ -50,7 +50,7 @@ import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
-import com.triaged.badge.net.api.DepartmentApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -371,7 +371,7 @@ public class DataProviderService extends Service {
     }
 
     protected void getSingleDepartment(final int syncId) {
-        App.restAdapter.create(DepartmentApi.class).get(syncId + "", new Callback<Department>() {
+        RestService.instance().badge().getDepartment(syncId + "", new Callback<Department>() {
             @Override
             public void success(Department department, Response response) {
                 ContentValues values = new ContentValues();

@@ -24,6 +24,7 @@ import com.triaged.badge.helpers.Foreground;
 import com.triaged.badge.net.ApiClient;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -202,6 +203,7 @@ public class App extends Application {
     public void onEvent(LogedinSuccessfully event) {
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
+        RestService.prepare(restAdapterMessaging, restAdapter);
     }
 
 }

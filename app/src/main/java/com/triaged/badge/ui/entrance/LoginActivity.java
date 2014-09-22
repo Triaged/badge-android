@@ -27,7 +27,7 @@ import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.FayeService;
-import com.triaged.badge.net.api.SessionApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.MixpanelActivity;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -73,8 +73,8 @@ public class LoginActivity extends MixpanelActivity {
             App.gLogger.e("JSON exception creating post body for login", e);
         }
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-
-        App.restAdapter.create(SessionApi.class).login(typedJsonString, new Callback<Account>() {
+        RestService.prepare(App.restAdapterMessaging, App.restAdapter);
+        RestService.instance().badge().login(typedJsonString, new Callback<Account>() {
             @Override
             public void success(Account account, retrofit.client.Response response) {
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);

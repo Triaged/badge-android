@@ -29,8 +29,7 @@ import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.User;
-import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.net.api.AccountApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.profile.OnboardingPositionActivity;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -116,7 +115,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                 return;
             }
             TypedJsonString typedJsonString = new TypedJsonString(user.toString());
-            App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
+            RestService.instance().badge().updateAccount(typedJsonString, new Callback<Account>() {
                 @Override
                 public void success(Account account, Response response) {
                     SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true);
@@ -125,7 +124,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                     values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, User.SHARING_LOCATION_ONE);
                     getContentResolver().update(ContactProvider.CONTENT_URI, values,
                             ContactsTable.COLUMN_ID + " =?",
-                            new String[] { App.accountId() + ""});
+                            new String[]{App.accountId() + ""});
                     EventBus.getDefault().post(new UpdateAccountEvent());
 
                     LocationTrackingService.scheduleAlarm(WelcomeActivity.this);
@@ -178,7 +177,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                     data.put("last_name", lastName.getText().toString());
                     employeeInfo.put("birth_date", birthDateValue);
                     employeeInfo.put("cell_phone", cellNumber.getText().toString());
-                    App.restAdapter.create(AccountApi.class).update(new TypedJsonString(user.toString()), new Callback<Account>() {
+                    RestService.instance().badge().updateAccount(new TypedJsonString(user.toString()), new Callback<Account>() {
                         @Override
                         public void success(Account account, Response response) {
                             // Update account info in database.
@@ -192,7 +191,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
                             }
                             getContentResolver().update(ContactProvider.CONTENT_URI, values,
                                     ContactsTable.COLUMN_ID + " =?",
-                                    new String[] { App.accountId() + ""});
+                                    new String[]{App.accountId() + ""});
                             EventBus.getDefault().post(new UpdateAccountEvent());
                             // Start next activity.
                             Intent intent = new Intent(WelcomeActivity.this, OnboardingPositionActivity.class);

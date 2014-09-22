@@ -49,7 +49,7 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.api.AccountApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.EditProfileInfoView;
 
@@ -179,16 +179,14 @@ public class EditProfileActivity extends BadgeActivity {
                 }
 
                 TypedJsonString updateDate = new TypedJsonString(user.toString());
-                final AccountApi accountApi = App.restAdapter.create(AccountApi.class);
-                accountApi.update(updateDate, new Callback<Account>() {
-
+                RestService.instance().badge().updateAccount(updateDate, new Callback<Account>() {
                     @Override
                     public void success(final Account account, retrofit.client.Response response) {
 
                         // OK now send avatar if there was a new one specified
                         if (newProfilePhotoData != null) {
                             TypedFile typedFile = new TypedFile("image/png", new File(currentPhotoPath));
-                            accountApi.postAvatar(typedFile, new Callback<Account>() {
+                            RestService.instance().badge().postAvatar(typedFile, new Callback<Account>() {
                                 @Override
                                 public void success(Account accountWithAvatar, retrofit.client.Response response) {
                                     saveNewAccountAndFinish(accountWithAvatar);

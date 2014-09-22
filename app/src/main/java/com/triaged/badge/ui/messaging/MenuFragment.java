@@ -24,7 +24,7 @@ import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.MessageThread;
-import com.triaged.badge.net.api.MessageThreadApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 import com.triaged.badge.ui.profile.AbstractProfileActivity;
@@ -186,7 +186,6 @@ public class MenuFragment extends Fragment  {
     }
 
     private void requestMute() {
-        MessageThreadApi messageThreadApi = App.restAdapterMessaging.create(MessageThreadApi.class);
         Callback<Response> muteCallback = new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
@@ -202,9 +201,9 @@ public class MenuFragment extends Fragment  {
         };
 
         if (muteCheckBox.isChecked()) {
-            messageThreadApi.unMute(mThreadId, muteCallback);
+            RestService.instance().messaging().unmuteThread(mThreadId, muteCallback);
         } else {
-            messageThreadApi.mute(mThreadId, muteCallback);
+            RestService.instance().messaging().muteThread(mThreadId, muteCallback);
         }
     }
 
@@ -231,26 +230,26 @@ public class MenuFragment extends Fragment  {
 
                     private void sendRenameRequest(String newName) {
                         MessageThreadRequest request = new MessageThreadRequest(new MessageThread(newName));
-                        MessageThreadApi messageThreadApi = App.restAdapterMessaging.create(MessageThreadApi.class);
-                        messageThreadApi.setName(mThreadId, request, new Callback<Response>() {
-                                    @Override
-                                    public void success(Response response, Response response2) {
-                                        App.gLogger.i("response:: success:: " + response);
-                                        mThreadName = input.getText().toString();
-                                        SharedPreferencesUtil.store("name_" + mThreadId, mThreadName);
-                                        groupNameTextView.setText(mThreadName);
-                                        getActivity().getActionBar().setTitle(mThreadName);
-                                        // Since right now we don't have table for thread,
-                                        // should notify observers in the following way.
-                                        getActivity().getContentResolver().notifyChange(MessageProvider.CONTENT_URI, null);
-                                    }
 
-                                    @Override
-                                    public void failure(RetrofitError error) {
-                                        Toast.makeText(getActivity(), "A problem occurred during sending the request.", Toast.LENGTH_LONG).show();
-                                        App.gLogger.e("response:: error", error);
-                                    }
-                                });
+                        RestService.instance().messaging().threadSetName(mThreadId, request, new Callback<Response>() {
+                            @Override
+                            public void success(Response response, Response response2) {
+                                App.gLogger.i("response:: success:: " + response);
+                                mThreadName = input.getText().toString();
+                                SharedPreferencesUtil.store("name_" + mThreadId, mThreadName);
+                                groupNameTextView.setText(mThreadName);
+                                getActivity().getActionBar().setTitle(mThreadName);
+                                // Since right now we don't have table for thread,
+                                // should notify observers in the following way.
+                                getActivity().getContentResolver().notifyChange(MessageProvider.CONTENT_URI, null);
+                            }
+
+                            @Override
+                            public void failure(RetrofitError error) {
+                                Toast.makeText(getActivity(), "A problem occurred during sending the request.", Toast.LENGTH_LONG).show();
+                                App.gLogger.e("response:: error", error);
+                            }
+                        });
                     }
                 })
                 .setNegativeButton("Cancel", null)

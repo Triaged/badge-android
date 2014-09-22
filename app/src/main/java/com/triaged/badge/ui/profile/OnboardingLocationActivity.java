@@ -22,8 +22,7 @@ import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.net.api.AccountApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;
 import com.triaged.badge.ui.home.MainActivity;
@@ -157,7 +156,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
             return;
         }
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
+        RestService.instance().badge().updateAccount(typedJsonString, new Callback<Account>() {
             @Override
             public void success(Account account, Response response) {
                 ContentValues values = new ContentValues();
@@ -165,7 +164,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
                         officeLocationsAdapter.usersOffice);
                 getContentResolver().update(ContactProvider.CONTENT_URI, values,
                         ContactsTable.COLUMN_ID + " =?",
-                        new String[] { App.accountId() + ""});
+                        new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
 
                 Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);

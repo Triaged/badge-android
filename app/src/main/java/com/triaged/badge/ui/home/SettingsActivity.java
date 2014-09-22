@@ -18,8 +18,7 @@ import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.User;
-import com.triaged.badge.net.RestClient;
-import com.triaged.badge.net.api.AccountApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.ChangePasswordActivity;
@@ -76,7 +75,7 @@ public class SettingsActivity extends BackButtonActivity {
 
                 int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);
                 if (deviceId > -1) {
-                    RestClient.deviceApi.signOut(deviceId);
+                    RestService.instance().badge().signOut(deviceId);
                 }
 
                 /**
@@ -117,7 +116,7 @@ public class SettingsActivity extends BackButtonActivity {
                     return;
                 }
                 TypedJsonString typedJsonString = new TypedJsonString(user.toString());
-                App.restAdapter.create(AccountApi.class).update(typedJsonString, new Callback<Account>() {
+                RestService.instance().badge().updateAccount(typedJsonString, new Callback<Account>() {
                     @Override
                     public void success(Account account, Response response) {
                         SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
@@ -128,7 +127,7 @@ public class SettingsActivity extends BackButtonActivity {
 
                         getContentResolver().update(ContactProvider.CONTENT_URI, values,
                                 ContactsTable.COLUMN_ID + " =?",
-                                new String[] { App.accountId() + ""});
+                                new String[]{App.accountId() + ""});
 
                         if (isChecked) {
                             LocationTrackingService.scheduleAlarm(SettingsActivity.this);

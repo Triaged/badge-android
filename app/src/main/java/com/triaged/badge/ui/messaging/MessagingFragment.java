@@ -25,7 +25,7 @@ import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.models.Receipt;
-import com.triaged.badge.net.api.ReceiptApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
 import com.triaged.badge.ui.notification.Notifier;
@@ -174,13 +174,13 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     }
 
-    ReceiptApi receiptApi = App.restAdapterMessaging.create(ReceiptApi.class);
+
     private void prepareAndSendReceipts() {
         ReceiptHelper.setTimestamp(getActivity(), mThreadId);
         List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.mContext);
         if (receiptList.size() > 0) {
             ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
-            receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
+            RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
                 @Override
                 public void success(Response response, Response response2) {
                     ReceiptHelper.setAllSeenReceiptsSync(App.mContext);
@@ -220,7 +220,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
             receiptArrayList.add(receipt);
             ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptArrayList);
 
-            receiptApi.reportReceipts(receiptsReportRequest, new Callback<Response>() {
+            RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
                 @Override
                 public void success(Response response, Response response2) {
                     App.gLogger.i(response.getReason());

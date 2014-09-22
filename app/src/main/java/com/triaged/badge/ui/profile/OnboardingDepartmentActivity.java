@@ -24,7 +24,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.models.Department;
-import com.triaged.badge.net.api.DepartmentApi;
+import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.home.adapters.DepartmentsAdapter;
 
@@ -103,7 +103,7 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
                             return;
                         }
                         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-                        App.restAdapter.create(DepartmentApi.class).create(typedJsonString, new Callback<Department>() {
+                        RestService.instance().badge().createDepartment(typedJsonString, new Callback<Department>() {
                             @Override
                             public void success(Department department, Response response) {
                                 // Put into database.
