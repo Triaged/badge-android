@@ -110,6 +110,12 @@ public class RestService {
 
         @POST("/v1/office_locations")
         void createOfficeLocation(@Body TypedInput typedInput, Callback<OfficeLocation> callback);
+
+        @PUT("/v1/office_locations/{id}/entered")
+        void checkInToOffice(@Path("id") String officeId, Callback<Response> callback);
+
+        @PUT("/v1/office_locations/{id}/exited")
+        void checkOutOfOffice(@Path("id") String officeId, Callback<Response> callback);
     }
 
 }

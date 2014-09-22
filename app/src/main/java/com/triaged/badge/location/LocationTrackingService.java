@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -22,15 +23,24 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.squareup.okhttp.Response;
 import com.triaged.badge.app.App;
+import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.RestService;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
 
 /**
  * Tracks location in the background if hte user has enabled.
@@ -91,7 +101,7 @@ public class LocationTrackingService extends Service implements LocationListener
         if (dataProviderServiceBinding != null) {
             Contact user = dataProviderServiceBinding.getLoggedInUser();
             if (user != null && user.currentOfficeLocationId > 0)
-                dataProviderServiceBinding.checkOutOfOffice(user.currentOfficeLocationId);
+                checkOut(user.currentOfficeLocationId, context);
         }
 
     }
@@ -212,7 +222,7 @@ public class LocationTrackingService extends Service implements LocationListener
                     while (officeLocations.moveToNext()) {
                         String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
                         String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
-                        int officeId = Contact.getIntSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_ID);
+                        final int officeId = Contact.getIntSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_ID);
                         String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
                         if (latStr != null && !"".equals(latStr)) {
                             officeLocation.setLatitude(Float.parseFloat(latStr));
@@ -228,10 +238,9 @@ public class LocationTrackingService extends Service implements LocationListener
                                 }
                             }
                             if (distance < OFFICE_DISTANCE_THRESHOLD_M) {
-                                // CHECK IN!
-                                dataProviderServiceBinding.checkInToOffice(officeId);
+                                checkIn(officeId, LocationTrackingService.this);
                             } else {
-                                dataProviderServiceBinding.checkOutOfOffice(officeId);
+                                checkOut(officeId, LocationTrackingService.this);
                             }
                         }
                     }
@@ -249,6 +258,44 @@ public class LocationTrackingService extends Service implements LocationListener
             }.execute();
         }
 
+    }
+
+    private static void checkOut(final int officeId, final Context context) {
+        RestService.instance().badge().checkOutOfOffice(officeId + "", new Callback<Response>() {
+            @Override
+            public void success(Response response, retrofit.client.Response response2) {
+                ContentValues values = new ContentValues();
+                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
+                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                        ContactsTable.COLUMN_ID + " =?",
+                        new String[]{App.accountId() + ""});
+                EventBus.getDefault().post(new UpdateAccountEvent());
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.w(LOG_TAG, "Couldn't check out in to office due to IOException " + officeId);
+            }
+        });
+    }
+
+    private static void checkIn(final int officeId, final Context context) {
+        RestService.instance().badge().checkInToOffice(officeId + "", new Callback<Response>() {
+            @Override
+            public void success(Response response, retrofit.client.Response response2) {
+                ContentValues values = new ContentValues();
+                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
+                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
+                        ContactsTable.COLUMN_ID + " =?",
+                        new String[]{App.accountId() + ""});
+                EventBus.getDefault().post(new UpdateAccountEvent());
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                Log.w(LOG_TAG, "Couldn't check out in to office due to IOException " + officeId);
+            }
+        });
     }
 
     @Override

@@ -980,97 +980,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Changes current user's office to this office id, when location svcs determine
-     * they are there. If a current office is already set, does nothing.
-     *
-     * @param officeId
-     */
-    protected void checkInToOffice(final int officeId) {
-        if (loggedInUser.currentOfficeLocationId <= 0) {
-            sqlThread.submit(new Runnable() {
-                @Override
-                public void run() {
-
-                    try {
-                        HttpResponse response = apiClient.checkinRequest(officeId);
-                        //ensureNotUnauthorized( response );
-                        int status = response.getStatusLine().getStatusCode();
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        if (status == HttpStatus.SC_OK) {
-                            ContentValues values = new ContentValues();
-                            values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
-                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                    ContactsTable.COLUMN_ID + " =?",
-                                    new String[] { loggedInUser.id + ""});
-//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                            loggedInUser.currentOfficeLocationId = officeId;
-                        } else {
-                            Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
-                        }
-                    } catch (IOException e) {
-                        Log.w(LOG_TAG, "Couldn't check out in to office due to IOException " + officeId);
-                        // Rats. Next time?
-                    }
-
-                }
-            });
-        }
-    }
-
-
-    /**
-     * Async wrapper for {@link #checkOutOfOfficeSynchronously(int)}
-     * for when called from the UI.
-     *
-     * @param officeId
-     */
-    protected void checkOutOfOfficeAsync(final int officeId) {
-        if (loggedInUser.currentOfficeLocationId == officeId) {
-            sqlThread.submit(new Runnable() {
-                @Override
-                public void run() {
-                    checkOutOfOfficeSynchronously(officeId);
-                }
-            });
-        }
-    }
-
-    /**
-     * If the user is currently "checked in" to this office,
-     * clear that status because they are no longer close to it.
-     *
-     * @param officeId
-     */
-    protected void checkOutOfOfficeSynchronously(int officeId) {
-        try {
-            HttpResponse response = apiClient.checkoutRequest(officeId);
-            //ensureNotUnauthorized(response);
-            int status = response.getStatusLine().getStatusCode();
-            if (response.getEntity() != null) {
-                response.getEntity().consumeContent();
-            }
-            if (status == HttpStatus.SC_OK) {
-                ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
-
-                getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
-                        new String[] { loggedInUser + ""});
-
-//                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(loggedInUser.id)});
-                loggedInUser.currentOfficeLocationId = -1;
-            } else {
-                Log.w(LOG_TAG, "Server responded with " + status + " trying to check out of location.");
-            }
-        } catch (IOException e) {
-            Log.w(LOG_TAG, "Couldn't check out of office due to IOException " + officeId);
-            // Rats. Next time?
-        }
-    }
-
-    /**
      * Get a writable database and do an incremental sync of new data from the cloud.
      * <p/>
      * Notifies listeners via the {@link #DB_AVAILABLE_ACTION} when the database is ready for use.
@@ -1774,21 +1683,6 @@ public class DataProviderService extends Service {
         public void registerDevice(String pushToken) {
             DataProviderService.this.registerDevice(pushToken);
         }
-
-        /**
-         * @see DataProviderService#checkInToOffice(int)
-         */
-        public void checkInToOffice(int officeId) {
-            DataProviderService.this.checkInToOffice(officeId);
-        }
-
-        /**
-         * @see DataProviderService#checkOutOfOfficeAsync(int)
-         */
-        public void checkOutOfOffice(int officeId) {
-            DataProviderService.this.checkOutOfOfficeAsync(officeId);
-        }
-
 
         /**
          * @see DataProviderService#getBasicMixpanelData() (int)
