@@ -504,21 +504,21 @@ public class DataProviderService extends Service {
 //                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
 
                     JSONObject companyObj = parseJSONResponse(response.getEntity());
-
                     JSONArray contactsArr = companyObj.getJSONArray("users");
                     int contactsLength = contactsArr.length();
+                    ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
                     for (int i = 0; i < contactsLength; i++) {
                         JSONObject newContact = contactsArr.getJSONObject(i);
                         ContentValues values = new ContentValues();
                         setContactDBValesFromJSON(newContact, values);
 
-                        clearCachedAvatarIfChanged(values.getAsInteger(ContactsTable.COLUMN_ID) + "",
-                                values.getAsString(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
-
                         getContentResolver().insert(ContactProvider.CONTENT_URI, values);
+                        dbOperations.add(ContentProviderOperation.newInsert(
+                                ContactProvider.CONTENT_URI).withValues(values).build());
                     }
+                    getContentResolver().applyBatch(ContactProvider.AUTHORITY, dbOperations);
+                    dbOperations.clear();
 
-                    ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
                     if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
                         JSONArray deptsArr = companyObj.getJSONArray("departments");
                         int deptsLength = deptsArr.length();
@@ -584,21 +584,6 @@ public class DataProviderService extends Service {
                 syncCompany();
             }
         });
-    }
-
-    private void clearCachedAvatarIfChanged(String userId, String avatarUrl) {
-        Cursor cursor = getContentResolver().query(ContactProvider.CONTENT_URI,
-                new String [] {ContactsTable.COLUMN_CONTACT_AVATAR_URL},
-                ContactsTable.COLUMN_ID + "=?",
-                new String[]{userId}, null);
-        if (cursor!= null && cursor.moveToFirst()) {
-            String dbAvatar = cursor.getString(1);
-            if (!dbAvatar.equals(avatarUrl)) {
-                MemoryCacheUtils.removeFromCache(dbAvatar, ImageLoader.getInstance().getMemoryCache());
-            }
-            cursor.close();
-        }
-
     }
 
     private void setContactDBValesFromJSON(JSONObject json, ContentValues values) throws JSONException {
