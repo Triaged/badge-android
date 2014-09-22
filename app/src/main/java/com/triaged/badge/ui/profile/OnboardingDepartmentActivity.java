@@ -1,6 +1,7 @@
 package com.triaged.badge.ui.profile;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,12 +18,22 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.triaged.badge.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.DepartmentProvider;
+import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.models.Department;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.DepartmentApi;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.home.adapters.DepartmentsAdapter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Allow the user to select their department or add a new one.
@@ -82,20 +93,38 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
 //                        Toast.makeText(OnboardingDepartmentActivity.this, input.getText().toString(), Toast.LENGTH_SHORT).show();
                         // First, attempt to create new dept async. Only on success do we hide the dialog.
                         final String departmentName = input.getText().toString();
-                        dataProviderServiceBinding.createNewDepartmentAsync(departmentName, new DataProviderService.AsyncSaveCallback() {
+                        JSONObject postData = new JSONObject();
+                        JSONObject departmentData = new JSONObject();
+                        try {
+                            postData.put("department", departmentData);
+                            departmentData.put("name", departmentName);
+                        } catch (JSONException e) {
+                            App.gLogger.e("JSON exception creating post body for create department", e);
+                            return;
+                        }
+                        TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
+                        App.restAdapter.create(DepartmentApi.class).create(typedJsonString, new Callback<Department>() {
                             @Override
-                            public void saveSuccess(int newId) {
+                            public void success(Department department, Response response) {
+                                // Put into database.
+                                ContentValues values = new ContentValues();
+                                values.put(DepartmentsTable.COLUMN_ID, department.id);
+                                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, department.name);
+                                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, department.usersCount);
+                                getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
+                                // Start next activity.
                                 Intent intent = new Intent(OnboardingDepartmentActivity.this, OnboardingPositionActivity.class);
                                 intent.putExtra(DEPT_NAME_EXTRA, departmentName);
-                                setResult(newId, intent);
+                                setResult(department.id, intent);
                                 finish();
                             }
 
                             @Override
-                            public void saveFailed(String reason) {
-                                Toast.makeText(OnboardingDepartmentActivity.this, reason, Toast.LENGTH_SHORT).show();
+                            public void failure(RetrofitError error) {
+                                Toast.makeText(OnboardingDepartmentActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         });
+
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                         imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
                     }

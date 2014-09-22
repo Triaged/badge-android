@@ -43,7 +43,6 @@ public class ApiClient extends DefaultHttpClient {
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
     private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
     private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
-    private static final String CREATE_DEPARTMENT_URI = String.format("%s/v1/departments", API_HOST);
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
     private static final String CREATE_OFFICE_LOCATION_URI = String.format("%s/v1/office_locations", API_HOST);
     private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
@@ -52,7 +51,6 @@ public class ApiClient extends DefaultHttpClient {
     private static final String GET_CONTACT_URI_PATTERN = "%s/v1/users/%d";
 
     private static final String GET_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d";
-    private static final String GET_DEPARTMENT_URI_PATTERN = "%s/v1/departments/%d";
 
     private static final String REQUEST_RESET_PASSWORD_URI = String.format("%s/v1/account/reset_password", API_HOST);
 
@@ -139,20 +137,6 @@ public class ApiClient extends DefaultHttpClient {
         return execute(post);
     }
 
-
-    /**
-     * Make a POST /departments request
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param department json object of form { "department" : { "name" : "New Dept" } }
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse createDepartmentRequest(JSONObject department) throws IOException {
-        return postHelper(department, CREATE_DEPARTMENT_URI);
-    }
 
     /**
      * Make a POST /office_locations request
@@ -244,12 +228,6 @@ public class ApiClient extends DefaultHttpClient {
 
     public HttpResponse getOffice(int officeId) throws IOException {
         HttpGet get = new HttpGet(String.format(GET_OFFICE_URI_PATTERN, API_HOST, officeId));
-        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(get);
-    }
-
-    public HttpResponse getDepartment(int departmentId) throws IOException {
-        HttpGet get = new HttpGet(String.format(GET_DEPARTMENT_URI_PATTERN, API_HOST, departmentId));
         get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
         return execute(get);
     }

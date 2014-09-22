@@ -12,7 +12,7 @@ import com.triaged.badge.database.table.DepartmentsTable;
 public class Department {
     public int id;
     public String name;
-    public int numContacts;
+    public int usersCount;
 
     /**
      * Populate this dept pojo with values from the current row in the
@@ -23,6 +23,6 @@ public class Department {
     public void fromCursor(Cursor deptCursor) {
         id = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_ID);
         name = Contact.getStringSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NAME);
-        numContacts = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS);
+        usersCount = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS);
     }
 }

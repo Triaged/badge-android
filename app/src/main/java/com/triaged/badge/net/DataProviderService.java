@@ -47,8 +47,10 @@ import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
+import com.triaged.badge.models.Department;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
+import com.triaged.badge.net.api.DepartmentApi;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -72,6 +74,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * This service abstracts access to contact and company
@@ -84,8 +89,6 @@ public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
     public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
-    public static final String COMPANY_NAME_PREFS_KEY = "companyName";
-    public static final String COMPANY_ID_PREFS_KEY = "companyId";
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
@@ -178,12 +181,6 @@ public class DataProviderService extends Service {
                     ContactsTable.COLUMN_CONTACT_MANAGER_ID,
                     ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
-    protected static final String QUERY_THREADS_SQL =
-            String.format("SELECT * from %s WHERE %s = 1 order by %s DESC",
-                    MessagesTable.TABLE_NAME,
-                    MessagesTable.COLUMN_MESSAGES_THREAD_HEAD,
-                    MessagesTable.COLUMN_MESSAGES_TIMESTAMP
-            );
     protected static final String QUERY_MESSAGES_SQL =
             String.format("SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact" +
                             " ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
@@ -211,10 +208,6 @@ public class DataProviderService extends Service {
             DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS,
             DepartmentsTable.COLUMN_DEPARTMENT_NAME);
 
-    protected static final String CLEAR_DEPARTMENTS_SQL = String.format("DELETE FROM %s;", DepartmentsTable.TABLE_NAME);
-    //    protected static final String CLEAR_CONTACTS_SQL = String.format("DELETE FROM %s;", ContactsTable.TABLE_NAME);
-    protected static final String CLEAR_OFFICE_LOCATIONS_SQL = String.format("DELETE FROM %s;", OfficeLocationsTable.TABLE_NAME);
-    protected static final String CLEAR_MESSAGES_SQL = String.format("DELETE FROM %s;", MessagesTable.TABLE_NAME);
     protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
 
@@ -378,26 +371,19 @@ public class DataProviderService extends Service {
     }
 
     protected void getSingleDepartment(final int syncId) {
-        sqlThread.submit(new Runnable() {
+        App.restAdapter.create(DepartmentApi.class).get(syncId + "", new Callback<Department>() {
             @Override
-            public void run() {
-                try {
-                    HttpResponse response = apiClient.getDepartment(syncId);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        ContentValues values = new ContentValues();
-                        JSONObject dept = parseJSONResponse(response.getEntity());
-                        setDepartmentBValuesFromJSON(dept, values);
-                        getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
-//                                database.insert(DepartmentsTable.TABLE_NAME, null, values);
-                        values.clear();
-                    }
-                } catch (IOException e) {
-                    App.gLogger.e("Network issue getting single department");
-                } catch (JSONException e) {
-                    App.gLogger.e("Couldn't understand response from Badge server", e);
-                }
+            public void success(Department department, Response response) {
+                ContentValues values = new ContentValues();
+                values.put(DepartmentsTable.COLUMN_ID, department.id);
+                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, department.name);
+                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, department.usersCount);
+                getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                App.gLogger.e("Network issue getting single department. error: " + error.getMessage());
             }
         });
     }
@@ -1254,73 +1240,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Create a new department and persist it to the database. Database row
-     * only created if api create option successful.
-     *
-     * @param department   name of new department
-     * @param saveCallback null or a callback that will be invoked on the main thread on success or failure
-     */
-    protected void createNewDepartmentAsync(final String department, final AsyncSaveCallback saveCallback) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                if (database == null) {
-                    fail("Database not ready yet. Please report to Badge HQ", saveCallback);
-                    return;
-                }
-
-                JSONObject postData = new JSONObject();
-                JSONObject departmentData = new JSONObject();
-                try {
-                    postData.put("department", departmentData);
-                    departmentData.put("name", department);
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for create department", e);
-                    fail("Unexpected issue, please contact Badge HQ", saveCallback);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.createDepartmentRequest(postData);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED) {
-                        // Get new department id
-                        JSONObject newDepartment = parseJSONResponse(response.getEntity());
-
-                        // Update local data.
-                        ContentValues values = new ContentValues();
-                        final int departmentId = newDepartment.getInt("id");
-                        values.put(DepartmentsTable.COLUMN_ID, departmentId);
-                        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, newDepartment.getString("name"));
-                        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, newDepartment.getInt("users_count"));
-                        getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
-//                        database.insert(DepartmentsTable.TABLE_NAME, null, values);
-                        if (saveCallback != null) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    saveCallback.saveSuccess(departmentId);
-                                }
-                            });
-                        }
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                        fail("Server responded with " + response.getStatusLine().getReasonPhrase(), saveCallback);
-                    }
-                } catch (IOException e) {
-                    fail("There was a network issue saving, please check your connection and try again.", saveCallback);
-                } catch (JSONException e) {
-                    fail("We didn't understand the server response, please contact Badge HQ.", saveCallback);
-                }
-            }
-        });
-
-    }
-
-    /**
      * Create a new office location via the API and save it to the local db if successful
      * <p/>
      * Operation is atomic, local values will not save if the account
@@ -2114,13 +2033,6 @@ public class DataProviderService extends Service {
          */
         public Cursor getOfficeLocationsCursor() {
             return DataProviderService.this.getOfficeLocationsCursor();
-        }
-
-        /**
-         * @see DataProviderService#createNewDepartmentAsync(String, DataProviderService.AsyncSaveCallback)
-         */
-        public void createNewDepartmentAsync(String department, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.createNewDepartmentAsync(department, saveCallback);
         }
 
         /**

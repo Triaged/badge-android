@@ -85,7 +85,7 @@ public class DepartmentsAdapter extends ArrayAdapter<Department> {
         ViewHolder holder = (ViewHolder) view.getTag();
         holder.deptNameView.setText(d.name);
         if (holder.deptCountView != null) {
-            holder.deptCountView.setText(String.valueOf(d.numContacts));
+            holder.deptCountView.setText(String.valueOf(d.usersCount));
         }
     }
 
