@@ -17,10 +17,14 @@ public class User {
     String primaryOfficeLocationid;
     String currentOfficeLocaitonId;
     String departmentId;
+    int sharingOfficeLocationStatus;
     boolean installedApp;
-    boolean sharingOfficeLocation;
 
     EmployeeInfo employeeInfo;
+
+    public static final int SHARING_LOCATION_UNAVAILABLE = 100;
+    public static final int SHARING_LOCATION_ONE = 200;
+    public static final int SHARING_LOCATION_OFF = 300;
 
 
     public int getId() {
@@ -127,12 +131,17 @@ public class User {
         this.installedApp = installedApp;
     }
 
-    public boolean isSharingOfficeLocation() {
-        return sharingOfficeLocation;
+    public int getSharingOfficeLocationStatus() {
+        return sharingOfficeLocationStatus;
     }
 
-    public void setSharingOfficeLocation(boolean sharingOfficeLocation) {
-        this.sharingOfficeLocation = sharingOfficeLocation;
+    public void setSharingOfficeLocationStatus(int sharingOfficeLocationStatus) {
+        if (sharingOfficeLocationStatus != SHARING_LOCATION_ONE &&
+                sharingOfficeLocationStatus != SHARING_LOCATION_OFF &&
+                sharingOfficeLocationStatus != SHARING_LOCATION_UNAVAILABLE) {
+            throw  new IllegalArgumentException("invalid argument for sharing office location status");
+        }
+        this.sharingOfficeLocationStatus = sharingOfficeLocationStatus;
     }
 
     public EmployeeInfo getEmployeeInfo() {
