@@ -11,7 +11,7 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.net.DataProviderService;
-import com.triaged.badge.ui.entrance.LoginActivity;
+import com.triaged.badge.ui.entrance.OnboardingActivity;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
@@ -54,7 +54,7 @@ public class LogoutReceiver extends BroadcastReceiver {
         Bundle bundle = intent.getExtras();
         if (bundle != null) {
             if (bundle.getBoolean(RESTART_APP_EXTRA)) {
-                Intent loginIntent = new Intent(context, LoginActivity.class);
+                Intent loginIntent = new Intent(context, OnboardingActivity.class);
                 loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(loginIntent);
             }
