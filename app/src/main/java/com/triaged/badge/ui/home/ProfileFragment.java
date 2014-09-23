@@ -325,7 +325,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         numberManagedByPrevious = reportsCursor.getCount();
 
         int iterator = 0;
-        final int userId = App.dataProviderServiceBinding.getLoggedInUser().id;
+        final int userId = App.accountId();
         if (reportsCursor.moveToFirst()) do {
             final ProfileManagesUserView newView = (ProfileManagesUserView) LayoutInflater.from(getActivity())
                     .inflate(R.layout.item_manages_contact, viewHolder, false);

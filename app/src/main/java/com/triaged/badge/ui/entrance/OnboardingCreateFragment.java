@@ -142,6 +142,7 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
             progressDialog = new ProgressDialog(getActivity());
             progressDialog.setTitle("Please wait");
             progressDialog.setMessage("Signing up");
+            progressDialog.setCanceledOnTouchOutside(false);
         }
         progressDialog.show();
 
@@ -155,7 +156,6 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
         postData.add("auth_params", authParams);
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
         RestService.prepare(App.restAdapterMessaging, App.restAdapter);
-
         RestService.instance().badge().signUp(typedJsonString, new Callback<AuthenticationResponse>() {
             @Override
             public void success(AuthenticationResponse authenticationResponse, Response response) {
@@ -166,7 +166,7 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(getActivity(), "Some thing went wrong", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), "Something went wrong", Toast.LENGTH_LONG).show();
                 progressDialog.dismiss();
             }
         });

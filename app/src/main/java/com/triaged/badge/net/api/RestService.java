@@ -110,6 +110,9 @@ public class RestService {
         @POST("/v1/authentications")
         void signUp(@Body TypedInput requestBody, Callback<AuthenticationResponse> callback);
 
+        @POST("/v1/authentications/valid")
+        void validate(@Body TypedInput requestBody, Callback<Account> callback);
+
 
         @POST("/v1/office_locations")
         void createOfficeLocation(@Body TypedInput typedInput, Callback<OfficeLocation> callback);
