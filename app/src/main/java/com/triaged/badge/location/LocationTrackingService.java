@@ -23,7 +23,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.squareup.okhttp.Response;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.provider.ContactProvider;
 import com.triaged.badge.database.table.ContactsTable;
@@ -41,6 +40,7 @@ import java.util.Date;
 import de.greenrobot.event.EventBus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Tracks location in the background if hte user has enabled.

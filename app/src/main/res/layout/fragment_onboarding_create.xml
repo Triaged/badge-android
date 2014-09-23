@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/root_view">
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingRight="24dp"
+        android:paddingLeft="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Create account"
+            android:id="@+id/login_title"
+            android:layout_marginTop="48dp"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName|textNoSuggestions"
+            android:hint="First Name"
+            android:ems="10"
+            android:id="@+id/first_name"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="36dp"
+            android:layout_below="@+id/login_title"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName|textNoSuggestions"
+            android:hint="Last Name"
+            android:ems="10"
+            android:id="@+id/last_name"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:layout_below="@+id/first_name"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"
+            android:hint="Email"
+            android:ems="10"
+            android:id="@+id/email"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:layout_below="@+id/last_name"
+            android:layout_centerHorizontal="true" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:hint="Phone"
+            android:ems="10"
+            android:id="@+id/phone"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:layout_below="@+id/email"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign Up"
+            android:id="@+id/signup"
+            android:layout_below="@+id/phone"
+            android:layout_marginTop="12dp"
+            android:layout_centerHorizontal="true" />
+    </RelativeLayout>
+
+    </ScrollView>
+
+</RelativeLayout>

@@ -25,7 +25,7 @@
         android:required="true" />
 
     <application
-        android:name=".App"
+        android:name="com.triaged.badge.app.App"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -44,8 +44,9 @@
 
         <!-- ACTIVITIES -->
         <activity
-            android:name="com.triaged.badge.ui.entrance.LoginActivity"
+            android:name="com.triaged.badge.ui.entrance.OnboardingActivity"
             android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden"
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -67,9 +68,8 @@
             android:name="com.triaged.badge.ui.messaging.MessagingActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Badge"
-            android:windowSoftInputMode="stateHidden">
+            android:windowSoftInputMode="stateHidden" >
         </activity>
-
         <activity
             android:name="com.triaged.badge.ui.entrance.ForgotPasswordActivity"
             android:label="@string/app_name"
@@ -109,7 +109,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme"
             android:windowSoftInputMode="stateHidden" />
-
         <activity
             android:name="com.triaged.badge.ui.home.SettingsActivity"
             android:label="@string/app_name"

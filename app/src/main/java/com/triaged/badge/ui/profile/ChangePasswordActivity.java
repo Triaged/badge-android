@@ -7,7 +7,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.squareup.okhttp.Response;
 import com.triaged.badge.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -19,6 +18,7 @@ import org.json.JSONObject;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Activity with 3 fields for current password,
@@ -66,7 +66,7 @@ public class ChangePasswordActivity extends BackButtonActivity {
                 TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
                 RestService.instance().badge().changePassword(typedJsonString, new Callback<Response>() {
                     @Override
-                    public void success(Response response, retrofit.client.Response response2) {
+                    public void success(Response response, Response response2) {
                         Toast.makeText(ChangePasswordActivity.this, "Your password has been changed successfully.", Toast.LENGTH_SHORT).show();
                         finish();
                     }

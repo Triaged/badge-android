@@ -5,6 +5,9 @@
     <string name="app_name">Badge</string>
     <string name="action_show_participants">Show Participants</string>
 
+    <!--ONBOARDING SIGN UP-->
+    <string name="invalid_email_error">Invalid email address</string>
+
     <!-- LOGIN ACTIVITY -->
     <string name="login_title">Login to Badge</string>
     <string name="login_info">Log in with your company email address</string>

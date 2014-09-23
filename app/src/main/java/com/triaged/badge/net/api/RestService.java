@@ -1,17 +1,17 @@
 package com.triaged.badge.net.api;
 
-import com.squareup.okhttp.Response;
 import com.triaged.badge.TypedJsonString;
-import com.triaged.badge.app.App;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.net.api.requests.DeviceRequest;
 import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
+import com.triaged.badge.net.api.responses.AuthenticationResponse;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
+import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
@@ -106,6 +106,9 @@ public class RestService {
 
         @POST("/v1/sessions")
         void login(@Body TypedInput requestBody, Callback<Account> callback);
+
+        @POST("/v1/authentications")
+        void signUp(@Body TypedInput requestBody, Callback<AuthenticationResponse> callback);
 
 
         @POST("/v1/office_locations")
