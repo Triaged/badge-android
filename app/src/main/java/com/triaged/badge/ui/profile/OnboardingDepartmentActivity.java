@@ -18,7 +18,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.DepartmentProvider;

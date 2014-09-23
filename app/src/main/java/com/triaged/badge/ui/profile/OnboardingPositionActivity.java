@@ -16,7 +16,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.ContactProvider;
@@ -24,7 +24,6 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;

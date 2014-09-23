@@ -1,6 +1,6 @@
 package com.triaged.badge.net.api;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.models.OfficeLocation;
