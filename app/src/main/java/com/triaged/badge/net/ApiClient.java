@@ -39,19 +39,11 @@ public class ApiClient extends DefaultHttpClient {
 
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
-    private static final String PATCH_ACCOUNT_URI = String.format("%s/v1/account", API_HOST);
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
     private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
     private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
     private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
-    private static final String ENTER_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/entered";
-    private static final String EXIT_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d/exited";
-    private static final String GET_CONTACT_URI_PATTERN = "%s/v1/users/%d";
-
-    private static final String GET_OFFICE_URI_PATTERN = "%s/v1/office_locations/%d";
-
-    private static final String REQUEST_RESET_PASSWORD_URI = String.format("%s/v1/account/reset_password", API_HOST);
 
     public static final String USER_AGENT = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
 
@@ -84,35 +76,6 @@ public class ApiClient extends DefaultHttpClient {
         getCompany.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
 
         return execute(httpHost, getCompany);
-    }
-
-    /**
-     * Make an api PATCH /account request.
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param data patch json in the form of { "user" : { "first_name" : "Joe", "employee_info_attributes" :  { "job_title" : "Head Honcho" } } } , should only contain information you want to update
-     * @return http response.
-     * @throws IOException
-     */
-    public HttpResponse patchAccountRequest(JSONObject data) throws IOException {
-        HttpEntityEnclosingRequestBase patch = new HttpEntityEnclosingRequestBase() {
-            @Override
-            public String getMethod() {
-                return "PATCH";
-            }
-        };
-        try {
-            patch.setURI(new URI(PATCH_ACCOUNT_URI));
-            StringEntity body = new StringEntity(data.toString(), "UTF-8");
-            body.setContentType(MIME_TYPE_JSON);
-            patch.setEntity(body);
-            patch.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-            return execute(httpHost, patch);
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Couldn't parse what should be a constant URL, bombing out.", e);
-        }
     }
 
     /**
@@ -149,72 +112,6 @@ public class ApiClient extends DefaultHttpClient {
      */
     public HttpResponse registerDeviceRequest(JSONObject device) throws IOException {
         return postHelper(device, REGISTER_DEVICE_URI);
-    }
-
-
-    /**
-     * PUTS to /offices/:id/entered to check in to an office
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param officeId office to check in to
-     * @return
-     */
-    public HttpResponse checkinRequest(int officeId) throws IOException {
-        HttpPut put = new HttpPut(String.format(ENTER_OFFICE_URI_PATTERN, API_HOST, officeId));
-        put.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(httpHost, put);
-    }
-
-    /**
-     * PUTS to /offices/:id/exited to check out of an office
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param officeId office to check out of
-     * @return
-     */
-    public HttpResponse checkoutRequest(int officeId) throws IOException {
-        HttpPut put = new HttpPut(String.format(EXIT_OFFICE_URI_PATTERN, API_HOST, officeId));
-        put.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(httpHost, put);
-    }
-
-    /**
-     * POSTS to the reset password uri (v1/account/reset_password) with
-     * an email address
-     *
-     * @param postBody
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse requestResetPasswordRequest(JSONObject postBody) throws IOException {
-        HttpPost post = new HttpPost(REQUEST_RESET_PASSWORD_URI);
-        StringEntity body = new StringEntity(postBody.toString(), "UTF-8");
-        body.setContentType(MIME_TYPE_JSON);
-        post.setEntity(body);
-        return execute(httpHost, post);
-    }
-
-    /**
-     * GETS /users/:id
-     *
-     * @param contactId
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse getContact(int contactId) throws IOException {
-        HttpGet get = new HttpGet(String.format(GET_CONTACT_URI_PATTERN, API_HOST, contactId));
-        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(get);
-    }
-
-    public HttpResponse getOffice(int officeId) throws IOException {
-        HttpGet get = new HttpGet(String.format(GET_OFFICE_URI_PATTERN, API_HOST, officeId));
-        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        return execute(get);
     }
 
     /**

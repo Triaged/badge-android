@@ -25,13 +25,14 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.helper.MessageHelper;
+import com.triaged.badge.database.helper.OfficeLocationHelper;
+import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.ContactProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
@@ -48,6 +49,7 @@ import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
+import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
@@ -58,8 +60,7 @@ import com.triaged.utils.SharedPreferencesUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -231,12 +232,8 @@ public class DataProviderService extends Service {
     protected long lastSynced;
     protected SharedPreferences prefs;
     protected ApiClient apiClient;
-    protected ArrayList<Contact> contactList;
     protected Handler handler;
     protected volatile boolean initialized;
-
-    protected HttpClient httpClient;
-    protected MimeTypeMap mimeTypeMap;
 
     private LocalBinding localBinding;
     private LocalBroadcastManager localBroadcastManager;
@@ -261,12 +258,8 @@ public class DataProviderService extends Service {
         sqlThread = Executors.newSingleThreadScheduledExecutor();
         databaseHelper = new DatabaseHelper(this);
         apiClient = new ApiClient(apiToken);
-        contactList = new ArrayList<Contact>(250);
         handler = new Handler();
         localBinding = new LocalBinding();
-        mimeTypeMap = MimeTypeMap.getSingleton();
-
-        httpClient = new DefaultHttpClient();
 
         syncGCMReceiver = new BroadcastReceiver() {
             @Override
@@ -301,7 +294,6 @@ public class DataProviderService extends Service {
         sqlThread.shutdownNow();
         databaseHelper.close();
         apiClient.getConnectionManager().shutdown();
-        httpClient.getConnectionManager().shutdown();
         database = null;
     }
 
@@ -311,61 +303,30 @@ public class DataProviderService extends Service {
      * Only used when called a GCM message is received instructing the client to update itself.
      */
     protected void getSingleContact(final int syncId) {
-        sqlThread.submit(new Runnable() {
+        RestService.instance().badge().getUser(syncId +"", new Callback<User>() {
             @Override
-            public void run() {
-                try {
-                    HttpResponse response = apiClient.getContact(syncId);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        ContentValues values = new ContentValues();
-                        JSONObject user = parseJSONResponse(response.getEntity());
-                        setContactDBValesFromJSON(user, values);
-                        Contact newContact = getContact(user.getInt("id"));
-                        if (newContact == null) {
-                            getContentResolver().insert(ContactProvider.CONTENT_URI, values);
-//                            database.insert(ContactsTable.TABLE_NAME, null, values);
-                        } else {
-                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                    ContactsTable.COLUMN_ID + " = ?",
-                                    new String[]{user.getString("id")});
-//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID),
-//                                    new String[]{user.getString("id")});
-                        }
-                        values.clear();
-                    }
-                } catch (IOException e) {
-                    App.gLogger.e("Network issue getting single contact");
-                } catch (JSONException e) {
-                    App.gLogger.e("Couldn't understand response from Badge server", e);
-                }
+            public void success(User user, Response response) {
+                getContentResolver().insert(ContactProvider.CONTENT_URI, UserHelper.toContentValue(user));
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+
             }
         });
     }
 
     protected void getSingleOffice(final int syncId) {
-        sqlThread.submit(new Runnable() {
+        RestService.instance().badge().getOfficeLocation(syncId + "", new Callback<OfficeLocation>() {
             @Override
-            public void run() {
-                try {
-                    HttpResponse response = apiClient.getOffice(syncId);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        ContentValues values = new ContentValues();
-                        JSONObject location = parseJSONResponse(response.getEntity());
-                        setOfficeLocationDBValuesFromJSON(location, values);
-                        getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
-//                                database.insert(OfficeLocationsTable.TABLE_NAME, null, values);
-                        values.clear();
+            public void success(OfficeLocation officeLocation, Response response) {
+                getContentResolver().insert(OfficeLocationProvider.CONTENT_URI,
+                        OfficeLocationHelper.toContentValue(officeLocation));
+            }
 
-                    }
-                } catch (IOException e) {
-                    App.gLogger.e("Network issue getting single office");
-                } catch (JSONException e) {
-                    App.gLogger.e("Couldn't understand response from Badge server", e);
-                }
+            @Override
+            public void failure(RetrofitError error) {
+
             }
         });
     }
@@ -836,41 +797,6 @@ public class DataProviderService extends Service {
 //        apiClient.apiToken = "";
     }
 
-
-    protected void requestResetPassword(final String email, final AsyncSaveCallback saveCallback) {
-        JSONObject postBody = new JSONObject();
-        try {
-            JSONObject user = new JSONObject();
-            postBody.put("email", email);
-        } catch (JSONException e) {
-            App.gLogger.e("JSON exception creating post body for forgot password", e);
-            fail("Unexpected issue, please contact Badge HQ", saveCallback);
-            return;
-        }
-
-        try {
-            HttpResponse response = apiClient.requestResetPasswordRequest(postBody);
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (response.getEntity() != null) {
-                response.getEntity().consumeContent();
-            }
-            if (statusCode == HttpStatus.SC_OK) {
-                if (saveCallback != null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            saveCallback.saveSuccess(-1);
-                        }
-                    });
-                }
-            } else {
-                fail("Got unexpected response from server. Please contact Badge HQ.", saveCallback);
-            }
-        } catch (IOException e) {
-            fail("There was a network issue requesting to reset password, please check your connection and try again.", saveCallback);
-        }
-    }
-
     /**
      * Posts to /devices to register upon login.
      *
@@ -938,45 +864,6 @@ public class DataProviderService extends Service {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Updates a contact's info via the api and broadcasts
-     * {@link #DB_UPDATED_ACTION} locally if successful.
-     *
-     * @param contactId
-     */
-    protected void refreshContact(final int contactId) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    HttpResponse response = apiClient.getContact(contactId);
-                    int statusCode = response.getStatusLine().getStatusCode();
-
-                    if (statusCode == HttpStatus.SC_OK) {
-                        try {
-                            JSONObject contact = parseJSONResponse(response.getEntity());
-                            ContentValues values = new ContentValues();
-                            setContactDBValesFromJSON(contact, values);
-                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                    ContactsTable.COLUMN_ID + " =?",
-                                    new String[]{contactId + ""});
-//                            database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{String.valueOf(contactId)});
-                            localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
-                        } catch (JSONException e) {
-                            Log.w(LOG_TAG, "Couldn't refresh contact due to malformed or unexpected JSON response.", e);
-                        }
-                    } else if (response.getEntity() != null) {
-                        Log.w(LOG_TAG, "Response from /users/id was " + response.getStatusLine().getReasonPhrase());
-                        response.getEntity().consumeContent();
-                    }
-
-                } catch (IOException e) {
-                    Log.w(LOG_TAG, "Couldn't refresh contact due to network issue.");
-                }
-            }
-        });
     }
 
     /**
@@ -1333,7 +1220,7 @@ public class DataProviderService extends Service {
             }
 
             // Get id of most recent msg.
-            Cursor messages = getMessages(threadId);
+            Cursor messages = database.rawQuery(QUERY_MESSAGES_SQL, new String[]{threadId});
             if (messages.moveToLast()) {
                 String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
                 final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
@@ -1424,14 +1311,6 @@ public class DataProviderService extends Service {
         msgValues.clear();
     }
 
-    protected Cursor getMessages(String threadId) {
-        if (database != null) {
-            return database.rawQuery(QUERY_MESSAGES_SQL, new String[]{threadId});
-        }
-        throw new IllegalStateException("getMessages() called before database available.");
-
-    }
-
     /**
      * Get the avatar url for the first user id in the list that's not mine.
      *
@@ -1504,26 +1383,6 @@ public class DataProviderService extends Service {
             return firstNames.toString();
         } else {
             return names.toString();
-        }
-    }
-
-    /**
-     * Utility method for any async save operation to invoke the fail method
-     * on the provided callback when things go awry.
-     * <p/>
-     * Invokes on the main thread.
-     *
-     * @param reason
-     * @param saveCallback
-     */
-    protected void fail(final String reason, final AsyncSaveCallback saveCallback) {
-        if (saveCallback != null) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    saveCallback.saveFailed(reason);
-                }
-            });
         }
     }
 
@@ -1692,7 +1551,7 @@ public class DataProviderService extends Service {
         }
 
         public void refreshContact(int contactId) {
-            DataProviderService.this.refreshContact(contactId);
+            DataProviderService.this.getSingleContact(contactId);
         }
 
         /**
@@ -1705,14 +1564,6 @@ public class DataProviderService extends Service {
                     DataProviderService.this.upsertThreadAndMessages(thread, true);
                 }
             });
-        }
-
-
-        /**
-         * @see DataProviderService#getMessages(String)
-         */
-        public Cursor getMessages(String threadId) {
-            return DataProviderService.this.getMessages(threadId);
         }
 
         /**
@@ -1759,13 +1610,6 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#requestResetPassword(String, DataProviderService.AsyncSaveCallback)
-         */
-        public void requestResetPassword(String email, AsyncSaveCallback saveCallback) {
-            DataProviderService.this.requestResetPassword(email, saveCallback);
-        }
-
-        /**
          * @see DataProviderService#partialSyncContactsAsync()
          */
         public void partialSyncContactsAsync() {
@@ -1804,25 +1648,5 @@ public class DataProviderService extends Service {
         jsonBuffer.close();
         String json = jsonBuffer.toString("UTF-8");
         return new JSONArray(json);
-    }
-
-    /**
-     * All profile saves are async and take a callback argument.
-     * If you need to be notified of the save result.
-     */
-    public interface AsyncSaveCallback {
-        /**
-         * Save has finished successfully.
-         *
-         * @param newId if save resulted in a new record, the id of the new record. otherwise -1
-         */
-        public void saveSuccess(int newId);
-
-        /**
-         * Save encountered an issue.
-         *
-         * @param reason human readable reason for user messaging
-         */
-        public void saveFailed(String reason);
     }
 }

@@ -1,5 +1,6 @@
 package com.triaged.badge.net.api;
 
+import com.triaged.badge.models.User;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Department;
@@ -89,6 +90,9 @@ public class RestService {
         @POST("/v1/account/avatar")
         void postAvatar(@Part("user[avatar]") TypedFile avatar, Callback<Account> callback);
 
+        @GET("/v1/users/{id}")
+        void getUser(@Path("id") String id, Callback<User> callback);
+
 
         @POST("/v1/departments")
         void createDepartment(@Body TypedInput requestBody, Callback<Department> callback);
@@ -122,6 +126,9 @@ public class RestService {
 
         @PUT("/v1/office_locations/{id}/exited")
         void checkOutOfOffice(@Path("id") String officeId, Callback<Response> callback);
+
+        @GET("/v1/office_locations/{id}")
+        void getOfficeLocation(@Path("id") String id, Callback<OfficeLocation> callback);
     }
 
 }
