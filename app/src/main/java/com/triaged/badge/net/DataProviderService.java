@@ -109,17 +109,6 @@ public class DataProviderService extends Service {
     public static final int MSG_STATUS_ACKNOWLEDGED = 1;
     public static final int MSG_STATUS_FAILED = 2;
 
-    protected static final String QUERY_ALL_CONTACTS_SQL =
-            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s ORDER BY contact.%s;",
-                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.TABLE_NAME,
-                    DepartmentsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
-                    DepartmentsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
-            );
-
     protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
             String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
                             " ON contact.%s = department.%s WHERE contact.%s = ? AND contact.%s = 0 ORDER BY contact.%s;",
@@ -203,12 +192,6 @@ public class DataProviderService extends Service {
                     MessagesTable.COLUMN_MESSAGES_ID,
                     MessagesTable.COLUMN_MESSAGES_GUID);
 
-    protected static final String QUERY_ALL_DEPARTMENTS_SQL = String.format(
-            "SELECT * FROM %s WHERE %s > ? ORDER BY %s;",
-            DepartmentsTable.TABLE_NAME,
-            DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS,
-            DepartmentsTable.COLUMN_DEPARTMENT_NAME);
-
     protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
 
@@ -218,8 +201,6 @@ public class DataProviderService extends Service {
     protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
 
     protected static final String[] EMPTY_STRING_ARRAY = new String[]{};
-    protected static final String[] DEPTS_WITH_CONTACTS_SQL_ARGS = new String[]{"0"};
-    protected static final String[] ALL_DEPTS_SQL_ARGS = new String[]{"-1"};
 
 
     protected static final String SERVICE_ANDROID = "android";
@@ -683,19 +664,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Query the db to get a cursor to the latest set of all contacts.
-     * Caller is responsible for closing the cursor when finished.
-     *
-     * @return a cursor to all contact rows
-     */
-    protected Cursor getContactsCursor() {
-        if (database != null) {
-            return database.rawQuery(QUERY_ALL_CONTACTS_SQL, EMPTY_STRING_ARRAY);
-        }
-        throw new IllegalStateException("getContactsCursor() called before database available.");
-    }
-
-    /**
      * Query the db to get a cursor to all contacts except for
      * the logged in user.
      * <p/>
@@ -711,19 +679,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Query the db to get a cursor to the full list of departments
-     *
-     * @return a cursor to all dept rows
-     */
-    protected Cursor getDepartmentCursor(boolean onlyThoseWithContacts) {
-        if (database != null) {
-            String[] args = onlyThoseWithContacts ? DEPTS_WITH_CONTACTS_SQL_ARGS : ALL_DEPTS_SQL_ARGS;
-            return database.rawQuery(QUERY_ALL_DEPARTMENTS_SQL, args);
-        }
-        throw new IllegalStateException("getDepartmentCursor() called before database available.");
-    }
-
-    /**
      * @return cursor to all office location rows
      */
     protected Cursor getOfficeLocationsCursor() {
@@ -732,7 +687,6 @@ public class DataProviderService extends Service {
         }
         throw new IllegalStateException("getOfficeLocationsCursor() called before database available.");
     }
-
 
     /**
      * @param locationId id of the office
@@ -1520,13 +1474,6 @@ public class DataProviderService extends Service {
          */
         public String getOfficeLocationName(int locationId) {
             return DataProviderService.this.getOfficeLocationName(locationId);
-        }
-
-        /*
-         * @see DataProviderService#getDepartmentCursor(boolean)
-         */
-        public Cursor getDepartmentCursor(boolean onlyNonEmptyDepts) {
-            return DataProviderService.this.getDepartmentCursor(onlyNonEmptyDepts);
         }
 
         /**

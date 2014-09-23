@@ -1,10 +1,13 @@
 package com.triaged.badge.ui.profile;
 
 import android.app.AlertDialog;
+import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -26,6 +29,7 @@ import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
+import com.triaged.badge.ui.base.MixpanelActivity;
 import com.triaged.badge.ui.home.adapters.DepartmentsAdapter;
 
 import org.json.JSONException;
@@ -40,13 +44,12 @@ import retrofit.client.Response;
  * <p/>
  * Created by Will on 7/14/14.
  */
-public class OnboardingDepartmentActivity extends BadgeActivity {
+public class OnboardingDepartmentActivity extends MixpanelActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String DEPT_NAME_EXTRA = "department";
 
     private ListView departmentsListView = null;
     private DepartmentsAdapter departmentsAdapter = null;
-    private Cursor departmentsCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,25 +146,25 @@ public class OnboardingDepartmentActivity extends BadgeActivity {
             }
         });
 
+        getLoaderManager().initLoader(0, null, this);
+
     }
 
     @Override
-    protected void onDatabaseReady() {
-        dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        new AsyncTask<Void, Void, Void>() {
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(this, DepartmentProvider.CONTENT_URI,
+                null, null, null, DepartmentsTable.COLUMN_DEPARTMENT_NAME);
+    }
 
-            @Override
-            protected Void doInBackground(Void... params) {
-                departmentsCursor = dataProviderServiceBinding.getDepartmentCursor(false);
-                return null;
-            }
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        departmentsAdapter = new DepartmentsAdapter(OnboardingDepartmentActivity.this,
+                R.layout.item_department_no_count, data);
+        departmentsListView.setAdapter(departmentsAdapter);
+    }
 
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                departmentsAdapter = new DepartmentsAdapter(OnboardingDepartmentActivity.this, R.layout.item_department_no_count, dataProviderServiceBinding, departmentsCursor);
-                departmentsListView.setAdapter(departmentsAdapter);
-                super.onPostExecute(aVoid);
-            }
-        }.execute();
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

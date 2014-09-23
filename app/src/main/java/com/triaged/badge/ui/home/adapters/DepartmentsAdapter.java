@@ -22,21 +22,15 @@ import java.util.List;
  */
 public class DepartmentsAdapter extends ArrayAdapter<Department> {
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
-    private Context context;
     private LayoutInflater inflater;
     private int resourceId;
-    private boolean onlyNonEmptyDepartments;
     private List<Department> baseList;
     public Cursor departmentsCursor;
 
-    public DepartmentsAdapter(Context context, int resourceId, DataProviderService.LocalBinding dataProviderServiceBinding, Cursor departmentsCursor) {
+    public DepartmentsAdapter(Context context, int resourceId, Cursor departmentsCursor) {
         super(context, resourceId);
-        this.context = context;
         this.inflater = LayoutInflater.from(context);
         this.resourceId = resourceId;
-        this.onlyNonEmptyDepartments = onlyNonEmptyDepartments;
-        this.dataProviderServiceBinding = dataProviderServiceBinding;
         baseList = new LinkedList<Department>();
         this.departmentsCursor = departmentsCursor;
         addDepartments();
