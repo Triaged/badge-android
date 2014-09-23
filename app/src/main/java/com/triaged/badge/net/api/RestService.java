@@ -1,5 +1,6 @@
 package com.triaged.badge.net.api;
 
+import com.triaged.badge.models.Company;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
@@ -22,6 +23,7 @@ import retrofit.http.POST;
 import retrofit.http.PUT;
 import retrofit.http.Part;
 import retrofit.http.Path;
+import retrofit.http.Query;
 import retrofit.mime.TypedFile;
 import retrofit.mime.TypedInput;
 
@@ -129,6 +131,9 @@ public class RestService {
 
         @GET("/v1/office_locations/{id}")
         void getOfficeLocation(@Path("id") String id, Callback<OfficeLocation> callback);
+
+        @GET("/v1/company")
+        void getCompany(@Query("timestamp") String timestamp, Callback<Company> callback);
     }
 
 }

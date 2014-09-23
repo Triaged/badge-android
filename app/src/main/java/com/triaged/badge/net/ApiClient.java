@@ -62,21 +62,6 @@ public class ApiClient extends DefaultHttpClient {
         this.apiToken = apiToken;
     }
 
-    /**
-     * Make a GET /company request.
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param lastSynced It should request only contacts at that company modified since this time in milliseconds
-     * @throws IOException if network issues occur during the process.
-     */
-    public HttpResponse downloadCompanyRequest(long lastSynced) throws IOException {
-        HttpGet getCompany = new HttpGet(String.format(GET_COMPANY_URI_PATTERN, API_HOST, lastSynced));
-        getCompany.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-
-        return execute(httpHost, getCompany);
-    }
 
     /**
      * Uploads avatar data in a multipart form request as  POST to /account

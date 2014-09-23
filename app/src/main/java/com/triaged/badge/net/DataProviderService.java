@@ -30,6 +30,7 @@ import android.widget.Toast;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.DatabaseHelper;
+import com.triaged.badge.database.helper.DepartmentHelper;
 import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
@@ -47,6 +48,7 @@ import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
+import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.models.OfficeLocation;
@@ -342,53 +344,34 @@ public class DataProviderService extends Service {
             return;
         }
 
-        sqlThread.submit(new Runnable() {
+        long previousSync = lastSynced;
+        lastSynced = System.currentTimeMillis();
+        prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
+
+        RestService.instance().badge().getCompany((previousSync - 60000) + "" /* one minute of buffer */, new Callback<Company>() {
             @Override
-            public void run() {
-                try {
-                    long previousSync = lastSynced;
-                    lastSynced = System.currentTimeMillis();
-                    prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
-
-                    HttpResponse response = apiClient.downloadCompanyRequest(previousSync - 60000 /* one minute of buffer */);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK) {
-                        JSONArray companyArr = parseJSONArrayResponse(response.getEntity());
-                        JSONObject companyObj = companyArr.getJSONObject(0);
-                        JSONArray contactsArr = companyObj.getJSONArray("users");
-                        ContentValues values = new ContentValues();
-                        int contactsLength = contactsArr.length();
-                        for (int i = 0; i < contactsLength; i++) {
-                            JSONObject newContact = contactsArr.getJSONObject(i);
-                            setContactDBValesFromJSON(newContact, values);
-                            Contact c = getContact(newContact.getInt("id"));
-                            if (c == null) {
-                                getContentResolver().insert(ContactProvider.CONTENT_URI, values);
-//                                database.insert(ContactsTable.TABLE_NAME, null, values);
-                            } else {
-                                getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                        ContactsTable.COLUMN_ID + " =?",
-                                        new String[] { newContact.getString("id")});
-//                                database.update(ContactsTable.TABLE_NAME, values, String.format("%s = ?", ContactsTable.COLUMN_ID), new String[]{newContact.getString("id")});
-                            }
-                            values.clear();
-                        }
-
-                        localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                    }
-                } catch (IOException e) {
-                    App.gLogger.e("Network issue doing partial contact sync. ");
-                } catch (JSONException e) {
-                    App.gLogger.e("Couldn't understand response from Badge server", e);
+            public void success(Company company, Response response) {
+                ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
+                for (User user : company.getUsers()) {
+                    dbOperations.add(ContentProviderOperation.newInsert(
+                            ContactProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
                 }
+                try {
+                    getContentResolver().applyBatch(ContactProvider.AUTHORITY, dbOperations);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                } catch (OperationApplicationException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                error.printStackTrace();
             }
         });
     }
+
 
     /**
      * Syncs company info from the cloud to the device.
@@ -399,102 +382,59 @@ public class DataProviderService extends Service {
     protected void syncCompany() {
         ConnectivityManager cMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cMgr.getActiveNetworkInfo();
-        if (info == null || !info.isConnected()) {
-            // TODO listen for network becoming available so we can sync then.
-
+        if (info == null || !info.isConnected()) {// TODO listen for network becoming available so we can sync then.
             return;
         }
-
-        boolean updated = false;
         lastSynced = System.currentTimeMillis();
         prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
-        try {
-//            db.beginTransaction();
-            HttpResponse response = apiClient.downloadCompanyRequest(0 /* Get all contacts */);
-            ensureNotUnauthorized(response);
-            try {
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode == HttpStatus.SC_OK) {
+
+        RestService.instance().badge().getCompany("0", new Callback<Company>() {
+            @Override
+            public void success(Company company, Response response) {
 //                    getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
-                    getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
-                    getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
-
-//                    db.execSQL(CLEAR_CONTACTS_SQL);
-//                    db.execSQL(CLEAR_DEPARTMENTS_SQL);
-//                    db.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
-
-                    JSONObject companyObj = parseJSONResponse(response.getEntity());
-                    JSONArray contactsArr = companyObj.getJSONArray("users");
-                    int contactsLength = contactsArr.length();
+                getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
+                getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
+                try {
                     ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
-                    for (int i = 0; i < contactsLength; i++) {
-                        JSONObject newContact = contactsArr.getJSONObject(i);
-                        ContentValues values = new ContentValues();
-                        setContactDBValesFromJSON(newContact, values);
-
-                        getContentResolver().insert(ContactProvider.CONTENT_URI, values);
+                    for (User user : company.getUsers()) {
                         dbOperations.add(ContentProviderOperation.newInsert(
-                                ContactProvider.CONTENT_URI).withValues(values).build());
+                                ContactProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
                     }
                     getContentResolver().applyBatch(ContactProvider.AUTHORITY, dbOperations);
                     dbOperations.clear();
 
-                    if (companyObj.has("uses_departments") && companyObj.getBoolean("uses_departments")) {
-                        JSONArray deptsArr = companyObj.getJSONArray("departments");
-                        int deptsLength = deptsArr.length();
-                        for (int i = 0; i < deptsLength; i++) {
-                            ContentValues values = new ContentValues();
-                            JSONObject dept = deptsArr.getJSONObject(i);
-                            setDepartmentBValuesFromJSON(dept, values);
-                            dbOperations.add(ContentProviderOperation.newInsert(
-                                    DepartmentProvider.CONTENT_URI).withValues(values).build());
-                        }
-                        getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
-                        dbOperations.clear();
+                    for (Department department: company.getDepartments()) {
+                        dbOperations.add(ContentProviderOperation.newInsert(
+                                DepartmentProvider.CONTENT_URI).withValues(
+                                DepartmentHelper.toContentValue(department)).build());
                     }
+                    getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
+                    dbOperations.clear();
 
-                    if (companyObj.has("office_locations")) {
-                        JSONArray locations = companyObj.getJSONArray("office_locations");
-                        int locationsLength = locations.length();
-                        for (int i = 0; i < locationsLength; i++) {
-                            ContentValues values = new ContentValues();
-                            JSONObject location = locations.getJSONObject(i);
-                            setOfficeLocationDBValuesFromJSON(location, values);
-                            dbOperations.add(ContentProviderOperation.newInsert(
-                                    OfficeLocationProvider.CONTENT_URI).withValues(values).build());
-                        }
-                        getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
-                        dbOperations.clear();
+
+                    for (OfficeLocation officeLocation: company.getOfficeLocations()) {
+                        dbOperations.add(ContentProviderOperation.newInsert(
+                                OfficeLocationProvider.CONTENT_URI).withValues(
+                                OfficeLocationHelper.toContentValue(officeLocation)).build());
                     }
+                    getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
+                    dbOperations.clear();
+
                     SharedPreferencesUtil.store(R.string.pref_has_fetch_company, true);
                     loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
 
-                } else {
-                    App.gLogger.e("Got status " + statusCode + " from API. Handle this appropriately!");
-                }
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            } catch (OperationApplicationException e) {
-                e.printStackTrace();
-            } finally {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    entity.consumeContent();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                } catch (OperationApplicationException e) {
+                    e.printStackTrace();
                 }
             }
 
-//            db.setTransactionSuccessful();
-            updated = true;
-        } catch (IOException e) {
-            App.gLogger.e("IO exception downloading company that should be handled more softly than this.", e);
-        } catch (JSONException e) {
-            App.gLogger.e("JSON from server not formatted correctly. Either we shouldn't have expected JSON or this is an api bug.", e);
-        } finally {
-//            db.endTransaction();
-        }
-        if (updated && initialized) {
-            localBroadcastManager.sendBroadcast(new Intent(DB_UPDATED_ACTION));
-        }
+            @Override
+            public void failure(RetrofitError error) {
+
+            }
+        });
     }
 
     protected void syncCompanyAsync() {
