@@ -48,9 +48,11 @@ import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
+import com.triaged.badge.models.BadgeThread;
 import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
+import com.triaged.badge.models.Message;
 import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
@@ -70,6 +72,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -343,7 +346,6 @@ public class DataProviderService extends Service {
         if (lastSynced > System.currentTimeMillis() - 120000 || database == null) {
             return;
         }
-
         long previousSync = lastSynced;
         lastSynced = System.currentTimeMillis();
         prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
@@ -371,7 +373,6 @@ public class DataProviderService extends Service {
             }
         });
     }
-
 
     /**
      * Syncs company info from the cloud to the device.
@@ -411,7 +412,6 @@ public class DataProviderService extends Service {
                     getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
                     dbOperations.clear();
 
-
                     for (OfficeLocation officeLocation: company.getOfficeLocations()) {
                         dbOperations.add(ContentProviderOperation.newInsert(
                                 OfficeLocationProvider.CONTENT_URI).withValues(
@@ -421,8 +421,7 @@ public class DataProviderService extends Service {
                     dbOperations.clear();
 
                     SharedPreferencesUtil.store(R.string.pref_has_fetch_company, true);
-                    loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
-
+                    loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1) + "");
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (OperationApplicationException e) {
@@ -432,7 +431,7 @@ public class DataProviderService extends Service {
 
             @Override
             public void failure(RetrofitError error) {
-
+                App.gLogger.e(error);
             }
         });
     }
@@ -444,110 +443,6 @@ public class DataProviderService extends Service {
                 syncCompany();
             }
         });
-    }
-
-    private void setContactDBValesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(ContactsTable.COLUMN_ID, json.getInt("id"));
-        setStringContentValueFromJSONUnlessNull(json, "last_name", values, ContactsTable.COLUMN_CONTACT_LAST_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "first_name", values, ContactsTable.COLUMN_CONTACT_FIRST_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "avatar_face_url", values, ContactsTable.COLUMN_CONTACT_AVATAR_URL);
-        setStringContentValueFromJSONUnlessNull(json, "email", values, ContactsTable.COLUMN_CONTACT_EMAIL);
-        setIntContentValueFromJSONUnlessBlank(json, "manager_id", values, ContactsTable.COLUMN_CONTACT_MANAGER_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "primary_office_location_id", values, ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "current_office_location_id", values, ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID);
-        setIntContentValueFromJSONUnlessBlank(json, "department_id", values, ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID);
-        setBooleanContentValueFromJSONUnlessBlank(json, "archived", values, ContactsTable.COLUMN_CONTACT_IS_ARCHIVED);
-
-        if (json.has("sharing_office_location") && !json.isNull("sharing_office_location")) {
-            int sharingInt = json.getBoolean("sharing_office_location") ? Contact.SHARING_LOCATION_TRUE : Contact.SHARING_LOCATION_FALSE;
-            values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, sharingInt);
-        } else {
-            values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION, Contact.SHARING_LOCATION_UNAVAILABLE);
-        }
-        if (json.has("employee_info")) {
-            JSONObject employeeInfo = json.getJSONObject("employee_info");
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_title", values, ContactsTable.COLUMN_CONTACT_JOB_TITLE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "job_start_date", values, ContactsTable.COLUMN_CONTACT_START_DATE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "birth_date", values, ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
-            // This comes in as iso 8601 GMT date.. but we save "August 1" or whatever
-            String birthDateStr = values.getAsString(ContactsTable.COLUMN_CONTACT_BIRTH_DATE);
-            if (birthDateStr != null) {
-                values.put(ContactsTable.COLUMN_CONTACT_BIRTH_DATE, Contact.convertBirthDateString(birthDateStr));
-            }
-            String startDateStr = values.getAsString(ContactsTable.COLUMN_CONTACT_START_DATE);
-            if (startDateStr != null) {
-                values.put(ContactsTable.COLUMN_CONTACT_START_DATE, Contact.convertStartDateString(startDateStr));
-            }
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "cell_phone", values, ContactsTable.COLUMN_CONTACT_CELL_PHONE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "office_phone", values, ContactsTable.COLUMN_CONTACT_OFFICE_PHONE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "website", values, ContactsTable.COLUMN_CONTACT_WEBSITE);
-            setStringContentValueFromJSONUnlessNull(employeeInfo, "linkedin", values, ContactsTable.COLUMN_CONTACT_LINKEDIN);
-        }
-    }
-
-    private void setOfficeLocationDBValuesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(OfficeLocationsTable.COLUMN_ID, json.getInt("id"));
-        setStringContentValueFromJSONUnlessNull(json, "name", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
-        setStringContentValueFromJSONUnlessNull(json, "street_address", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS);
-        setStringContentValueFromJSONUnlessNull(json, "city", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY);
-        setStringContentValueFromJSONUnlessNull(json, "state", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE);
-        setStringContentValueFromJSONUnlessNull(json, "zip_code", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP);
-        setStringContentValueFromJSONUnlessNull(json, "country", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY);
-        setStringContentValueFromJSONUnlessNull(json, "latitude", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
-        setStringContentValueFromJSONUnlessNull(json, "longitude", values, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
-    }
-
-
-    private void setDepartmentBValuesFromJSON(JSONObject json, ContentValues values) throws JSONException {
-        values.put(DepartmentsTable.COLUMN_ID, json.getInt("id"));
-        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, json.getString("name"));
-        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, json.getString("users_count"));
-    }
-
-    /**
-     * Pulls an int from json and sets it as a content value if the key exists and is not a null literal.
-     *
-     * @param json   json object possibly containing key
-     * @param key    key in to json object where value should live
-     * @param values database values to add to if the key exists
-     * @param column column name to set in database values
-     * @throws JSONException
-     */
-    private static void setStringContentValueFromJSONUnlessNull(JSONObject json, String key, ContentValues values, String column) throws JSONException {
-        if (!json.isNull(key)) {
-            values.put(column, json.getString(key));
-        }
-    }
-
-    /**
-     * Pulls an int from json and sets it as a content value if the key exists and is not the empty string.
-     *
-     * @param json   json object possibly containing key
-     * @param key    key in to json object where value should live
-     * @param values database values to add to if the key exists
-     * @param column column name to set in database values
-     * @throws JSONException
-     */
-    private static void setIntContentValueFromJSONUnlessBlank(JSONObject json, String key, ContentValues values, String column) throws JSONException {
-        if (!json.isNull(key) && !"".equals(json.getString(key))) {
-            values.put(column, json.getInt(key));
-        }
-    }
-
-
-    /**
-     * Pulls an int from json and sets it as a content value if the key exists and is not the empty string.
-     *
-     * @param json   json object possibly containing key
-     * @param key    key in to json object where value should live
-     * @param values database values to add to if the key exists
-     * @param column column name to set in database values
-     * @throws JSONException
-     */
-    private static void setBooleanContentValueFromJSONUnlessBlank(JSONObject json, String key, ContentValues values, String column) throws JSONException {
-        if (!json.isNull(key) && !"".equals(json.getString(key))) {
-            values.put(column, json.getBoolean(key));
-        }
     }
 
     /**
@@ -586,9 +481,9 @@ public class DataProviderService extends Service {
      * @param contactId, an integer
      * @return a Contact
      */
-    protected Contact getContact(int contactId) {
+    protected Contact getContact(String contactId) {
         if (database != null) {
-            Cursor cursor = database.rawQuery(QUERY_CONTACT_SQL, new String[]{String.valueOf(contactId)});
+            Cursor cursor = database.rawQuery(QUERY_CONTACT_SQL, new String[]{contactId});
             try {
                 if (cursor.moveToFirst()) {
                     Contact contact = new Contact();
@@ -656,39 +551,9 @@ public class DataProviderService extends Service {
      * This should only be called on the sql thread.
      */
     protected void loggedOut() {
-
         Intent logoutIntent = new Intent(LogoutReceiver.ACTION_LOGOUT);
         logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, true);
         DataProviderService.this.sendBroadcast(logoutIntent);
-
-
-//        if (loggedInUser != null && loggedInUser.currentOfficeLocationId > 0 && !"".equals(apiClient.apiToken)) {
-//            // User initiated logout, make sure they don't get "stuck"
-//            checkOutOfOfficeSynchronously(loggedInUser.currentOfficeLocationId);
-//        }
-//        loggedInUser = null;
-//        prefs.edit().clear().commit();
-//
-//        // Stop tracking location
-//        LocationTrackingService.clearAlarm(localBinding, this);
-//
-//        // Wipe DB, we're not logged in anymore.
-//        database.execSQL(CLEAR_CONTACTS_SQL);
-//        database.execSQL(CLEAR_DEPARTMENTS_SQL);
-//        database.execSQL(CLEAR_OFFICE_LOCATIONS_SQL);
-//        database.execSQL(CLEAR_MESSAGES_SQL);
-//        notifyUILoggedOut();
-//
-//
-//        // Stop the messaging service.
-//        Intent fayeIntent = new Intent(this, FayeService.class);
-//        stopService(fayeIntent);
-//
-//
-//        // Report the event to mixpanel
-//        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
-//        mixpanelAPI.clearSuperProperties();
-//        apiClient.apiToken = "";
     }
 
     /**
@@ -775,7 +640,7 @@ public class DataProviderService extends Service {
                     int loggedInContactId = prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1);
                     if (loggedInContactId > 0) {
                         // If we're logged in, and the database isn't empty, the UI should be ready to go.
-                        if ((loggedInUser = getContact(loggedInContactId)) != null) {
+                        if ((loggedInUser = getContact(loggedInContactId + "")) != null) {
                             initialized = true;
                             localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                         }
@@ -864,7 +729,7 @@ public class DataProviderService extends Service {
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     final String guid = UUID.randomUUID().toString();
-                    JSONArray userIds = new JSONArray(prefs.getString(threadId, "[]"));
+                    String[] userIds = prefs.getString(threadId, "").split(",");
                     //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, message);
@@ -1018,30 +883,20 @@ public class DataProviderService extends Service {
     }
 
     protected void syncMessagesSync() {
-        try {
-            HttpResponse response = apiClient.getMessageHistory(prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000 /* 10 seconds of buffer */, loggedInUser.id);
-            int status = response.getStatusLine().getStatusCode();
-            if (status == HttpStatus.SC_OK) {
-                JSONArray msgResponse = parseJSONArrayResponse(response.getEntity());
-                int numThreads = msgResponse.length();
-                for (int i = 0; i < numThreads; i++) {
-                    JSONObject thread = msgResponse.getJSONObject(i);
-                    upsertThreadAndMessages(thread, false);
-                    Intent updateIntent = new Intent(MSGS_UPDATED_ACTION);
-                    updateIntent.putExtra(THREAD_ID_EXTRA, thread.getString("id"));
-                    localBroadcastManager.sendBroadcast(updateIntent);
-
-                }
-            } else {
-                if (response.getEntity() != null) {
-                    response.getEntity().consumeContent();
+        long since = (prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
+        RestService.instance().messaging().getMessages(since + "", new Callback<BadgeThread[]>() {
+            @Override
+            public void success(BadgeThread[] badgeThreads, Response response) {
+                for(BadgeThread bThread: badgeThreads) {
+                    upsertThreadAndMessages(bThread, false);
                 }
             }
-        } catch (IOException e) {
-            Log.w(LOG_TAG, "Can't sync message history at the moment.");
-        } catch (JSONException e) {
-            App.gLogger.e("Severe issue, message history response unparseable.", e);
-        }
+
+            @Override
+            public void failure(RetrofitError error) {
+                App.gLogger.e(error);
+            }
+        });
     }
 
     /**
@@ -1052,102 +907,88 @@ public class DataProviderService extends Service {
      * messages, mark it as acknowledged, broadcast it, and sync
      * timestamp/id with server.
      *
-     * @param thread    faye thread json object
+     * @param bThread   A badgeThread Object.
      * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
      *                  assume they are historical
      */
-    protected void upsertThreadAndMessages(final JSONObject thread, final boolean broadcast) {
-        String threadId;
-//        database.beginTransaction();
+    protected void upsertThreadAndMessages(final BadgeThread bThread, final boolean broadcast) {
+        prefs.edit().putString(bThread.getId(), Arrays.toString(bThread.getUserIds())).commit();
+        long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
+
+        SharedPreferencesUtil.store("is_mute_" + bThread.getId(), bThread.isMuted());
+        if (bThread.getName() != null) SharedPreferencesUtil.store("name_" + bThread.getId(), bThread.getName());
+
+        ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>(bThread.getMessages().length);
+        for (Message msg : bThread.getMessages()) {
+            //TODO: why nano? those zeros at the end of timestamp
+            // does not make it unique number!
+            long timestamp = (long) (msg.getTimestamp() * 1000000d) /* nanos */;
+            if (timestamp > mostRecentMsgTimestamp) {
+                mostRecentMsgTimestamp = timestamp;
+            }
+            ContentValues contentValues = MessageHelper.toContentValue(msg, bThread.getId());
+            dbOperations.add(ContentProviderOperation.newInsert(
+                    MessageProvider.CONTENT_URI).
+                    withValues(contentValues).
+                    build());
+
+            if (contentValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID) != loggedInUser.id) {
+                ContentValues receiptValues = new ContentValues();
+                receiptValues.put(ReceiptTable.COLUMN_MESSAGE_ID, contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID));
+                receiptValues.put(ReceiptTable.COLUMN_THREAD_ID, bThread.getId());
+                receiptValues.put(ReceiptTable.COLUMN_USER_ID, loggedInUser.id);
+                receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
+                getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
+
+                EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
+                        contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID)));
+            }
+        }
         try {
-            threadId = thread.getString("id");
-            JSONArray userIds = thread.getJSONArray("user_ids");
-
-            String userIdsList = userIdArrayToKey(userIds);
-
-            prefs.edit().putString(userIdsList, threadId).putString(threadId, userIds.toString()).commit();
-
-            JSONArray msgArray = thread.getJSONArray("messages");
-            long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
-
-            if (!thread.isNull("muted")) SharedPreferencesUtil.store("is_mute_" + threadId, thread.getBoolean("muted"));
-            if (!thread.isNull("name")) SharedPreferencesUtil.store("name_" + threadId, thread.getString("name"));
-
-            ArrayList<ContentProviderOperation> dbOperations =
-                    new ArrayList<ContentProviderOperation>(msgArray.length());
-            for (int i = 0; i < msgArray.length(); i++) {
-                JSONObject msg = msgArray.getJSONObject(i);
-                //TODO: why nano? those zeros at the end of timestamp
-                // does not make it unique number!
-                long timestamp = (long) (msg.getDouble("timestamp") * 1000000d) /* nanos */;
-                if (timestamp > mostRecentMsgTimestamp) {
-                    mostRecentMsgTimestamp = timestamp;
-                }
-                ContentValues contentValues = MessageHelper.setMessageContentValuesFromJSON(threadId, msg);
-                dbOperations.add(ContentProviderOperation.newInsert(
-                        MessageProvider.CONTENT_URI).
-                        withValues(contentValues).
-                        build());
-
-                if (contentValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID) != loggedInUser.id) {
-                    ContentValues receiptValues = new ContentValues();
-                    receiptValues.put(ReceiptTable.COLUMN_MESSAGE_ID, contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID));
-                    receiptValues.put(ReceiptTable.COLUMN_THREAD_ID, threadId);
-                    receiptValues.put(ReceiptTable.COLUMN_USER_ID, loggedInUser.id);
-                    receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
-
-                    getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
-
-                    EventBus.getDefault().post(new NewMessageEvent(threadId,
-                            contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID)));
-                }
-            }
-
             getContentResolver().applyBatch(MessageProvider.AUTHORITY, dbOperations);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
 
 
-            // If I'm honest, this switch isn't intended to be used this way,
-            // but the idea here is only update the timestamp on history sync
-            // so that all messages will eventually be dl'd no matter what.
-            if (!broadcast) {
-                prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+        // If I'm honest, this switch isn't intended to be used this way,
+        // but the idea here is only update the timestamp on history sync
+        // so that all messages will eventually be dl'd no matter what.
+        if (!broadcast) {
+            prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+        }
+
+        // Get id of most recent msg.
+        Cursor messages = database.rawQuery(QUERY_MESSAGES_SQL, new String[]{bThread.getId()});
+        if (messages.moveToLast()) {
+            String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
+            final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
+            if ("Inf".equals(mostRecentGuid)) {
+                // Dang! Crash the app to get a report.
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        throw new RuntimeException("Crashing app. Couldn't set head of thread " + bThread.getId()
+                                + " because message guid came back 'Inf' message id is " + mostRecentId);
+                    }
+                });
             }
+            messages.close();
+            // Unset thread head on all thread messages.
+            clearThreadHead(bThread.getId());
 
-            // Get id of most recent msg.
-            Cursor messages = database.rawQuery(QUERY_MESSAGES_SQL, new String[]{threadId});
-            if (messages.moveToLast()) {
-                String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
-                final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
-                if ("Inf".equals(mostRecentGuid)) {
-                    // Dang! Crash the app to get a report.
-                    final String finalThreadId = threadId;
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            throw new RuntimeException("Crashing app. Couldn't set head of thread " + finalThreadId + " because message guid came back 'Inf' message id is " + mostRecentId);
-                        }
-                    });
-                }
-                messages.close();
-                // Unset thread head on all thread messages.
-                clearThreadHead(threadId);
+            ContentValues msgValues = new ContentValues();
+            msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(bThread.getUserIds()));
+            msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
+            msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
+            getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
+                    MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                    new String[] { mostRecentGuid});
 
-                ContentValues msgValues = new ContentValues();
-                msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
-                msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
-                msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
-
-                getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                        MessagesTable.COLUMN_MESSAGES_GUID + " =?",
-                        new String[] { mostRecentGuid});
-
-            } else {
-                messages.close();
-            }
-        } catch (JSONException e) {
-            App.gLogger.e("Malformed JSON back from faye.");
-        } catch (Throwable wtf) {
-            App.gLogger.e("Couldn't insert message and it's causing all kinds of problems.", wtf);
+        } else {
+            messages.close();
         }
     }
 
@@ -1212,12 +1053,10 @@ public class DataProviderService extends Service {
      * @return
      * @throws JSONException
      */
-    private String userIdArrayToAvatarUrl(JSONArray userIdArr) throws JSONException {
-        int numUsers = userIdArr.length();
-        for (int i = 0; i < numUsers; i++) {
-            int userId = userIdArr.getInt(i);
-            if (userId != loggedInUser.id) {
-                Contact c = getContact(userId);
+    private String userIdArrayToAvatarUrl(String[] userIdArr) {
+        for (String id : userIdArr) {
+            if (!id.equals(loggedInUser.id + "")) {
+                Contact c = getContact(id);
                 return c.avatarUrl;
             }
         }
@@ -1253,18 +1092,16 @@ public class DataProviderService extends Service {
      *
      * @param userIdArr json array of user ids
      * @return a comma delimited string of unsorted contact names
-     * @throws JSONException
      */
-    private String userIdArrayToNames(JSONArray userIdArr) throws JSONException {
+    private String userIdArrayToNames(String[] userIdArr) {
+        StringBuilder firstNames = new StringBuilder();
         StringBuilder names = new StringBuilder();
         String delim = "";
-        int numUsers = userIdArr.length();
-        StringBuilder firstNames = new StringBuilder();
         int validNames = 0;
-        for (int i = 0; i < numUsers; i++) {
-            int userId = userIdArr.getInt(i);
-            if (userId != loggedInUser.id) {
-                Contact c = getContact(userId);
+
+        for (String id : userIdArr) {
+            if (!id.equals(loggedInUser.id + "")) {
+                Contact c = getContact(id);
                 if (c != null) {
                     names.append(delim).append(c.name);
                     firstNames.append(delim).append(c.firstName);
@@ -1296,7 +1133,7 @@ public class DataProviderService extends Service {
     }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
-        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
+        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1) + "");
     }
 
 
@@ -1326,10 +1163,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#getContact(int)
+         * @see DataProviderService#getContact(String)
          */
         public Contact getContact(int contactId) {
-            return DataProviderService.this.getContact(contactId);
+            return DataProviderService.this.getContact(contactId + "");
         }
 
         /**
@@ -1444,11 +1281,11 @@ public class DataProviderService extends Service {
         /**
          * @see DataProviderService#upsertThreadAndMessages(org.json.JSONObject, boolean)
          */
-        public void upsertThreadAndMessagesAsync(final JSONObject thread) {
+        public void upsertThreadAndMessagesAsync(final BadgeThread badgeThread) {
             sqlThread.submit(new Runnable() {
                 @Override
                 public void run() {
-                    DataProviderService.this.upsertThreadAndMessages(thread, true);
+                    DataProviderService.this.upsertThreadAndMessages(badgeThread, true);
                 }
             });
         }
@@ -1468,18 +1305,12 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * Provide a way to use {@link #userIdArrayToNames(org.json.JSONArray)}
-         * from the UI.
          *
          * @param threadId
          * @return
          */
         public String getRecipientNames(String threadId) {
-            try {
-                return userIdArrayToNames(new JSONArray(prefs.getString(threadId, "[]")));
-            } catch (JSONException e) {
-                return null;
-            }
+            return userIdArrayToNames(prefs.getString(threadId, "").split(","));
         }
 
         /**
@@ -1521,19 +1352,4 @@ public class DataProviderService extends Service {
         return new JSONObject(json);
     }
 
-    /**
-     * Given an http response entity, parse in to a json object.
-     *
-     * @param entity http response body
-     * @return parsed json object
-     * @throws IOException   if network stream can't be read.
-     * @throws JSONException if there's an error parsing json.
-     */
-    protected static JSONArray parseJSONArrayResponse(HttpEntity entity) throws IOException, JSONException {
-        ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream(1024 /* 256 k */);
-        entity.writeTo(jsonBuffer);
-        jsonBuffer.close();
-        String json = jsonBuffer.toString("UTF-8");
-        return new JSONArray(json);
-    }
 }

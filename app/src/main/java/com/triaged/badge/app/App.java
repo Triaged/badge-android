@@ -58,6 +58,9 @@ public class App extends Application {
     public static RestAdapter restAdapterMessaging;
     public static RestAdapter restAdapter;
     private static int mAccountId;
+    public static final Gson gson = new GsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     @Override
     public void onCreate() {
@@ -122,10 +125,6 @@ public class App extends Application {
 
     private void setupRestAdapter() {
         final String authorization = SharedPreferencesUtil.getString("apiToken", "");
-
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create();
 
         RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {

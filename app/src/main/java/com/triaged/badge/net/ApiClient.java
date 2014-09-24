@@ -40,8 +40,6 @@ public class ApiClient extends DefaultHttpClient {
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
-    private static final String GET_COMPANY_URI_PATTERN = "%s/v1/company?timestamp=%d";
-    private static final String GET_MSG_HISTORY_URI_FORMAT = "%s/api/v1/user/messages?timestamp=%d";
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
     private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
 
@@ -118,22 +116,6 @@ public class ApiClient extends DefaultHttpClient {
         post.setHeader("Accept", MIME_TYPE_JSON);
         post.setHeader("User-Id", String.valueOf(userId));
         return execute(messagingHttpHost, post);
-    }
-
-    /**
-     * GETS /api/v1/user/history from messaging api host
-     *
-     * @param sinceTimeNano retrieve only messages more recent than this timestamp in nanoseconds from epoch
-     * @param userId        logged in user id.
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse getMessageHistory(long sinceTimeNano, int userId) throws IOException {
-        HttpGet get = new HttpGet(String.format(GET_MSG_HISTORY_URI_FORMAT, API_MESSAGING_HOST, sinceTimeNano / 1000000l));
-        get.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        get.setHeader("Accept", MIME_TYPE_JSON);
-        get.setHeader("User-Id", String.valueOf(userId));
-        return execute(messagingHttpHost, get);
     }
 
     private HttpResponse postHelper(JSONObject postData, String uri) throws IOException {
