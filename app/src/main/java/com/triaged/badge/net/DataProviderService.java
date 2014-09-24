@@ -557,59 +557,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Posts to /devices to register upon login.
-     *
-     * @param pushToken GCM device registration
-     */
-    protected void registerDevice(final String pushToken) {
-
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                int androidVersion = android.os.Build.VERSION.SDK_INT;
-
-                JSONObject postData = new JSONObject();
-                JSONObject deviceData = new JSONObject();
-                try {
-                    postData.put("device", deviceData);
-                    deviceData.put("token", pushToken);
-                    deviceData.put("os_version", androidVersion);
-                    deviceData.put("service", SERVICE_ANDROID);
-                    deviceData.put("application_id", Settings.Secure.getString(DataProviderService.this.getContentResolver(),
-                            Settings.Secure.ANDROID_ID));
-                } catch (JSONException e) {
-                    App.gLogger.e("JSON exception creating post body for device registration", e);
-                    return;
-                }
-
-                try {
-                    HttpResponse response = apiClient.registerDeviceRequest(postData);
-                    ensureNotUnauthorized(response);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED) {
-                        // Get new department id
-                        JSONObject newDevice = parseJSONResponse(response.getEntity());
-
-                        SharedPreferences.Editor prefsEditor = PreferenceManager.getDefaultSharedPreferences(DataProviderService.this).edit();
-                        prefsEditor.putInt(REGISTERED_DEVICE_ID_PREFS_KEY, newDevice.getInt("id"));
-                        prefsEditor.commit();
-                    } else {
-                        if (response.getEntity() != null) {
-                            response.getEntity().consumeContent();
-                        }
-                    }
-                } catch (IOException e) {
-                    // We'll try again next time the app starts.
-                    App.gLogger.e("IOException trying to register device with badge HQ", e);
-                } catch (JSONException e) {
-                    App.gLogger.e("Response from Badge HQ wasn't parseable, sad panda", e);
-                }
-
-            }
-        });
-    }
-
-    /**
      * Every time we hit the API, we should make sure the status code
      * returned wasn't unauthorized. If it was, we assume
      * the user has been logged out or termed or something and we reset
@@ -1260,12 +1207,6 @@ public class DataProviderService extends Service {
             return DataProviderService.this.getOfficeLocationsCursor();
         }
 
-        /**
-         * @see DataProviderService#registerDevice(String)
-         */
-        public void registerDevice(String pushToken) {
-            DataProviderService.this.registerDevice(pushToken);
-        }
 
         /**
          * @see DataProviderService#getBasicMixpanelData() (int)
@@ -1279,7 +1220,7 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#upsertThreadAndMessages(org.json.JSONObject, boolean)
+         * @see DataProviderService#upsertThreadAndMessages(com.triaged.badge.models.BadgeThread, boolean)
          */
         public void upsertThreadAndMessagesAsync(final BadgeThread badgeThread) {
             sqlThread.submit(new Runnable() {

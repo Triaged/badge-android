@@ -144,26 +144,4 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
 
     }
-
-
-    /**
-     * Every time we get to the contacts screen, do a quick check to see if we've registered the device yet.
-     * If not, do it assuming the user is logged in!
-     */
-    private void lazyDeviceRegistration() {
-        if (shouldRegister && dataProviderServiceBinding.getLoggedInUser() != null) {
-            String regId = getRegistrationId(this);
-            if (regId.isEmpty()) {
-                // This will async generate a new reg id and
-                // send it up to the cloud
-                ensureGcmRegistration();
-            } else {
-                // Re-register device
-                ((App) getApplication()).dataProviderServiceBinding.registerDevice(regId);
-            }
-            shouldRegister = false;
-        }
-    }
-
-
 }

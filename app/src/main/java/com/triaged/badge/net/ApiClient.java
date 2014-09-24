@@ -41,25 +41,19 @@ public class ApiClient extends DefaultHttpClient {
 
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
     private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
-    private static final String REGISTER_DEVICE_URI = String.format("%s/v1/devices", API_HOST);
 
     public static final String USER_AGENT = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
 
-    private HttpHost httpHost;
     private HttpHost messagingHttpHost;
     String apiToken;
 
     public ApiClient(String apiToken) {
         super();
         this.getParams().setParameter( CoreProtocolPNames.USER_AGENT, USER_AGENT);
-
-        URI uri = URI.create(String.format("%s", API_HOST));
-        httpHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
-        uri = URI.create(String.format("%s", API_MESSAGING_HOST));
+        URI uri = URI.create(String.format("%s", API_MESSAGING_HOST));
         messagingHttpHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
         this.apiToken = apiToken;
     }
-
 
     /**
      * Uploads avatar data in a multipart form request as  POST to /account
@@ -84,20 +78,6 @@ public class ApiClient extends DefaultHttpClient {
 
 
     /**
-     * Make a POST /devices request
-     * <p/>
-     * The caller should make sure that it consumes all the entity content
-     * and/or closes the stream for the response.
-     *
-     * @param device { "device" : { "token": "xxx", "": "os_version": 18, "service": "android" } }
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse registerDeviceRequest(JSONObject device) throws IOException {
-        return postHelper(device, REGISTER_DEVICE_URI);
-    }
-
-    /**
      * POSTS to the messaging api host /api/v1/message_threads with
      * a set of recipients
      *
@@ -116,10 +96,6 @@ public class ApiClient extends DefaultHttpClient {
         post.setHeader("Accept", MIME_TYPE_JSON);
         post.setHeader("User-Id", String.valueOf(userId));
         return execute(messagingHttpHost, post);
-    }
-
-    private HttpResponse postHelper(JSONObject postData, String uri) throws IOException {
-        return postHelper(postData, uri, httpHost);
     }
 
     private HttpResponse postHelper(JSONObject postData, String uri, HttpHost host) throws IOException {

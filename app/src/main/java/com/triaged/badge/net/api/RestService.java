@@ -4,6 +4,7 @@ import com.triaged.badge.models.Account;
 import com.triaged.badge.models.BadgeThread;
 import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Department;
+import com.triaged.badge.models.Device;
 import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.requests.DeviceRequest;
@@ -108,7 +109,7 @@ public class RestService {
 
 
         @POST("v1/devices")
-        void registerDevice(@Body DeviceRequest deviceRequest);
+        void registerDevice(@Body DeviceRequest deviceRequest, Callback<Device> callback);
 
         @DELETE("v1/devices/{device_id}/sign_out")
         void signOut(@Path("device_id") int deviceId);

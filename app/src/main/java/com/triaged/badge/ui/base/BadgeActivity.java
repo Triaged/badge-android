@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -16,12 +17,19 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.models.Device;
 import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.net.api.RestService;
+import com.triaged.badge.net.api.requests.DeviceRequest;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.io.IOException;
+
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * All app activities should inherit from this super
@@ -243,7 +251,6 @@ public abstract class BadgeActivity extends MixpanelActivity {
             protected String doInBackground(Void... params) {
                 String msg = "";
                 try {
-
                     GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(BadgeActivity.this);
                     String regid = gcm.register(SENDER_ID);
                     msg = "Device registered, registration ID=" + regid;
@@ -261,7 +268,26 @@ public abstract class BadgeActivity extends MixpanelActivity {
                     // Persist the regID - no need to register again.
                     storeRegistrationId(BadgeActivity.this, regid);
                     // Send it up to the api.
-                    ((App) getApplication()).dataProviderServiceBinding.registerDevice(regid);
+
+                    Device device = new Device();
+                    device.setToken(regid);
+                    device.setService("android");
+                    device.setApplicationId(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
+                    device.setOsVersion(android.os.Build.VERSION.SDK_INT + "");
+
+                    RestService.instance().badge().registerDevice(new DeviceRequest(device), new Callback<Device>() {
+                        @Override
+                        public void success(Device device, Response response) {
+                            SharedPreferencesUtil.store(R.string.pref_device_id_key, device.getId());
+                        }
+
+                        @Override
+                        public void failure(RetrofitError error) {
+                            App.gLogger.e(error);
+                            App.gLogger.w("Something went wrong during device registration for gcm id");
+                        }
+                    });
+
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.
