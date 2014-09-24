@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -57,11 +56,11 @@ import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 
@@ -69,11 +68,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,11 +91,9 @@ import retrofit.client.Response;
 public class DataProviderService extends Service {
     protected static final String LOG_TAG = DataProviderService.class.getName();
 
-    public static final String REGISTERED_DEVICE_ID_PREFS_KEY = "badgeDeviceId";
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
     public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
-    public static final String MSGS_UPDATED_ACTION = "com.triage.badge.MSGS_UPDATED";
     public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
@@ -421,7 +416,7 @@ public class DataProviderService extends Service {
                     dbOperations.clear();
 
                     SharedPreferencesUtil.store(R.string.pref_has_fetch_company, true);
-                    loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1) + "");
+                    loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (OperationApplicationException e) {
@@ -481,9 +476,9 @@ public class DataProviderService extends Service {
      * @param contactId, an integer
      * @return a Contact
      */
-    protected Contact getContact(String contactId) {
+    protected Contact getContact(Integer contactId) {
         if (database != null) {
-            Cursor cursor = database.rawQuery(QUERY_CONTACT_SQL, new String[]{contactId});
+            Cursor cursor = database.rawQuery(QUERY_CONTACT_SQL, new String[]{contactId + ""});
             try {
                 if (cursor.moveToFirst()) {
                     Contact contact = new Contact();
@@ -587,7 +582,7 @@ public class DataProviderService extends Service {
                     int loggedInContactId = prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1);
                     if (loggedInContactId > 0) {
                         // If we're logged in, and the database isn't empty, the UI should be ready to go.
-                        if ((loggedInUser = getContact(loggedInContactId + "")) != null) {
+                        if ((loggedInUser = getContact(loggedInContactId)) != null) {
                             initialized = true;
                             localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                         }
@@ -676,7 +671,7 @@ public class DataProviderService extends Service {
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     final String guid = UUID.randomUUID().toString();
-                    String[] userIds = prefs.getString(threadId, "").split(",");
+                    String[] userIds = deserializeStringArray(prefs.getString(threadId, ""));
                     //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, message);
@@ -859,7 +854,9 @@ public class DataProviderService extends Service {
      *                  assume they are historical
      */
     protected void upsertThreadAndMessages(final BadgeThread bThread, final boolean broadcast) {
-        prefs.edit().putString(bThread.getId(), Arrays.toString(bThread.getUserIds())).commit();
+        prefs.edit().putString(bThread.getId(), Arrays.toString(bThread.getUserIds()))
+                .putString(userIdArrayToKey(bThread.getUserIds()), bThread.getId())
+                .commit();
         long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
         SharedPreferencesUtil.store("is_mute_" + bThread.getId(), bThread.isMuted());
@@ -947,37 +944,28 @@ public class DataProviderService extends Service {
      * @return
      */
     protected String createThreadSync(final Integer[] recipientIds) throws JSONException, IOException {
-        String threadKey;
-        JSONObject postBody = new JSONObject();
-        JSONObject messageThread = new JSONObject();
-        JSONArray userIds = new JSONArray();
-
-        postBody.put("message_thread", messageThread);
-        for (int i : recipientIds) {
-            userIds.put(i);
-        }
-        messageThread.put("user_ids", userIds);
-        threadKey = userIdArrayToKey(userIds);
-
+        String threadKey = userIdArrayToKey(recipientIds);
         String existingThreadId = prefs.getString(threadKey, "");
         if ("".equals(existingThreadId)) {
-            HttpResponse response = apiClient.createThreadRequest(postBody, loggedInUser.id);
-            int status = response.getStatusLine().getStatusCode();
-            if (status == HttpStatus.SC_OK || status == HttpStatus.SC_CREATED) {
-                JSONObject thread = parseJSONResponse(response.getEntity());
-                String threadId = thread.getString("id");
-                prefs.edit().putString(threadKey, threadId).putString(threadId, userIds.toString()).commit();
-                return threadId;
+            JSONObject postBody = new JSONObject();
+            JSONObject messageThread = new JSONObject();
+            JSONArray userIds = new JSONArray();
+            postBody.put("message_thread", messageThread);
+            for (int i : recipientIds) {
+                userIds.put(i);
+            }
+            messageThread.put("user_ids", userIds);
+            TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
+            BadgeThread resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
+            if (resultThread != null) {
+                prefs.edit().putString(threadKey, resultThread.getId()).putString(resultThread.getId(), Arrays.toString(recipientIds)).commit();
+                return resultThread.getId();
             } else {
-                if (response.getEntity() != null) {
-                    response.getEntity().consumeContent();
-                }
-                // fail( "Unexpected response from the server.", saveCallback );
+                throw new IOException("Problem with creating thread due to network issue");
             }
         } else {
             return existingThreadId;
         }
-        return null;
     }
 
     protected void clearThreadHead(String threadId) {
@@ -1000,10 +988,29 @@ public class DataProviderService extends Service {
      * @return
      * @throws JSONException
      */
+    private String userIdArrayToAvatarUrl(Integer[] userIdArr) {
+        for (int id : userIdArr) {
+            if (id != loggedInUser.id) {
+                Contact c = getContact(id);
+                if (c != null) {
+                    return c.avatarUrl;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the avatar url for the first user id in the list that's not mine.
+     *
+     * @param userIdArr
+     * @return
+     * @throws JSONException
+     */
     private String userIdArrayToAvatarUrl(String[] userIdArr) {
         for (String id : userIdArr) {
-            if (!id.equals(loggedInUser.id + "")) {
-                Contact c = getContact(id);
+            if (!id.equals(loggedInUser.id)) {
+                Contact c = getContact(Integer.parseInt(id));
                 return c.avatarUrl;
             }
         }
@@ -1016,20 +1023,47 @@ public class DataProviderService extends Service {
      * @param userIdArr json array of user ids
      * @return a comma delimited string of sorted ids from userIdArr
      */
-    private static String userIdArrayToKey(JSONArray userIdArr) throws JSONException {
-        int size = userIdArr.length();
-        ArrayList<Integer> userIdList = new ArrayList<Integer>(size);
-        for (int i = 0; i < size; i++) {
-            userIdList.add(userIdArr.getInt(i));
-        }
-        Collections.sort(userIdList);
+    private static String userIdArrayToKey(Integer[] userIdArr) {
+        Arrays.sort(userIdArr);
         StringBuilder delimString = new StringBuilder();
         String delim = "";
-        for (Integer userId : userIdList) {
+        for (int userId : userIdArr) {
             delimString.append(delim).append(userId);
             delim = ",";
         }
         return delimString.toString();
+    }
+
+    /**
+     * Look up the contact corresponding to each id and join
+     * their names in a comma separated list, excluding the logged
+     * in user's own name
+     *
+     * @param userIdArr json array of user ids
+     * @return a comma delimited string of unsorted contact names
+     */
+    private String userIdArrayToNames(Integer[] userIdArr) {
+        StringBuilder firstNames = new StringBuilder();
+        StringBuilder names = new StringBuilder();
+        String delim = "";
+        int validNames = 0;
+
+        for (Integer id : userIdArr) {
+            if (!id.equals(loggedInUser.id)) {
+                Contact c = getContact(id);
+                if (c != null) {
+                    names.append(delim).append(c.name);
+                    firstNames.append(delim).append(c.firstName);
+                    validNames++;
+                    delim = ", ";
+                }
+            }
+        }
+        if (validNames > 1) {
+            return firstNames.toString();
+        } else {
+            return names.toString();
+        }
     }
 
     /**
@@ -1048,7 +1082,7 @@ public class DataProviderService extends Service {
 
         for (String id : userIdArr) {
             if (!id.equals(loggedInUser.id + "")) {
-                Contact c = getContact(id);
+                Contact c = getContact(Integer.parseInt(id));
                 if (c != null) {
                     names.append(delim).append(c.name);
                     firstNames.append(delim).append(c.firstName);
@@ -1080,7 +1114,7 @@ public class DataProviderService extends Service {
     }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
-        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1) + "");
+        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
     }
 
 
@@ -1110,10 +1144,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#getContact(String)
+         * @see DataProviderService#getContact(Integer)
          */
         public Contact getContact(int contactId) {
-            return DataProviderService.this.getContact(contactId + "");
+            return DataProviderService.this.getContact(contactId);
         }
 
         /**
@@ -1251,7 +1285,7 @@ public class DataProviderService extends Service {
          * @return
          */
         public String getRecipientNames(String threadId) {
-            return userIdArrayToNames(prefs.getString(threadId, "").split(","));
+            return userIdArrayToNames(deserializeStringArray(prefs.getString(threadId, "")));
         }
 
         /**
@@ -1277,20 +1311,8 @@ public class DataProviderService extends Service {
 
     }
 
-    /**
-     * Given an http response entity, parse in to a json object.
-     *
-     * @param entity http response body
-     * @return parsed json object
-     * @throws IOException   if network stream can't be read.
-     * @throws JSONException if there's an error parsing json.
-     */
-    protected static JSONObject parseJSONResponse(HttpEntity entity) throws IOException, JSONException {
-        ByteArrayOutputStream jsonBuffer = new ByteArrayOutputStream(1024 /* 256 k */);
-        entity.writeTo(jsonBuffer);
-        jsonBuffer.close();
-        String json = jsonBuffer.toString("UTF-8");
-        return new JSONObject(json);
+    private static String[] deserializeStringArray(String string) {
+        return string.replace("[", "").replace("]", "").split(", ");
     }
 
 }

@@ -67,6 +67,10 @@ public class RestService {
 
 
     public interface MessagingService {
+
+        @POST("/api/v1/message_threads")
+        BadgeThread createMessageThread(@Body TypedInput threadBody);
+
         @PUT("/api/v1/message_threads/{message_thread_id}")
         void threadSetName(@Path("message_thread_id") String threadId,
                            @Body MessageThreadRequest messageThreadRequest,

@@ -36,6 +36,12 @@ public class LogoutReceiver extends BroadcastReceiver {
         //TODO: need to send unregister request to the server
 
 
+        // Report the event to mixpanel
+//        MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(DataProviderService.this, App.MIXPANEL_TOKEN);
+//        mixpanelAPI.clearSuperProperties();
+//        apiClient.apiToken = "";
+
+
         LocationTrackingService.justClearAlarm(context);
 
         // Stop running services

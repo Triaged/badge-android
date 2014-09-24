@@ -32,7 +32,6 @@ import java.net.URISyntaxException;
  * @author Created by jc on 7/7/14.
  */
 public class ApiClient extends DefaultHttpClient {
-    public static final String MIME_TYPE_JSON = "application/json";
 
     public static final String API_MESSAGING_HOST = BuildConfig.API_MESSAGING_SERVER_URL;
     private static final String API_HOST = BuildConfig.API_URL;
@@ -40,18 +39,15 @@ public class ApiClient extends DefaultHttpClient {
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     private static final String POST_AVATAR_URI = String.format("%s/v1/account/avatar", API_HOST);
-    private static final String CREATE_THREAD_URI = String.format("%s/api/v1/message_threads", API_MESSAGING_HOST);
 
     public static final String USER_AGENT = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
 
-    private HttpHost messagingHttpHost;
     String apiToken;
 
     public ApiClient(String apiToken) {
         super();
         this.getParams().setParameter( CoreProtocolPNames.USER_AGENT, USER_AGENT);
         URI uri = URI.create(String.format("%s", API_MESSAGING_HOST));
-        messagingHttpHost = new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme());
         this.apiToken = apiToken;
     }
 
@@ -75,38 +71,4 @@ public class ApiClient extends DefaultHttpClient {
         post.setEntity(reqEntity);
         return execute(post);
     }
-
-
-    /**
-     * POSTS to the messaging api host /api/v1/message_threads with
-     * a set of recipients
-     *
-     * @param postBody
-     * @return
-     * @throws IOException
-     */
-    public HttpResponse createThreadRequest(JSONObject postBody, int userId) throws IOException {
-        HttpPost post = new HttpPost(CREATE_THREAD_URI);
-        StringEntity body = new StringEntity(postBody.toString(), "UTF-8");
-        body.setContentType(MIME_TYPE_JSON);
-        post.setEntity(body);
-        if (apiToken != null && !apiToken.isEmpty()) {
-            post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        }
-        post.setHeader("Accept", MIME_TYPE_JSON);
-        post.setHeader("User-Id", String.valueOf(userId));
-        return execute(messagingHttpHost, post);
-    }
-
-    private HttpResponse postHelper(JSONObject postData, String uri, HttpHost host) throws IOException {
-        HttpPost post = new HttpPost(uri);
-        StringEntity body = new StringEntity(postData.toString(), "UTF-8");
-        body.setContentType(MIME_TYPE_JSON);
-        post.setEntity(body);
-        if (apiToken != null && !apiToken.isEmpty()) {
-            post.setHeader(AUTHORIZATION_HEADER_NAME, apiToken);
-        }
-        return execute(host, post);
-    }
-
 }
