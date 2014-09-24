@@ -8,37 +8,31 @@ public class BadgeThread {
     double timestamp;
     String id;
     boolean muted;
+    String name;
     Message[] messages;
+    String [] userIds;
 
     public double getTimestamp() {
         return timestamp;
-    }
-
-    public void setTimestamp(double timestamp) {
-        this.timestamp = timestamp;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public boolean isMuted() {
         return muted;
-    }
-
-    public void setMuted(boolean muted) {
-        this.muted = muted;
     }
 
     public Message[] getMessages() {
         return messages;
     }
 
-    public void setMessages(Message[] messages) {
-        this.messages = messages;
+    public String getName() {
+        return name;
+    }
+
+    public String[] getUserIds() {
+        return userIds;
     }
 }
