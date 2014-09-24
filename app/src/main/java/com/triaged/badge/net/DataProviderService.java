@@ -61,9 +61,6 @@ import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -196,15 +193,10 @@ public class DataProviderService extends Service {
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
 
     protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
-    public static final String API_TOKEN_PREFS_KEY = "apiToken";
     protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
     protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
 
     protected static final String[] EMPTY_STRING_ARRAY = new String[]{};
-
-
-    protected static final String SERVICE_ANDROID = "android";
-
 
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
@@ -212,7 +204,6 @@ public class DataProviderService extends Service {
     protected SQLiteDatabase database = null;
     protected long lastSynced;
     protected SharedPreferences prefs;
-    protected ApiClient apiClient;
     protected Handler handler;
     protected volatile boolean initialized;
 
@@ -234,11 +225,9 @@ public class DataProviderService extends Service {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
-        String apiToken = prefs.getString(API_TOKEN_PREFS_KEY, "");
         lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
         databaseHelper = new DatabaseHelper(this);
-        apiClient = new ApiClient(apiToken);
         handler = new Handler();
         localBinding = new LocalBinding();
 
@@ -274,7 +263,6 @@ public class DataProviderService extends Service {
         localBroadcastManager.unregisterReceiver(syncGCMReceiver);
         sqlThread.shutdownNow();
         databaseHelper.close();
-        apiClient.getConnectionManager().shutdown();
         database = null;
     }
 
@@ -457,7 +445,7 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Return only contacts in a given department. Same fields returned as {@link #getContactsCursor()}
+     * Return only contacts in a given department.
      *
      * @param departmentId
      * @return
@@ -552,22 +540,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * Every time we hit the API, we should make sure the status code
-     * returned wasn't unauthorized. If it was, we assume
-     * the user has been logged out or termed or something and we reset
-     * to logged out state.
-     *
-     * @param response
-     */
-    protected boolean ensureNotUnauthorized(HttpResponse response) {
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            loggedOut();
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * Get a writable database and do an incremental sync of new data from the cloud.
      * <p/>
      * Notifies listeners via the {@link #DB_AVAILABLE_ACTION} when the database is ready for use.
@@ -593,14 +565,12 @@ public class DataProviderService extends Service {
                     }
 
                     // If there's a logged in user, sync the whole company.
-                    if (!apiClient.apiToken.isEmpty()) {
+                    if (App.accountId() > 0) {
                         syncCompany();
-
                         // Edge case avoided here, user was unauthorized
                         // and now db is empty, this is null.
                         if (loggedInUser != null) {
                             syncMessagesSync();
-
                         }
 
                         // If we had to sync the company first (it was dropped
@@ -1106,9 +1076,6 @@ public class DataProviderService extends Service {
     }
 
     public void onEvent(LogedinSuccessfully logedinSuccessfully) {
-
-        String apiToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
-        apiClient = new ApiClient(apiToken);
         syncCompanyAsync();
         syncMessagesAsync();
     }

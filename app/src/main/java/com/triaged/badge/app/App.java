@@ -21,12 +21,12 @@ import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.helpers.Foreground;
-import com.triaged.badge.net.ApiClient;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
+import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONObject;
@@ -125,12 +125,12 @@ public class App extends Application {
 
     private void setupRestAdapter() {
         final String authorization = SharedPreferencesUtil.getString("apiToken", "");
-
+        final String userAgent = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
         RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
-                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
+                        request.addHeader("User-Agent", userAgent);
                         request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
@@ -144,7 +144,7 @@ public class App extends Application {
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
-                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
+                        request.addHeader("User-Agent", userAgent);
                         request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
@@ -167,7 +167,6 @@ public class App extends Application {
     }
 
     private void setupULI() {
-
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
                 .cacheInMemory(true)
                 .cacheOnDisk(true)

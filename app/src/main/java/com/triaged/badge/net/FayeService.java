@@ -12,7 +12,9 @@ import android.util.Log;
 import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.BuildConfig;
+import com.triaged.badge.app.R;
 import com.triaged.badge.models.BadgeThread;
+import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +62,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         heartbeatThread = Executors.newSingleThreadScheduledExecutor();
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         loggedInUserId = prefs.getInt(DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, -1);
-        authToken = prefs.getString(DataProviderService.API_TOKEN_PREFS_KEY, "");
+        authToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
         if (loggedInUserId <= 0) {
             stopSelf();
         } else {
