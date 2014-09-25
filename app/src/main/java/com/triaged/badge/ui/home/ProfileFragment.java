@@ -21,6 +21,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.provider.ContactProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
@@ -220,10 +221,10 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                 availabilityHeader.setVisibility(View.VISIBLE);
                 currentLocationView.setVisibility(View.VISIBLE);
                 int currentLocationId = contact.currentOfficeLocationId;
-                String officeLocationName =  App.dataProviderServiceBinding.getOfficeLocationName(currentLocationId);
+                String officeLocationName =  OfficeLocationHelper.getOfficeLocationName(getActivity(), currentLocationId + "");
                 if (officeLocationName != null) {
                     currentLocationView.isOn = true;
-                    currentLocationView.primaryValue = App.dataProviderServiceBinding.getOfficeLocationName(currentLocationId);
+                    currentLocationView.primaryValue = officeLocationName;
                 } else {
                     currentLocationView.primaryValue = "Out of office";
                     currentLocationView.isOn = false;

@@ -116,7 +116,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
 
     @Override
     protected void onDatabaseReady() {
-        officeLocationsAdapter = new OfficeLocationsAdapter(this, dataProviderServiceBinding, R.layout.item_office_location);
+        officeLocationsAdapter = new OfficeLocationsAdapter(this, R.layout.item_office_location);
         officeLocationsList.setAdapter(officeLocationsAdapter);
     }
 

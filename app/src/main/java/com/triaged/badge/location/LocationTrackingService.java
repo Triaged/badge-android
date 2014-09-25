@@ -24,7 +24,9 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.triaged.badge.app.App;
+import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
@@ -217,7 +219,7 @@ public class LocationTrackingService extends Service implements LocationListener
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
-                    Cursor officeLocations = dataProviderServiceBinding.getOfficeLocationsCursor();
+                    Cursor officeLocations = OfficeLocationHelper.getOfficeLocationsCursor(LocationTrackingService.this);
                     Location officeLocation = new Location(LocationManager.NETWORK_PROVIDER);
                     while (officeLocations.moveToNext()) {
                         String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);

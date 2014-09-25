@@ -183,17 +183,6 @@ public class DataProviderService extends Service {
             );
 
 
-    protected static final String QUERY_MESSAGE_SQL =
-            String.format("SELECT * FROM %s WHERE %s = ? OR %s = ?",
-                    MessagesTable.TABLE_NAME,
-                    MessagesTable.COLUMN_MESSAGES_ID,
-                    MessagesTable.COLUMN_MESSAGES_GUID);
-
-    protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
-    protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
-
-    protected static final String[] EMPTY_STRING_ARRAY = new String[]{};
-
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
     protected DatabaseHelper databaseHelper;
@@ -494,34 +483,6 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * @return cursor to all office location rows
-     */
-    protected Cursor getOfficeLocationsCursor() {
-        if (database != null) {
-            return database.rawQuery(QUERY_ALL_OFFICES_SQL, EMPTY_STRING_ARRAY);
-        }
-        throw new IllegalStateException("getOfficeLocationsCursor() called before database available.");
-    }
-
-    /**
-     * @param locationId id of the office
-     * @return Name of the office.
-     */
-    private String getOfficeLocationName(int locationId) {
-        if (database != null) {
-            Cursor cursor = database.rawQuery(QUERY_OFFICE_LOCATION_SQL, new String[]{String.valueOf(locationId)});
-            if (cursor.moveToFirst()) {
-                String name = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
-                cursor.close();
-                return name;
-            } else {
-                return null;
-            }
-        }
-        throw new IllegalStateException("getOfficeLocationName() called before database available.");
-    }
-
-    /**
      * When the service detects that there is no active user
      * or api token, it calls this function.
      * <p/>
@@ -706,7 +667,9 @@ public class DataProviderService extends Service {
         sqlThread.schedule(new Runnable() {
             @Override
             public void run() {
-                Cursor msgCursor = database.rawQuery(QUERY_MESSAGE_SQL, new String[]{"foo", guid});
+                Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
+                        null, MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                        new String[]{guid}, null);
                 if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
                     ContentValues values = new ContentValues();
                     values.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED);
@@ -749,7 +712,9 @@ public class DataProviderService extends Service {
         sqlThread.submit(new Runnable() {
             @Override
             public void run() {
-                Cursor msgCursor = database.rawQuery(QUERY_MESSAGE_SQL, new String[]{"foo", guid});
+                Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
+                        null, MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                        new String[]{guid}, null);
                 if (msgCursor.moveToFirst()) {
                     // Flip back to pending status.
                     ContentValues msgValues = new ContentValues();
@@ -1191,21 +1156,6 @@ public class DataProviderService extends Service {
             loggedInUser.officePhone = currentUser.getEmployeeInfo().getOfficePhone();
 
         }
-
-        /**
-         * @see DataProviderService#getOfficeLocationName(int)
-         */
-        public String getOfficeLocationName(int locationId) {
-            return DataProviderService.this.getOfficeLocationName(locationId);
-        }
-
-        /**
-         * @see DataProviderService#getOfficeLocationsCursor() ()
-         */
-        public Cursor getOfficeLocationsCursor() {
-            return DataProviderService.this.getOfficeLocationsCursor();
-        }
-
 
         /**
          * @see DataProviderService#getBasicMixpanelData() (int)

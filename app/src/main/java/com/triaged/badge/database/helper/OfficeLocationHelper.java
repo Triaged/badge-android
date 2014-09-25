@@ -1,9 +1,13 @@
 package com.triaged.badge.database.helper;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 
+import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
+import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.OfficeLocation;
 
 /**
@@ -35,5 +39,23 @@ public class OfficeLocationHelper {
             values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, officeLocation.getZipCode());
 
         return values;
+    }
+
+    public static String getOfficeLocationName(Context context, String officeLocationId) {
+        Cursor cursor = context.getContentResolver().query(
+                OfficeLocationProvider.CONTENT_URI,
+                new String[]{OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME},
+                OfficeLocationsTable.COLUMN_ID + " =?",
+                new String[]{officeLocationId},
+                null);
+        if (cursor.moveToFirst()) {
+            return Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+        }
+        return null;
+    }
+
+    public static Cursor getOfficeLocationsCursor(Context context) {
+        return context.getContentResolver().query(OfficeLocationProvider.CONTENT_URI,
+                null, null, null, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
     }
 }

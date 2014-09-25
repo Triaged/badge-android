@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.OfficeLocationHelper;
+import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
@@ -24,11 +26,12 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     private int resourceId;
     public int usersOffice;
     public String usersOfficeName;
+    Context context;
 
-    public OfficeLocationsAdapter(Context context, DataProviderService.LocalBinding dataProviderServiceBinding, int resourceId) {
-        super(context, dataProviderServiceBinding.getOfficeLocationsCursor(), false);
-        this.dataProviderServiceBinding = dataProviderServiceBinding;
+    public OfficeLocationsAdapter(Context context, int resourceId) {
+        super(context, OfficeLocationHelper.getOfficeLocationsCursor(context), false);
         this.inflater = LayoutInflater.from(context);
+        this.context = context;
         this.resourceId = resourceId;
         usersOffice = dataProviderServiceBinding.getLoggedInUser().primaryOfficeLocationId;
         usersOfficeName = dataProviderServiceBinding.getLoggedInUser().officeName;
@@ -72,9 +75,11 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     }
 
     public void refresh() {
-        changeCursor(dataProviderServiceBinding.getOfficeLocationsCursor());
+        changeCursor(OfficeLocationHelper.getOfficeLocationsCursor(context));
         notifyDataSetChanged();
     }
+
+
 
     public void destroy() {
         getCursor().close();
