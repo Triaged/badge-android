@@ -34,6 +34,7 @@ import hugo.weaving.DebugLog;
 public class InviteFriendFragment extends Fragment {
 
     static String myAccountHost;
+    static boolean isFromACompany = false;
     PhoneContactAdapter contactAdapter;
 
     @InjectView(R.id.contacts_listview) ListView contactsListView;
@@ -49,6 +50,7 @@ public class InviteFriendFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_invite_friend, container, false);
         ButterKnife.inject(this, root);
 
+        isFromACompany = SharedPreferencesUtil.getBoolean(R.string.pref_is_a_company_email_key, false);
         String accountEmail = SharedPreferencesUtil.getString(R.string.pref_account_email_key, "");
         int atSignIndex = accountEmail.lastIndexOf('@');
         if (atSignIndex > 0) {
@@ -123,7 +125,7 @@ public class InviteFriendFragment extends Fragment {
                 if (contactName.equals(email)) {
                     newContact.hideSubtext = true;
                 }
-                if (isColleague(email)) {
+                if (isFromACompany && isColleague(email)) {
                     newContact.isColleague = true;
                     contacts.add(colleagueCounter, newContact);
                     colleagueCounter++;
@@ -160,12 +162,14 @@ public class InviteFriendFragment extends Fragment {
             }
         }
 
-        HeaderRow othersHeaderRow = new HeaderRow("Other Contacts");
         if (colleagueCounter > 0) {
             HeaderRow colleagueHeaderRow = new HeaderRow(myAccountHost);
             contacts.add(0, colleagueHeaderRow);
+
+            HeaderRow othersHeaderRow = new HeaderRow("Other Contacts");
             contacts.add(colleagueCounter + 1, othersHeaderRow);
         } else {
+            HeaderRow othersHeaderRow = new HeaderRow("Contacts");
             contacts.add(colleagueCounter, othersHeaderRow);
         }
         return  contacts;

@@ -192,7 +192,7 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
         if (email != null) {
             int atIndex = email.lastIndexOf('@');
             if (atIndex > 0) {
-                String host = email.substring(atIndex);
+                String host = email.substring(atIndex + 1);
                 try {
                     InputStream inputStream = getActivity().getAssets().open("blacklist.hosts");
                     InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8" );
