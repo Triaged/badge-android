@@ -254,10 +254,10 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
             } else {
                 primaryOfficeView.setVisibility(View.GONE);
             }
-            if (!TextUtils.isEmpty(contact.managerName)) {
-                bossHeader.setVisibility(View.VISIBLE);
+            Contact boss;
+            if (!TextUtils.isEmpty(contact.managerName) &&
+                    (boss = App.dataProviderServiceBinding.getContact(contact.managerId)) != null) {
 
-                final Contact boss = App.dataProviderServiceBinding.getContact(contact.managerId);
                 bossView.userId = App.dataProviderServiceBinding.getLoggedInUser().id;
                 bossView.setupView(boss);
                 bossView.noPhotoThumb.setText(boss.initials);
@@ -293,21 +293,21 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                         }
                     });
                 }
-
+                bossHeader.setVisibility(View.VISIBLE);
                 bossView.setVisibility(View.VISIBLE);
 
-            } else {
-                bossHeader.setVisibility(View.GONE);
-                bossView.setVisibility(View.GONE);
-            }
+                } else {
+                    bossHeader.setVisibility(View.GONE);
+                    bossView.setVisibility(View.GONE);
+                }
 
-            JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
-            try {
-                props.put("user_id", String.valueOf(contact.id));
-                mixpanel.track("profile_viewed", props);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+                JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+                try {
+                    props.put("user_id", String.valueOf(contact.id));
+                    mixpanel.track("profile_viewed", props);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
         }
     }
 
