@@ -11,6 +11,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.ui.base.views.NonSwipeableViewPager;
 import com.triaged.badge.ui.home.MainActivity;
+import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
 
@@ -21,7 +22,8 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import de.greenrobot.event.EventBus;
 
-public class OnboardingActivity extends Activity implements OnboardingCreateFragment.OnSignUpListener {
+public class OnboardingActivity extends Activity implements
+        OnboardingCreateFragment.OnSignUpListener, OnboardingConfirmFragment.OnConfirmListener {
 
 
     @InjectView(R.id.viewpager) NonSwipeableViewPager viewPager;
@@ -31,18 +33,19 @@ public class OnboardingActivity extends Activity implements OnboardingCreateFrag
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!TextUtils.isEmpty(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
-            EventBus.getDefault().post(new LogedinSuccessfully());
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-            return;
-        }
+//        if (!TextUtils.isEmpty(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
+//            EventBus.getDefault().post(new LogedinSuccessfully());
+//            startActivity(new Intent(this, MainActivity.class));
+//            finish();
+//            return;
+//        }
 
         setContentView(R.layout.activity_onboarding);
         ButterKnife.inject(this);
 
         fragmentList.add(new OnboardingCreateFragment());
         fragmentList.add(new OnboardingConfirmFragment());
+//        fragmentList.add(new InviteFriendFragment());
 
         viewPager.setPagingEnabled(false);
         viewPager.setAdapter(new FragmentStatePagerAdapter(getFragmentManager()) {
@@ -64,14 +67,25 @@ public class OnboardingActivity extends Activity implements OnboardingCreateFrag
     }
 
     @Override
-    public void onSuccess() {
-        Handler handler = new Handler(getMainLooper());
-        handler.postDelayed(new Runnable() {
+    public void onSignUpSucceed() {
+        viewPager.postDelayed(new Runnable() {
             @Override
             public void run() {
                 viewPager.setCurrentItem(1);
             }
-        }, 600);
+        }, 400);
+    }
+
+    @Override
+    public void onConfirmSucceed() {
+        viewPager.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                fragmentList.add(new InviteFriendFragment());
+                viewPager.getAdapter().notifyDataSetChanged();
+                viewPager.setCurrentItem(2);
+            }
+        }, 400);
     }
 
     @Override

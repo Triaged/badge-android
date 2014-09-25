@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="pref_api_token">apiToken</string>
-    <string name="pref_account_id_key">loggedInUserId</string>
-    <string name="pref_has_fetch_company">has_fetched_company</string>
-    <string name="pref_device_id_key">badgeDeviceId</string>
-    <string name="pref_account_company_id_key">companyId</string>
+    <string name="pref_account_id_key">account_id</string>
+    <string name="pref_account_email_key">account_email</string>
+    <string name="pref_api_token">account_token</string>
+    <string name="pref_account_company_id_key">company_Id</string>
+    <string name="pref_does_fetched_company_already">does_fetched_company</string>
+    <string name="pref_device_id_key">badge_device_id</string>
+    <string name="pref_is_a_company_email_key">is_a_company_email</string>
 </resources>

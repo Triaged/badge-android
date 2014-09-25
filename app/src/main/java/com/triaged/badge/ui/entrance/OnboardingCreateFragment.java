@@ -20,11 +20,15 @@ import com.mobsandgeeks.saripaar.Validator;
 import com.mobsandgeeks.saripaar.annotation.Email;
 import com.mobsandgeeks.saripaar.annotation.Required;
 import com.triaged.badge.net.mime.TypedJsonString;
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
 import com.triaged.utils.SharedPreferencesUtil;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -155,13 +159,12 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
         JsonObject postData = new JsonObject();
         postData.add("auth_params", authParams);
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        RestService.prepare(App.restAdapterMessaging, App.restAdapter);
         RestService.instance().badge().signUp(typedJsonString, new Callback<AuthenticationResponse>() {
             @Override
             public void success(AuthenticationResponse authenticationResponse, Response response) {
-                SharedPreferencesUtil.store(R.string.pref_account_id_key, authenticationResponse.id());
+                storeUserInfoInSharedPreferences(authenticationResponse.id(), emailView.getText().toString());
                 progressDialog.dismiss();
-                mListener.onSuccess();
+                mListener.onSignUpSucceed();
             }
 
             @Override
@@ -170,6 +173,42 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
                 progressDialog.dismiss();
             }
         });
+    }
+
+    private void storeUserInfoInSharedPreferences(final int accountId, final String accountEmail) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferencesUtil.store(R.string.pref_is_a_company_email_key,
+                        isACompanyEmail(accountEmail));
+                SharedPreferencesUtil.store(R.string.pref_account_email_key, accountEmail);
+                SharedPreferencesUtil.store(R.string.pref_account_id_key, accountId);
+            }
+        });
+        thread.start();
+    }
+
+    private boolean isACompanyEmail(String email) {
+        if (email != null) {
+            int atIndex = email.lastIndexOf('@');
+            if (atIndex > 0) {
+                String host = email.substring(atIndex + 1);
+                try {
+                    InputStream inputStream = getActivity().getAssets().open("blacklist.hosts");
+                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8" );
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (line.equals(host)) {
+                            return false;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -191,7 +230,7 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
      * activity.
      */
     public interface OnSignUpListener {
-        public void onSuccess();
+        public void onSignUpSucceed();
     }
 
 

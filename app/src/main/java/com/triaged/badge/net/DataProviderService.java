@@ -400,10 +400,11 @@ public class DataProviderService extends Service {
                                 OfficeLocationProvider.CONTENT_URI).withValues(
                                 OfficeLocationHelper.toContentValue(officeLocation)).build());
                     }
+                    SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
                     getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
                     dbOperations.clear();
 
-                    SharedPreferencesUtil.store(R.string.pref_has_fetch_company, true);
+                    SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
                     loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
                 } catch (RemoteException e) {
                     e.printStackTrace();

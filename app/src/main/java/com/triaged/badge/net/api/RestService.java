@@ -1,5 +1,7 @@
 package com.triaged.badge.net.api;
 
+import com.triaged.badge.net.api.requests.InviteRequest;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.BadgeThread;
 import com.triaged.badge.models.Company;
@@ -11,7 +13,6 @@ import com.triaged.badge.net.api.requests.DeviceRequest;
 import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
-import com.triaged.badge.net.mime.TypedJsonString;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -104,7 +105,6 @@ public class RestService {
         @GET("/v1/users/{id}")
         void getUser(@Path("id") String id, Callback<User> callback);
 
-
         @POST("/v1/departments")
         void createDepartment(@Body TypedInput requestBody, Callback<Department> callback);
 
@@ -143,6 +143,9 @@ public class RestService {
 
         @GET("/v1/company")
         void getCompany(@Query("timestamp") String timestamp, Callback<Company> callback);
+
+        @POST("/v1/invites")
+        void invite(@Body InviteRequest inviteRequest, Callback<Response> callback);
     }
 
 }
