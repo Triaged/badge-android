@@ -61,7 +61,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         localBinding = new LocalBinding();
         heartbeatThread = Executors.newSingleThreadScheduledExecutor();
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        loggedInUserId = prefs.getInt(DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, -1);
+        loggedInUserId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         authToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
         if (loggedInUserId <= 0) {
             stopSelf();

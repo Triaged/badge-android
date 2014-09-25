@@ -124,7 +124,7 @@ public class App extends Application {
     }
 
     private void setupRestAdapter() {
-        final String authorization = SharedPreferencesUtil.getString("apiToken", "");
+        final String authorization = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
         final String userAgent = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
         RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {

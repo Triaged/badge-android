@@ -33,12 +33,12 @@ public class OnboardingActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        if (!TextUtils.isEmpty(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
-//            EventBus.getDefault().post(new LogedinSuccessfully());
-//            startActivity(new Intent(this, MainActivity.class));
-//            finish();
-//            return;
-//        }
+        if (!TextUtils.isEmpty(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
+            EventBus.getDefault().post(new LogedinSuccessfully());
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
 
         setContentView(R.layout.activity_onboarding);
         ButterKnife.inject(this);

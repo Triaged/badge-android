@@ -192,10 +192,6 @@ public class DataProviderService extends Service {
     protected static final String QUERY_ALL_OFFICES_SQL = String.format("SELECT *  FROM %s ORDER BY %s;", OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
     protected static final String QUERY_OFFICE_LOCATION_SQL = String.format("SELECT %s FROM %s WHERE %s = ?", OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, OfficeLocationsTable.TABLE_NAME, OfficeLocationsTable.COLUMN_ID);
 
-    protected static final String LAST_SYNCED_PREFS_KEY = "lastSyncedOn";
-    protected static final String LOGGED_IN_USER_ID_PREFS_KEY = "loggedInUserId";
-    protected static final String INSTALLED_VERSION_PREFS_KEY = "installedAppVersion";
-
     protected static final String[] EMPTY_STRING_ARRAY = new String[]{};
 
     protected volatile Contact loggedInUser;
@@ -225,7 +221,7 @@ public class DataProviderService extends Service {
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
-        lastSynced = prefs.getLong(LAST_SYNCED_PREFS_KEY, 0);
+        lastSynced = SharedPreferencesUtil.getLong(R.string.pref_last_sync_key, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
         databaseHelper = new DatabaseHelper(this);
         handler = new Handler();
@@ -331,7 +327,7 @@ public class DataProviderService extends Service {
         }
         long previousSync = lastSynced;
         lastSynced = System.currentTimeMillis();
-        prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
+        SharedPreferencesUtil.store(R.string.pref_last_sync_key, lastSynced);
 
         RestService.instance().badge().getCompany((previousSync - 60000) + "" /* one minute of buffer */, new Callback<Company>() {
             @Override
@@ -370,7 +366,7 @@ public class DataProviderService extends Service {
             return;
         }
         lastSynced = System.currentTimeMillis();
-        prefs.edit().putLong(LAST_SYNCED_PREFS_KEY, lastSynced).commit();
+        SharedPreferencesUtil.store(R.string.pref_last_sync_key, lastSynced);
 
         RestService.instance().badge().getCompany("0", new Callback<Company>() {
             @Override
@@ -405,7 +401,7 @@ public class DataProviderService extends Service {
                     dbOperations.clear();
 
                     SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
-                    loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
+                    loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (OperationApplicationException e) {
@@ -551,8 +547,8 @@ public class DataProviderService extends Service {
             public void run() {
                 try {
                     database = databaseHelper.getReadableDatabase();
+                    int loggedInContactId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
 
-                    int loggedInContactId = prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1);
                     if (loggedInContactId > 0) {
                         // If we're logged in, and the database isn't empty, the UI should be ready to go.
                         if ((loggedInUser = getContact(loggedInContactId)) != null) {
@@ -588,8 +584,8 @@ public class DataProviderService extends Service {
                         // disabled location tracking, start the tracking service.
                         try {
                             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                            if (pInfo.versionCode > prefs.getInt(INSTALLED_VERSION_PREFS_KEY, -1)) {
-                                prefs.edit().putInt(INSTALLED_VERSION_PREFS_KEY, pInfo.versionCode).commit();
+                            if (pInfo.versionCode > SharedPreferencesUtil.getInteger(R.string.pref_app_previous_version_key, -1)) {
+                                SharedPreferencesUtil.store(R.string.pref_app_previous_version_key, pInfo.versionCode);
                                 if (prefs.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
                                     // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
 //                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
@@ -1077,12 +1073,13 @@ public class DataProviderService extends Service {
     }
 
     public void onEvent(LogedinSuccessfully logedinSuccessfully) {
+        loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
         syncCompanyAsync();
         syncMessagesAsync();
     }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
-        loggedInUser = getContact(prefs.getInt(LOGGED_IN_USER_ID_PREFS_KEY, -1));
+        loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
     }
 
 
