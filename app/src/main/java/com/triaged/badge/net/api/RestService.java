@@ -1,5 +1,6 @@
 package com.triaged.badge.net.api;
 
+import com.triaged.badge.net.api.requests.InviteRequest;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Department;
@@ -122,6 +123,9 @@ public class RestService {
 
         @PUT("/v1/office_locations/{id}/exited")
         void checkOutOfOffice(@Path("id") String officeId, Callback<Response> callback);
+
+        @POST("/v1/invites")
+        void invite(@Body InviteRequest inviteRequest, Callback<Response> callback);
     }
 
 }

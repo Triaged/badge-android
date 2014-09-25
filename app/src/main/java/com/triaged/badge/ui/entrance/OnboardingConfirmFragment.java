@@ -1,6 +1,7 @@
 package com.triaged.badge.ui.entrance;
 
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -46,6 +47,8 @@ import retrofit.client.Response;
 public class OnboardingConfirmFragment extends Fragment implements View.OnFocusChangeListener,
         View.OnKeyListener, TextWatcher {
 
+    private OnConfirmListener mListener;
+
     ProgressDialog progressDialog;
     @InjectView(R.id.root_view) RelativeLayout rootView;
     @InjectView(R.id.confirm_textview) View confirmTitleView;
@@ -74,7 +77,6 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
         JsonObject postData = new JsonObject();
         postData.add("auth_params", authParams);
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        RestService.prepare(App.restAdapterMessaging, App.restAdapter);
         RestService.instance().badge().validate(typedJsonString, new Callback<Account>() {
             @Override
             public void success(Account account, Response response) {
@@ -85,8 +87,9 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
                 getActivity().getContentResolver().insert(ContactProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
                 EventBus.getDefault().post(new LogedinSuccessfully());
                 EventBus.getDefault().post(new UpdateAccountEvent());
-
-                startActivity(new Intent(getActivity(), MainActivity.class));
+//                startActivity(new Intent(getActivity(), MainActivity.class));
+                mListener.onConfirmSucceed();
+                GeneralUtils.dismissKeyboard(getActivity());
             }
 
             @Override
@@ -156,6 +159,23 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
                 pinLayoutView.setLayoutParams(pinlayoutParam);
             }
         });
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mListener = (OnConfirmListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnSignUpListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
     }
 
     @Override
@@ -249,5 +269,16 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
     @Override
     public void afterTextChanged(Editable s) {
 
+    }
+
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     */
+    public interface OnConfirmListener {
+        public void onConfirmSucceed();
     }
 }

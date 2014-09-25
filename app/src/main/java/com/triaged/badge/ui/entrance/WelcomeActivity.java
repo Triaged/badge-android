@@ -282,7 +282,7 @@ public class WelcomeActivity extends BadgeActivity implements DatePickerDialog.O
 
     @Override
     protected void onResume() {
-        if ( SharedPreferencesUtil.getBoolean(R.string.pref_has_fetch_company, false) ) {
+        if ( SharedPreferencesUtil.getBoolean(R.string.pref_does_fetched_company_already, false) ) {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }

@@ -5,7 +5,7 @@
     <string name="app_name">Badge</string>
     <string name="action_show_participants">Show Participants</string>
 
-    <!--ONBOARDING SIGN UP-->
+    <!-- ONBOARDING SIGN UP -->
     <string name="invalid_email_error">Invalid email address</string>
 
     <!-- LOGIN ACTIVITY -->
@@ -124,5 +124,6 @@
     <string name="search_contacts">Search contacts</string>
     <string name="search_departments">Search departments</string>
     <string name="name">Name</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

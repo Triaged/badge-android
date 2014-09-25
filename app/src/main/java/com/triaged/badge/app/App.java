@@ -165,10 +165,10 @@ public class App extends Application {
 
         restAdapterMessaging = restBuilderMessaging.build();
         restAdapter = restBuilder.build();
+        RestService.prepare(restAdapterMessaging, restAdapter);
     }
 
     private void setupULI() {
-
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
                 .cacheInMemory(true)
                 .cacheOnDisk(true)
@@ -203,7 +203,6 @@ public class App extends Application {
     public void onEvent(LogedinSuccessfully event) {
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
-        RestService.prepare(restAdapterMessaging, restAdapter);
     }
 
 }

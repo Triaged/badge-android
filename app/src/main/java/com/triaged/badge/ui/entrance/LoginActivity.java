@@ -73,7 +73,6 @@ public class LoginActivity extends MixpanelActivity {
             App.gLogger.e("JSON exception creating post body for login", e);
         }
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        RestService.prepare(App.restAdapterMessaging, App.restAdapter);
         RestService.instance().badge().login(typedJsonString, new Callback<Account>() {
             @Override
             public void success(Account account, retrofit.client.Response response) {
@@ -210,7 +209,7 @@ public class LoginActivity extends MixpanelActivity {
     }
 
     private boolean isAlreadyLoggedIn() {
-        return SharedPreferencesUtil.getBoolean(R.string.pref_has_fetch_company, false);
+        return SharedPreferencesUtil.getBoolean(R.string.pref_does_fetched_company_already, false);
     }
 
     protected JSONObject constructMixpanelSuperProperties(User user) {
