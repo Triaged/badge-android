@@ -350,7 +350,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                     } else {
                         Intent intent = new Intent(getActivity(), ProfileActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, bossView.profileId);
+                        intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, (int) bossView.profileId);
                         startActivity(intent);
                     }
                 }
@@ -414,7 +414,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                         } else {
                             Intent intent = new Intent(getActivity(), ProfileActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, newView.profileId);
+                            intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, (int) newView.profileId);
                             startActivity(intent);
                         }
                     }
