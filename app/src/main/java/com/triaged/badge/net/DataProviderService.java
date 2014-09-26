@@ -1103,59 +1103,6 @@ public class DataProviderService extends Service {
             return loggedInUser;
         }
 
-        /**
-         * Just a temporary method, for this refactoring
-         */
-        public void setLoggedInUser(User currentUser) {
-            loggedInUser = new Contact();
-            loggedInUser.id = currentUser.getId();
-            loggedInUser.firstName = currentUser.getFirstName();
-            loggedInUser.lastName = currentUser.getLastName();
-            loggedInUser.avatarUrl = currentUser.getAvatarUrl();
-            loggedInUser.linkedin = currentUser.getEmployeeInfo().getLinkedin();
-            loggedInUser.website = currentUser.getEmployeeInfo().getWebsite();
-
-            if (currentUser.getEmployeeInfo().getBirthDate() != null) {
-                loggedInUser.birthDateString = Contact.convertBirthDateString(currentUser.getEmployeeInfo().getBirthDate());
-            }
-            loggedInUser.cellPhone = currentUser.getEmployeeInfo().getCellPhone();
-
-            try {
-                loggedInUser.currentOfficeLocationId = Integer.valueOf(currentUser.getCurrentOfficeLocaitonId());
-            } catch (NumberFormatException e) {
-                loggedInUser.currentOfficeLocationId = -1;
-            }
-
-            try {
-                loggedInUser.departmentId = Integer.valueOf(currentUser.getDepartmentId());
-            } catch (NumberFormatException e) {
-                loggedInUser.departmentId = -1;
-            }
-
-            try {
-                loggedInUser.managerId = Integer.valueOf(currentUser.getManagerId());
-            } catch (NumberFormatException e) {
-                loggedInUser.managerId = -1;
-            }
-
-            try {
-                loggedInUser.primaryOfficeLocationId = Integer.valueOf(currentUser.getPrimaryOfficeLocationid());
-            } catch (NumberFormatException e) {
-                loggedInUser.primaryOfficeLocationId = -1;
-            }
-
-            loggedInUser.isArchived = currentUser.isArchived();
-            loggedInUser.jobTitle = currentUser.getEmployeeInfo().getJobTitle();
-
-            loggedInUser.name = currentUser.getFirstName() + " " + currentUser.getLastName();
-
-            if (currentUser.getEmployeeInfo().getJobStartDate() != null) {
-                loggedInUser.startDateString = Contact.convertStartDateString(currentUser.getEmployeeInfo().getJobStartDate());
-            }
-//            loggedInUser.sharingOfficeLocation = currentUser.isSharingOfficeLocation();
-            loggedInUser.officePhone = currentUser.getEmployeeInfo().getOfficePhone();
-
-        }
 
         /**
          * @see DataProviderService#getBasicMixpanelData() (int)
