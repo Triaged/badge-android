@@ -16,7 +16,6 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.ContactsTable;
-import com.triaged.badge.net.DataProviderService;
 
 /**
  * Created by Will on 7/9/14.
@@ -27,12 +26,8 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
 
-    public ContactsWithoutHeadingsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding) {
-        this(context, cursor, dataProviderServiceBinding, true);
-    }
-
-    public ContactsWithoutHeadingsAdapter(Context context, Cursor cursor, DataProviderService.LocalBinding dataProviderServiceBinding, boolean includeMe) {
-        super(context, includeMe ? cursor : dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser(), false);
+    public ContactsWithoutHeadingsAdapter(Context context, Cursor cursor) {
+        super(context, cursor, true);
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
     }

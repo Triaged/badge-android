@@ -63,7 +63,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
         departmentId = extra.getInt(DEPARTMENT_ID_EXTRA);
         backButton.setText(departmentName);
 
-        adapter = new ContactsWithoutHeadingsAdapter(this, null, dataProviderServiceBinding);
+        adapter = new ContactsWithoutHeadingsAdapter(this, null);
         contactsForDepartmentList.setAdapter(adapter);
         getLoaderManager().initLoader(0, savedInstanceState, this);
     }
