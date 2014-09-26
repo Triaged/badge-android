@@ -130,18 +130,6 @@ public class DataProviderService extends Service {
                     OfficeLocationsTable.COLUMN_ID,
                     ContactsTable.COLUMN_ID
             );
-    protected static final String QUERY_CONTACTS_WITH_EXCEPTION_SQL =
-            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
-                            " ON contact.%s = department.%s WHERE contact.%s != ? AND contact.is_archived = 0  ORDER BY %s;",
-                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.TABLE_NAME,
-                    DepartmentsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
-                    DepartmentsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
-            );
     protected static final String QUERY_MESSAGES_SQL =
             String.format("SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact" +
                             " ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
@@ -410,21 +398,6 @@ public class DataProviderService extends Service {
             }
         }
         throw new IllegalStateException("getContact() called before database available.");
-    }
-
-    /**
-     * Query the db to get a cursor to all contacts except for
-     * the logged in user.
-     * <p/>
-     * Caller must close the cursor when finished.
-     *
-     * @return a cursor to all contact rows minus 1
-     */
-    protected Cursor getContactsCursorExcludingLoggedInUser() {
-        if (database != null) {
-            return database.rawQuery(QUERY_CONTACTS_WITH_EXCEPTION_SQL, new String[]{String.valueOf(loggedInUser.id)});
-        }
-        throw new IllegalStateException("getContactsCursorExcludingLoggedInUser() called before database available.");
     }
 
     /**
@@ -1002,13 +975,6 @@ public class DataProviderService extends Service {
          */
         public void initDatabase() {
             DataProviderService.this.initDatabase();
-        }
-
-        /**
-         * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
-         */
-        public Cursor getContactsCursorExcludingLoggedInUser() {
-            return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
         }
 
         /**
