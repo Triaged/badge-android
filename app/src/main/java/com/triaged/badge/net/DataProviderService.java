@@ -130,20 +130,6 @@ public class DataProviderService extends Service {
                     OfficeLocationsTable.COLUMN_ID,
                     ContactsTable.COLUMN_ID
             );
-    protected static final String QUERY_MESSAGES_SQL =
-            String.format("SELECT message.*, contact.%s, contact.%s, contact.%s from %s message LEFT OUTER JOIN %s contact" +
-                            " ON message.%s = contact.%s WHERE message.%s = ? order by message.%s ASC",
-                    ContactsTable.COLUMN_CONTACT_AVATAR_URL,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME,
-                    MessagesTable.TABLE_NAME,
-                    ContactsTable.TABLE_NAME,
-                    MessagesTable.COLUMN_MESSAGES_FROM_ID,
-                    ContactsTable.COLUMN_ID,
-                    MessagesTable.COLUMN_MESSAGES_THREAD_ID,
-                    MessagesTable.COLUMN_MESSAGES_TIMESTAMP
-            );
-
 
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
@@ -755,7 +741,10 @@ public class DataProviderService extends Service {
         }
 
         // Get id of most recent msg.
-        Cursor messages = database.rawQuery(QUERY_MESSAGES_SQL, new String[]{bThread.getId()});
+        Cursor messages = getContentResolver().query(MessageProvider.CONTENT_URI, null,
+                MessagesTable.COLUMN_MESSAGES_THREAD_ID + "=?",
+                new String[]{bThread.getId()},
+                MessagesTable.COLUMN_MESSAGES_TIMESTAMP + " ASC");
         if (messages.moveToLast()) {
             String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
             final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
