@@ -29,12 +29,7 @@ public abstract class AbstractProvider extends ContentProvider {
 
 
     /**
-     * Initialize your content provider on startup.
-     * This method is called for all registered content providers on the
-     * application main thread at application launch time.  It must not perform
-     * lengthy operations, or application startup will be delayed.
-     *
-     * @return true if the provider was successfully loaded, false otherwise
+     * {@inheritDoc}
      */
     @Override
     public boolean onCreate() {
@@ -43,12 +38,7 @@ public abstract class AbstractProvider extends ContentProvider {
     }
 
     /**
-     * Handle requests to insert a new row.
-     *
-     * @param uri The content:// URI of the insertion request.
-     * @param values An array of sets of column_name/value pairs to add to the database.
-     *    This must not be null.
-     * @return The number of values that were inserted.
+     * {@inheritDoc}
      */
     @Override
     public synchronized Uri insert(Uri uri, ContentValues values) {
@@ -68,23 +58,7 @@ public abstract class AbstractProvider extends ContentProvider {
 
 
     /**
-     * Handle query requests from clients.
-     * This method can be called from multiple threads.
-     *
-     * @param uri The URI to query. This will be the full URI sent by the client;
-     *      if the client is requesting a specific record, the URI will end in a record number
-     *      that the implementation should parse and add to a WHERE or HAVING clause, specifying
-     *      that _id value.
-     * @param projection The list of columns to put into the cursor. If
-     *      null all columns are included.
-     * @param selection A selection criteria to apply when filtering rows.
-     *      If null then all rows are included.
-     * @param selectionArgs You may include ?s in selection, which will be replaced by
-     *      the values from selectionArgs, in order that they appear in the selection.
-     *      The values will be bound as Strings.
-     * @param sortOrder How the rows in the cursor should be sorted.
-     *      If null then the provider is free to define the sort order.
-     * @return a Cursor or null.
+     * {@inheritDoc}
      */
     @Override
     public synchronized Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
@@ -97,10 +71,13 @@ public abstract class AbstractProvider extends ContentProvider {
 
         queryBuilder.setTables(basePath());
 
+        Cursor cursor;
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
         int uriType = uriType(uri);
         switch (uriType) {
 
             case RECORDS:
+                cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
                 break;
 
             case RECORD_ID:
@@ -108,30 +85,20 @@ public abstract class AbstractProvider extends ContentProvider {
                  * adding the ID to the original query
                  */
                 queryBuilder.appendWhere("_id=" + uri.getLastPathSegment());
+                cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder, "1");
                 break;
 
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
 
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-
-        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
 
 
     /**
-     * Handle requests to update one or more rows.
-     * Update all rows matching the selection
-     *
-     * @param uri The URI to query. This can potentially have a record ID if this
-     * is an update request for a specific record.
-     * @param values A set of column_name/value pairs to update in the database.
-     *     This must not be null.
-     * @param selection An optional filter to match rows to update.
-     * @return the number of rows affected.
+     * {@inheritDoc}
      */
     @Override
     public synchronized int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
@@ -171,14 +138,7 @@ public abstract class AbstractProvider extends ContentProvider {
 
 
     /**
-     * Handle requests to delete one or more rows.
-     * The implementation should apply the selection clause when performing
-     * deletion, allowing the operation to affect multiple rows in a directory.
-     *
-     * @param uri The full URI to query, including a row ID (if a specific record is requested).
-     * @param selection An optional restriction to apply to rows when deleting.
-     * @return The number of rows affected.
-     * @throws android.database.SQLException
+     * {@inheritDoc}
      */
     @Override
     public synchronized int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -212,9 +172,7 @@ public abstract class AbstractProvider extends ContentProvider {
     }
 
     /**
-     * handle requests for the MIME type of the data at the given URI
-     * @param uri the URI to query.
-     * @return a MIME type string, or null if there is no type.
+     * {@inheritDoc}
      */
     @Override
     public String getType(Uri uri) {
