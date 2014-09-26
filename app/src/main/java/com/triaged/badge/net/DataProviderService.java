@@ -106,20 +106,6 @@ public class DataProviderService extends Service {
     public static final int MSG_STATUS_ACKNOWLEDGED = 1;
     public static final int MSG_STATUS_FAILED = 2;
 
-    protected static final String QUERY_DEPARTMENT_CONTACTS_SQL =
-            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
-                            " ON contact.%s = department.%s WHERE contact.%s = ? AND contact.%s = 0 ORDER BY contact.%s;",
-                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.TABLE_NAME,
-                    DepartmentsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
-                    DepartmentsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
-                    ContactsTable.COLUMN_CONTACT_IS_ARCHIVED,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
-            );
-
     protected static final String QUERY_CONTACT_SQL =
             String.format("SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM" +
                             " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
@@ -154,18 +140,6 @@ public class DataProviderService extends Service {
                     ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
                     ContactsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME
-            );
-    protected static final String QUERY_MANAGED_CONTACTS_SQL =
-            String.format("SELECT contact.*, department.%s %s FROM %s contact LEFT OUTER JOIN %s department" +
-                            " ON  contact.%s = department.%s WHERE contact.%s = ? ORDER BY %s;",
-                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
-                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.TABLE_NAME,
-                    DepartmentsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
-                    DepartmentsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_MANAGER_ID,
                     ContactsTable.COLUMN_CONTACT_FIRST_NAME
             );
     protected static final String QUERY_MESSAGES_SQL =
@@ -412,35 +386,6 @@ public class DataProviderService extends Service {
                 syncCompany();
             }
         });
-    }
-
-    /**
-     * Return a cursor to a set of contact rows that the given id manages.
-     * All columns included.
-     * <p/>
-     * Caller must close the Cursor when no longer needed.
-     *
-     * @param contactId manager id
-     * @return db cursor
-     */
-    protected Cursor getContactsManaged(int contactId) {
-        if (database != null) {
-            return database.rawQuery(QUERY_MANAGED_CONTACTS_SQL, new String[]{String.valueOf(contactId)});
-        }
-        throw new IllegalStateException("getContactsManaged() called before database available.");
-    }
-
-    /**
-     * Return only contacts in a given department.
-     *
-     * @param departmentId
-     * @return
-     */
-    protected Cursor getContactsByDepartmentCursor(int departmentId) {
-        if (database != null) {
-            return database.rawQuery(QUERY_DEPARTMENT_CONTACTS_SQL, new String[]{String.valueOf(departmentId)});
-        }
-        throw new IllegalStateException("getContactsByDepartmentCursor() called before database available.");
     }
 
     /**
@@ -1060,24 +1005,10 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#getContactsByDepartmentCursor(int)
-         */
-        public Cursor getContactsByDepartmentCursor(int departmentId) {
-            return DataProviderService.this.getContactsByDepartmentCursor(departmentId);
-        }
-
-        /**
          * @see DataProviderService#getContactsCursorExcludingLoggedInUser()
          */
         public Cursor getContactsCursorExcludingLoggedInUser() {
             return DataProviderService.this.getContactsCursorExcludingLoggedInUser();
-        }
-
-        /**
-         * @see DataProviderService#getContact(Integer)
-         */
-        public Contact getContact(int contactId) {
-            return DataProviderService.this.getContact(contactId);
         }
 
         /**
@@ -1087,13 +1018,6 @@ public class DataProviderService extends Service {
          */
         public boolean isInitialized() {
             return initialized;
-        }
-
-        /**
-         * @see DataProviderService#getContactsManaged(int)
-         */
-        public Cursor getContactsManaged(int contactId) {
-            return DataProviderService.this.getContactsManaged(contactId);
         }
 
         /**
