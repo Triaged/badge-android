@@ -27,8 +27,7 @@ import com.triaged.badge.models.MessageThread;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
-import com.triaged.badge.ui.profile.AbstractProfileActivity;
-import com.triaged.badge.ui.profile.OtherProfileActivity;
+import com.triaged.badge.ui.profile.ProfileActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONArray;
@@ -72,8 +71,8 @@ public class MenuFragment extends Fragment  {
             return;
         }
         int contactId = ((MyContactAdapter.ViewHolder)view.getTag()).contactId;
-        Intent profileIntent = new Intent(getActivity(), OtherProfileActivity.class);
-        profileIntent.putExtra(AbstractProfileActivity.PROFILE_ID_EXTRA, contactId);
+        Intent profileIntent = new Intent(getActivity(), ProfileActivity.class);
+        profileIntent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, contactId);
         startActivity(profileIntent);
     }
 

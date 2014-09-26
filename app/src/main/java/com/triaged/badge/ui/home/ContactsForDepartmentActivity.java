@@ -10,8 +10,7 @@ import android.widget.ListView;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
-import com.triaged.badge.ui.profile.AbstractProfileActivity;
-import com.triaged.badge.ui.profile.OtherProfileActivity;
+import com.triaged.badge.ui.profile.ProfileActivity;
 
 /**
  * Contacts for a given department
@@ -45,10 +44,10 @@ public class ContactsForDepartmentActivity extends BackButtonActivity {
                     intent = new Intent(ContactsForDepartmentActivity.this, MainActivity.class);
 //                    intent = new Intent(ContactsForDepartmentActivity.this, MyProfileActivity.class);
                 } else {
-                    intent = new Intent(ContactsForDepartmentActivity.this, OtherProfileActivity.class);
+                    intent = new Intent(ContactsForDepartmentActivity.this, ProfileActivity.class);
                 }
                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                intent.putExtra(AbstractProfileActivity.PROFILE_ID_EXTRA, clickedId);
+                intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, clickedId);
                 startActivity(intent);
             }
         });

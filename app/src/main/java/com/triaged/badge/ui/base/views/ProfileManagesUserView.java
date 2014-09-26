@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 /**
- * A view that holds a contact managed by another user
+ * A view that holds a user managed by another user
  * <p/>
  * Created by Will on 7/9/14.
  */

@@ -1,23 +1,28 @@
 package com.triaged.badge.models;
 
+import android.text.TextUtils;
+
+import java.util.concurrent.TimeoutException;
+
 /**
  * Created by Sadegh Kazemy on 9/19/14.
  */
 public class User {
 
-    int id;
+    long id;
     String firstName;
     String lastName;
     String fullName;
+    transient String initials;
     boolean archived;
     String avatarFaceUrl;
     String avatarUrl;
     String email;
-    String managerId;
-    String primaryOfficeLocationid;
-    String currentOfficeLocaitonId;
-    String departmentId;
-    int sharingOfficeLocationStatus;
+    long managerId;
+    long primaryOfficeLocationId;
+    long currentOfficeLocationId;
+    long departmentId;
+    boolean isSharingOfficeLocation;
     boolean installedApp;
 
     EmployeeInfo employeeInfo;
@@ -27,11 +32,11 @@ public class User {
     public static final int SHARING_LOCATION_OFF = 300;
 
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -91,35 +96,35 @@ public class User {
         this.email = email;
     }
 
-    public String getManagerId() {
+    public long getManagerId() {
         return managerId;
     }
 
-    public void setManagerId(String managerId) {
+    public void setManagerId(long managerId) {
         this.managerId = managerId;
     }
 
-    public String getPrimaryOfficeLocationid() {
-        return primaryOfficeLocationid;
+    public long getPrimaryOfficeLocationId() {
+        return primaryOfficeLocationId;
     }
 
-    public void setPrimaryOfficeLocationid(String primaryOfficeLocationid) {
-        this.primaryOfficeLocationid = primaryOfficeLocationid;
+    public void setPrimaryOfficeLocationId(long primaryOfficeLocationId) {
+        this.primaryOfficeLocationId = primaryOfficeLocationId;
     }
 
-    public String getCurrentOfficeLocaitonId() {
-        return currentOfficeLocaitonId;
+    public long currentOfficeLocationId() {
+        return currentOfficeLocationId;
     }
 
-    public void setCurrentOfficeLocaitonId(String currentOfficeLocaitonId) {
-        this.currentOfficeLocaitonId = currentOfficeLocaitonId;
+    public void setCurrentOfficeLocationId(long currentOfficeLocationId) {
+        this.currentOfficeLocationId = currentOfficeLocationId;
     }
 
-    public String getDepartmentId() {
+    public long getDepartmentId() {
         return departmentId;
     }
 
-    public void setDepartmentId(String departmentId) {
+    public void setDepartmentId(long departmentId) {
         this.departmentId = departmentId;
     }
 
@@ -131,17 +136,12 @@ public class User {
         this.installedApp = installedApp;
     }
 
-    public int getSharingOfficeLocationStatus() {
-        return sharingOfficeLocationStatus;
+    public boolean isSharingLocation() {
+        return isSharingOfficeLocation;
     }
 
-    public void setSharingOfficeLocationStatus(int sharingOfficeLocationStatus) {
-        if (sharingOfficeLocationStatus != SHARING_LOCATION_ONE &&
-                sharingOfficeLocationStatus != SHARING_LOCATION_OFF &&
-                sharingOfficeLocationStatus != SHARING_LOCATION_UNAVAILABLE) {
-            throw  new IllegalArgumentException("invalid argument for sharing office location status");
-        }
-        this.sharingOfficeLocationStatus = sharingOfficeLocationStatus;
+    public void setSharingOfficeLocationStatus(boolean sharingOfficeLocationStatus) {
+        this.isSharingOfficeLocation = sharingOfficeLocationStatus;
     }
 
     public EmployeeInfo getEmployeeInfo() {
@@ -150,5 +150,23 @@ public class User {
 
     public void setEmployeeInfo(EmployeeInfo employeeInfo) {
         this.employeeInfo = employeeInfo;
+    }
+
+    public String initials() {
+        if (initials == null) {
+            if (TextUtils.isEmpty(firstName)) {
+                if (TextUtils.isEmpty(lastName)) {
+                    initials = "";
+                }
+                initials = lastName.substring(0, 1).toLowerCase();
+            } else {
+                if (TextUtils.isEmpty(lastName)) {
+                    initials = firstName.substring(0, 1).toUpperCase();
+                } else {
+                    initials = firstName.substring(0, 1) + lastName.substring(0, 1).toUpperCase();
+                }
+            }
+        }
+        return initials;
     }
 }

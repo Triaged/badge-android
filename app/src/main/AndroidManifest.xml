@@ -47,8 +47,8 @@
         <activity
             android:name="com.triaged.badge.ui.entrance.OnboardingActivity"
             android:label="@string/app_name"
-            android:windowSoftInputMode="stateHidden"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -95,7 +95,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme" />
         <activity
-            android:name="com.triaged.badge.ui.profile.OtherProfileActivity"
+            android:name="com.triaged.badge.ui.profile.ProfileActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme"
@@ -198,7 +198,6 @@
             android:authorities="com.triaged.badge.provider.receipts"
             android:enabled="true"
             android:exported="false" />
-
     </application>
 
 </manifest>

@@ -27,7 +27,7 @@ import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
 import com.triaged.badge.ui.home.adapters.MyDepartmentAdapter;
-import com.triaged.badge.ui.profile.OtherProfileActivity;
+import com.triaged.badge.ui.profile.ProfileActivity;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -40,7 +40,6 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  */
 
 public class ContactsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
-
 
     private final static int CONTACTS_TAB_ID = 1000;
     private final static int DEPARTMENTS_TAB_ID = 2000;
@@ -135,9 +134,9 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
                 if (App.dataProviderServiceBinding.getLoggedInUser() != null) {
                     int clickedId = ((MyContactAdapter.ViewHolder) view.getTag()).contactId;
                     if (clickedId != App.dataProviderServiceBinding.getLoggedInUser().id) {
-                        Intent intent = new Intent(getActivity(), OtherProfileActivity.class);
+                        Intent intent = new Intent(getActivity(), ProfileActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        intent.putExtra("PROFILE_ID", clickedId);
+                        intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, clickedId);
                         startActivity(intent);
                     } else {
                         // Normally won't happen.
