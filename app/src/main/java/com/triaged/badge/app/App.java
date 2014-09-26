@@ -23,6 +23,7 @@ import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.helpers.Foreground;
 import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
+import com.triaged.badge.net.LongDeserializer;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
@@ -59,6 +60,7 @@ public class App extends Application {
     public static RestAdapter restAdapter;
     private static int mAccountId;
     public static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(long.class, new LongDeserializer())
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
 
