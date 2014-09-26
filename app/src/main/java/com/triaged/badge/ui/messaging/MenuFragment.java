@@ -20,10 +20,11 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.table.ContactsTable;
-import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.MessageThread;
+import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.ui.home.adapters.MyContactAdapter;
@@ -57,7 +58,7 @@ public class MenuFragment extends Fragment  {
     private String mThreadId;
     private String mThreadName;
     MyContactAdapter adapter;
-    List<Contact> participants;
+    List<User> participants;
     MatrixCursor cursor;
 
     @InjectView(R.id.participantsList) ListView participantsListView;
@@ -70,9 +71,9 @@ public class MenuFragment extends Fragment  {
         if (id < 0) { // If the header-view clicked somehow, do nothing
             return;
         }
-        int contactId = ((MyContactAdapter.ViewHolder)view.getTag()).contactId;
+        int userId = ((MyContactAdapter.ViewHolder)view.getTag()).contactId;
         Intent profileIntent = new Intent(getActivity(), ProfileActivity.class);
-        profileIntent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, contactId);
+        profileIntent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, userId);
         startActivity(profileIntent);
     }
 
@@ -126,14 +127,14 @@ public class MenuFragment extends Fragment  {
                     ContactsTable.COLUMN_CONTACT_AVATAR_URL
             }, users.length());
 
-            participants = new ArrayList<Contact>(users.length());
+            participants = new ArrayList<User>(users.length());
             for (int i = 0; i < users.length(); i++) {
                 Integer userId = users.getInt(i);
                 if (userId != App.dataProviderServiceBinding.getLoggedInUser().id) {
-                    final Contact c = App.dataProviderServiceBinding.getContact(userId);
-                    if (c != null && !c.isArchived) {
+                    final User c = UserHelper.getUser(getActivity(), userId);
+                    if (c != null && !c.isArchived()) {
                         participants.add(c);
-                        addContactToCursor(c);
+                        addUserToCursor(c);
                     }
                 }
             }
@@ -256,12 +257,12 @@ public class MenuFragment extends Fragment  {
     }
 
 
-    private void addContactToCursor(Contact contact) {
-        cursor.addRow(new Object[]{contact.id,
-                contact.firstName,
-                contact.lastName,
-                contact.jobTitle,
-                contact.avatarUrl
+    private void addUserToCursor(User user) {
+        cursor.addRow(new Object[]{user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmployeeInfo().getJobTitle(),
+                user.getAvatarFaceUrl()
         });
     }
 

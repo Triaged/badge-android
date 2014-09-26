@@ -1,8 +1,11 @@
 package com.triaged.badge.database.helper;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 
+import com.triaged.badge.database.provider.ContactProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.EmployeeInfo;
@@ -79,5 +82,16 @@ public class UserHelper {
         employeeInfo.setLinkedin(cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_LINKEDIN)));
 
         return user;
+    }
+
+    public static User getUser(Context context, int userId) {
+         Cursor cursor = context.getContentResolver().query(
+                 ContentUris.withAppendedId(ContactProvider.CONTENT_URI, userId),
+                null,  null, null, null);
+        if (cursor.moveToFirst()) {
+            return fromCursor(cursor);
+        } else {
+            return null;
+        }
     }
 }
