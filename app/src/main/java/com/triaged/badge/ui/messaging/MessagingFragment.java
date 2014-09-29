@@ -198,10 +198,8 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     private void markMessagesAsRead() {
         ContentValues values = new ContentValues();
         values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
-
         getActivity().getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                MessagesTable.COLUMN_MESSAGES_THREAD_ID +   " =? AND " +
-                        MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1",
+                MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
                 new String[] { mThreadId});
     }
 

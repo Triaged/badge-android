@@ -17,7 +17,7 @@ import com.triaged.badge.database.table.ReceiptTable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 24;
+    protected static final int DATABASE_VERSION = 25;
 
     private static Context mContext;
 

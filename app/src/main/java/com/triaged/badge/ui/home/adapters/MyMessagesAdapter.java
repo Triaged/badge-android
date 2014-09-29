@@ -15,7 +15,9 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.MessagesTable;
+import com.triaged.badge.models.Contact;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONArray;
@@ -67,7 +69,7 @@ public class MyMessagesAdapter extends CursorAdapter {
         final ViewHolder holder = (ViewHolder) view.getTag();
         holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
         String names = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS));
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
         String body = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
         int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_IS_READ));
 

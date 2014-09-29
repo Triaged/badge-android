@@ -17,7 +17,6 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.MessageProvider;
-import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.ui.home.adapters.MyMessagesAdapter;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 import com.triaged.badge.ui.notification.Notifier;
@@ -83,9 +82,8 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI,
-                null, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1", null,
-                MessagesTable.COLUMN_MESSAGES_TIMESTAMP + " DESC");
+        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_HISTROY,
+                null, null, null, null);
     }
 
     @Override
@@ -93,7 +91,6 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
         if (data != null) {
             adapter.swapCursor(data);
             checkListEmptiness();
-
         }
     }
 

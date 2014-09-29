@@ -499,7 +499,6 @@ public class DataProviderService extends Service {
                 ContentValues msgValues = new ContentValues();
 //                database.beginTransaction();
                 try {
-                    clearThreadHead(threadId);
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     final String guid = UUID.randomUUID().toString();
@@ -507,8 +506,6 @@ public class DataProviderService extends Service {
                     //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, message);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_ID, threadId);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_FROM_ID, loggedInUser.id);
                     msgValues.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
@@ -759,13 +756,9 @@ public class DataProviderService extends Service {
                 });
             }
             messages.close();
-            // Unset thread head on all thread messages.
-            clearThreadHead(bThread.getId());
 
             ContentValues msgValues = new ContentValues();
-            msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, userIdArrayToAvatarUrl(bThread.getUserIds()));
             msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
-            msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 1);
             getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
                     MessagesTable.COLUMN_MESSAGES_GUID + " =?",
                     new String[] { mostRecentGuid});
@@ -805,19 +798,6 @@ public class DataProviderService extends Service {
         } else {
             return existingThreadId;
         }
-    }
-
-    protected void clearThreadHead(String threadId) {
-        ContentValues msgValues = new ContentValues();
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_HEAD, 0);
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_AVATAR_URL, (String) null);
-        msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, (String) null);
-        getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
-                new String[] { threadId});
-
-//        database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_THREAD_ID), new String[]{threadId});
-        msgValues.clear();
     }
 
     /**
