@@ -49,7 +49,6 @@ public class App extends Application {
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
-    public ServiceConnection dataProviderServiceConnnection = null;
 
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
@@ -75,13 +74,13 @@ public class App extends Application {
 
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
-        setupDataProviderServicebinding();
+        setupDataProviderServiceBinding();
         initForeground();
         setupULI();
     }
 
-    private void setupDataProviderServicebinding() {
-        dataProviderServiceConnnection = new ServiceConnection() {
+    private void setupDataProviderServiceBinding() {
+        ServiceConnection dataProviderServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
@@ -93,9 +92,9 @@ public class App extends Application {
             }
         };
 
-        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
+        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnection, BIND_AUTO_CREATE)) {
             App.gLogger.e("Couldn't bind to data provider service.");
-            unbindService(dataProviderServiceConnnection);
+            unbindService(dataProviderServiceConnection);
         }
     }
 
