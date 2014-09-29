@@ -69,7 +69,7 @@ public class MyMessagesAdapter extends CursorAdapter {
         final ViewHolder holder = (ViewHolder) view.getTag();
         holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
         String names = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_PARTICIPANTS));
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_AVATAR_URL));
         String body = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_BODY));
         int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_IS_READ));
 

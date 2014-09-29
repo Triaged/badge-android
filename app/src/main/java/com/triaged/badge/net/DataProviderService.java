@@ -507,7 +507,6 @@ public class DataProviderService extends Service {
                     //msgValues.put( CompanySQLiteHelper.CLM_ID, null );
                     msgValues.put(MessagesTable.CLM_TIMESTAMP, timestamp);
                     msgValues.put(MessagesTable.CLM_BODY, message);
-                    msgValues.put(MessagesTable.CLM_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
                     msgValues.put(MessagesTable.CLM_THREAD_ID, threadId);
                     msgValues.put(MessagesTable.CLM_AUTHOR_ID, loggedInUser.id);
                     msgValues.put(MessagesTable.CLM_IS_READ, 1);
@@ -760,7 +759,6 @@ public class DataProviderService extends Service {
             messages.close();
 
             ContentValues msgValues = new ContentValues();
-            msgValues.put(MessagesTable.CLM_AVATAR_URL, userIdArrayToAvatarUrl(bThread.getUserIds()));
             msgValues.put(MessagesTable.CLM_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
             getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
                     MessagesTable.CLM_GUID + " =?",
@@ -801,40 +799,6 @@ public class DataProviderService extends Service {
         } else {
             return existingThreadId;
         }
-    }
-
-    /**
-     * Get the avatar url for the first user id in the list that's not mine.
-     *
-     * @param userIdArr
-     * @return
-     * @throws JSONException
-     */
-    private String userIdArrayToAvatarUrl(Integer[] userIdArr) {
-        for (int id : userIdArr) {
-            if (id != loggedInUser.id) {
-                String avatarUrl = UserHelper.getUserAvatar(this, id);
-                if (avatarUrl != null) return avatarUrl;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Get the avatar url for the first user id in the list that's not mine.
-     *
-     * @param userIdArr
-     * @return
-     * @throws JSONException
-     */
-    private String userIdArrayToAvatarUrl(String[] userIdArr) {
-        for (String id : userIdArr) {
-            if (!id.equals(loggedInUser.id)) {
-                String avatarUrl = UserHelper.getUserAvatar(this, Integer.parseInt(id));
-                if (avatarUrl != null) return avatarUrl;
-            }
-        }
-        return null;
     }
 
     /**
@@ -940,7 +904,6 @@ public class DataProviderService extends Service {
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
         loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
     }
-
 
     /**
      * Local, non rpc interface for this service.
