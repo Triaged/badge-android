@@ -70,7 +70,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
                 if (position != 0) {
                     Cursor officeCursor = (Cursor) officeLocationsAdapter.getItem(position - 1);
                     officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_ID);
-                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, OfficeLocationsTable.CLM_NAME);
                     officeLocationsAdapter.notifyDataSetChanged();
                     noLocationCheck.setVisibility(View.GONE);
                 }
@@ -160,7 +160,7 @@ public class OnboardingLocationActivity extends BadgeActivity {
             @Override
             public void success(Account account, Response response) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                values.put(ContactsTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
                         officeLocationsAdapter.usersOffice);
                 getContentResolver().update(ContactProvider.CONTENT_URI, values,
                         ContactsTable.COLUMN_ID + " =?",

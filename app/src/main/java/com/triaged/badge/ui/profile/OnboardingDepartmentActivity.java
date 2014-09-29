@@ -9,7 +9,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,7 +27,6 @@ import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.net.api.RestService;
-import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.MixpanelActivity;
 import com.triaged.badge.ui.home.adapters.DepartmentsAdapter;
 
@@ -112,8 +110,8 @@ public class OnboardingDepartmentActivity extends MixpanelActivity implements Lo
                                 // Put into database.
                                 ContentValues values = new ContentValues();
                                 values.put(DepartmentsTable.COLUMN_ID, department.id);
-                                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, department.name);
-                                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, department.usersCount);
+                                values.put(DepartmentsTable.CLM_NAME, department.name);
+                                values.put(DepartmentsTable.CLM_CONTACTS_NUMBER, department.usersCount);
                                 getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
                                 // Start next activity.
                                 Intent intent = new Intent(OnboardingDepartmentActivity.this, OnboardingPositionActivity.class);
@@ -153,7 +151,7 @@ public class OnboardingDepartmentActivity extends MixpanelActivity implements Lo
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(this, DepartmentProvider.CONTENT_URI,
-                null, null, null, DepartmentsTable.COLUMN_DEPARTMENT_NAME);
+                null, null, null, DepartmentsTable.CLM_NAME);
     }
 
     @Override

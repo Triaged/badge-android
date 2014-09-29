@@ -72,8 +72,8 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(this, ContactProvider.CONTENT_URI,
-                null, ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID + "=?",
-                new String[]{departmentId+""}, ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+                null, ContactsTable.CLM_DEPARTMENT_ID + "=?",
+                new String[]{departmentId+""}, ContactsTable.CLM_FIRST_NAME);
     }
 
     @Override

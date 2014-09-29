@@ -26,7 +26,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
@@ -222,10 +221,10 @@ public class LocationTrackingService extends Service implements LocationListener
                     Cursor officeLocations = OfficeLocationHelper.getOfficeLocationsCursor(LocationTrackingService.this);
                     Location officeLocation = new Location(LocationManager.NETWORK_PROVIDER);
                     while (officeLocations.moveToNext()) {
-                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
-                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
+                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_LAT);
+                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_LNG);
                         final int officeId = Contact.getIntSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_ID);
-                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_NAME);
                         if (latStr != null && !"".equals(latStr)) {
                             officeLocation.setLatitude(Float.parseFloat(latStr));
                             officeLocation.setLongitude(Float.parseFloat(lngStr));
@@ -267,7 +266,7 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
+                values.put(ContactsTable.CLM_CURRENT_OFFICE_LOCATION_ID, -1);
                 context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
                         ContactsTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
@@ -286,7 +285,7 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
+                values.put(ContactsTable.CLM_CURRENT_OFFICE_LOCATION_ID, officeId);
                 context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
                         ContactsTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});

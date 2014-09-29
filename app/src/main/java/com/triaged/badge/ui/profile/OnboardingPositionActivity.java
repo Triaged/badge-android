@@ -95,9 +95,9 @@ public class OnboardingPositionActivity extends BadgeActivity {
                         public void success(Account account, Response response) {
                             // Put updated data into database.
                             ContentValues values = new ContentValues();
-                            values.put(ContactsTable.COLUMN_CONTACT_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
-                            values.put(ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
-                            values.put(ContactsTable.COLUMN_CONTACT_MANAGER_ID, account.getCurrentUser().getManagerId());
+                            values.put(ContactsTable.CLM_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
+                            values.put(ContactsTable.CLM_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
+                            values.put(ContactsTable.CLM_MANAGER_ID, account.getCurrentUser().getManagerId());
                             getContentResolver().update(ContactProvider.CONTENT_URI, values,
                                     ContactsTable.COLUMN_ID + " =?",
                                     new String[] { App.accountId() + ""});

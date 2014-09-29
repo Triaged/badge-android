@@ -195,31 +195,31 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
         if (id == CONTACTS_TAB_ID) {
             if (mSearchTerm == null) {
                 return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
-                        null, ContactsTable.COLUMN_CONTACT_IS_ARCHIVED + " = 0", null,
-                        ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+                        null, ContactsTable.CLM_IS_ARCHIVED + " = 0", null,
+                        ContactsTable.CLM_FIRST_NAME);
             } else {
                 String filterString = "%" + mSearchTerm + "%";
                 return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
                         null,
-                        ContactsTable.COLUMN_CONTACT_LAST_NAME + " LIKE ? OR " +
-                        ContactsTable.COLUMN_CONTACT_FIRST_NAME + " LIKE ?  AND " +
-                        ContactsTable.COLUMN_CONTACT_IS_ARCHIVED + " = 0"
+                        ContactsTable.CLM_LAST_NAME + " LIKE ? OR " +
+                        ContactsTable.CLM_FIRST_NAME + " LIKE ?  AND " +
+                        ContactsTable.CLM_IS_ARCHIVED + " = 0"
                         , new String[] { filterString, filterString},
-                        ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+                        ContactsTable.CLM_FIRST_NAME);
             }
 
         } else if (id == DEPARTMENTS_TAB_ID) {
             if (mSearchTerm == null) {
                 return new CursorLoader(getActivity(), DepartmentProvider.CONTENT_URI, null,
-                        DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS + " > 0 ",
+                        DepartmentsTable.CLM_CONTACTS_NUMBER + " > 0 ",
                         null,
-                        DepartmentsTable.COLUMN_DEPARTMENT_NAME);
+                        DepartmentsTable.CLM_NAME);
             } else {
                 return new CursorLoader(getActivity(), DepartmentProvider.CONTENT_URI, null,
-                        DepartmentsTable.COLUMN_DEPARTMENT_NAME + " LIKE ? AND " +
-                        DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS + " > 0 ",
+                        DepartmentsTable.CLM_NAME + " LIKE ? AND " +
+                        DepartmentsTable.CLM_CONTACTS_NUMBER + " > 0 ",
                         new String[] {"%" + mSearchTerm + "%"},
-                        DepartmentsTable.COLUMN_DEPARTMENT_NAME);
+                        DepartmentsTable.CLM_NAME);
             }
         }
         return null;

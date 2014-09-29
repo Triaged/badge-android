@@ -138,11 +138,11 @@ public class OnboardingReportingToActivity extends BackButtonActivity implements
             String filterString = "%" + mSearchTerm + "%";
             return new CursorLoader(this, ContactProvider.CONTENT_URI, null,
                     ContactsTable.COLUMN_ID + "<> ? AND ("
-                            + ContactsTable.COLUMN_CONTACT_LAST_NAME + " LIKE ? OR "
-                            + ContactsTable.COLUMN_CONTACT_FIRST_NAME + " LIKE ?)  AND "
-                            + ContactsTable.COLUMN_CONTACT_IS_ARCHIVED + " = 0",
+                            + ContactsTable.CLM_LAST_NAME + " LIKE ? OR "
+                            + ContactsTable.CLM_FIRST_NAME + " LIKE ?)  AND "
+                            + ContactsTable.CLM_IS_ARCHIVED + " = 0",
                     new String[] { App.accountId() + "" , filterString, filterString},
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME);
+                    ContactsTable.CLM_FIRST_NAME);
         }
     }
 

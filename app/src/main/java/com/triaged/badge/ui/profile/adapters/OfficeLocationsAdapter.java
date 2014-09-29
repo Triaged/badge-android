@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
-import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
@@ -57,11 +56,11 @@ public class OfficeLocationsAdapter extends CursorAdapter {
     }
 
     private void setupView(ViewHolder holder, Cursor cursor) {
-        holder.officeName.setText(Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME));
-        String address = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS);
-        String city = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY);
-        String zip = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP);
-        String country = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY);
+        holder.officeName.setText(Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_NAME));
+        String address = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_ADDRESS);
+        String city = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_CITY);
+        String zip = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_ZIP);
+        String country = Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_COUNTRY);
         String details = String.format("%s, %s %s, %s", address, city, zip, country);
         holder.officeDetails.setText(details);
 

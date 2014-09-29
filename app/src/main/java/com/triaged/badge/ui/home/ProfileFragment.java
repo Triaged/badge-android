@@ -194,7 +194,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         if (mCurrentUser.getDepartmentId() > 0) {
             Cursor depCursor = getActivity().getContentResolver().query(
               ContentUris.withAppendedId(DepartmentProvider.CONTENT_URI, mCurrentUser.getDepartmentId()),
-                    new String[] {DepartmentsTable.COLUMN_DEPARTMENT_NAME},
+                    new String[] {DepartmentsTable.CLM_NAME},
                     null, null, null
             );
             if (depCursor.moveToFirst()) {
@@ -311,7 +311,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     private void bindOfficeView() {
         Cursor cursor = getActivity().getContentResolver().query(
                 ContentUris.withAppendedId(OfficeLocationProvider.CONTENT_URI, mCurrentUser.currentOfficeLocationId()),
-                new String[]{OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME}, null, null, null);
+                new String[]{OfficeLocationsTable.CLM_NAME}, null, null, null);
         if (cursor.moveToFirst()) {
             primaryOfficeView.primaryValue = cursor.getString(0);
             primaryOfficeView.secondaryValue = "Primary Office";
@@ -444,7 +444,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                     null,  null, null, null);
         } else {
             return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
-                    null, ContactsTable.COLUMN_CONTACT_MANAGER_ID + "=?",
+                    null, ContactsTable.CLM_MANAGER_ID + "=?",
                     new String[]{mContactId + ""}, null);
         }
     }

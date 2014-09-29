@@ -22,7 +22,7 @@ public class Department {
      */
     public void fromCursor(Cursor deptCursor) {
         id = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_ID);
-        name = Contact.getStringSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NAME);
-        usersCount = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS);
+        name = Contact.getStringSafelyFromCursor(deptCursor, DepartmentsTable.CLM_NAME);
+        usersCount = Contact.getIntSafelyFromCursor(deptCursor, DepartmentsTable.CLM_CONTACTS_NUMBER);
     }
 }

@@ -22,21 +22,21 @@ public class OfficeLocationHelper {
 
         values.put(ContactsTable.COLUMN_ID, officeLocation.getId());
         if (officeLocation.getName() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, officeLocation.getName());
+            values.put(OfficeLocationsTable.CLM_NAME, officeLocation.getName());
         if (officeLocation.getCity() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY, officeLocation.getCity());
+            values.put(OfficeLocationsTable.CLM_CITY, officeLocation.getCity());
         if (officeLocation.getState() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE, officeLocation.getState());
+            values.put(OfficeLocationsTable.CLM_STATE, officeLocation.getState());
         if (officeLocation.getCountry() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, officeLocation.getCountry());
+            values.put(OfficeLocationsTable.CLM_COUNTRY, officeLocation.getCountry());
         if (officeLocation.getLatitude() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, officeLocation.getLatitude());
+            values.put(OfficeLocationsTable.CLM_LAT, officeLocation.getLatitude());
         if (officeLocation.getLongitude() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, officeLocation.getLongitude());
+            values.put(OfficeLocationsTable.CLM_LNG, officeLocation.getLongitude());
         if (officeLocation.getStreetAddress() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS, officeLocation.getStreetAddress());
+            values.put(OfficeLocationsTable.CLM_ADDRESS, officeLocation.getStreetAddress());
         if (officeLocation.getZipCode() != null)
-            values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, officeLocation.getZipCode());
+            values.put(OfficeLocationsTable.CLM_ZIP, officeLocation.getZipCode());
 
         return values;
     }
@@ -44,18 +44,18 @@ public class OfficeLocationHelper {
     public static String getOfficeLocationName(Context context, String officeLocationId) {
         Cursor cursor = context.getContentResolver().query(
                 OfficeLocationProvider.CONTENT_URI,
-                new String[]{OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME},
+                new String[]{OfficeLocationsTable.CLM_NAME},
                 OfficeLocationsTable.COLUMN_ID + " =?",
                 new String[]{officeLocationId},
                 null);
         if (cursor.moveToFirst()) {
-            return Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+            return Contact.getStringSafelyFromCursor(cursor, OfficeLocationsTable.CLM_NAME);
         }
         return null;
     }
 
     public static Cursor getOfficeLocationsCursor(Context context) {
         return context.getContentResolver().query(OfficeLocationProvider.CONTENT_URI,
-                null, null, null, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+                null, null, null, OfficeLocationsTable.CLM_NAME);
     }
 }

@@ -15,8 +15,8 @@ public class DepartmentHelper {
     public static ContentValues toContentValue(Department department) {
         ContentValues values = new ContentValues();
         values.put(DepartmentsTable.COLUMN_ID, department.id);
-        values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, department.usersCount);
-        if (department.name != null) values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, department.name);
+        values.put(DepartmentsTable.CLM_CONTACTS_NUMBER, department.usersCount);
+        if (department.name != null) values.put(DepartmentsTable.CLM_NAME, department.name);
         return values;
     }
 }

@@ -110,23 +110,23 @@ public class DataProviderService extends Service {
             String.format("SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM" +
                             " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
                             " ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
-                    OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME,
+                    OfficeLocationsTable.CLM_NAME,
                     DatabaseHelper.JOINED_OFFICE_NAME,
-                    DepartmentsTable.COLUMN_DEPARTMENT_NAME,
+                    DepartmentsTable.CLM_NAME,
                     DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME,
+                    ContactsTable.CLM_FIRST_NAME,
                     DatabaseHelper.JOINED_MANAGER_FIRST_NAME,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME,
+                    ContactsTable.CLM_LAST_NAME,
                     DatabaseHelper.JOINED_MANAGER_LAST_NAME,
                     ContactsTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID,
+                    ContactsTable.CLM_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
                     ContactsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_MANAGER_ID,
+                    ContactsTable.CLM_MANAGER_ID,
                     ContactsTable.COLUMN_ID,
                     OfficeLocationsTable.TABLE_NAME,
-                    ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                    ContactsTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
                     OfficeLocationsTable.COLUMN_ID,
                     ContactsTable.COLUMN_ID
             );
@@ -239,8 +239,8 @@ public class DataProviderService extends Service {
             public void success(Department department, Response response) {
                 ContentValues values = new ContentValues();
                 values.put(DepartmentsTable.COLUMN_ID, department.id);
-                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NAME, department.name);
-                values.put(DepartmentsTable.COLUMN_DEPARTMENT_NUM_CONTACTS, department.usersCount);
+                values.put(DepartmentsTable.CLM_NAME, department.name);
+                values.put(DepartmentsTable.CLM_CONTACTS_NUMBER, department.usersCount);
                 getContentResolver().insert(DepartmentProvider.CONTENT_URI, values);
             }
 
@@ -503,15 +503,17 @@ public class DataProviderService extends Service {
                     // GUID
                     final String guid = UUID.randomUUID().toString();
                     String[] userIds = deserializeStringArray(prefs.getString(threadId, ""));
-                    //msgValues.put( CompanySQLiteHelper.COLUMN_MESSAGES_ID, null );
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_TIMESTAMP, timestamp);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_BODY, message);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_ID, threadId);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_FROM_ID, loggedInUser.id);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_GUID, guid);
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
+
+                    //msgValues.put( CompanySQLiteHelper.CLM_ID, null );
+                    msgValues.put(MessagesTable.CLM_TIMESTAMP, timestamp);
+                    msgValues.put(MessagesTable.CLM_BODY, message);
+                    msgValues.put(MessagesTable.CLM_AVATAR_URL, userIdArrayToAvatarUrl(userIds));
+                    msgValues.put(MessagesTable.CLM_THREAD_ID, threadId);
+                    msgValues.put(MessagesTable.CLM_AUTHOR_ID, loggedInUser.id);
+                    msgValues.put(MessagesTable.CLM_IS_READ, 1);
+                    msgValues.put(MessagesTable.CLM_GUID, guid);
+                    msgValues.put(MessagesTable.CLM_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
+                    msgValues.put(MessagesTable.CLM_ACK, MSG_STATUS_PENDING);
 
                     getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
 //                            database.insert(MessagesTable.TABLE_NAME, null, msgValues);
@@ -569,21 +571,21 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
-                        null, MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                        null, MessagesTable.CLM_GUID + " =?",
                         new String[]{guid}, null);
-                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK)) == MSG_STATUS_PENDING) {
+                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.CLM_ACK)) == MSG_STATUS_PENDING) {
                     ContentValues values = new ContentValues();
-                    values.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_FAILED);
+                    values.put(MessagesTable.CLM_ACK, MSG_STATUS_FAILED);
 
 
                     int rowsUpdated = getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                            MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                            MessagesTable.CLM_GUID + " =?",
                             new String[] { guid});
 
 //                    int rowsUpdated = database.update(
 //                            MessagesTable.TABLE_NAME,
 //                            values,
-//                            String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID),
+//                            String.format("%s = ?", MessagesTable.CLM_GUID),
 //                            new String[]{guid}
 //                    );
                     if (rowsUpdated == 1) {
@@ -614,20 +616,20 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
-                        null, MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                        null, MessagesTable.CLM_GUID + " =?",
                         new String[]{guid}, null);
                 if (msgCursor.moveToFirst()) {
                     // Flip back to pending status.
                     ContentValues msgValues = new ContentValues();
-                    msgValues.put(MessagesTable.COLUMN_MESSAGES_ACK, MSG_STATUS_PENDING);
+                    msgValues.put(MessagesTable.CLM_ACK, MSG_STATUS_PENDING);
                     getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                            MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                            MessagesTable.CLM_GUID + " =?",
                             new String[] { guid});
 
-//                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.COLUMN_MESSAGES_GUID), new String[]{guid});
-                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
-                    String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
-                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP));
+//                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.CLM_GUID), new String[]{guid});
+                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
+                    String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_BODY));
+                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP));
                     msgCursor.close();
 
                     Intent statusChangeIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
@@ -709,16 +711,16 @@ public class DataProviderService extends Service {
                     withValues(contentValues).
                     build());
 
-            if (contentValues.getAsInteger(MessagesTable.COLUMN_MESSAGES_FROM_ID) != loggedInUser.id) {
+            if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != loggedInUser.id) {
                 ContentValues receiptValues = new ContentValues();
-                receiptValues.put(ReceiptTable.COLUMN_MESSAGE_ID, contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID));
-                receiptValues.put(ReceiptTable.COLUMN_THREAD_ID, bThread.getId());
-                receiptValues.put(ReceiptTable.COLUMN_USER_ID, loggedInUser.id);
+                receiptValues.put(ReceiptTable.CLM_MESSAGE_ID, contentValues.getAsString(MessagesTable.CLM_ID));
+                receiptValues.put(ReceiptTable.CLM_THREAD_ID, bThread.getId());
+                receiptValues.put(ReceiptTable.CLM_USER_ID, loggedInUser.id);
                 receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
                 getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
 
                 EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
-                        contentValues.getAsString(MessagesTable.COLUMN_MESSAGES_ID)));
+                        contentValues.getAsString(MessagesTable.CLM_ID)));
             }
         }
         try {
@@ -739,12 +741,12 @@ public class DataProviderService extends Service {
 
         // Get id of most recent msg.
         Cursor messages = getContentResolver().query(MessageProvider.CONTENT_URI, null,
-                MessagesTable.COLUMN_MESSAGES_THREAD_ID + "=?",
+                MessagesTable.CLM_THREAD_ID + "=?",
                 new String[]{bThread.getId()},
-                MessagesTable.COLUMN_MESSAGES_TIMESTAMP + " ASC");
+                MessagesTable.CLM_TIMESTAMP + " ASC");
         if (messages.moveToLast()) {
-            String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
-            final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ID));
+            String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.CLM_GUID));
+            final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.CLM_ID));
             if ("Inf".equals(mostRecentGuid)) {
                 // Dang! Crash the app to get a report.
                 handler.post(new Runnable() {
@@ -758,9 +760,10 @@ public class DataProviderService extends Service {
             messages.close();
 
             ContentValues msgValues = new ContentValues();
-            msgValues.put(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
+            msgValues.put(MessagesTable.CLM_AVATAR_URL, userIdArrayToAvatarUrl(bThread.getUserIds()));
+            msgValues.put(MessagesTable.CLM_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
             getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                    MessagesTable.COLUMN_MESSAGES_GUID + " =?",
+                    MessagesTable.CLM_GUID + " =?",
                     new String[] { mostRecentGuid});
 
         } else {

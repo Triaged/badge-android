@@ -74,7 +74,7 @@ public class MessageProvider extends AbstractProvider {
                 checkColumns(projection);
                 queryBuilder.setTables(MessagesTable.TABLE_NAME + " LEFT OUTER JOIN " +
                         ContactsTable.TABLE_NAME + " ON " +
-                        MessagesTable.TABLE_NAME + "." + MessagesTable.COLUMN_MESSAGES_FROM_ID + " = " +
+                        MessagesTable.TABLE_NAME + "." + MessagesTable.CLM_AUTHOR_ID + " = " +
                         ContactsTable.TABLE_NAME + "." + ContactsTable.COLUMN_ID);
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
                 Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
@@ -97,23 +97,23 @@ public class MessageProvider extends AbstractProvider {
                 .append(" FROM ")
                 .append("(SELECT ")
                 .append(MessagesTable.COLUMN_ID).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_BODY).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_TIMESTAMP).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_IS_READ).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_THREAD_ID).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS).append(", ")
-                .append(MessagesTable.COLUMN_MESSAGES_FROM_ID)
+                .append(MessagesTable.CLM_BODY).append(", ")
+                .append(MessagesTable.CLM_TIMESTAMP).append(", ")
+                .append(MessagesTable.CLM_IS_READ).append(", ")
+                .append(MessagesTable.CLM_THREAD_ID).append(", ")
+                .append(MessagesTable.CLM_THREAD_PARTICIPANTS).append(", ")
+                .append(MessagesTable.CLM_AUTHOR_ID)
                 .append(" FROM ").append(MessagesTable.TABLE_NAME)
-                .append(" GROUP BY ").append(MessagesTable.COLUMN_MESSAGES_THREAD_ID)
-                .append(" ORDER BY ").append(MessagesTable.COLUMN_MESSAGES_TIMESTAMP).append(" DESC")
+                .append(" GROUP BY ").append(MessagesTable.CLM_THREAD_ID)
+                .append(" ORDER BY ").append(MessagesTable.CLM_TIMESTAMP).append(" DESC")
                 .append(") msg ")
                 .append(" LEFT JOIN ( SELECT ")
                 .append(ContactsTable.COLUMN_ID).append(" as contact_id, ")
-                .append(ContactsTable.COLUMN_CONTACT_FIRST_NAME).append(", ")
-                .append(ContactsTable.COLUMN_CONTACT_AVATAR_URL)
+                .append(ContactsTable.CLM_FIRST_NAME).append(", ")
+                .append(ContactsTable.CLM_AVATAR_URL)
                 .append(" FROM ").append(ContactsTable.TABLE_NAME)
                 .append(") cnt ")
-                .append(" ON ").append("msg.").append(MessagesTable.COLUMN_MESSAGES_FROM_ID)
+                .append(" ON ").append("msg.").append(MessagesTable.CLM_AUTHOR_ID)
                 .append("= cnt.").append("contact_id");
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         return database.rawQuery(query.toString(), null);

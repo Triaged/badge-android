@@ -67,11 +67,11 @@ public class MyMessagesAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
-        holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_ID));
-        String names = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_THREAD_PARTICIPANTS));
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
-        String body = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY));
-        int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_IS_READ));
+        holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
+        String names = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_PARTICIPANTS));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_AVATAR_URL));
+        String body = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_BODY));
+        int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_IS_READ));
 
         if (isRead == 1) {
             holder.name.setTextColor(mainBlackColor);
@@ -112,7 +112,7 @@ public class MyMessagesAdapter extends CursorAdapter {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        long serverTime = cursor.getLong(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP)) / 1000l;
+        long serverTime = cursor.getLong(cursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP)) / 1000l;
         if (serverTime > System.currentTimeMillis()) {
             serverTime = System.currentTimeMillis() - 5000;
         }

@@ -122,7 +122,7 @@ public class SettingsActivity extends BackButtonActivity {
                         SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
 
                         ContentValues values = new ContentValues(1);
-                        values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION,
+                        values.put(ContactsTable.CLM_SHARING_OFFICE_LOCATION,
                                 isChecked ? User.SHARING_LOCATION_ONE : User.SHARING_LOCATION_OFF);
 
                         getContentResolver().update(ContactProvider.CONTENT_URI, values,

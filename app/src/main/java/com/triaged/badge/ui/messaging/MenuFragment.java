@@ -121,10 +121,10 @@ public class MenuFragment extends Fragment  {
 
             cursor = new MatrixCursor(new String[] {
                     ContactsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_CONTACT_FIRST_NAME,
-                    ContactsTable.COLUMN_CONTACT_LAST_NAME,
-                    ContactsTable.COLUMN_CONTACT_JOB_TITLE,
-                    ContactsTable.COLUMN_CONTACT_AVATAR_URL
+                    ContactsTable.CLM_FIRST_NAME,
+                    ContactsTable.CLM_LAST_NAME,
+                    ContactsTable.CLM_JOB_TITLE,
+                    ContactsTable.CLM_AVATAR_URL
             }, users.length());
 
             participants = new ArrayList<User>(users.length());

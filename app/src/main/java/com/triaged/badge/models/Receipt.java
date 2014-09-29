@@ -67,10 +67,10 @@ public class Receipt {
 
     public static ContentValues generateContentValue(Receipt receipt) {
         ContentValues cv = new ContentValues(4);
-        cv.put(ReceiptTable.COLUMN_THREAD_ID, receipt.threadId);
-        cv.put(ReceiptTable.COLUMN_MESSAGE_ID, receipt.messageId);
-        cv.put(ReceiptTable.COLUMN_USER_ID, receipt.userId);
-        cv.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.timestamp);
+        cv.put(ReceiptTable.CLM_THREAD_ID, receipt.threadId);
+        cv.put(ReceiptTable.CLM_MESSAGE_ID, receipt.messageId);
+        cv.put(ReceiptTable.CLM_USER_ID, receipt.userId);
+        cv.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.timestamp);
         cv.put(ReceiptTable.COLUMN_SYNC_STATUS, receipt.syncStatus);
         return cv;
     }
@@ -89,10 +89,10 @@ public class Receipt {
 
     public static Receipt getCursorEntity(Cursor cursor) {
         Receipt receipt = new Receipt();
-        receipt.setMessageId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_MESSAGE_ID)));
-        receipt.setThreadId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_THREAD_ID)));
-        receipt.setUserId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_USER_ID)));
-        receipt.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_SEEN_TIMESTAMP)));
+        receipt.setMessageId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_MESSAGE_ID)));
+        receipt.setThreadId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_THREAD_ID)));
+        receipt.setUserId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_USER_ID)));
+        receipt.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_SEEN_TIMESTAMP)));
         receipt.setSyncStatus(cursor.getInt(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_SYNC_STATUS)));
         return receipt;
     }

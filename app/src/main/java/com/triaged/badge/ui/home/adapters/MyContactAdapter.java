@@ -71,10 +71,10 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
         final ViewHolder holder = (ViewHolder) view.getTag();
 
-        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_FIRST_NAME));
-        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_LAST_NAME));
-        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_JOB_TITLE));
-        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
+        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
+        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_LAST_NAME));
+        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_JOB_TITLE));
+        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_AVATAR_URL));
 
         holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID));
         holder.name = firstName + " " + lastName;
@@ -121,7 +121,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         }
 
         Cursor cursor = (Cursor) getItem(position);
-        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_FIRST_NAME));
+        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
         String headerText = "" + lastName.subSequence(0, 1).charAt(0);
         holder.textView.setText(headerText);
 
@@ -131,7 +131,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
     @Override
     public long getHeaderId(int position) {
         Cursor cursor = (Cursor) getItem(position);
-        return cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_CONTACT_FIRST_NAME)).charAt(0);
+        return cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME)).charAt(0);
     }
 
     class HeaderViewHolder {

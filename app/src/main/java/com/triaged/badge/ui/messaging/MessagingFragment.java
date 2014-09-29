@@ -155,7 +155,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         //TODO: must optimized the columns projection
         return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_WITH_CONTACTS_INFO,
-                null, MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
+                null, MessagesTable.CLM_THREAD_ID + " =?",
                 new String[] { mThreadId},
                 null);
     }
@@ -197,9 +197,9 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     private void markMessagesAsRead() {
         ContentValues values = new ContentValues();
-        values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
+        values.put(MessagesTable.CLM_IS_READ, 1);
         getActivity().getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
+                MessagesTable.CLM_THREAD_ID + " =?",
                 new String[] { mThreadId});
     }
 
@@ -225,12 +225,12 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
                     ContentValues receiptSyncedValues = new ContentValues(2);
                     receiptSyncedValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
-                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.COLUMN_USER_ID + "=?",
+                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.CLM_USER_ID + "=?",
                             new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
                 }
 
@@ -238,12 +238,12 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                 public void failure(RetrofitError error) {
                     App.gLogger.e(error.getMessage());
                     ContentValues receiptSyncedValues = new ContentValues(1);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
-                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.COLUMN_USER_ID + "=?",
+                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.CLM_USER_ID + "=?",
                             new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
                 }
             });
