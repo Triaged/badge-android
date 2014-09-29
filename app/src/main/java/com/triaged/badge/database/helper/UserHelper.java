@@ -94,4 +94,36 @@ public class UserHelper {
             return null;
         }
     }
+
+    public static String getUserAvatar(Context context, int userId) {
+        Cursor cursor = context.getContentResolver().query(
+                ContentUris.withAppendedId(ContactProvider.CONTENT_URI, userId),
+                new String[]{ContactsTable.COLUMN_CONTACT_AVATAR_URL},  null, null, null);
+        if (cursor.moveToFirst()) {
+            return cursor.getString(0);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param context Application context.
+     * @param userId The Id of user's that we want their name.
+     * @return Return an array containing first and last name of person or NULL
+     */
+    public static String[] getUserName(Context context, int userId) {
+        Cursor cursor = context.getContentResolver().query(
+                ContentUris.withAppendedId(ContactProvider.CONTENT_URI, userId),
+                new String[]{
+                        ContactsTable.COLUMN_CONTACT_FIRST_NAME,
+                        ContactsTable.COLUMN_CONTACT_LAST_NAME
+                },
+                null, null, null);
+        if (cursor.moveToFirst()) {
+            return new String[] {cursor.getString(0), cursor.getString(1)};
+        } else {
+            return null;
+        }
+    }
 }

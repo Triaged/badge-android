@@ -213,7 +213,7 @@ public class DataProviderService extends Service {
 
             @Override
             public void failure(RetrofitError error) {
-
+                App.gLogger.e(error);
             }
         });
     }
@@ -228,7 +228,7 @@ public class DataProviderService extends Service {
 
             @Override
             public void failure(RetrofitError error) {
-
+                App.gLogger.e(error);
             }
         });
     }
@@ -830,10 +830,8 @@ public class DataProviderService extends Service {
     private String userIdArrayToAvatarUrl(Integer[] userIdArr) {
         for (int id : userIdArr) {
             if (id != loggedInUser.id) {
-                Contact c = getContact(id);
-                if (c != null) {
-                    return c.avatarUrl;
-                }
+                String avatarUrl = UserHelper.getUserAvatar(this, id);
+                if (avatarUrl != null) return avatarUrl;
             }
         }
         return null;
@@ -849,8 +847,8 @@ public class DataProviderService extends Service {
     private String userIdArrayToAvatarUrl(String[] userIdArr) {
         for (String id : userIdArr) {
             if (!id.equals(loggedInUser.id)) {
-                Contact c = getContact(Integer.parseInt(id));
-                return c.avatarUrl;
+                String avatarUrl = UserHelper.getUserAvatar(this, Integer.parseInt(id));
+                if (avatarUrl != null) return avatarUrl;
             }
         }
         return null;
@@ -887,12 +885,15 @@ public class DataProviderService extends Service {
         String delim = "";
         int validNames = 0;
 
+        String [] userName;
         for (Integer id : userIdArr) {
             if (!id.equals(loggedInUser.id)) {
-                Contact c = getContact(id);
-                if (c != null) {
-                    names.append(delim).append(c.name);
-                    firstNames.append(delim).append(c.firstName);
+                userName = UserHelper.getUserName(this, id);
+                if (userName != null) {
+                    if (validNames <= 1) {
+                        names.append(delim).append(String.format("%s %s",userName[0], userName[1]));
+                    }
+                    firstNames.append(delim).append(userName[1]);
                     validNames++;
                     delim = ", ";
                 }
@@ -919,12 +920,15 @@ public class DataProviderService extends Service {
         String delim = "";
         int validNames = 0;
 
+        String [] userName;
         for (String id : userIdArr) {
             if (!id.equals(loggedInUser.id + "")) {
-                Contact c = getContact(Integer.parseInt(id));
-                if (c != null) {
-                    names.append(delim).append(c.name);
-                    firstNames.append(delim).append(c.firstName);
+                userName = UserHelper.getUserName(this, Integer.parseInt(id));
+                if (userName != null) {
+                    if (validNames <= 1) {
+                        names.append(delim).append(String.format("%s %s", userName[0], userName[1]));
+                    }
+                    firstNames.append(delim).append(userName[1]);
                     validNames++;
                     delim = ", ";
                 }
