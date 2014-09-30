@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.triaged.badge.ui.messaging.MessagingActivity" >
+
+    <item android:id="@+id/next_button"
+        android:title="@string/message_next"
+        android:orderInCategory="100"
+        android:showAsAction="always" />
+</menu>

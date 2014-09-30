@@ -48,10 +48,10 @@
             android:name="com.triaged.badge.ui.entrance.OnboardingActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
+            android:theme="@style/Badge"
             android:windowSoftInputMode="stateHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

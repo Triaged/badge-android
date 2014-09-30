@@ -6,11 +6,15 @@ import android.app.LoaderManager;
 import android.content.AsyncTaskLoader;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -19,6 +23,7 @@ import android.widget.ProgressBar;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.IRow;
+import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.util.ArrayList;
@@ -47,8 +52,11 @@ public class InviteFriendFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_invite_friend, container, false);
         ButterKnife.inject(this, root);
+
+        getActivity().getActionBar().show();
 
         isFromACompany = SharedPreferencesUtil.getBoolean(R.string.pref_is_a_company_email_key, false);
         String accountEmail = SharedPreferencesUtil.getString(R.string.pref_account_email_key, "");
@@ -186,6 +194,21 @@ public class InviteFriendFragment extends Fragment {
         }
     }
 
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.invite_friend_fragment_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.next_button) {
+            startActivity(new Intent(getActivity(), MainActivity.class));
+            getActivity().finish();
+            return true;
+        }
+        return false;
+    }
 
     static class PhoneContact implements IRow {
         String id;

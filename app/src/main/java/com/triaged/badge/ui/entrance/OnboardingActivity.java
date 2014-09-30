@@ -45,7 +45,7 @@ public class OnboardingActivity extends Activity implements
 
         fragmentList.add(new OnboardingCreateFragment());
         fragmentList.add(new OnboardingConfirmFragment());
-//        fragmentList.add(new InviteFriendFragment());
+        fragmentList.add(new InviteFriendFragment());
 
         viewPager.setPagingEnabled(false);
         viewPager.setAdapter(new FragmentStatePagerAdapter(getFragmentManager()) {
@@ -81,8 +81,6 @@ public class OnboardingActivity extends Activity implements
         viewPager.postDelayed(new Runnable() {
             @Override
             public void run() {
-                fragmentList.add(new InviteFriendFragment());
-                viewPager.getAdapter().notifyDataSetChanged();
                 viewPager.setCurrentItem(2);
             }
         }, 400);
@@ -90,7 +88,7 @@ public class OnboardingActivity extends Activity implements
 
     @Override
     public void onBackPressed() {
-        if (viewPager.getCurrentItem() > 0) {
+        if (viewPager.getCurrentItem() == 1) {
             viewPager.setCurrentItem(viewPager.getCurrentItem() - 1);
         } else {
             super.onBackPressed();
