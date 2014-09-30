@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 
 import com.triaged.badge.database.provider.OfficeLocationProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.OfficeLocation;
@@ -20,7 +20,7 @@ public class OfficeLocationHelper {
     public static ContentValues toContentValue(OfficeLocation officeLocation) {
         ContentValues values = new ContentValues();
 
-        values.put(ContactsTable.COLUMN_ID, officeLocation.getId());
+        values.put(UsersTable.COLUMN_ID, officeLocation.getId());
         if (officeLocation.getName() != null)
             values.put(OfficeLocationsTable.CLM_NAME, officeLocation.getName());
         if (officeLocation.getCity() != null)

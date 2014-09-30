@@ -28,13 +28,13 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.ButtonWithFont;
 import com.triaged.badge.ui.base.views.CustomLayoutParams;
 import com.triaged.badge.ui.base.views.FlowLayout;
-import com.triaged.badge.ui.home.adapters.MyContactAdapter;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
@@ -60,7 +60,7 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
     private String mSearchTerm = null;
-    private MyContactAdapter contactsAdapter = null;
+    private UserAdapter contactsAdapter = null;
 
     @InjectView(R.id.contacts_list) StickyListHeadersListView contactsListView;
     @InjectView(R.id.search_bar) EditText searchBar;
@@ -141,13 +141,13 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
 
         recipients = new HashMap<Integer, String>();
 
-        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
+        contactsAdapter = new UserAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView.setAdapter(contactsAdapter);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
+                UserAdapter.ViewHolder holder = (UserAdapter.ViewHolder) view.getTag();
                 addRecipient(holder.contactId, holder.name);
                 searchBar.setText("");
             }
@@ -262,19 +262,19 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (mSearchTerm == null) {
-            return new CursorLoader(this, ContactProvider.CONTENT_URI, null,
-                    ContactsTable.COLUMN_ID + " <>?",
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + " <>?",
                     new String[]{App.accountId()+""},
                     null);
         } else {
             String filterString = "%" + mSearchTerm + "%";
-            return new CursorLoader(this, ContactProvider.CONTENT_URI, null,
-                    ContactsTable.COLUMN_ID + "<> ? AND ("
-                            + ContactsTable.CLM_LAST_NAME + " LIKE ? OR "
-                            + ContactsTable.CLM_FIRST_NAME + " LIKE ?)  AND "
-                            + ContactsTable.CLM_IS_ARCHIVED + " = 0",
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + "<> ? AND ("
+                            + UsersTable.CLM_LAST_NAME + " LIKE ? OR "
+                            + UsersTable.CLM_FIRST_NAME + " LIKE ?)  AND "
+                            + UsersTable.CLM_IS_ARCHIVED + " = 0",
                     new String[] { App.accountId() + "" , filterString, filterString},
-                    ContactsTable.CLM_FIRST_NAME);
+                    UsersTable.CLM_FIRST_NAME);
         }
     }
 

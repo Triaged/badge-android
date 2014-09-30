@@ -25,8 +25,8 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Contact;
@@ -266,9 +266,9 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.CLM_CURRENT_OFFICE_LOCATION_ID, -1);
-                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                values.put(UsersTable.CLM_CURRENT_OFFICE_LOCATION_ID, -1);
+                context.getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
             }
@@ -285,9 +285,9 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.CLM_CURRENT_OFFICE_LOCATION_ID, officeId);
-                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                values.put(UsersTable.CLM_CURRENT_OFFICE_LOCATION_ID, officeId);
+                context.getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
             }

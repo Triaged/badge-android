@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.utils.SharedPreferencesUtil;
@@ -70,8 +70,8 @@ public class HistoryAdapter extends CursorAdapter {
         holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
         String names = cursor.getString(cursor.getColumnIndex(MessageThreadsTable.CLM_NAME));
         if (names == null) {
-            String firstName = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_FIRST_NAME));
-            String lastName = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_LAST_NAME));
+            String firstName = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
+            String lastName = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));
             if (firstName != null && lastName != null) {
                 names = String.format("%s %s", firstName, lastName);
             } else {
@@ -79,7 +79,7 @@ public class HistoryAdapter extends CursorAdapter {
             }
         }
 
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_AVATAR_URL));
         String body = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_BODY));
         int isRead = cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_IS_READ));
 

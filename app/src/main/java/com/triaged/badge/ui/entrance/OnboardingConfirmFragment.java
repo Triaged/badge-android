@@ -4,7 +4,6 @@ package com.triaged.badge.ui.entrance;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
@@ -20,16 +19,14 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.gson.JsonObject;
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.UserHelper;
-import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.mime.TypedJsonString;
-import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
@@ -84,10 +81,10 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
                 // TODO: Need to check for null values
                 SharedPreferencesUtil.store(R.string.pref_api_token, account.getAuthenticationToken());
                 SharedPreferencesUtil.store(R.string.pref_account_company_id_key, account.getCompanyId());
-                getActivity().getContentResolver().insert(ContactProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
+                getActivity().getContentResolver().insert(UserProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
                 EventBus.getDefault().post(new LogedinSuccessfully());
                 EventBus.getDefault().post(new UpdateAccountEvent());
-                
+
                 mListener.onConfirmSucceed();
                 GeneralUtils.dismissKeyboard(getActivity());
             }

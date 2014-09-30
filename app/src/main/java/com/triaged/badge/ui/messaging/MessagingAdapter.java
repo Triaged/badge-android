@@ -16,7 +16,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.net.DataProviderService;
@@ -77,11 +77,11 @@ public class MessagingAdapter  extends CursorAdapter {
         holder.timestamp.setText(prettyTime.format(messageDate));
         holder.userPhoto.setVisibility(View.VISIBLE);
         holder.userPhoto.setImageBitmap(null);
-        String first = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_FIRST_NAME));
-        String last = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_LAST_NAME));
+        String first = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
+        String last = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));
         holder.photoPlaceholder.setText(Contact.constructInitials(first, last));
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.CLM_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_AVATAR_URL));
 
         ImageLoader.getInstance().displayImage(avatarUrl, holder.userPhoto, new SimpleImageLoadingListener() {
             @Override

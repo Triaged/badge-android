@@ -23,7 +23,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
@@ -43,14 +43,14 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
  * Created by Sadegh Kazemy on 9/7/14.
  */
 
-public class MyContactAdapter extends CursorAdapter implements StickyListHeadersAdapter {
+public class UserAdapter extends CursorAdapter implements StickyListHeadersAdapter {
 
     private float densityMultiplier = 1;
     private LayoutInflater inflater;
     private int mResourceId;
     private Activity mActivity;
 
-    public MyContactAdapter(Activity activity, Cursor cursor, int resourceId) {
+    public UserAdapter(Activity activity, Cursor cursor, int resourceId) {
         super(activity, cursor, false);
         mResourceId = resourceId;
         this.mActivity = activity;
@@ -70,12 +70,12 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
     public void bindView(View view, Context context, Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
 
-        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
-        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_LAST_NAME));
-        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_JOB_TITLE));
-        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_AVATAR_URL));
+        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME));
+        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_LAST_NAME));
+        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_JOB_TITLE));
+        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_AVATAR_URL));
 
-        holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID));
+        holder.contactId = cursor.getInt(cursor.getColumnIndexOrThrow(UsersTable.COLUMN_ID));
         holder.name = firstName + " " + lastName;
         holder.nameTextView.setText(holder.name);
         holder.titleTextView.setText(jobTitle);
@@ -119,7 +119,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         }
 
         Cursor cursor = (Cursor) getItem(position);
-        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
+        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME));
         String headerText = "" + lastName.subSequence(0, 1).charAt(0);
         holder.textView.setText(headerText);
 
@@ -129,7 +129,7 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
     @Override
     public long getHeaderId(int position) {
         Cursor cursor = (Cursor) getItem(position);
-        return cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME)).charAt(0);
+        return cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME)).charAt(0);
     }
 
     class HeaderViewHolder {

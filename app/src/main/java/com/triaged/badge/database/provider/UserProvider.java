@@ -3,17 +3,17 @@ package com.triaged.badge.database.provider;
 import android.content.UriMatcher;
 import android.net.Uri;
 
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 
 /**
  *
  * Created by Sadegh Kazemy on 9/7/14.
  */
-public class ContactProvider extends AbstractProvider {
-    public ContactProvider() { }
+public class UserProvider extends AbstractProvider {
+    public UserProvider() { }
 
-    public static final String AUTHORITY = "com.triaged.badge.provider.contacts";
-    static final String TABLE_NAME = ContactsTable.TABLE_NAME;
+    public static final String AUTHORITY = "com.triaged.badge.provider.users";
+    static final String TABLE_NAME = UsersTable.TABLE_NAME;
     static final String URI = "content://" + AUTHORITY + "/" + TABLE_NAME;
     public static final Uri CONTENT_URI = Uri.parse(URI);
 

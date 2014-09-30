@@ -16,11 +16,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
@@ -95,11 +95,11 @@ public class OnboardingPositionActivity extends BadgeActivity {
                         public void success(Account account, Response response) {
                             // Put updated data into database.
                             ContentValues values = new ContentValues();
-                            values.put(ContactsTable.CLM_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
-                            values.put(ContactsTable.CLM_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
-                            values.put(ContactsTable.CLM_MANAGER_ID, account.getCurrentUser().getManagerId());
-                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                    ContactsTable.COLUMN_ID + " =?",
+                            values.put(UsersTable.CLM_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
+                            values.put(UsersTable.CLM_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
+                            values.put(UsersTable.CLM_MANAGER_ID, account.getCurrentUser().getManagerId());
+                            getContentResolver().update(UserProvider.CONTENT_URI, values,
+                                    UsersTable.COLUMN_ID + " =?",
                                     new String[] { App.accountId() + ""});
                             EventBus.getDefault().post(new UpdateAccountEvent());
 

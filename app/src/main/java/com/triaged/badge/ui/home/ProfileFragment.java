@@ -24,10 +24,10 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
-import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.User;
@@ -324,7 +324,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
 
     private void bindBossView() {
         Cursor cursor = getActivity().getContentResolver().query(
-                ContentUris.withAppendedId(ContactProvider.CONTENT_URI, mCurrentUser.getManagerId()),
+                ContentUris.withAppendedId(UserProvider.CONTENT_URI, mCurrentUser.getManagerId()),
                 null,null, null, null);
         if (cursor.moveToFirst()) {
             User boss = UserHelper.fromCursor(cursor);
@@ -440,11 +440,11 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (id == CONTACT_LOAD_REQUEST_ID) {
             return new CursorLoader(getActivity(),
-                    ContentUris.withAppendedId(ContactProvider.CONTENT_URI, mContactId),
+                    ContentUris.withAppendedId(UserProvider.CONTENT_URI, mContactId),
                     null,  null, null, null);
         } else {
-            return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
-                    null, ContactsTable.CLM_MANAGER_ID + "=?",
+            return new CursorLoader(getActivity(), UserProvider.CONTENT_URI,
+                    null, UsersTable.CLM_MANAGER_ID + "=?",
                     new String[]{mContactId + ""}, null);
         }
     }

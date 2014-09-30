@@ -21,7 +21,7 @@ public class ThreadUserTable extends AbstractTable {
                 + "FOREIGN KEY (" + CLM_THREAD_ID + ") REFERENCES "
                     + MessageThreadsTable.TABLE_NAME + "(" + MessageThreadsTable.COLUMN_ID + "),"
                 + "FOREIGN KEY (" + CLM_USER_ID + ") REFERENCES "
-                    + ContactsTable.TABLE_NAME + "(" + ContactsTable.COLUMN_ID + ")"
+                    + UsersTable.TABLE_NAME + "(" + UsersTable.COLUMN_ID + ")"
                 + ");");
     }
 

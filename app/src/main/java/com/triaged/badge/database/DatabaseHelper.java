@@ -4,7 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
@@ -37,7 +37,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
 //        db.execSQL("PRAGMA foreign_keys=ON;");
-        new ContactsTable().onCreate(db);
+        new UsersTable().onCreate(db);
         new DepartmentsTable().onCreate(db);
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
@@ -48,7 +48,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        new ContactsTable().onUpgrade(db, oldVersion, newVersion);
+        new UsersTable().onUpgrade(db, oldVersion, newVersion);
         new DepartmentsTable().onUpgrade(db, oldVersion, newVersion);
         new MessagesTable().onUpgrade(db, oldVersion, newVersion);
         new OfficeLocationsTable().onUpgrade(db, oldVersion, newVersion);

@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 
 /**
  * Created by Will on 7/9/14.
@@ -47,13 +47,13 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
-        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
-        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_LAST_NAME));
+        String firstName = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME));
+        String lastName = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_LAST_NAME));
         holder.name = firstName + " " + lastName;
-        holder.id = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsTable.COLUMN_ID)) ;
+        holder.id = cursor.getInt(cursor.getColumnIndexOrThrow(UsersTable.COLUMN_ID)) ;
 
         holder.nameTextView.setText(holder.name);
-        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_JOB_TITLE));
+        String jobTitle = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_JOB_TITLE));
         holder.titleTextView.setText(jobTitle);
         if (TextUtils.isEmpty(jobTitle)) {
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) holder.nameTextView.getLayoutParams();
@@ -67,7 +67,7 @@ public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
         holder.thumbImage.setImageBitmap(null);
         holder.noPhotoThumb.setText(String.valueOf(firstName.charAt(0) + lastName.charAt(0)).toUpperCase());
         holder.noPhotoThumb.setVisibility(View.VISIBLE);
-        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_AVATAR_URL));
         if (avatarUrl != null) {
 //            dataProviderServiceBinding.setSmallContactImage(c, holder.thumbImage, holder.noPhotoThumb );
             ImageLoader.getInstance().displayImage(avatarUrl, holder.thumbImage, new SimpleImageLoadingListener() {

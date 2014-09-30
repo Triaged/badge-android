@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.ThreadUserTable;
 
 /**
@@ -48,9 +48,9 @@ public class ThreadUserProvider extends AbstractProvider {
             SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
             checkColumns(projection);
             queryBuilder.setTables(ThreadUserTable.TABLE_NAME + " LEFT OUTER JOIN " +
-                    ContactsTable.TABLE_NAME + " ON " +
+                    UsersTable.TABLE_NAME + " ON " +
                     ThreadUserTable.TABLE_NAME + "." + ThreadUserTable.CLM_USER_ID + " = " +
-                    ContactsTable.TABLE_NAME + "." + ContactsTable.COLUMN_ID);
+                    UsersTable.TABLE_NAME + "." + UsersTable.COLUMN_ID);
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
             cursor.setNotificationUri(getContext().getContentResolver(), uri);

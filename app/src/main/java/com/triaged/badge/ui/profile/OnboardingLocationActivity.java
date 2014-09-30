@@ -13,11 +13,11 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
@@ -160,10 +160,10 @@ public class OnboardingLocationActivity extends BadgeActivity {
             @Override
             public void success(Account account, Response response) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
+                values.put(UsersTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
                         officeLocationsAdapter.usersOffice);
-                getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
 

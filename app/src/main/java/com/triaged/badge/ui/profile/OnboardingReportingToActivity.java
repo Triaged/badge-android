@@ -18,10 +18,10 @@ import android.widget.ImageButton;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.ui.base.BackButtonActivity;
-import com.triaged.badge.ui.home.adapters.MyContactAdapter;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -36,7 +36,7 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 public class OnboardingReportingToActivity extends BackButtonActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String MGR_NAME_EXTRA = "mgrName";
-    private MyContactAdapter contactsAdapter;
+    private UserAdapter contactsAdapter;
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
     private String mSearchTerm = null;
@@ -52,12 +52,12 @@ public class OnboardingReportingToActivity extends BackButtonActivity implements
         ButterKnife.inject(this);
 
         backButton.setText("Reporting To");
-        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
+        contactsAdapter = new UserAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView.setAdapter(contactsAdapter);
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
+                UserAdapter.ViewHolder holder = (UserAdapter.ViewHolder) view.getTag();
                 Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
                 intent.putExtra(MGR_NAME_EXTRA, holder.name);
                 setResult(holder.contactId, intent);
@@ -130,19 +130,19 @@ public class OnboardingReportingToActivity extends BackButtonActivity implements
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (mSearchTerm == null) {
-            return new CursorLoader(this, ContactProvider.CONTENT_URI, null,
-                    ContactsTable.COLUMN_ID + " <>?",
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + " <>?",
                     new String[]{App.accountId()+""},
                     null);
         } else {
             String filterString = "%" + mSearchTerm + "%";
-            return new CursorLoader(this, ContactProvider.CONTENT_URI, null,
-                    ContactsTable.COLUMN_ID + "<> ? AND ("
-                            + ContactsTable.CLM_LAST_NAME + " LIKE ? OR "
-                            + ContactsTable.CLM_FIRST_NAME + " LIKE ?)  AND "
-                            + ContactsTable.CLM_IS_ARCHIVED + " = 0",
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + "<> ? AND ("
+                            + UsersTable.CLM_LAST_NAME + " LIKE ? OR "
+                            + UsersTable.CLM_FIRST_NAME + " LIKE ?)  AND "
+                            + UsersTable.CLM_IS_ARCHIVED + " = 0",
                     new String[] { App.accountId() + "" , filterString, filterString},
-                    ContactsTable.CLM_FIRST_NAME);
+                    UsersTable.CLM_FIRST_NAME);
         }
     }
 

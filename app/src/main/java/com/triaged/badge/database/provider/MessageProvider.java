@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 
@@ -74,9 +74,9 @@ public class MessageProvider extends AbstractProvider {
                  */
                 checkColumns(projection);
                 queryBuilder.setTables(MessagesTable.TABLE_NAME + " LEFT OUTER JOIN " +
-                        ContactsTable.TABLE_NAME + " ON " +
+                        UsersTable.TABLE_NAME + " ON " +
                         MessagesTable.TABLE_NAME + "." + MessagesTable.CLM_AUTHOR_ID + " = " +
-                        ContactsTable.TABLE_NAME + "." + ContactsTable.COLUMN_ID);
+                        UsersTable.TABLE_NAME + "." + UsersTable.COLUMN_ID);
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
                 Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -108,11 +108,11 @@ public class MessageProvider extends AbstractProvider {
                 .append(" ORDER BY ").append(MessagesTable.CLM_TIMESTAMP).append(" DESC")
                 .append(") messages ")
                 .append(" LEFT JOIN ( SELECT ")
-                .append(ContactsTable.COLUMN_ID).append(" as contact_id, ")
-                .append(ContactsTable.CLM_FIRST_NAME).append(", ")
-                .append(ContactsTable.CLM_LAST_NAME).append(", ")
-                .append(ContactsTable.CLM_AVATAR_URL)
-                .append(" FROM ").append(ContactsTable.TABLE_NAME)
+                .append(UsersTable.COLUMN_ID).append(" as contact_id, ")
+                .append(UsersTable.CLM_FIRST_NAME).append(", ")
+                .append(UsersTable.CLM_LAST_NAME).append(", ")
+                .append(UsersTable.CLM_AVATAR_URL)
+                .append(" FROM ").append(UsersTable.TABLE_NAME)
                 .append(") users ")
                 .append(" ON ").append("messages.").append(MessagesTable.CLM_AUTHOR_ID)
                 .append("= users.").append("contact_id")

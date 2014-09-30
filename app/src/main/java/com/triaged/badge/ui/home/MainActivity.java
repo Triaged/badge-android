@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BadgeActivity;
 
@@ -74,7 +73,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
         });
 
         messagesFragment = MessagesFragments.newInstance();
-        contactFragment = ContactsFragment.newInstance();
+        contactFragment = UsersFragment.newInstance();
         myProfileFragment = ProfileFragment.newInstance(myUserId);
 
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {

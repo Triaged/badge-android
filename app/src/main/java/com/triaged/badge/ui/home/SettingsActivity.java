@@ -9,11 +9,11 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Account;
@@ -122,11 +122,11 @@ public class SettingsActivity extends BackButtonActivity {
                         SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
 
                         ContentValues values = new ContentValues(1);
-                        values.put(ContactsTable.CLM_SHARING_OFFICE_LOCATION,
+                        values.put(UsersTable.CLM_SHARING_OFFICE_LOCATION,
                                 isChecked ? User.SHARING_LOCATION_ONE : User.SHARING_LOCATION_OFF);
 
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
+                        getContentResolver().update(UserProvider.CONTENT_URI, values,
+                                UsersTable.COLUMN_ID + " =?",
                                 new String[]{App.accountId() + ""});
 
                         if (isChecked) {

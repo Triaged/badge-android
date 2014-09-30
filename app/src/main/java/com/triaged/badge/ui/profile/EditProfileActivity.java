@@ -40,12 +40,12 @@ import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.UserHelper;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
@@ -417,8 +417,8 @@ public class EditProfileActivity extends BadgeActivity {
 
     private void saveNewAccountAndFinish(Account account) {
         ContentValues values = UserHelper.toContentValue(account.getCurrentUser());
-        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                ContactsTable.COLUMN_ID + " =?",
+        getContentResolver().update(UserProvider.CONTENT_URI, values,
+                UsersTable.COLUMN_ID + " =?",
                 new String[]{account.getCurrentUser().getId() + ""});
         // Notify DataProviderService to update its model of current account
         EventBus.getDefault().post(new UpdateAccountEvent());

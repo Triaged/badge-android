@@ -174,8 +174,8 @@
         <!-- CONTENT PROVIDERS -->
 
         <provider
-            android:name="com.triaged.badge.database.provider.ContactProvider"
-            android:authorities="com.triaged.badge.provider.contacts"
+            android:name="com.triaged.badge.database.provider.UserProvider"
+            android:authorities="com.triaged.badge.provider.users"
             android:enabled="true"
             android:exported="false" />
         <provider

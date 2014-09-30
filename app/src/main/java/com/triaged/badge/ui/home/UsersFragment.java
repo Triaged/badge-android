@@ -21,11 +21,11 @@ import android.widget.ListView;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
-import com.triaged.badge.ui.home.adapters.MyContactAdapter;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.home.adapters.MyDepartmentAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
 
@@ -39,12 +39,12 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
  * Created by Sadegh Kazemy on 9/7/14.
  */
 
-public class ContactsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class UsersFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private final static int CONTACTS_TAB_ID = 1000;
     private final static int DEPARTMENTS_TAB_ID = 2000;
 
-    private MyContactAdapter contactsAdapter;
+    private UserAdapter contactsAdapter;
     private MyDepartmentAdapter departmentAdapter;
     private String mSearchTerm = null;
     private int currentTab = CONTACTS_TAB_ID;
@@ -98,11 +98,11 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
 
-    public static ContactsFragment newInstance() {
-        ContactsFragment fragment = new ContactsFragment();
+    public static UsersFragment newInstance() {
+        UsersFragment fragment = new UsersFragment();
         return fragment;
     }
-    public ContactsFragment() {
+    public UsersFragment() {
         // Required empty public constructor
     }
 
@@ -113,7 +113,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
         View root =  inflater.inflate(R.layout.fragment_contacts, container, false);
         ButterKnife.inject(this, root);
 
-        contactsAdapter = new MyContactAdapter(getActivity(), null, R.layout.item_contact_with_msg);
+        contactsAdapter = new UserAdapter(getActivity(), null, R.layout.item_contact_with_msg);
         departmentAdapter = new MyDepartmentAdapter(getActivity(), null);
 
         contactsListView.setAdapter(contactsAdapter);
@@ -132,7 +132,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (App.dataProviderServiceBinding.getLoggedInUser() != null) {
-                    int clickedId = ((MyContactAdapter.ViewHolder) view.getTag()).contactId;
+                    int clickedId = ((UserAdapter.ViewHolder) view.getTag()).contactId;
                     if (clickedId != App.dataProviderServiceBinding.getLoggedInUser().id) {
                         Intent intent = new Intent(getActivity(), ProfileActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -181,7 +181,7 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
                 mSearchTerm = newFilter;
                 // Restarts the loader. This triggers onCreateLoader(), which builds the
                 // necessary content Uri from mSearchTerm.
-                getLoaderManager().restartLoader(currentTab, null, ContactsFragment.this);
+                getLoaderManager().restartLoader(currentTab, null, UsersFragment.this);
             }
 
             @Override public void afterTextChanged(Editable s) { }
@@ -194,18 +194,18 @@ public class ContactsFragment extends Fragment implements LoaderManager.LoaderCa
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         if (id == CONTACTS_TAB_ID) {
             if (mSearchTerm == null) {
-                return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
-                        null, ContactsTable.CLM_IS_ARCHIVED + " = 0", null,
-                        ContactsTable.CLM_FIRST_NAME);
+                return new CursorLoader(getActivity(), UserProvider.CONTENT_URI,
+                        null, UsersTable.CLM_IS_ARCHIVED + " = 0", null,
+                        UsersTable.CLM_FIRST_NAME);
             } else {
                 String filterString = "%" + mSearchTerm + "%";
-                return new CursorLoader(getActivity(), ContactProvider.CONTENT_URI,
+                return new CursorLoader(getActivity(), UserProvider.CONTENT_URI,
                         null,
-                        ContactsTable.CLM_LAST_NAME + " LIKE ? OR " +
-                        ContactsTable.CLM_FIRST_NAME + " LIKE ?  AND " +
-                        ContactsTable.CLM_IS_ARCHIVED + " = 0"
+                        UsersTable.CLM_LAST_NAME + " LIKE ? OR " +
+                        UsersTable.CLM_FIRST_NAME + " LIKE ?  AND " +
+                        UsersTable.CLM_IS_ARCHIVED + " = 0"
                         , new String[] { filterString, filterString},
-                        ContactsTable.CLM_FIRST_NAME);
+                        UsersTable.CLM_FIRST_NAME);
             }
 
         } else if (id == DEPARTMENTS_TAB_ID) {

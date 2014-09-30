@@ -11,8 +11,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
@@ -71,9 +71,9 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(this, ContactProvider.CONTENT_URI,
-                null, ContactsTable.CLM_DEPARTMENT_ID + "=?",
-                new String[]{departmentId+""}, ContactsTable.CLM_FIRST_NAME);
+        return new CursorLoader(this, UserProvider.CONTENT_URI,
+                null, UsersTable.CLM_DEPARTMENT_ID + "=?",
+                new String[]{departmentId+""}, UsersTable.CLM_FIRST_NAME);
     }
 
     @Override

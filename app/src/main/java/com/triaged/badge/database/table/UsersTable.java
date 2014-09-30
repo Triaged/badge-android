@@ -6,9 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
  *
  * Created by Sadegh Kazemy on 9/7/14.
  */
-public class ContactsTable extends AbstractTable {
+public class UsersTable extends AbstractTable {
 
-    public static final String TABLE_NAME = "contacts";
+    public static final String TABLE_NAME = "users";
 
     public static final String CLM_LAST_NAME = "last_name";
     public static final String CLM_FIRST_NAME = "first_name";

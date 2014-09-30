@@ -33,14 +33,14 @@ import com.triaged.badge.database.helper.DepartmentHelper;
 import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
-import com.triaged.badge.database.provider.ContactProvider;
+import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.provider.ReceiptProvider;
 import com.triaged.badge.database.provider.ThreadProvider;
 import com.triaged.badge.database.provider.ThreadUserProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
@@ -69,7 +69,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
@@ -118,21 +117,21 @@ public class DataProviderService extends Service {
                     DatabaseHelper.JOINED_OFFICE_NAME,
                     DepartmentsTable.CLM_NAME,
                     DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    ContactsTable.CLM_FIRST_NAME,
+                    UsersTable.CLM_FIRST_NAME,
                     DatabaseHelper.JOINED_MANAGER_FIRST_NAME,
-                    ContactsTable.CLM_LAST_NAME,
+                    UsersTable.CLM_LAST_NAME,
                     DatabaseHelper.JOINED_MANAGER_LAST_NAME,
-                    ContactsTable.TABLE_NAME,
+                    UsersTable.TABLE_NAME,
                     DepartmentsTable.TABLE_NAME,
-                    ContactsTable.CLM_DEPARTMENT_ID,
+                    UsersTable.CLM_DEPARTMENT_ID,
                     DepartmentsTable.COLUMN_ID,
-                    ContactsTable.TABLE_NAME,
-                    ContactsTable.CLM_MANAGER_ID,
-                    ContactsTable.COLUMN_ID,
+                    UsersTable.TABLE_NAME,
+                    UsersTable.CLM_MANAGER_ID,
+                    UsersTable.COLUMN_ID,
                     OfficeLocationsTable.TABLE_NAME,
-                    ContactsTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
+                    UsersTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
                     OfficeLocationsTable.COLUMN_ID,
-                    ContactsTable.COLUMN_ID
+                    UsersTable.COLUMN_ID
             );
 
     protected volatile Contact loggedInUser;
@@ -212,7 +211,7 @@ public class DataProviderService extends Service {
         RestService.instance().badge().getUser(syncId +"", new Callback<User>() {
             @Override
             public void success(User user, Response response) {
-                getContentResolver().insert(ContactProvider.CONTENT_URI, UserHelper.toContentValue(user));
+                getContentResolver().insert(UserProvider.CONTENT_URI, UserHelper.toContentValue(user));
             }
 
             @Override
@@ -276,10 +275,10 @@ public class DataProviderService extends Service {
                 ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
                 for (User user : company.getUsers()) {
                     dbOperations.add(ContentProviderOperation.newInsert(
-                            ContactProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
+                            UserProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
                 }
                 try {
-                    getContentResolver().applyBatch(ContactProvider.AUTHORITY, dbOperations);
+                    getContentResolver().applyBatch(UserProvider.AUTHORITY, dbOperations);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (OperationApplicationException e) {
@@ -319,9 +318,9 @@ public class DataProviderService extends Service {
                     ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
                     for (User user : company.getUsers()) {
                         dbOperations.add(ContentProviderOperation.newInsert(
-                                ContactProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
+                                UserProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
                     }
-                    getContentResolver().applyBatch(ContactProvider.AUTHORITY, dbOperations);
+                    getContentResolver().applyBatch(UserProvider.AUTHORITY, dbOperations);
                     dbOperations.clear();
 
                     for (Department department: company.getDepartments()) {
@@ -972,7 +971,7 @@ public class DataProviderService extends Service {
             StringBuilder names = new StringBuilder();
             if (cursor.moveToFirst()) {
                 do {
-                    names.append(cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME))).append(",");
+                    names.append(cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME))).append(",");
                 } while (cursor.moveToNext());
                 // Delete the last comma
                 names.deleteCharAt(names.length() - 1);
