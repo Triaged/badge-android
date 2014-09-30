@@ -198,6 +198,16 @@
             android:authorities="com.triaged.badge.provider.receipts"
             android:enabled="true"
             android:exported="false" />
+        <provider
+            android:name="com.triaged.badge.database.provider.ThreadProvider"
+            android:authorities="com.triaged.badge.provider.threads"
+            android:enabled="true"
+            android:exported="false" />
+        <provider
+            android:name="com.triaged.badge.database.provider.ThreadUserProvider"
+            android:authorities="com.triaged.badge.provider.thread_users"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>
