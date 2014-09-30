@@ -15,8 +15,8 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
-import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.utils.SharedPreferencesUtil;
 
@@ -68,7 +68,7 @@ public class HistoryAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         final ViewHolder holder = (ViewHolder) view.getTag();
         holder.threadId = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
-        String names = cursor.getString(cursor.getColumnIndex(MessageThreadsTable.CLM_NAME));
+        String names = cursor.getString(cursor.getColumnIndex(BThreadsTable.CLM_NAME));
         if (names == null) {
             String firstName = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
             String lastName = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));

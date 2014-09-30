@@ -9,7 +9,7 @@ public class ReceiptTable extends AbstractTable {
 
     public static final String TABLE_NAME = "receipts";
 
-    public static final String CLM_THREAD_ID = "thread_id";
+    public static final String CLM_THREAD_ID = "bthread_id";
     public static final String CLM_MESSAGE_ID = "message_id";
     public static final String CLM_USER_ID = "user_id";
     public static final String CLM_SEEN_TIMESTAMP = "seen_timestamp";

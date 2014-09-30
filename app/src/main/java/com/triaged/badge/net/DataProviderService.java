@@ -33,25 +33,25 @@ import com.triaged.badge.database.helper.DepartmentHelper;
 import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
+import com.triaged.badge.database.provider.BThreadProvider;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.provider.ReceiptProvider;
-import com.triaged.badge.database.provider.ThreadProvider;
 import com.triaged.badge.database.provider.ThreadUserProvider;
+import com.triaged.badge.database.table.BThreadUserTable;
+import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
-import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
-import com.triaged.badge.database.table.ThreadUserTable;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.badge.models.BadgeThread;
+import com.triaged.badge.models.BThread;
 import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
@@ -653,10 +653,10 @@ public class DataProviderService extends Service {
 
     protected void syncMessagesSync() {
         long since = (prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
-        RestService.instance().messaging().getMessages(since + "", new Callback<BadgeThread[]>() {
+        RestService.instance().messaging().getMessages(since + "", new Callback<BThread[]>() {
             @Override
-            public void success(BadgeThread[] badgeThreads, Response response) {
-                for(BadgeThread bThread: badgeThreads) {
+            public void success(BThread[] bThreads, Response response) {
+                for(BThread bThread: bThreads) {
                     upsertThreadAndMessages(bThread, false);
                 }
             }
@@ -680,28 +680,28 @@ public class DataProviderService extends Service {
      * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
      *                  assume they are historical
      */
-    protected void upsertThreadAndMessages(final BadgeThread bThread, final boolean broadcast) {
+    protected void upsertThreadAndMessages(final BThread bThread, final boolean broadcast) {
         long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
         // Insert thread into database.
         ContentValues cv = new ContentValues();
-        cv.put(MessageThreadsTable.COLUMN_ID, bThread.getId());
-        cv.put(MessageThreadsTable.CLM_IS_MUTED, bThread.isMuted());
-        cv.put(MessageThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
+        cv.put(BThreadsTable.COLUMN_ID, bThread.getId());
+        cv.put(BThreadsTable.CLM_IS_MUTED, bThread.isMuted());
+        cv.put(BThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
         if (bThread.getUserIds().length == 2) {
-            cv.put(MessageThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
+            cv.put(BThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
         } else if (bThread.getName() != null){
-            cv.put(MessageThreadsTable.CLM_NAME, bThread.getName());
+            cv.put(BThreadsTable.CLM_NAME, bThread.getName());
         }
-        getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
+        getContentResolver().insert(BThreadProvider.CONTENT_URI, cv);
 
         // For each user into this thread,
         // put a record into thread_user junction table.
         ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>(bThread.getMessages().length);
         for (int userId : bThread.getUserIds()) {
             ContentValues contentValues = new ContentValues(2);
-            contentValues.put(ThreadUserTable.CLM_USER_ID, userId);
-            contentValues.put(ThreadUserTable.CLM_THREAD_ID, bThread.getId());
+            contentValues.put(BThreadUserTable.CLM_USER_ID, userId);
+            contentValues.put(BThreadUserTable.CLM_THREAD_ID, bThread.getId());
             dbOperations.add(ContentProviderOperation
                     .newInsert(ThreadUserProvider.CONTENT_URI)
                     .withValues(contentValues).build());
@@ -795,9 +795,9 @@ public class DataProviderService extends Service {
      */
     protected String createThreadSync(final Integer[] recipientIds) throws JSONException,  RemoteException, OperationApplicationException {
         String threadKey = userIdArrayToKey(recipientIds);
-        Cursor cursor = getContentResolver().query(ThreadProvider.CONTENT_URI,
-                new String[]{MessageThreadsTable.COLUMN_ID},
-                MessageThreadsTable.CLM_USERS_KEY + "=?",
+        Cursor cursor = getContentResolver().query(BThreadProvider.CONTENT_URI,
+                new String[]{BThreadsTable.COLUMN_ID},
+                BThreadsTable.CLM_USERS_KEY + "=?",
                 new String[]{threadKey},
                 null);
         if (cursor.moveToFirst()) {
@@ -812,22 +812,22 @@ public class DataProviderService extends Service {
             }
             messageThread.put("user_ids", userIds);
             TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
-            BadgeThread resultThread;
+            BThread resultThread;
             resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
             ContentValues cv = new ContentValues();
-            cv.put(MessageThreadsTable.COLUMN_ID, resultThread.getId());
-            cv.put(MessageThreadsTable.CLM_USERS_KEY, threadKey);
-            cv.put(MessageThreadsTable.CLM_IS_MUTED, false);
-            cv.put(MessageThreadsTable.CLM_NAME, createThreadName(recipientIds));
-            getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
+            cv.put(BThreadsTable.COLUMN_ID, resultThread.getId());
+            cv.put(BThreadsTable.CLM_USERS_KEY, threadKey);
+            cv.put(BThreadsTable.CLM_IS_MUTED, false);
+            cv.put(BThreadsTable.CLM_NAME, createThreadName(recipientIds));
+            getContentResolver().insert(BThreadProvider.CONTENT_URI, cv);
 
             ArrayList<ContentProviderOperation> dbOperations =
                     new ArrayList<ContentProviderOperation>(resultThread.getUserIds().length);
             for (int participantId : resultThread.getUserIds()) {
                 dbOperations.add(ContentProviderOperation.newInsert(
                         ThreadUserProvider.CONTENT_URI)
-                        .withValue(ThreadUserTable.CLM_THREAD_ID, resultThread.getId())
-                        .withValue(ThreadUserTable.CLM_USER_ID, participantId)
+                        .withValue(BThreadUserTable.CLM_THREAD_ID, resultThread.getId())
+                        .withValue(BThreadUserTable.CLM_USER_ID, participantId)
                         .build());
             }
             getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
@@ -933,13 +933,13 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#upsertThreadAndMessages(com.triaged.badge.models.BadgeThread, boolean)
+         * @see DataProviderService#upsertThreadAndMessages(com.triaged.badge.models.BThread, boolean)
          */
-        public void upsertThreadAndMessagesAsync(final BadgeThread badgeThread) {
+        public void upsertThreadAndMessagesAsync(final BThread bThread) {
             sqlThread.submit(new Runnable() {
                 @Override
                 public void run() {
-                    DataProviderService.this.upsertThreadAndMessages(badgeThread, true);
+                    DataProviderService.this.upsertThreadAndMessages(bThread, true);
                 }
             });
         }
@@ -965,7 +965,7 @@ public class DataProviderService extends Service {
          */
         public String getRecipientNames(String threadId) {
             Cursor cursor = getContentResolver().query(ThreadUserProvider.CONTENT_URI_CONTACT_INFO,
-                    null, ThreadUserTable.CLM_THREAD_ID + "=?",
+                    null, BThreadUserTable.CLM_THREAD_ID + "=?",
                     new String[]{threadId},
                     null);
             StringBuilder names = new StringBuilder();

@@ -4,13 +4,13 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.triaged.badge.database.table.BThreadUserTable;
+import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
-import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
-import com.triaged.badge.database.table.ThreadUserTable;
 
 /**
  * @author Created by jc on 7/10/14.
@@ -42,8 +42,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
         new ReceiptTable().onCreate(db);
-        new MessageThreadsTable().onCreate(db);
-        new ThreadUserTable().onCreate(db);
+        new BThreadsTable().onCreate(db);
+        new BThreadUserTable().onCreate(db);
     }
 
     @Override
@@ -53,8 +53,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         new MessagesTable().onUpgrade(db, oldVersion, newVersion);
         new OfficeLocationsTable().onUpgrade(db, oldVersion, newVersion);
         new ReceiptTable().onUpgrade(db, oldVersion, newVersion);
-        new MessageThreadsTable().onUpgrade(db, oldVersion, newVersion);
-        new ThreadUserTable().onUpgrade(db, oldVersion, newVersion);
+        new BThreadsTable().onUpgrade(db, oldVersion, newVersion);
+        new BThreadUserTable().onUpgrade(db, oldVersion, newVersion);
 
         onCreate(db);
     }

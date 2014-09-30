@@ -13,7 +13,7 @@ import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.BuildConfig;
 import com.triaged.badge.app.R;
-import com.triaged.badge.models.BadgeThread;
+import com.triaged.badge.models.BThread;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import org.json.JSONException;
@@ -158,7 +158,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         }
         ensureDataServiceBinding();
         try {
-            BadgeThread messageThread = App.gson.fromJson(json.getJSONObject("message_thread").toString(), BadgeThread.class);
+            BThread messageThread = App.gson.fromJson(json.getJSONObject("message_thread").toString(), BThread.class);
             dataProviderServiceBinding.upsertThreadAndMessagesAsync(messageThread);
             // Do actual work.
 

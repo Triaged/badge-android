@@ -64,7 +64,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     //    @InjectView(R.id.post_box_wrapper) RelativeLayout postBoxWrapper;
     @InjectView(R.id.send_now_button) ImageButton sendButton;
-    @InjectView(R.id.message_thread) ListView threadList;
+    @InjectView(R.id.message_listview) ListView threadList;
     @InjectView(R.id.input_box) EditText postBox;
 
     @OnTextChanged(R.id.input_box)

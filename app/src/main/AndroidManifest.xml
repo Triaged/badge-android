@@ -199,8 +199,8 @@
             android:enabled="true"
             android:exported="false" />
         <provider
-            android:name="com.triaged.badge.database.provider.ThreadProvider"
-            android:authorities="com.triaged.badge.provider.threads"
+            android:name="com.triaged.badge.database.provider.BThreadProvider"
+            android:authorities="com.triaged.badge.provider.bthreads"
             android:enabled="true"
             android:exported="false" />
         <provider

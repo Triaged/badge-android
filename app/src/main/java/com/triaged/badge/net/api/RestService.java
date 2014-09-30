@@ -1,16 +1,16 @@
 package com.triaged.badge.net.api;
 
+import com.triaged.badge.models.BThread;
 import com.triaged.badge.net.api.requests.InviteRequest;
+import com.triaged.badge.net.api.requests.MessageBThreadRequest;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
-import com.triaged.badge.models.BadgeThread;
 import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Department;
 import com.triaged.badge.models.Device;
 import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.requests.DeviceRequest;
-import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
 
@@ -70,11 +70,11 @@ public class RestService {
     public interface MessagingService {
 
         @POST("/api/v1/message_threads")
-        BadgeThread createMessageThread(@Body TypedInput threadBody);
+        BThread createMessageThread(@Body TypedInput threadBody);
 
         @PUT("/api/v1/message_threads/{message_thread_id}")
         void threadSetName(@Path("message_thread_id") String threadId,
-                           @Body MessageThreadRequest messageThreadRequest,
+                           @Body MessageBThreadRequest messageBThreadRequest,
                            Callback<retrofit.client.Response> callback);
 
         @POST("/api/v1/message_threads/{message_thread_id}/unmute")
@@ -88,7 +88,7 @@ public class RestService {
         void reportReceipts(@Body ReceiptsReportRequest receiptsReportRequest, Callback<retrofit.client.Response> callback);
 
         @GET("/api/v1/user/messages")
-        void getMessages(@Query("timestamp") String sinceMilliSecs, Callback<BadgeThread[]> callback );
+        void getMessages(@Query("timestamp") String sinceMilliSecs, Callback<BThread[]> callback );
     }
 
     public interface BadgeService {

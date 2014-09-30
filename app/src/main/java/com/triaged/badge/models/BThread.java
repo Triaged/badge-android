@@ -3,7 +3,7 @@ package com.triaged.badge.models;
 /**
  * Created by Sadegh Kazemy on 9/19/14.
  */
-public class BadgeThread {
+public class BThread {
 
     double timestamp;
     String id;

@@ -24,15 +24,15 @@ import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ThreadProvider;
+import com.triaged.badge.database.provider.BThreadProvider;
 import com.triaged.badge.database.provider.ThreadUserProvider;
+import com.triaged.badge.database.table.BThreadUserTable;
+import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
-import com.triaged.badge.database.table.MessageThreadsTable;
-import com.triaged.badge.database.table.ThreadUserTable;
 import com.triaged.badge.models.MessageThread;
 import com.triaged.badge.net.api.RestService;
-import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.ui.home.adapters.UserAdapter;
+import com.triaged.badge.net.api.requests.MessageBThreadRequest;
 import com.triaged.badge.ui.profile.ProfileActivity;
 
 import butterknife.ButterKnife;
@@ -114,7 +114,7 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(getActivity(),
                 ThreadUserProvider.CONTENT_URI_CONTACT_INFO,
-                null, ThreadUserTable.CLM_THREAD_ID + "=? AND " +
+                null, BThreadUserTable.CLM_THREAD_ID + "=? AND " +
                 UsersTable.CLM_IS_ARCHIVED + "=0 AND " +
                 UsersTable.COLUMN_ID + "!=?",
                 new String[]{mThreadId, App.accountId() + ""},
@@ -165,9 +165,9 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
             @Override
             public void success(Response response, Response response2) {
                 ContentValues cv = new ContentValues(1);
-                cv.put(MessageThreadsTable.CLM_IS_MUTED, !muteCheckBox.isChecked());
-                getActivity().getContentResolver().update(ThreadProvider.CONTENT_URI, cv,
-                        MessageThreadsTable.COLUMN_ID + "=?", new String[]{mThreadId});
+                cv.put(BThreadsTable.CLM_IS_MUTED, !muteCheckBox.isChecked());
+                getActivity().getContentResolver().update(BThreadProvider.CONTENT_URI, cv,
+                        BThreadsTable.COLUMN_ID + "=?", new String[]{mThreadId});
             }
 
             @Override
@@ -205,15 +205,15 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
                     }
 
                     private void sendRenameRequest(String newName) {
-                        MessageThreadRequest request = new MessageThreadRequest(new MessageThread(newName));
+                        MessageBThreadRequest request = new MessageBThreadRequest(new MessageThread(newName));
 
                         RestService.instance().messaging().threadSetName(mThreadId, request, new Callback<Response>() {
                             @Override
                             public void success(Response response, Response response2) {
                                 ContentValues cv = new ContentValues(1);
-                                cv.put(MessageThreadsTable.CLM_NAME, input.getText().toString());
-                                getActivity().getContentResolver().update(ThreadProvider.CONTENT_URI, cv,
-                                        MessageThreadsTable.COLUMN_ID + "=?", new String[]{mThreadId});
+                                cv.put(BThreadsTable.CLM_NAME, input.getText().toString());
+                                getActivity().getContentResolver().update(BThreadProvider.CONTENT_URI, cv,
+                                        BThreadsTable.COLUMN_ID + "=?", new String[]{mThreadId});
                             }
 
                             @Override

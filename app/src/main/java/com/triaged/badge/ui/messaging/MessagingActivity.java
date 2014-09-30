@@ -2,7 +2,6 @@ package com.triaged.badge.ui.messaging;
 
 import android.app.ActionBar;
 import android.app.LoaderManager;
-import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
@@ -13,8 +12,8 @@ import android.view.MenuItem;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivity;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ThreadProvider;
-import com.triaged.badge.database.table.MessageThreadsTable;
+import com.triaged.badge.database.provider.BThreadProvider;
+import com.triaged.badge.database.table.BThreadsTable;
 
 
 public class MessagingActivity extends SlidingActivity implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -89,9 +88,9 @@ public class MessagingActivity extends SlidingActivity implements LoaderManager.
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(this, ThreadProvider.CONTENT_URI,
+        return new CursorLoader(this, BThreadProvider.CONTENT_URI,
                 null,
-                MessageThreadsTable.COLUMN_ID + "=?",
+                BThreadsTable.COLUMN_ID + "=?",
                 new String[]{mThreadId},
                 null);
     }
@@ -99,8 +98,8 @@ public class MessagingActivity extends SlidingActivity implements LoaderManager.
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data.moveToFirst()) {
-            String threadName = data.getString(data.getColumnIndexOrThrow(MessageThreadsTable.CLM_NAME));
-            boolean isMute = data.getInt(data.getColumnIndexOrThrow(MessageThreadsTable.CLM_IS_MUTED)) > 0;
+            String threadName = data.getString(data.getColumnIndexOrThrow(BThreadsTable.CLM_NAME));
+            boolean isMute = data.getInt(data.getColumnIndexOrThrow(BThreadsTable.CLM_IS_MUTED)) > 0;
             getActionBar().setTitle(threadName);
             menuFragment.setThreadName(threadName);
             menuFragment.setMute(isMute);

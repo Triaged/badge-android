@@ -5,11 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 /**
  * Created by Sadegh Kazemy on 9/29/14.
  */
-public class ThreadUserTable extends AbstractTable {
+public class BThreadUserTable extends AbstractTable {
 
-    public static String TABLE_NAME = "thread_user_junction";
+    public static String TABLE_NAME = "bthread_user_junction";
 
-    public static String CLM_THREAD_ID = "thread_id";
+    public static String CLM_THREAD_ID = "bthread_id";
     public static String CLM_USER_ID = "user_id";
 
     @Override
@@ -19,7 +19,7 @@ public class ThreadUserTable extends AbstractTable {
                 + CLM_USER_ID + " INTEGER NOT NULL, "
                 + "PRIMARY KEY (" + CLM_USER_ID + ", " + CLM_THREAD_ID + "), "
                 + "FOREIGN KEY (" + CLM_THREAD_ID + ") REFERENCES "
-                    + MessageThreadsTable.TABLE_NAME + "(" + MessageThreadsTable.COLUMN_ID + "),"
+                    + BThreadsTable.TABLE_NAME + "(" + BThreadsTable.COLUMN_ID + "),"
                 + "FOREIGN KEY (" + CLM_USER_ID + ") REFERENCES "
                     + UsersTable.TABLE_NAME + "(" + UsersTable.COLUMN_ID + ")"
                 + ");");

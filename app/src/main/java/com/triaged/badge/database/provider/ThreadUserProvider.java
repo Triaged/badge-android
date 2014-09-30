@@ -6,8 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
+import com.triaged.badge.database.table.BThreadUserTable;
 import com.triaged.badge.database.table.UsersTable;
-import com.triaged.badge.database.table.ThreadUserTable;
 
 /**
  * Created by Sadegh Kazemy on 9/29/14.
@@ -17,7 +17,7 @@ public class ThreadUserProvider extends AbstractProvider {
     public ThreadUserProvider() {}
 
     public static final String AUTHORITY = "com.triaged.badge.provider.thread_users";
-    static final String TABLE_THREAD_USER = ThreadUserTable.TABLE_NAME;
+    static final String TABLE_THREAD_USER = BThreadUserTable.TABLE_NAME;
 
     static final String URI_THREAD_USER = "content://" + AUTHORITY + "/" + TABLE_THREAD_USER;
     static final String URI_THREAD_USER_INFO = "content://" + AUTHORITY + "/" + TABLE_THREAD_USER + "_contact_info";
@@ -47,9 +47,9 @@ public class ThreadUserProvider extends AbstractProvider {
         if (uriType(uri) == RECORDS_WITH_CONTACTS) {
             SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
             checkColumns(projection);
-            queryBuilder.setTables(ThreadUserTable.TABLE_NAME + " LEFT OUTER JOIN " +
+            queryBuilder.setTables(BThreadUserTable.TABLE_NAME + " LEFT OUTER JOIN " +
                     UsersTable.TABLE_NAME + " ON " +
-                    ThreadUserTable.TABLE_NAME + "." + ThreadUserTable.CLM_USER_ID + " = " +
+                    BThreadUserTable.TABLE_NAME + "." + BThreadUserTable.CLM_USER_ID + " = " +
                     UsersTable.TABLE_NAME + "." + UsersTable.COLUMN_ID);
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);

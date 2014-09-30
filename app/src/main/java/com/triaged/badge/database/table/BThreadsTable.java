@@ -5,9 +5,9 @@ import android.database.sqlite.SQLiteDatabase;
 /**
  * Created by Sadegh Kazemy on 9/29/14.
  */
-public class MessageThreadsTable extends AbstractTable {
+public class BThreadsTable extends AbstractTable {
 
-    public static final String TABLE_NAME = "message_threads";
+    public static final String TABLE_NAME = "bthreads";
 
     public static final String CLM_NAME = "name";
     public static final String CLM_IS_MUTED = "is_muted";
@@ -22,7 +22,7 @@ public class MessageThreadsTable extends AbstractTable {
                         + CLM_IS_MUTED + " BOOLEAN "
                         + ");"
         );
-        db.execSQL("CREATE INDEX message_thread_table_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
+        db.execSQL("CREATE INDEX thread_table_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
     }
 
     @Override

@@ -13,7 +13,7 @@ public class MessagesTable extends AbstractTable {
 
     public static final String CLM_ID = "server_msg_id";
     public static final String CLM_BODY = "body";
-    public static final String CLM_THREAD_ID = "thread_id";
+    public static final String CLM_THREAD_ID = "bthread_id";
     public static final String CLM_AUTHOR_ID = "author_id";
     public static final String CLM_TIMESTAMP = "timestamp";
     public static final String CLM_ACK = "message_acknowledged";

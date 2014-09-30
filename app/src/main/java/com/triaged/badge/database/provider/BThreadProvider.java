@@ -3,19 +3,19 @@ package com.triaged.badge.database.provider;
 import android.content.UriMatcher;
 import android.net.Uri;
 
-import com.triaged.badge.database.table.MessageThreadsTable;
+import com.triaged.badge.database.table.BThreadsTable;
 
 /**
  * Created by Sadegh Kazemy on 9/29/14.
  */
-public class ThreadProvider extends AbstractProvider {
+public class BThreadProvider extends AbstractProvider {
 
-    public ThreadProvider() { }
+    public BThreadProvider() { }
 
-    public static final String AUTHORITY = "com.triaged.badge.provider.threads";
-    static final String TABLE_THREAD = MessageThreadsTable.TABLE_NAME;
+    public static final String AUTHORITY = "com.triaged.badge.provider.bthreads";
+    static final String TABLE_BTHREAD = BThreadsTable.TABLE_NAME;
 
-    static final String URI = "content://" + AUTHORITY + "/" + TABLE_THREAD;
+    static final String URI = "content://" + AUTHORITY + "/" + TABLE_BTHREAD;
 
     public static final Uri CONTENT_URI = Uri.parse(URI);
 
@@ -25,8 +25,8 @@ public class ThreadProvider extends AbstractProvider {
     static final UriMatcher uriMatcher;
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(AUTHORITY, TABLE_THREAD, RECORDS);
-        uriMatcher.addURI(AUTHORITY, TABLE_THREAD + "/#", RECORD_ID);
+        uriMatcher.addURI(AUTHORITY, TABLE_BTHREAD, RECORDS);
+        uriMatcher.addURI(AUTHORITY, TABLE_BTHREAD + "/#", RECORD_ID);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class ThreadProvider extends AbstractProvider {
 
     @Override
     protected String basePath() {
-        return TABLE_THREAD;
+        return TABLE_BTHREAD;
     }
 
     @Override

@@ -7,8 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
+import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
-import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 
 /**
@@ -117,11 +117,11 @@ public class MessageProvider extends AbstractProvider {
                 .append(" ON ").append("messages.").append(MessagesTable.CLM_AUTHOR_ID)
                 .append("= users.").append("contact_id")
                 .append(" LEFT JOIN ( SELECT ")
-                .append(MessageThreadsTable.CLM_NAME).append(", ")
-                .append(MessageThreadsTable.COLUMN_ID)
-                .append(" FROM ").append(MessageThreadsTable.TABLE_NAME)
+                .append(BThreadsTable.CLM_NAME).append(", ")
+                .append(BThreadsTable.COLUMN_ID)
+                .append(" FROM ").append(BThreadsTable.TABLE_NAME)
                 .append(") threads ON ").append("messages.").append(MessagesTable.CLM_THREAD_ID)
-                .append("= threads.").append(MessageThreadsTable.COLUMN_ID);
+                .append("= threads.").append(BThreadsTable.COLUMN_ID);
         ;
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         return database.rawQuery(query.toString(), null);
