@@ -815,7 +815,7 @@ public class DataProviderService extends Service {
                 cv.put(MessageThreadsTable.COLUMN_ID, resultThread.getId());
                 cv.put(MessageThreadsTable.CLM_USERS_KEY, threadKey);
                 cv.put(MessageThreadsTable.CLM_IS_MUTED, false);
-                cv.put(MessageThreadsTable.CLM_NAME, "NAAAAME");
+                cv.put(MessageThreadsTable.CLM_NAME, createThreadName(recipientIds));
                 getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
 
                 ArrayList<ContentProviderOperation> dbOperations =
@@ -832,6 +832,30 @@ public class DataProviderService extends Service {
             } else {
                 throw new IOException("Problem with creating thread due to network issue");
             }
+        }
+    }
+
+    private String createThreadName(Integer[] recipientIds) {
+        if (recipientIds.length == 2) {
+            String[] name = new String[2];
+            for (int userId : recipientIds) {
+                if (userId == App.accountId()) continue;
+                name = UserHelper.getUserName(this, recipientIds[0]);
+            }
+            return String.format("%s %s", name[0], name[1]);
+        } else {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int userId : recipientIds) {
+                if (userId == App.accountId()) continue;
+                String firstName = UserHelper.getUserName(this, userId)[0];
+                if (firstName != null) {
+                    stringBuilder.append(firstName).append(", ");
+                }
+            }
+            if (stringBuilder.length() > 2) {
+                stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
+            }
+            return stringBuilder.toString();
         }
     }
 
