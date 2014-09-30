@@ -81,7 +81,7 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_HISTROY,
+        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_HISTORY,
                 null, null, null, null);
     }
 

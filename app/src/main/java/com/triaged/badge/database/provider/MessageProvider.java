@@ -26,7 +26,7 @@ public class MessageProvider extends AbstractProvider {
 
     public static final Uri CONTENT_URI = Uri.parse(URI);
     public static final Uri CONTENT_URI_WITH_CONTACTS_INFO = Uri.parse(URI_WITH_CONTACTS_INFO);
-    public static final Uri CONTENT_URI_HISTROY = Uri.parse(URI_HISTORY);
+    public static final Uri CONTENT_URI_HISTORY = Uri.parse(URI_HISTORY);
 
 
     /**
@@ -157,6 +157,6 @@ public class MessageProvider extends AbstractProvider {
     protected void notifyUris(Uri uri) {
         super.notifyUris(uri);
         getContext().getContentResolver().notifyChange(CONTENT_URI_WITH_CONTACTS_INFO, null);
-        getContext().getContentResolver().notifyChange(CONTENT_URI_HISTROY, null);
+        getContext().getContentResolver().notifyChange(CONTENT_URI_HISTORY, null);
     }
 }
