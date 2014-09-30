@@ -32,7 +32,7 @@ import butterknife.InjectView;
 /**
  * Created by Sadegh Kazemy on 9/7/14.
  */
-public class MyMessagesAdapter extends CursorAdapter {
+public class HistoryAdapter extends CursorAdapter {
 
     private LayoutInflater inflater;
     private PrettyTime prettyTime;
@@ -43,7 +43,7 @@ public class MyMessagesAdapter extends CursorAdapter {
     private Typeface medium;
     private Typeface regular;
 
-    public MyMessagesAdapter(Context context, Cursor c) {
+    public HistoryAdapter(Context context, Cursor c) {
         super(context, c, false);
         inflater = LayoutInflater.from(context);
         prettyTime = new PrettyTime();
