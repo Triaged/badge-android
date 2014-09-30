@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 
 /**
@@ -105,16 +106,23 @@ public class MessageProvider extends AbstractProvider {
                 .append(" FROM ").append(MessagesTable.TABLE_NAME)
                 .append(" GROUP BY ").append(MessagesTable.CLM_THREAD_ID)
                 .append(" ORDER BY ").append(MessagesTable.CLM_TIMESTAMP).append(" DESC")
-                .append(") msg ")
+                .append(") messages ")
                 .append(" LEFT JOIN ( SELECT ")
                 .append(ContactsTable.COLUMN_ID).append(" as contact_id, ")
                 .append(ContactsTable.CLM_FIRST_NAME).append(", ")
                 .append(ContactsTable.CLM_LAST_NAME).append(", ")
                 .append(ContactsTable.CLM_AVATAR_URL)
                 .append(" FROM ").append(ContactsTable.TABLE_NAME)
-                .append(") cnt ")
-                .append(" ON ").append("msg.").append(MessagesTable.CLM_AUTHOR_ID)
-                .append("= cnt.").append("contact_id");
+                .append(") users ")
+                .append(" ON ").append("messages.").append(MessagesTable.CLM_AUTHOR_ID)
+                .append("= users.").append("contact_id")
+                .append(" LEFT JOIN ( SELECT ")
+                .append(MessageThreadsTable.CLM_NAME).append(", ")
+                .append(MessageThreadsTable.COLUMN_ID)
+                .append(" FROM ").append(MessageThreadsTable.TABLE_NAME)
+                .append(") threads ON ").append("messages.").append(MessagesTable.CLM_THREAD_ID)
+                .append("= threads.").append(MessageThreadsTable.COLUMN_ID);
+        ;
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         return database.rawQuery(query.toString(), null);
     }
