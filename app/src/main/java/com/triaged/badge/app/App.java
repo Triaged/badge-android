@@ -49,6 +49,7 @@ public class App extends Application {
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
     public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
+    private static App mInstance;
 
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
@@ -66,6 +67,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        mInstance = this;
         if (!BuildConfig.DEBUG) {
             Crashlytics.start(this);
         }
@@ -74,13 +76,13 @@ public class App extends Application {
 
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
-        setupDataProviderServiceBinding();
         initForeground();
         setupULI();
     }
 
+    public static ServiceConnection dataProviderServiceConnection;
     private void setupDataProviderServiceBinding() {
-        ServiceConnection dataProviderServiceConnection = new ServiceConnection() {
+        dataProviderServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
@@ -198,9 +200,14 @@ public class App extends Application {
         return mAccountId;
     }
 
+    public static App getInstance(){
+        return mInstance;
+    }
+
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
+        setupDataProviderServiceBinding();
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
     }

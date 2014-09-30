@@ -883,12 +883,6 @@ public class DataProviderService extends Service {
         return new JSONObject();
     }
 
-    public void onEvent(LogedinSuccessfully logedinSuccessfully) {
-        loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
-        syncCompanyAsync();
-        syncMessagesAsync();
-    }
-
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
         loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
     }
