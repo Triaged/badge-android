@@ -14,7 +14,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.ui.base.BackButtonActivity;
-import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
+import com.triaged.badge.ui.home.adapters.UserWithoutHeadingAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
 
 /**
@@ -31,7 +31,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
     private int departmentId;
 
     private ListView contactsForDepartmentList;
-    private ContactsWithoutHeadingsAdapter adapter;
+    private UserWithoutHeadingAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
         contactsForDepartmentList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                int clickedId = ((ContactsWithoutHeadingsAdapter.ViewHolder)view.getTag()).id;
+                int clickedId = ((UserWithoutHeadingAdapter.ViewHolder)view.getTag()).id;
                 Intent intent;
                 if (clickedId == dataProviderServiceBinding.getLoggedInUser().id) {
                     //TODO, use profile fragment
@@ -63,7 +63,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
         departmentId = extra.getInt(DEPARTMENT_ID_EXTRA);
         backButton.setText(departmentName);
 
-        adapter = new ContactsWithoutHeadingsAdapter(this, null);
+        adapter = new UserWithoutHeadingAdapter(this, null);
         contactsForDepartmentList.setAdapter(adapter);
         getLoaderManager().initLoader(0, savedInstanceState, this);
     }

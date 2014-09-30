@@ -22,12 +22,12 @@ import com.triaged.badge.models.Contact;
  * Created by Will on 7/9/14.
  * Revised by Sadegh on 9/26/14.
  */
-public class ContactsWithoutHeadingsAdapter extends CursorAdapter {
+public class UserWithoutHeadingAdapter extends CursorAdapter {
 
     private LayoutInflater inflater;
     private float densityMultiplier = 1;
 
-    public ContactsWithoutHeadingsAdapter(Context context, Cursor cursor) {
+    public UserWithoutHeadingAdapter(Context context, Cursor cursor) {
         super(context, cursor, true);
         inflater = LayoutInflater.from(context);
         densityMultiplier = context.getResources().getDisplayMetrics().density;
