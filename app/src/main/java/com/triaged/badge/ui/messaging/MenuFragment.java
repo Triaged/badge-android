@@ -29,7 +29,7 @@ import com.triaged.badge.database.provider.ThreadUserProvider;
 import com.triaged.badge.database.table.BThreadUserTable;
 import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
-import com.triaged.badge.models.MessageThread;
+import com.triaged.badge.models.BThread;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.net.api.requests.MessageBThreadRequest;
@@ -205,7 +205,9 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
                     }
 
                     private void sendRenameRequest(String newName) {
-                        MessageBThreadRequest request = new MessageBThreadRequest(new MessageThread(newName));
+                        BThread bThread = new BThread();
+                        bThread.setName(newName);
+                        MessageBThreadRequest request = new MessageBThreadRequest(bThread);
 
                         RestService.instance().messaging().threadSetName(mThreadId, request, new Callback<Response>() {
                             @Override

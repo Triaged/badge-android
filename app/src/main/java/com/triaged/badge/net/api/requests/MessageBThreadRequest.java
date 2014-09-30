@@ -1,15 +1,15 @@
 package com.triaged.badge.net.api.requests;
 
-import com.triaged.badge.models.MessageThread;
+import com.triaged.badge.models.BThread;
 
 /**
  * Created by Sadegh Kazemy on 9/11/14.
  */
 public class MessageBThreadRequest {
 
-    MessageThread messageThread;
+    BThread messageThread;
 
-    public MessageBThreadRequest(MessageThread messageThread) {
-        this.messageThread = messageThread;
+    public MessageBThreadRequest(BThread bThread) {
+        this.messageThread = bThread;
     }
 }

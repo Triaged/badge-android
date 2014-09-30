@@ -5,9 +5,9 @@ package com.triaged.badge.models;
  */
 public class BThread {
 
-    double timestamp;
+    Double timestamp;
     String id;
-    boolean muted;
+    Boolean muted;
     String name;
     Message[] messages;
     Integer[] userIds;
