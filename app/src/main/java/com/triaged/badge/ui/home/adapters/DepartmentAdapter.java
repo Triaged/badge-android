@@ -21,22 +21,15 @@ import butterknife.InjectView;
 public class DepartmentAdapter extends CursorAdapter {
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
-    private Context context;
     private LayoutInflater inflater;
-    public Cursor departmentsCursor;
 
     public DepartmentAdapter(Context context, Cursor cursor) {
         super(context, cursor, false);
-        this.context = context;
         this.inflater = LayoutInflater.from(context);
-
-        this.departmentsCursor = departmentsCursor;
     }
-
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-
         View row = inflater.inflate(R.layout.item_department_with_count, parent, false);
         ViewHolder holder = new ViewHolder(row);
         row.setTag(holder);
@@ -46,20 +39,16 @@ public class DepartmentAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
-
+        String numberOfContacts = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.CLM_CONTACTS_NUMBER));
+        holder.deptCountView.setText(String.valueOf(numberOfContacts));
         holder.name = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.CLM_NAME));
         holder.id = cursor.getInt(cursor.getColumnIndexOrThrow(DepartmentsTable.COLUMN_ID));
-        String numberOfContacts = cursor.getString(cursor.getColumnIndexOrThrow(DepartmentsTable.CLM_CONTACTS_NUMBER));
-
         holder.deptNameView.setText(holder.name);
-        holder.deptCountView.setText(String.valueOf(numberOfContacts));
     }
-
 
     public class ViewHolder {
         public String name;
         public int id;
-
         @InjectView(R.id.dept_name) TextView deptNameView;
         @InjectView(R.id.dept_count) TextView deptCountView;
 
@@ -67,5 +56,4 @@ public class DepartmentAdapter extends CursorAdapter {
             ButterKnife.inject(this, row);
         }
     }
-
 }
