@@ -39,13 +39,13 @@ import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import retrofit.RetrofitError;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
@@ -101,39 +101,16 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
                         @Override
                         protected String doInBackground(Void... params) {
                             try {
-                                try {
-                                    return dataProviderServiceBinding.createThreadSync(recipientIds);
-                                } catch (RemoteException e) {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-                                    App.gLogger.e(e);
-                                } catch (OperationApplicationException e) {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
-                                    App.gLogger.e(e);
-                                }
+                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                            } catch (RetrofitError e) {
+                                toastMessage("Network issue occurred. Try again later.");
+                                App.gLogger.e(e);
                             } catch (JSONException e) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            } catch (IOException e) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                toastMessage("Unexpected response from server.");
+                            } catch (OperationApplicationException e ) {
+                                toastMessage("Unexpected response from server.");
+                            } catch ( RemoteException  e){
+                                toastMessage("Unexpected response from server.");
                             }
                             return null;
                         }
@@ -309,5 +286,15 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
+    }
+
+
+    private void toastMessage(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

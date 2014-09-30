@@ -794,7 +794,7 @@ public class DataProviderService extends Service {
      * @param recipientIds
      * @return
      */
-    protected String createThreadSync(final Integer[] recipientIds) throws JSONException, IOException, RemoteException, OperationApplicationException {
+    protected String createThreadSync(final Integer[] recipientIds) throws JSONException,  RemoteException, OperationApplicationException {
         String threadKey = userIdArrayToKey(recipientIds);
         Cursor cursor = getContentResolver().query(ThreadProvider.CONTENT_URI,
                 new String[]{MessageThreadsTable.COLUMN_ID},
@@ -813,29 +813,26 @@ public class DataProviderService extends Service {
             }
             messageThread.put("user_ids", userIds);
             TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
-            BadgeThread resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
-            if (resultThread != null) {
-                ContentValues cv = new ContentValues();
-                cv.put(MessageThreadsTable.COLUMN_ID, resultThread.getId());
-                cv.put(MessageThreadsTable.CLM_USERS_KEY, threadKey);
-                cv.put(MessageThreadsTable.CLM_IS_MUTED, false);
-                cv.put(MessageThreadsTable.CLM_NAME, createThreadName(recipientIds));
-                getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
+            BadgeThread resultThread;
+            resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
+            ContentValues cv = new ContentValues();
+            cv.put(MessageThreadsTable.COLUMN_ID, resultThread.getId());
+            cv.put(MessageThreadsTable.CLM_USERS_KEY, threadKey);
+            cv.put(MessageThreadsTable.CLM_IS_MUTED, false);
+            cv.put(MessageThreadsTable.CLM_NAME, createThreadName(recipientIds));
+            getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
 
-                ArrayList<ContentProviderOperation> dbOperations =
-                        new ArrayList<ContentProviderOperation>(resultThread.getUserIds().length);
-                for (int participantId : resultThread.getUserIds()) {
-                    dbOperations.add(ContentProviderOperation.newInsert(
-                            ThreadUserProvider.CONTENT_URI)
-                            .withValue(ThreadUserTable.CLM_THREAD_ID, resultThread.getId())
-                            .withValue(ThreadUserTable.CLM_USER_ID, participantId)
-                            .build());
-                }
-                getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
-                return resultThread.getId();
-            } else {
-                throw new IOException("Problem with creating thread due to network issue");
+            ArrayList<ContentProviderOperation> dbOperations =
+                    new ArrayList<ContentProviderOperation>(resultThread.getUserIds().length);
+            for (int participantId : resultThread.getUserIds()) {
+                dbOperations.add(ContentProviderOperation.newInsert(
+                        ThreadUserProvider.CONTENT_URI)
+                        .withValue(ThreadUserTable.CLM_THREAD_ID, resultThread.getId())
+                        .withValue(ThreadUserTable.CLM_USER_ID, participantId)
+                        .build());
             }
+            getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
+            return resultThread.getId();
         }
     }
 
@@ -958,7 +955,7 @@ public class DataProviderService extends Service {
         /**
          * @see DataProviderService#createThreadSync(Integer[])
          */
-        public String createThreadSync(Integer[] userIds) throws JSONException, IOException, RemoteException, OperationApplicationException {
+        public String createThreadSync(Integer[] userIds) throws JSONException, RemoteException, OperationApplicationException {
             return DataProviderService.this.createThreadSync(userIds);
         }
 

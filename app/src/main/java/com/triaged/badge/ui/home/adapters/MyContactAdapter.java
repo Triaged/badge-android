@@ -1,5 +1,6 @@
 package com.triaged.badge.ui.home.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.OperationApplicationException;
@@ -28,13 +29,13 @@ import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.Optional;
+import retrofit.RetrofitError;
 import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
 /**
@@ -44,27 +45,24 @@ import se.emilsjolander.stickylistheaders.StickyListHeadersAdapter;
 
 public class MyContactAdapter extends CursorAdapter implements StickyListHeadersAdapter {
 
-
     private float densityMultiplier = 1;
     private LayoutInflater inflater;
     private int mResourceId;
-    private Context mContext;
+    private Activity mActivity;
 
-    public MyContactAdapter(Context context, Cursor cursor, int resourceId) {
-        super(context, cursor, false);
+    public MyContactAdapter(Activity activity, Cursor cursor, int resourceId) {
+        super(activity, cursor, false);
         mResourceId = resourceId;
-        mContext = context;
-        inflater = LayoutInflater.from(context);
-        densityMultiplier = context.getResources().getDisplayMetrics().density;
+        this.mActivity = activity;
+        inflater = LayoutInflater.from(activity);
+        densityMultiplier = activity.getResources().getDisplayMetrics().density;
     }
-
 
     @Override
     public View newView(final Context context, Cursor cursor, ViewGroup parent) {
         View row = inflater.inflate(mResourceId, parent, false);
         final ViewHolder holder = new ViewHolder(row);
         row.setTag(holder);
-
         return row;
     }
 
@@ -94,7 +92,6 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         holder.noPhotoThumb.setText(Contact.constructInitials(firstName, lastName));
         holder.noPhotoThumb.setVisibility(View.VISIBLE);
         if (avatarUrl != null) {
-
             ImageLoader.getInstance().displayImage(avatarUrl, holder.thumbImage, new SimpleImageLoadingListener() {
                 @Override
                 public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
@@ -162,16 +159,15 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
                 protected String doInBackground(Void... params) {
                     try {
                         return App.dataProviderServiceBinding.createThreadSync(recipientIds);
+                    } catch (RetrofitError e) {
+                       toastMessage("Network issue occurred. Try again later.");
+                        App.gLogger.e(e);
                     } catch (JSONException e) {
-                        Toast.makeText(mContext, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                    } catch (RemoteException e) {
-                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                        App.gLogger.e(e);
-                    } catch (OperationApplicationException e) {
-                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                        App.gLogger.e(e);
+                        toastMessage("Unexpected response from server.");
+                    } catch (OperationApplicationException e ) {
+                        toastMessage("Unexpected response from server.");
+                    } catch ( RemoteException  e) {
+                        toastMessage("Unexpected response from server.");
                     }
                     return null;
                 }
@@ -181,10 +177,10 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
                     if (threadId != null) {
                         //TODO: should not create new activity,
                         // just update the thread id and refresh the fragment.
-                        Intent intent = new Intent(mContext, MessagingActivity.class);
+                        Intent intent = new Intent(mActivity, MessagingActivity.class);
                         intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
 //                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        mContext.startActivity(intent);
+                        mActivity.startActivity(intent);
                     }
                 }
             }.execute();
@@ -193,6 +189,15 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
         ViewHolder(View row) {
             ButterKnife.inject(this, row);
         }
+    }
+
+    private void toastMessage(final String message) {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(App.context(), message, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
 }
