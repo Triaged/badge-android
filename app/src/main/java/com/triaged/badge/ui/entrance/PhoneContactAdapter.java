@@ -49,6 +49,7 @@ class PhoneContactAdapter extends ArrayAdapter<IRow> {
             InviteFriendFragment.PhoneContact phoneContact = (InviteFriendFragment.PhoneContact) getItem(position);
             holder.nameView.setText(phoneContact.name);
             holder.subtextView.setVisibility(View.VISIBLE);
+            holder.position = position;
             if (TextUtils.isEmpty(phoneContact.email)) {
                 holder.subtextView.setText(phoneContact.phone);
             } else {
@@ -94,8 +95,7 @@ class PhoneContactAdapter extends ArrayAdapter<IRow> {
 
     class ViewHolder {
         int position;
-        @InjectView(R.id.contact_name)
-        TextView nameView;
+        @InjectView(R.id.contact_name) TextView nameView;
         @InjectView(R.id.subtext_view) TextView subtextView;
         @InjectView(R.id.invite_button)
         Button inviteView;
