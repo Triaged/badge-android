@@ -1,6 +1,11 @@
 package com.triaged.badge.ui.messaging;
 
 import android.app.ActionBar;
+import android.app.LoaderManager;
+import android.content.ContentUris;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -8,49 +13,42 @@ import android.view.MenuItem;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivity;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.ThreadProvider;
+import com.triaged.badge.database.table.MessageThreadsTable;
 
 
-public class MessagingActivity extends SlidingActivity {
+public class MessagingActivity extends SlidingActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String THREAD_ID_EXTRA = "thread_id_extra";
-    public static final String THREAD_NAME_EXTRA = "thread_name_extra";
 
     private String mThreadId;
-    private String mThreadName;
+    MenuFragment menuFragment;
 
     @Override
      public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mThreadId = getIntent().getExtras().getString(THREAD_ID_EXTRA);
-        mThreadName = getIntent().getExtras().getString(THREAD_NAME_EXTRA);
-
-        setupActionbar();
-
-//        setTitle("Chatting!!");
-
-        setContentView(R.layout.activity_messaging_content_frame);
-
-        setBehindContentView(R.layout.messaging_menu_frame);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(false);
 
         getSlidingMenu().setSlidingEnabled(true);
         getSlidingMenu().setTouchModeAbove(SlidingMenu.RIGHT);
         getSlidingMenu().setMode(SlidingMenu.RIGHT);
         setSlidingActionBarEnabled(false);
 
+        setContentView(R.layout.activity_messaging_content_frame);
+        setBehindContentView(R.layout.messaging_menu_frame);
 
         if (savedInstanceState == null) {
-//            getFragmentManager().beginTransaction()
-//                    .add(R.id.container, MessagingFragment.newInstance(mThreadId))
-//                    .commit();
-
+            mThreadId = getIntent().getExtras().getString(THREAD_ID_EXTRA);
             getFragmentManager().beginTransaction()
-                    .replace(R.id.content_frame, MessagingFragment.newInstance(mThreadId))
+                    .add(R.id.content_frame, MessagingFragment.newInstance(mThreadId))
                     .commit();
 
+            menuFragment = MenuFragment.newInstance(mThreadId);
             getFragmentManager().beginTransaction()
-                    .replace(R.id.menu_frame, MenuFragment.newInstance(mThreadId, mThreadName))
+                    .add(R.id.menu_frame, menuFragment)
                     .commit();
-
 
             // customize the SlidingMenu
             SlidingMenu sm = getSlidingMenu();
@@ -60,14 +58,7 @@ public class MessagingActivity extends SlidingActivity {
             sm.setBehindScrollScale(0.25f);
             sm.setFadeDegree(0.25f);
         }
-    }
-
-    private void setupActionbar() {
-        ActionBar actionBar = getActionBar();
-        actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowHomeEnabled(false);
-
-        actionBar.setTitle(mThreadName);
+        getLoaderManager().initLoader(0, savedInstanceState, this);
     }
 
     @Override
@@ -94,5 +85,30 @@ public class MessagingActivity extends SlidingActivity {
             default:
                 return false;
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(this, ThreadProvider.CONTENT_URI,
+                null,
+                MessageThreadsTable.COLUMN_ID + "=?",
+                new String[]{mThreadId},
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (data.moveToFirst()) {
+            String threadName = data.getString(data.getColumnIndexOrThrow(MessageThreadsTable.CLM_NAME));
+            boolean isMute = data.getInt(data.getColumnIndexOrThrow(MessageThreadsTable.CLM_IS_MUTED)) > 0;
+            getActionBar().setTitle(threadName);
+            menuFragment.setThreadName(threadName);
+            menuFragment.setMute(isMute);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

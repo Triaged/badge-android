@@ -7,10 +7,12 @@ import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -93,13 +95,31 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
                 if (recipients.size() > 0) {
                     HashSet<Integer> userIdSet = new HashSet<Integer>(recipients.keySet());
                     userIdSet.add(dataProviderServiceBinding.getLoggedInUser().id);
-                    final Integer[] recipientIds = userIdSet.toArray(new Integer[]{});
+                    final Integer[] recipientIds = userIdSet.toArray(new Integer[userIdSet.size()]);
                     Arrays.sort(recipientIds);
                     new AsyncTask<Void, Void, String>() {
                         @Override
                         protected String doInBackground(Void... params) {
                             try {
-                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                try {
+                                    return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                } catch (RemoteException e) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                    App.gLogger.e(e);
+                                } catch (OperationApplicationException e) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                    App.gLogger.e(e);
+                                }
                             } catch (JSONException e) {
                                 runOnUiThread(new Runnable() {
                                     @Override
@@ -123,7 +143,6 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
                             if (threadId != null) {
                                 Intent intent = new Intent(MessageNewActivity.this, MessagingActivity.class);
                                 intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
-                                intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, dataProviderServiceBinding.getRecipientNames(threadId));
                                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                                 startActivity(intent);
                                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);

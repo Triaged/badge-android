@@ -16,7 +16,6 @@ public class MessagesTable extends AbstractTable {
     public static final String CLM_THREAD_ID = "thread_id";
     public static final String CLM_AUTHOR_ID = "author_id";
     public static final String CLM_TIMESTAMP = "timestamp";
-    public static final String CLM_THREAD_PARTICIPANTS = "thread_names";
     public static final String CLM_ACK = "message_acknowledged";
     public static final String CLM_IS_READ = "is_read";
     public static final String CLM_GUID = "guid";
@@ -32,7 +31,6 @@ public class MessagesTable extends AbstractTable {
                 .append(CLM_BODY).append(" TEXT, ")
                 .append(CLM_TIMESTAMP).append(" INTEGER, ")
                 .append(CLM_ACK).append(" INTEGER, ")
-                .append(CLM_THREAD_PARTICIPANTS).append(" TEXT, ")
                 .append(CLM_IS_READ).append(" INTEGER, ")
                 .append(CLM_GUID).append(" TEXT UNIQUE")
                 .append(");");

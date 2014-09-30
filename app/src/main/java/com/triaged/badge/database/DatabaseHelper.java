@@ -6,9 +6,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.database.table.ThreadUserTable;
 
 /**
  * @author Created by jc on 7/10/14.
@@ -26,25 +28,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
     public static final String JOINED_OFFICE_NAME = "office_name";
 
-//    private DataProviderService dataProviderService;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-//        this.dataProviderService = dataProviderService;
         mContext = context;
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
 //        db.execSQL("PRAGMA foreign_keys=ON;");
-
         new ContactsTable().onCreate(db);
         new DepartmentsTable().onCreate(db);
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
         new ReceiptTable().onCreate(db);
-
-//        dataProviderService.dataClearedCallback();
+        new MessageThreadsTable().onCreate(db);
+        new ThreadUserTable().onCreate(db);
     }
 
     @Override
@@ -54,6 +53,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         new MessagesTable().onUpgrade(db, oldVersion, newVersion);
         new OfficeLocationsTable().onUpgrade(db, oldVersion, newVersion);
         new ReceiptTable().onUpgrade(db, oldVersion, newVersion);
+        new MessageThreadsTable().onUpgrade(db, oldVersion, newVersion);
+        new ThreadUserTable().onUpgrade(db, oldVersion, newVersion);
 
         onCreate(db);
     }

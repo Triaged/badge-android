@@ -41,7 +41,6 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
     void messageItemClicked(AdapterView<?> parent, View view, int position, long id) {
         Intent intent = new Intent(getActivity(), MessagingActivity.class);
         intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).threadId);
-        intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).name.getText().toString());
         startActivity(intent);
     }
 

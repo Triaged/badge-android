@@ -2,9 +2,11 @@ package com.triaged.badge.ui.home.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +70,6 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         String firstName = cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME));
@@ -165,6 +166,12 @@ public class MyContactAdapter extends CursorAdapter implements StickyListHeaders
                         Toast.makeText(mContext, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
                     } catch (IOException e) {
                         Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                    } catch (RemoteException e) {
+                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                        App.gLogger.e(e);
+                    } catch (OperationApplicationException e) {
+                        Toast.makeText(mContext, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
+                        App.gLogger.e(e);
                     }
                     return null;
                 }

@@ -38,11 +38,15 @@ import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.provider.ReceiptProvider;
+import com.triaged.badge.database.provider.ThreadProvider;
+import com.triaged.badge.database.provider.ThreadUserProvider;
 import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.database.table.MessageThreadsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.database.table.ThreadUserTable;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
@@ -497,13 +501,10 @@ public class DataProviderService extends Service {
             @Override
             public void run() {
                 ContentValues msgValues = new ContentValues();
-//                database.beginTransaction();
                 try {
                     long timestamp = System.currentTimeMillis() * 1000 /* nano */;
                     // GUID
                     final String guid = UUID.randomUUID().toString();
-                    String[] userIds = deserializeStringArray(prefs.getString(threadId, ""));
-
                     //msgValues.put( CompanySQLiteHelper.CLM_ID, null );
                     msgValues.put(MessagesTable.CLM_TIMESTAMP, timestamp);
                     msgValues.put(MessagesTable.CLM_BODY, message);
@@ -511,26 +512,19 @@ public class DataProviderService extends Service {
                     msgValues.put(MessagesTable.CLM_AUTHOR_ID, loggedInUser.id);
                     msgValues.put(MessagesTable.CLM_IS_READ, 1);
                     msgValues.put(MessagesTable.CLM_GUID, guid);
-                    msgValues.put(MessagesTable.CLM_THREAD_PARTICIPANTS, userIdArrayToNames(userIds));
                     msgValues.put(MessagesTable.CLM_ACK, MSG_STATUS_PENDING);
-
                     getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
-//                            database.insert(MessagesTable.TABLE_NAME, null, msgValues);
-//                    database.setTransactionSuccessful();
-                    sendMessageToFaye(timestamp, guid, threadId, message);
 
+                    sendMessageToFaye(timestamp, guid, threadId, message);
                 } catch (JSONException e) {
                     // Realllllllly shouldn't happen.
                     App.gLogger.e("Severe bug, JSON exception parsing user id array from prefs", e);
                     return;
-                } finally {
-//                    database.endTransaction();
                 }
                 Intent newMsgIntent = new Intent(NEW_MSG_ACTION);
                 newMsgIntent.putExtra(THREAD_ID_EXTRA, threadId);
                 newMsgIntent.putExtra(IS_INCOMING_MSG_EXTRA, false);
-                //newMsgIntent.putExtra( MESSAGE_ID_EXTRA, mess)
-                //newMsgIntent.putExtra( )
+
                 localBroadcastManager.sendBroadcast(newMsgIntent);
             }
 
@@ -688,28 +682,54 @@ public class DataProviderService extends Service {
      *                  assume they are historical
      */
     protected void upsertThreadAndMessages(final BadgeThread bThread, final boolean broadcast) {
-        prefs.edit().putString(bThread.getId(), Arrays.toString(bThread.getUserIds()))
-                .putString(userIdArrayToKey(bThread.getUserIds()), bThread.getId())
-                .commit();
         long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
-        SharedPreferencesUtil.store("is_mute_" + bThread.getId(), bThread.isMuted());
-        if (bThread.getName() != null) SharedPreferencesUtil.store("name_" + bThread.getId(), bThread.getName());
+        // Insert thread into database.
+        ContentValues cv = new ContentValues();
+        cv.put(MessageThreadsTable.COLUMN_ID, bThread.getId());
+        cv.put(MessageThreadsTable.CLM_IS_MUTED, bThread.isMuted());
+        cv.put(MessageThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
+        if (bThread.getName() != null) cv.put(MessageThreadsTable.CLM_NAME, bThread.getName());
+        getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
 
+        // For each user into this thread,
+        // put a record into thread_user junction table.
         ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>(bThread.getMessages().length);
-        for (Message msg : bThread.getMessages()) {
-            //TODO: why nano? those zeros at the end of timestamp
-            // does not make it unique number!
-            long timestamp = (long) (msg.getTimestamp() * 1000000d) /* nanos */;
-            if (timestamp > mostRecentMsgTimestamp) {
-                mostRecentMsgTimestamp = timestamp;
-            }
-            ContentValues contentValues = MessageHelper.toContentValue(msg, bThread.getId());
+        for (int userId : bThread.getUserIds()) {
+            ContentValues contentValues = new ContentValues(2);
+            contentValues.put(ThreadUserTable.CLM_USER_ID, userId);
+            contentValues.put(ThreadUserTable.CLM_THREAD_ID, bThread.getId());
+            dbOperations.add(ContentProviderOperation
+                    .newInsert(ThreadUserProvider.CONTENT_URI)
+                    .withValues(contentValues).build());
+        }
+        try {
+            getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+        }
+        dbOperations.clear();
+
+        for (Message message : bThread.getMessages()) {
+            // Insert the message into the database.
+            ContentValues contentValues = MessageHelper.toContentValue(message, bThread.getId());
             dbOperations.add(ContentProviderOperation.newInsert(
                     MessageProvider.CONTENT_URI).
                     withValues(contentValues).
                     build());
 
+            //TODO: why nano? those zeros at the end of timestamp
+            // does not make it unique number!
+            long timestamp = (long) (message.getTimestamp() * 1000000d) /* nanos */;
+            if (timestamp > mostRecentMsgTimestamp) {
+                mostRecentMsgTimestamp = timestamp;
+            }
+
+
+            // If I am not the author of this message,
+            // create a receipt and put into database for further use.
             if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != loggedInUser.id) {
                 ContentValues receiptValues = new ContentValues();
                 receiptValues.put(ReceiptTable.CLM_MESSAGE_ID, contentValues.getAsString(MessagesTable.CLM_ID));
@@ -717,7 +737,7 @@ public class DataProviderService extends Service {
                 receiptValues.put(ReceiptTable.CLM_USER_ID, loggedInUser.id);
                 receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
                 getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
-
+                // Announce on event-but that we have new message
                 EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
                         contentValues.getAsString(MessagesTable.CLM_ID)));
             }
@@ -758,12 +778,6 @@ public class DataProviderService extends Service {
             }
             messages.close();
 
-            ContentValues msgValues = new ContentValues();
-            msgValues.put(MessagesTable.CLM_THREAD_PARTICIPANTS, userIdArrayToNames(bThread.getUserIds()));
-            getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                    MessagesTable.CLM_GUID + " =?",
-                    new String[] { mostRecentGuid});
-
         } else {
             messages.close();
         }
@@ -776,10 +790,16 @@ public class DataProviderService extends Service {
      * @param recipientIds
      * @return
      */
-    protected String createThreadSync(final Integer[] recipientIds) throws JSONException, IOException {
+    protected String createThreadSync(final Integer[] recipientIds) throws JSONException, IOException, RemoteException, OperationApplicationException {
         String threadKey = userIdArrayToKey(recipientIds);
-        String existingThreadId = prefs.getString(threadKey, "");
-        if ("".equals(existingThreadId)) {
+        Cursor cursor = getContentResolver().query(ThreadProvider.CONTENT_URI,
+                new String[]{MessageThreadsTable.CLM_USERS_KEY},
+                MessageThreadsTable.CLM_USERS_KEY + "=?",
+                new String[]{threadKey},
+                null);
+        if (cursor.moveToFirst()) {
+            return cursor.getString(0);
+        } else {
             JSONObject postBody = new JSONObject();
             JSONObject messageThread = new JSONObject();
             JSONArray userIds = new JSONArray();
@@ -791,13 +811,27 @@ public class DataProviderService extends Service {
             TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
             BadgeThread resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
             if (resultThread != null) {
-                prefs.edit().putString(threadKey, resultThread.getId()).putString(resultThread.getId(), Arrays.toString(recipientIds)).commit();
+                ContentValues cv = new ContentValues();
+                cv.put(MessageThreadsTable.COLUMN_ID, resultThread.getId());
+                cv.put(MessageThreadsTable.CLM_USERS_KEY, threadKey);
+                cv.put(MessageThreadsTable.CLM_IS_MUTED, false);
+                cv.put(MessageThreadsTable.CLM_NAME, "NAAAAME");
+                getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
+
+                ArrayList<ContentProviderOperation> dbOperations =
+                        new ArrayList<ContentProviderOperation>(resultThread.getUserIds().length);
+                for (int participantId : resultThread.getUserIds()) {
+                    dbOperations.add(ContentProviderOperation.newInsert(
+                            ThreadUserProvider.CONTENT_URI)
+                            .withValue(ThreadUserTable.CLM_THREAD_ID, resultThread.getId())
+                            .withValue(ThreadUserTable.CLM_USER_ID, participantId)
+                            .build());
+                }
+                getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
                 return resultThread.getId();
             } else {
                 throw new IOException("Problem with creating thread due to network issue");
             }
-        } else {
-            return existingThreadId;
         }
     }
 
@@ -816,76 +850,6 @@ public class DataProviderService extends Service {
             delim = ",";
         }
         return delimString.toString();
-    }
-
-    /**
-     * Look up the contact corresponding to each id and join
-     * their names in a comma separated list, excluding the logged
-     * in user's own name
-     *
-     * @param userIdArr json array of user ids
-     * @return a comma delimited string of unsorted contact names
-     */
-    private String userIdArrayToNames(Integer[] userIdArr) {
-        StringBuilder firstNames = new StringBuilder();
-        StringBuilder names = new StringBuilder();
-        String delim = "";
-        int validNames = 0;
-
-        String [] userName;
-        for (Integer id : userIdArr) {
-            if (!id.equals(loggedInUser.id)) {
-                userName = UserHelper.getUserName(this, id);
-                if (userName != null) {
-                    if (validNames <= 1) {
-                        names.append(delim).append(String.format("%s %s",userName[0], userName[1]));
-                    }
-                    firstNames.append(delim).append(userName[1]);
-                    validNames++;
-                    delim = ", ";
-                }
-            }
-        }
-        if (validNames > 1) {
-            return firstNames.toString();
-        } else {
-            return names.toString();
-        }
-    }
-
-    /**
-     * Look up the contact corresponding to each id and join
-     * their names in a comma separated list, excluding the logged
-     * in user's own name
-     *
-     * @param userIdArr json array of user ids
-     * @return a comma delimited string of unsorted contact names
-     */
-    private String userIdArrayToNames(String[] userIdArr) {
-        StringBuilder firstNames = new StringBuilder();
-        StringBuilder names = new StringBuilder();
-        String delim = "";
-        int validNames = 0;
-
-        String [] userName;
-        for (String id : userIdArr) {
-            if (!id.equals(loggedInUser.id + "")) {
-                userName = UserHelper.getUserName(this, Integer.parseInt(id));
-                if (userName != null) {
-                    if (validNames <= 1) {
-                        names.append(delim).append(String.format("%s %s", userName[0], userName[1]));
-                    }
-                    firstNames.append(delim).append(userName[1]);
-                    validNames++;
-                    delim = ", ";
-                }
-            }
-        }
-        if (validNames > 1) {
-            return firstNames.toString();
-        } else {
-            return names.toString();
-        }
     }
 
     /**
@@ -966,7 +930,7 @@ public class DataProviderService extends Service {
         /**
          * @see DataProviderService#createThreadSync(Integer[])
          */
-        public String createThreadSync(Integer[] userIds) throws JSONException, IOException {
+        public String createThreadSync(Integer[] userIds) throws JSONException, IOException, RemoteException, OperationApplicationException {
             return DataProviderService.this.createThreadSync(userIds);
         }
 
@@ -976,7 +940,19 @@ public class DataProviderService extends Service {
          * @return
          */
         public String getRecipientNames(String threadId) {
-            return userIdArrayToNames(deserializeStringArray(prefs.getString(threadId, "")));
+            Cursor cursor = getContentResolver().query(ThreadUserProvider.CONTENT_URI_CONTACT_INFO,
+                    null, ThreadUserTable.CLM_THREAD_ID + "=?",
+                    new String[]{threadId},
+                    null);
+            StringBuilder names = new StringBuilder();
+            if (cursor.moveToFirst()) {
+                do {
+                    names.append(cursor.getString(cursor.getColumnIndexOrThrow(ContactsTable.CLM_FIRST_NAME))).append(",");
+                } while (cursor.moveToNext());
+                // Delete the last comma
+                names.deleteCharAt(names.length() - 1);
+            }
+            return names.toString();
         }
 
         /**

@@ -24,7 +24,7 @@ public class DepartmentsTable extends AbstractTable {
 
         db.execSQL(createSql.toString());
         db.execSQL("CREATE INDEX department_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
-        db.execSQL("CREATE INDEX department_num_contacts_index ON " + TABLE_NAME + "(" + CLM_CONTACTS_NUMBER + ");");
+        db.execSQL("CREATE INDEX department_contacts_number_index ON " + TABLE_NAME + "(" + CLM_CONTACTS_NUMBER + ");");
     }
 
     @Override
