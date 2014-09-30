@@ -89,6 +89,9 @@ public class RestService {
 
         @GET("/api/v1/user/messages")
         void getMessages(@Query("timestamp") String sinceMilliSecs, Callback<BThread[]> callback );
+
+        @GET("/api/v1/user/messages")
+        BThread[] getMessages(@Query("timestamp") String sinceMilliSecs);
     }
 
     public interface BadgeService {
@@ -143,6 +146,9 @@ public class RestService {
 
         @GET("/v1/company")
         void getCompany(@Query("timestamp") String timestamp, Callback<Company> callback);
+
+        @GET("/v1/company")
+        Company getCompany(@Query("timestamp") String timestamp);
 
         @POST("/v1/invites")
         void invite(@Body InviteRequest inviteRequest, Callback<Response> callback);

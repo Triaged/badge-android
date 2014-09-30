@@ -307,62 +307,48 @@ public class DataProviderService extends Service {
         }
         lastSynced = System.currentTimeMillis();
         SharedPreferencesUtil.store(R.string.pref_last_sync_key, lastSynced);
-
-        RestService.instance().badge().getCompany("0", new Callback<Company>() {
-            @Override
-            public void success(Company company, Response response) {
-//                    getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
-                getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
-                getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
-                try {
-                    ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
-                    for (User user : company.getUsers()) {
-                        dbOperations.add(ContentProviderOperation.newInsert(
-                                UserProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
-                    }
-                    getContentResolver().applyBatch(UserProvider.AUTHORITY, dbOperations);
-                    dbOperations.clear();
-
-                    for (Department department: company.getDepartments()) {
-                        dbOperations.add(ContentProviderOperation.newInsert(
-                                DepartmentProvider.CONTENT_URI).withValues(
-                                DepartmentHelper.toContentValue(department)).build());
-                    }
-                    getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
-                    dbOperations.clear();
-
-                    for (OfficeLocation officeLocation: company.getOfficeLocations()) {
-                        dbOperations.add(ContentProviderOperation.newInsert(
-                                OfficeLocationProvider.CONTENT_URI).withValues(
-                                OfficeLocationHelper.toContentValue(officeLocation)).build());
-                    }
-                    SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
-                    getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
-                    dbOperations.clear();
-
-                    SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
-                    loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                } catch (OperationApplicationException e) {
-                    e.printStackTrace();
+        try {
+            Company company = RestService.instance().badge().getCompany("0");
+//            getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
+            getContentResolver().delete(DepartmentProvider.CONTENT_URI, null, null);
+            getContentResolver().delete(OfficeLocationProvider.CONTENT_URI, null, null);
+            try {
+                ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
+                for (User user : company.getUsers()) {
+                    dbOperations.add(ContentProviderOperation.newInsert(
+                            UserProvider.CONTENT_URI).withValues(UserHelper.toContentValue(user)).build());
                 }
+                getContentResolver().applyBatch(UserProvider.AUTHORITY, dbOperations);
+                dbOperations.clear();
+
+                for (Department department: company.getDepartments()) {
+                    dbOperations.add(ContentProviderOperation.newInsert(
+                            DepartmentProvider.CONTENT_URI).withValues(
+                            DepartmentHelper.toContentValue(department)).build());
+                }
+                getContentResolver().applyBatch(DepartmentProvider.AUTHORITY, dbOperations);
+                dbOperations.clear();
+
+                for (OfficeLocation officeLocation: company.getOfficeLocations()) {
+                    dbOperations.add(ContentProviderOperation.newInsert(
+                            OfficeLocationProvider.CONTENT_URI).withValues(
+                            OfficeLocationHelper.toContentValue(officeLocation)).build());
+                }
+                SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
+                getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
+                dbOperations.clear();
+
+                SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
+                loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (OperationApplicationException e) {
+                e.printStackTrace();
             }
 
-            @Override
-            public void failure(RetrofitError error) {
-                App.gLogger.e(error);
-            }
-        });
-    }
-
-    protected void syncCompanyAsync() {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                syncCompany();
-            }
-        });
+        } catch (RetrofitError e) {
+            App.gLogger.e(e);
+        }
     }
 
     /**
@@ -527,7 +513,6 @@ public class DataProviderService extends Service {
                 localBroadcastManager.sendBroadcast(newMsgIntent);
             }
 
-
         });
     }
 
@@ -653,19 +638,14 @@ public class DataProviderService extends Service {
 
     protected void syncMessagesSync() {
         long since = (prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
-        RestService.instance().messaging().getMessages(since + "", new Callback<BThread[]>() {
-            @Override
-            public void success(BThread[] bThreads, Response response) {
-                for(BThread bThread: bThreads) {
-                    upsertThreadAndMessages(bThread, false);
-                }
+        try {
+            BThread[] bThreads = RestService.instance().messaging().getMessages(since + "");
+            for (BThread bThread : bThreads) {
+                upsertThreadAndMessages(bThread, false);
             }
-
-            @Override
-            public void failure(RetrofitError error) {
-                App.gLogger.e(error);
-            }
-        });
+        } catch (RetrofitError error) {
+            App.gLogger.e(error);
+        }
     }
 
     /**
