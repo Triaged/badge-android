@@ -25,8 +25,8 @@ import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.ui.home.adapters.DepartmentAdapter;
 import com.triaged.badge.ui.home.adapters.UserAdapter;
-import com.triaged.badge.ui.home.adapters.MyDepartmentAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
 
 import butterknife.ButterKnife;
@@ -45,7 +45,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     private final static int DEPARTMENTS_TAB_ID = 2000;
 
     private UserAdapter contactsAdapter;
-    private MyDepartmentAdapter departmentAdapter;
+    private DepartmentAdapter departmentAdapter;
     private String mSearchTerm = null;
     private int currentTab = CONTACTS_TAB_ID;
 
@@ -114,7 +114,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         ButterKnife.inject(this, root);
 
         contactsAdapter = new UserAdapter(getActivity(), null, R.layout.item_contact_with_msg);
-        departmentAdapter = new MyDepartmentAdapter(getActivity(), null);
+        departmentAdapter = new DepartmentAdapter(getActivity(), null);
 
         contactsListView.setAdapter(contactsAdapter);
         departmentsListView.setAdapter(departmentAdapter);
@@ -149,7 +149,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         departmentsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                MyDepartmentAdapter.ViewHolder viewHolder = (MyDepartmentAdapter.ViewHolder) view.getTag();
+                DepartmentAdapter.ViewHolder viewHolder = (DepartmentAdapter.ViewHolder) view.getTag();
                 Intent intent = new Intent(getActivity(), ContactsForDepartmentActivity.class);
                 intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_ID_EXTRA, viewHolder.id);
                 intent.putExtra(ContactsForDepartmentActivity.DEPARTMENT_NAME_EXTRA, viewHolder.name);

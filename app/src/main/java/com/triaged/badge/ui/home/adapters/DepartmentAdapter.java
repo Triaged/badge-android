@@ -18,14 +18,14 @@ import butterknife.InjectView;
 /**
  * Created by Sadegh Kazemy on 9/7/14.
  */
-public class MyDepartmentAdapter extends CursorAdapter {
+public class DepartmentAdapter extends CursorAdapter {
 
     protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private Context context;
     private LayoutInflater inflater;
     public Cursor departmentsCursor;
 
-    public MyDepartmentAdapter(Context context, Cursor cursor) {
+    public DepartmentAdapter(Context context, Cursor cursor) {
         super(context, cursor, false);
         this.context = context;
         this.inflater = LayoutInflater.from(context);
