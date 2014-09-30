@@ -689,7 +689,11 @@ public class DataProviderService extends Service {
         cv.put(MessageThreadsTable.COLUMN_ID, bThread.getId());
         cv.put(MessageThreadsTable.CLM_IS_MUTED, bThread.isMuted());
         cv.put(MessageThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
-        if (bThread.getName() != null) cv.put(MessageThreadsTable.CLM_NAME, bThread.getName());
+        if (bThread.getUserIds().length == 2) {
+            cv.put(MessageThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
+        } else if (bThread.getName() != null){
+            cv.put(MessageThreadsTable.CLM_NAME, bThread.getName());
+        }
         getContentResolver().insert(ThreadProvider.CONTENT_URI, cv);
 
         // For each user into this thread,
