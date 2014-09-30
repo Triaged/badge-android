@@ -793,7 +793,7 @@ public class DataProviderService extends Service {
     protected String createThreadSync(final Integer[] recipientIds) throws JSONException, IOException, RemoteException, OperationApplicationException {
         String threadKey = userIdArrayToKey(recipientIds);
         Cursor cursor = getContentResolver().query(ThreadProvider.CONTENT_URI,
-                new String[]{MessageThreadsTable.CLM_USERS_KEY},
+                new String[]{MessageThreadsTable.COLUMN_ID},
                 MessageThreadsTable.CLM_USERS_KEY + "=?",
                 new String[]{threadKey},
                 null);
@@ -976,10 +976,6 @@ public class DataProviderService extends Service {
             DataProviderService.this.partialSyncContactsAsync();
         }
 
-    }
-
-    private static String[] deserializeStringArray(String string) {
-        return string.replace("[", "").replace("]", "").split(", ");
     }
 
 }
