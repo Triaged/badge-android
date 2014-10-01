@@ -31,6 +31,16 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) cityscape.getLayoutParams();
         lp.setMargins(0, 0, 0, 0);
         cityscape.setLayoutParams(lp);
+
+        // make visible check if user has no office location.
+        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+        if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {
+            noLocationCheck.setVisibility(View.VISIBLE);
+        } else {
+            noLocationCheck.setVisibility(View.GONE);
+            officeLocationsAdapter.usersOffice = loggedInUser.primaryOfficeLocationId;
+            officeLocationsAdapter.usersOfficeName = loggedInUser.officeName;
+        }
     }
 
     @Override
@@ -41,17 +51,4 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         finish();
     }
 
-    @Override
-    protected void onDatabaseReady() {
-        super.onDatabaseReady();
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
-        if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {
-            noLocationCheck.setVisibility(View.VISIBLE);
-        } else {
-            noLocationCheck.setVisibility(View.GONE);
-            officeLocationsAdapter.usersOffice = loggedInUser.primaryOfficeLocationId;
-            officeLocationsAdapter.usersOfficeName = loggedInUser.officeName;
-            officeLocationsAdapter.refresh();
-        }
-    }
 }

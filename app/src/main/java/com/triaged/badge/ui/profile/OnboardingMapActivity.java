@@ -117,8 +117,6 @@ public class OnboardingMapActivity extends BackButtonActivity implements
                                 values.put(OfficeLocationsTable.CLM_LAT, officeLocation.getLatitude());
                                 values.put(OfficeLocationsTable.CLM_LNG, officeLocation.getLongitude());
                                 getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
-
-                                setResult(officeLocation.getId());
                                 finish();
                             }
 
