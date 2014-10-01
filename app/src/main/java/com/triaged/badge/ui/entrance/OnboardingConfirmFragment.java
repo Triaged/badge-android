@@ -83,7 +83,6 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
                 SharedPreferencesUtil.store(R.string.pref_account_company_id_key, account.getCompanyId());
                 getActivity().getContentResolver().insert(UserProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
                 EventBus.getDefault().post(new LogedinSuccessfully());
-                EventBus.getDefault().post(new UpdateAccountEvent());
 
                 mListener.onConfirmSucceed();
                 GeneralUtils.dismissKeyboard(getActivity());
