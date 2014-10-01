@@ -20,7 +20,7 @@ public class BThread {
         return id;
     }
 
-    public boolean isMuted() {
+    public Boolean isMuted() {
         return muted;
     }
 

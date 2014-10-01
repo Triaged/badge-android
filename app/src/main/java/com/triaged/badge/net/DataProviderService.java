@@ -445,7 +445,7 @@ public class DataProviderService extends Service {
         // Insert thread into database.
         ContentValues cv = new ContentValues();
         cv.put(BThreadsTable.COLUMN_ID, bThread.getId());
-        cv.put(BThreadsTable.CLM_IS_MUTED, bThread.isMuted());
+        if (bThread.isMuted() != null) cv.put(BThreadsTable.CLM_IS_MUTED, bThread.isMuted());
         cv.put(BThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
         if (bThread.getUserIds().length == 2) {
             cv.put(BThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
