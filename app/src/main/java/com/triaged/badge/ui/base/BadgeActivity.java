@@ -15,6 +15,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.models.Device;
 import com.triaged.badge.net.DataProviderService;
@@ -54,7 +55,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
-    private IntentFilter newMessageIntentFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
+    private IntentFilter newMessageIntentFilter = new IntentFilter(MessageProcessor.NEW_MSG_ACTION);
     private BroadcastReceiver logoutReceiver;
     private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -107,8 +108,8 @@ public abstract class BadgeActivity extends MixpanelActivity {
      * @param intent
      */
     protected void notifyNewMessage(Intent intent) {
-        if (intent.getBooleanExtra(DataProviderService.IS_INCOMING_MSG_EXTRA, false)) {
-            String threadId = intent.getStringExtra(DataProviderService.THREAD_ID_EXTRA);
+        if (intent.getBooleanExtra(MessageProcessor.IS_INCOMING_MSG_EXTRA, false)) {
+            String threadId = intent.getStringExtra(MessageProcessor.THREAD_ID_EXTRA);
             String from = intent.getStringExtra(DataProviderService.MESSAGE_FROM_EXTRA);
             String message = intent.getStringExtra(DataProviderService.MESSAGE_BODY_EXTRA);
             Notifier.newNotification(this, from, message, threadId);

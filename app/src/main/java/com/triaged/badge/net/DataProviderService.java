@@ -2,7 +2,6 @@ package com.triaged.badge.net;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -10,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
-import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -21,7 +19,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
-import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -41,7 +38,6 @@ import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.ReceiptTable;
-import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
@@ -65,10 +61,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
 import retrofit.Callback;
@@ -87,12 +81,9 @@ public class DataProviderService extends Service {
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
-    public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
 
-    public static final String THREAD_ID_EXTRA = "threadId";
     public static final String MESSAGE_BODY_EXTRA = "messageBody";
     public static final String MESSAGE_FROM_EXTRA = "messageFrom";
-    public static final String IS_INCOMING_MSG_EXTRA = "isIncomingMessage";
 
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
@@ -415,153 +406,6 @@ public class DataProviderService extends Service {
         });
     }
 
-    /**
-     * Create a message in the database and send it async to faye
-     * for sending over websocket.
-     * <p/>
-     * New messages become the thread head and are read by default.
-     * The lifecycle for message status is pending, sent, or error.
-     *
-     * @param threadId
-     * @param message
-     */
-    protected void sendMessageAsync(final String threadId, final String message) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                ContentValues msgValues = new ContentValues();
-                try {
-                    long timestamp = System.currentTimeMillis() * 1000 /* nano */;
-                    // GUID
-                    final String guid = UUID.randomUUID().toString();
-                    //msgValues.put( CompanySQLiteHelper.CLM_ID, null );
-                    msgValues.put(MessagesTable.CLM_TIMESTAMP, timestamp);
-                    msgValues.put(MessagesTable.CLM_BODY, message);
-                    msgValues.put(MessagesTable.CLM_THREAD_ID, threadId);
-                    msgValues.put(MessagesTable.CLM_AUTHOR_ID, loggedInUser.id);
-                    msgValues.put(MessagesTable.CLM_IS_READ, 1);
-                    msgValues.put(MessagesTable.CLM_GUID, guid);
-                    msgValues.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_PENDING);
-                    getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
-
-                    sendMessageToFaye(timestamp, guid, threadId, message);
-                } catch (JSONException e) {
-                    // Realllllllly shouldn't happen.
-                    App.gLogger.e("Severe bug, JSON exception parsing user id array from prefs", e);
-                    return;
-                }
-                Intent newMsgIntent = new Intent(NEW_MSG_ACTION);
-                newMsgIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                newMsgIntent.putExtra(IS_INCOMING_MSG_EXTRA, false);
-
-                localBroadcastManager.sendBroadcast(newMsgIntent);
-            }
-
-        });
-    }
-
-    protected void sendMessageToFaye(long timestamp, final String guid, final String threadId, final String message) throws JSONException {
-        final JSONObject msgWrapper = new JSONObject();
-        JSONObject msg = new JSONObject();
-        msgWrapper.put("message", msg);
-        msg.put("author_id", loggedInUser.id);
-        msg.put("body", message);
-        msg.put("timestamp", timestamp);
-        msg.put("guid", guid);
-        msgWrapper.put("guid", guid);
-        // Bind/unbind every time so that the service doesn't live past
-        // stopService()
-        ServiceConnection fayeServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                FayeService.LocalBinding fayeServiceBinding = (FayeService.LocalBinding) service;
-                fayeServiceBinding.sendMessage(threadId, msgWrapper);
-
-                unbindService(this);
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                // Derp
-            }
-        };
-        if (!bindService(new Intent(DataProviderService.this, FayeService.class), fayeServiceConnection, BIND_AUTO_CREATE)) {
-            unbindService(fayeServiceConnection);
-        }
-        sqlThread.schedule(new Runnable() {
-            @Override
-            public void run() {
-                Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
-                        null, MessagesTable.CLM_GUID + " =?",
-                        new String[]{guid}, null);
-                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.CLM_ACK)) == Message.MSG_STATUS_PENDING) {
-                    ContentValues values = new ContentValues();
-                    values.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_FAILED);
-
-                    int rowsUpdated = getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                            MessagesTable.CLM_GUID + " =?",
-                            new String[] { guid});
-                    if (rowsUpdated == 1) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(DataProviderService.this, "Message could not be sent.", Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                }
-            }
-        }, 4, TimeUnit.SECONDS);
-
-    }
-
-    /**
-     * Try to send a message again that's already saved in the DB.
-     *
-     * @param guid message guid
-     */
-    protected void retryMessageAsync(final String guid) {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
-                        null, MessagesTable.CLM_GUID + " =?",
-                        new String[]{guid}, null);
-                if (msgCursor.moveToFirst()) {
-                    // Flip back to pending status.
-                    ContentValues msgValues = new ContentValues();
-                    msgValues.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_PENDING);
-                    getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
-                            MessagesTable.CLM_GUID + " =?",
-                            new String[] { guid});
-
-                    String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
-                    String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_BODY));
-                    long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP));
-                    msgCursor.close();
-
-                    try {
-                        sendMessageToFaye(timestamp, guid, threadId, body);
-                    } catch (JSONException e) {
-                        App.gLogger.e("JSON exception preparing message to send to faye", e);
-                    }
-                } else {
-                    App.gLogger.w("UI wanted to retry message with guid " + guid + " but that message can't be found.");
-                }
-
-            }
-        });
-    }
-
-    protected void syncMessagesAsync() {
-        sqlThread.submit(new Runnable() {
-            @Override
-            public void run() {
-                syncMessagesSync();
-            }
-        });
-    }
-
     protected void syncMessagesSync() {
         long since = (SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
         try {
@@ -572,6 +416,15 @@ public class DataProviderService extends Service {
         } catch (RetrofitError error) {
             App.gLogger.e(error);
         }
+    }
+
+    protected void syncMessagesAsync() {
+        sqlThread.submit(new Runnable() {
+            @Override
+            public void run() {
+                syncMessagesSync();
+            }
+        });
     }
 
     /**
@@ -843,13 +696,6 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * @see DataProviderService#sendMessageAsync(String, String)
-         */
-        public void sendMessageAsync(String threadId, String body) {
-            DataProviderService.this.sendMessageAsync(threadId, body);
-        }
-
-        /**
          * @see DataProviderService#createThreadSync(Integer[])
          */
         public String createThreadSync(Integer[] userIds) throws JSONException, RemoteException, OperationApplicationException {
@@ -861,13 +707,6 @@ public class DataProviderService extends Service {
          */
         public void syncMessagesAsync() {
             DataProviderService.this.syncMessagesAsync();
-        }
-
-        /**
-         * @see DataProviderService#retryMessageAsync(String)
-         */
-        public void retryMessageAsync(String guid) {
-            DataProviderService.this.retryMessageAsync(guid);
         }
 
         /**

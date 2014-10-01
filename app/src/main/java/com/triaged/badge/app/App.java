@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.os.IBinder;
 
 import com.crashlytics.android.Crashlytics;
@@ -50,12 +51,13 @@ public class App extends Application {
 
     public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private static App mInstance;
+    private static Handler mHandler;
 
     public Foreground appForeground;
     public Foreground.Listener foregroundListener;
 
     public static final ILogger gLogger = new LoggerImp(BuildConfig.DEBUG);
-    public static Context mContext;
+    private static Context mContext;
     public static RestAdapter restAdapterMessaging;
     public static RestAdapter restAdapter;
     private static int mAccountId;
@@ -73,6 +75,7 @@ public class App extends Application {
         }
         EventBus.getDefault().register(this);
         mContext = this;
+        mHandler = new Handler(getMainLooper());
 
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
@@ -194,6 +197,10 @@ public class App extends Application {
 
     public static Context context() {
         return mContext;
+    }
+
+    public static Handler uiHandler() {
+        return mHandler;
     }
 
     public static int accountId() {

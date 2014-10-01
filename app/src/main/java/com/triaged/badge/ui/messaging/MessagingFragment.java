@@ -17,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.ReceiptHelper;
 import com.triaged.badge.database.provider.MessageProvider;
@@ -81,7 +82,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     void sendMessage() {
         String msg = postBox.getText().toString();
         if (!msg.equals("")) {
-            App.dataProviderServiceBinding.sendMessageAsync(mThreadId, msg);
+            MessageProcessor.getInstance().sendMessage(mThreadId, msg);
             postBox.setText("");
             JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
             try {
@@ -177,13 +178,13 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     private void prepareAndSendReceipts() {
         ReceiptHelper.setTimestamp(getActivity(), mThreadId);
-        List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.mContext);
+        List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.context());
         if (receiptList.size() > 0) {
             ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
             RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
                 @Override
                 public void success(Response response, Response response2) {
-                    ReceiptHelper.setAllSeenReceiptsSync(App.mContext);
+                    ReceiptHelper.setAllSeenReceiptsSync(App.context());
                 }
 
                 @Override

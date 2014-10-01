@@ -41,8 +41,7 @@ public class GCMReceiver extends BroadcastReceiver {
             Intent broadcastIntent = new Intent(SYNC_GCM_RECEIVED);
             broadcastIntent.putExtra(SYNC_GCM_DATA_TYPE_KEY, syncType);
             broadcastIntent.putExtra(SYNC_GCM_DATA_ID_KEY, syncId);
-            LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
-            localBroadcastManager.sendBroadcast(broadcastIntent);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent);
         }
 
     }

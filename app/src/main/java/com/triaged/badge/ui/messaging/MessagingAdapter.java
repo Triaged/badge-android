@@ -15,6 +15,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
@@ -112,7 +113,7 @@ public class MessagingAdapter  extends CursorAdapter {
             holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    App.dataProviderServiceBinding.retryMessageAsync(guid);
+                    MessageProcessor.getInstance().retryMessage(guid);
                 }
             });
         }
