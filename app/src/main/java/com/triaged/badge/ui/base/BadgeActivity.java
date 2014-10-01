@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -55,103 +54,49 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
-    protected LocalBroadcastManager localBroadcastManager;
-    protected BroadcastReceiver databaseReadyReceiver;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
-    private BroadcastReceiver logoutListener;
-    private BroadcastReceiver newMessageReceiver;
-    IntentFilter newMessageIntentFilter;
-
-
+    private IntentFilter newMessageIntentFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
+    private BroadcastReceiver logoutReceiver;
+    private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            notifyNewMessage(intent);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        registerForLogoutAction();
+        super.onCreate(savedInstanceState);
+    }
+
+    private void registerForLogoutAction() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(DataProviderService.LOGGED_OUT_ACTION);
-        logoutListener = new BroadcastReceiver() {
+        logoutReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 logout();
             }
         };
-
-        localBroadcastManager.registerReceiver(logoutListener, intentFilter);
-
-        newMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                notifyNewMessage(intent);
-            }
-        };
-        newMessageIntentFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
-
-        databaseReadyReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(DataProviderService.DB_AVAILABLE_ACTION)) {
-                    dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-                    onDatabaseReady();
-                } else if (intent.getAction().equals(DataProviderService.DB_UPDATED_ACTION)) {
-                    onDatabaseUpdated();
-                }
-            }
-        };
-        IntentFilter dbActionFilter = new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION);
-        dbActionFilter.addAction(DataProviderService.DB_UPDATED_ACTION);
-        localBroadcastManager.registerReceiver(databaseReadyReceiver, dbActionFilter);
-        dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        if (dataProviderServiceBinding != null) {
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    onDatabaseReady();
-                }
-            });
-
-        }
-        super.onCreate(savedInstanceState);
+        LocalBroadcastManager.getInstance(this).registerReceiver(logoutReceiver, intentFilter);
     }
 
     @Override
     protected void onDestroy() {
-        localBroadcastManager.unregisterReceiver(databaseReadyReceiver);
-        localBroadcastManager.unregisterReceiver(logoutListener);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(logoutReceiver);
         super.onDestroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        localBroadcastManager.registerReceiver(newMessageReceiver, newMessageIntentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, newMessageIntentFilter);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        localBroadcastManager.unregisterReceiver(newMessageReceiver);
-    }
-
-    /**
-     * Implement this method to do any activity set up
-     * that requires access to badge data.
-     * <p/>
-     * Do not attempt to access {@link #dataProviderServiceBinding}
-     * until this has been called.
-     * <p/>
-     * This is always invoked after {@link android.app.Activity#onCreate(android.os.Bundle)}
-     * <p/>
-     * Default impl does nothing.
-     */
-    protected void onDatabaseReady() {
-    }
-
-    /**
-     * Default impl does nothing. Override to be notified
-     * when the database has been re-synced.
-     */
-    protected void onDatabaseUpdated() {
-
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(newMessageReceiver);
     }
 
     /**
@@ -168,11 +113,6 @@ public abstract class BadgeActivity extends MixpanelActivity {
             String message = intent.getStringExtra(DataProviderService.MESSAGE_BODY_EXTRA);
             Notifier.newNotification(this, from, message, threadId);
         }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
     }
 
     /**

@@ -413,6 +413,7 @@ public class EditProfileActivity extends BadgeActivity {
 
         pendingUploadBar = (ProgressBar) findViewById(R.id.pending_upload);
 
+        bindView();
     }
 
     private void saveNewAccountAndFinish(Account account) {
@@ -425,9 +426,8 @@ public class EditProfileActivity extends BadgeActivity {
         finish();
     }
 
-    @Override
-    protected void onDatabaseReady() {
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+    protected void bindView() {
+        Contact loggedInUser = App.dataProviderServiceBinding.getLoggedInUser();
 
         profileImageMissingView.setText(loggedInUser.initials);
         profileImageMissingView.setVisibility(View.VISIBLE);

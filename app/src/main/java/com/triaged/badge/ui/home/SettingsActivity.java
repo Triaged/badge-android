@@ -70,7 +70,7 @@ public class SettingsActivity extends BackButtonActivity {
             @Override
             public void onClick(View v) {
 
-                JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
                 mixpanel.track("logout", props);
 
                 int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);
@@ -132,7 +132,7 @@ public class SettingsActivity extends BackButtonActivity {
                         if (isChecked) {
                             LocationTrackingService.scheduleAlarm(SettingsActivity.this);
                         } else {
-                            LocationTrackingService.clearAlarm(dataProviderServiceBinding, SettingsActivity.this);
+                            LocationTrackingService.clearAlarm(App.dataProviderServiceBinding, SettingsActivity.this);
                         }
                         EventBus.getDefault().post(new UpdateAccountEvent());
                     }

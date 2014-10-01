@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;
@@ -33,7 +34,7 @@ public class EditLocationActivity extends OnboardingLocationActivity {
         cityscape.setLayoutParams(lp);
 
         // make visible check if user has no office location.
-        Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+        Contact loggedInUser = App.dataProviderServiceBinding.getLoggedInUser();
         if (loggedInUser.officeName == null || loggedInUser.officeName.equals("")) {
             noLocationCheck.setVisibility(View.VISIBLE);
         } else {

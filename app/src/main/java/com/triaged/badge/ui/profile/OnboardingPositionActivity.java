@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -137,7 +138,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 startActivityForResult(intent, MANAGER_REQUEST_CODE);
             }
         });
-        localBroadcastManager.registerReceiver(onboardingFinishedReceiver, new IntentFilter(ONBOARDING_FINISHED_ACTION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(onboardingFinishedReceiver, new IntentFilter(ONBOARDING_FINISHED_ACTION));
 
         nametag = (ImageView) findViewById(R.id.nametag);
         tellUsMoreTitle = (TextView) findViewById(R.id.tell_us_more_title);
@@ -169,11 +170,11 @@ public class OnboardingPositionActivity extends BadgeActivity {
             }
         });
 
+        bindView();
     }
 
-    @Override
-    protected void onDatabaseReady() {
-        final Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+    protected void bindView() {
+        final Contact loggedInUser = App.dataProviderServiceBinding.getLoggedInUser();
         managerId = loggedInUser.managerId;
         departmentId = loggedInUser.departmentId;
 
@@ -219,7 +220,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        localBroadcastManager.unregisterReceiver(onboardingFinishedReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(onboardingFinishedReceiver);
     }
 
     @Override

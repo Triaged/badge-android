@@ -94,14 +94,14 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
             public void onClick(View v) {
                 if (recipients.size() > 0) {
                     HashSet<Integer> userIdSet = new HashSet<Integer>(recipients.keySet());
-                    userIdSet.add(dataProviderServiceBinding.getLoggedInUser().id);
+                    userIdSet.add(App.dataProviderServiceBinding.getLoggedInUser().id);
                     final Integer[] recipientIds = userIdSet.toArray(new Integer[userIdSet.size()]);
                     Arrays.sort(recipientIds);
                     new AsyncTask<Void, Void, String>() {
                         @Override
                         protected String doInBackground(Void... params) {
                             try {
-                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                return App.dataProviderServiceBinding.createThreadSync(recipientIds);
                             } catch (RetrofitError e) {
                                 toastMessage("Network issue occurred. Try again later.");
                                 App.gLogger.e(e);

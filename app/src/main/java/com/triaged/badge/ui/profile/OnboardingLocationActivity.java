@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -142,7 +143,7 @@ public class OnboardingLocationActivity extends BadgeActivity implements LoaderM
 
                 Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);
                 startActivity(intent);
-                localBroadcastManager.sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
+                LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
                 finish();
             }
 
