@@ -19,7 +19,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.models.Message;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -95,15 +95,15 @@ public class MessagingAdapter  extends CursorAdapter {
             holder.progressBar.setVisibility(View.GONE);
             holder.messageFailedButton.setVisibility(View.GONE);
             int status = cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_ACK));
-            if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
+            if (status == Message.MSG_STATUS_ACKNOWLEDGED) {
                 // Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.CLM_BODY)));
-            } else if (status == DataProviderService.MSG_STATUS_PENDING) {
+            } else if (status == Message.MSG_STATUS_PENDING) {
                 // Pending
                 // Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.CLM_BODY)));
                 holder.progressBar.setVisibility(View.VISIBLE);
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
-            } else if (status == DataProviderService.MSG_STATUS_FAILED) {
+            } else if (status == Message.MSG_STATUS_FAILED) {
                 holder.messageFailedButton.setVisibility(View.VISIBLE);
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);

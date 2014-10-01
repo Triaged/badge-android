@@ -4,50 +4,44 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.database.helper.DepartmentHelper;
 import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.BThreadProvider;
-import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.provider.ReceiptProvider;
 import com.triaged.badge.database.provider.ThreadUserProvider;
+import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.BThreadUserTable;
 import com.triaged.badge.database.table.BThreadsTable;
-import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
-import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.database.table.ReceiptTable;
-import com.triaged.badge.events.LogedinSuccessfully;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
@@ -89,57 +83,20 @@ import retrofit.client.Response;
  * @author Created by jc on 7/7/14.
  */
 public class DataProviderService extends Service {
-    protected static final String LOG_TAG = DataProviderService.class.getName();
 
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
 
-    public static final String DB_UPDATED_ACTION = "com.triage.badge.DB_UPDATED";
-    public static final String DB_AVAILABLE_ACTION = "com.triage.badge.DB_AVAILABLE";
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
     public static final String NEW_MSG_ACTION = "com.triage.badge.NEW_MSG";
-    public static final String MSG_STATUS_CHANGED_ACTION = "com.triage.badge.MSG_STATUS_CHANGED";
 
     public static final String THREAD_ID_EXTRA = "threadId";
-    public static final String MESSAGE_ID_EXTRA = "messageId";
     public static final String MESSAGE_BODY_EXTRA = "messageBody";
     public static final String MESSAGE_FROM_EXTRA = "messageFrom";
     public static final String IS_INCOMING_MSG_EXTRA = "isIncomingMessage";
 
-    public static final int MSG_STATUS_PENDING = 0;
-    public static final int MSG_STATUS_ACKNOWLEDGED = 1;
-    public static final int MSG_STATUS_FAILED = 2;
-
-    protected static final String QUERY_CONTACT_SQL =
-            String.format("SELECT contact.*, office.%s %s, department.%s %s, manager.%s %s, manager.%s %s FROM" +
-                            " %s contact LEFT OUTER JOIN %s department ON contact.%s = department.%s LEFT OUTER JOIN %s manager" +
-                            " ON contact.%s = manager.%s LEFT OUTER JOIN %s office ON contact.%s = office.%s  WHERE contact.%s = ?",
-                    OfficeLocationsTable.CLM_NAME,
-                    DatabaseHelper.JOINED_OFFICE_NAME,
-                    DepartmentsTable.CLM_NAME,
-                    DatabaseHelper.JOINED_DEPARTMENT_NAME,
-                    UsersTable.CLM_FIRST_NAME,
-                    DatabaseHelper.JOINED_MANAGER_FIRST_NAME,
-                    UsersTable.CLM_LAST_NAME,
-                    DatabaseHelper.JOINED_MANAGER_LAST_NAME,
-                    UsersTable.TABLE_NAME,
-                    DepartmentsTable.TABLE_NAME,
-                    UsersTable.CLM_DEPARTMENT_ID,
-                    DepartmentsTable.COLUMN_ID,
-                    UsersTable.TABLE_NAME,
-                    UsersTable.CLM_MANAGER_ID,
-                    UsersTable.COLUMN_ID,
-                    OfficeLocationsTable.TABLE_NAME,
-                    UsersTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
-                    OfficeLocationsTable.COLUMN_ID,
-                    UsersTable.COLUMN_ID
-            );
-
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
-    protected DatabaseHelper databaseHelper;
-    protected SQLiteDatabase database = null;
     protected long lastSynced;
-    protected SharedPreferences prefs;
     protected Handler handler;
     protected volatile boolean initialized;
 
@@ -158,12 +115,10 @@ public class DataProviderService extends Service {
         super.onCreate();
         EventBus.getDefault().register(this);
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
 
         lastSynced = SharedPreferencesUtil.getLong(R.string.pref_last_sync_key, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
-        databaseHelper = new DatabaseHelper(this);
         handler = new Handler();
         localBinding = new LocalBinding();
 
@@ -198,8 +153,6 @@ public class DataProviderService extends Service {
         EventBus.getDefault().unregister(this);
         localBroadcastManager.unregisterReceiver(syncGCMReceiver);
         sqlThread.shutdownNow();
-        databaseHelper.close();
-        database = null;
     }
 
     /**
@@ -262,7 +215,7 @@ public class DataProviderService extends Service {
      */
     protected void partialSyncContactsAsync() {
         // Sanity check, if we've synced within 2 minutes, don't bother.
-        if (lastSynced > System.currentTimeMillis() - 120000 || database == null) {
+        if (lastSynced > System.currentTimeMillis() - 120000 ) {
             return;
         }
         long previousSync = lastSynced;
@@ -296,7 +249,6 @@ public class DataProviderService extends Service {
     /**
      * Syncs company info from the cloud to the device.
      * <p/>
-     * Notifies listeners via local broadcast that data has been updated with the {@link #DB_UPDATED_ACTION}
      *
      */
     protected void syncCompany() {
@@ -359,20 +311,19 @@ public class DataProviderService extends Service {
      * @return a Contact
      */
     protected Contact getContact(Integer contactId) {
-        if (database != null) {
-            Cursor cursor = database.rawQuery(QUERY_CONTACT_SQL, new String[]{contactId + ""});
-            try {
-                if (cursor.moveToFirst()) {
-                    Contact contact = new Contact();
-                    contact.fromCursor(cursor);
-                    return contact;
-                }
-                return null;
-            } finally {
-                cursor.close();
+       Cursor cursor = getContentResolver().query(
+               ContentUris.withAppendedId(UserProvider.CONTENT_URI_FULL_INFO, contactId ),
+               null, null, null, null);
+        try {
+            if (cursor.moveToFirst()) {
+                Contact contact = new Contact();
+                contact.fromCursor(cursor);
+                return contact;
             }
+            return null;
+        } finally {
+            cursor.close();
         }
-        throw new IllegalStateException("getContact() called before database available.");
     }
 
     /**
@@ -393,26 +344,22 @@ public class DataProviderService extends Service {
     /**
      * Get a writable database and do an incremental sync of new data from the cloud.
      * <p/>
-     * Notifies listeners via the {@link #DB_AVAILABLE_ACTION} when the database is ready for use.
      */
     protected void initDatabase() {
         sqlThread.submit(new Runnable() {
             @Override
             public void run() {
                 try {
-                    database = databaseHelper.getReadableDatabase();
                     int loggedInContactId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
 
                     if (loggedInContactId > 0) {
                         // If we're logged in, and the database isn't empty, the UI should be ready to go.
                         if ((loggedInUser = getContact(loggedInContactId)) != null) {
                             initialized = true;
-                            localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                         }
                     } else {
                         // If there's no logged in user, nothing else will happen so we're done here.
                         initialized = true;
-                        localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                     }
 
                     // If there's a logged in user, sync the whole company.
@@ -423,15 +370,12 @@ public class DataProviderService extends Service {
                         if (loggedInUser != null) {
                             syncMessagesSync();
                         }
-
                         // If we had to sync the company first (it was dropped
                         // due to DB upgrade or whatever) noooooow we can
                         // let the UI know we're initialized.
                         if (!initialized) {
                             initialized = true;
-                            localBroadcastManager.sendBroadcast(new Intent(DB_AVAILABLE_ACTION));
                         }
-
 
                         // Check if this is the first boot of a new install
                         // If it is, since we're logged in, if the user hasnt
@@ -440,7 +384,7 @@ public class DataProviderService extends Service {
                             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
                             if (pInfo.versionCode > SharedPreferencesUtil.getInteger(R.string.pref_app_previous_version_key, -1)) {
                                 SharedPreferencesUtil.store(R.string.pref_app_previous_version_key, pInfo.versionCode);
-                                if (prefs.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
+                                if (SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
                                     // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
 //                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
 //                                        @Override
@@ -497,7 +441,7 @@ public class DataProviderService extends Service {
                     msgValues.put(MessagesTable.CLM_AUTHOR_ID, loggedInUser.id);
                     msgValues.put(MessagesTable.CLM_IS_READ, 1);
                     msgValues.put(MessagesTable.CLM_GUID, guid);
-                    msgValues.put(MessagesTable.CLM_ACK, MSG_STATUS_PENDING);
+                    msgValues.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_PENDING);
                     getContentResolver().insert(MessageProvider.CONTENT_URI, msgValues);
 
                     sendMessageToFaye(timestamp, guid, threadId, message);
@@ -550,26 +494,14 @@ public class DataProviderService extends Service {
                 Cursor msgCursor = getContentResolver().query(MessageProvider.CONTENT_URI,
                         null, MessagesTable.CLM_GUID + " =?",
                         new String[]{guid}, null);
-                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.CLM_ACK)) == MSG_STATUS_PENDING) {
+                if (msgCursor.moveToFirst() && msgCursor.getInt(msgCursor.getColumnIndex(MessagesTable.CLM_ACK)) == Message.MSG_STATUS_PENDING) {
                     ContentValues values = new ContentValues();
-                    values.put(MessagesTable.CLM_ACK, MSG_STATUS_FAILED);
-
+                    values.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_FAILED);
 
                     int rowsUpdated = getContentResolver().update(MessageProvider.CONTENT_URI, values,
                             MessagesTable.CLM_GUID + " =?",
                             new String[] { guid});
-
-//                    int rowsUpdated = database.update(
-//                            MessagesTable.TABLE_NAME,
-//                            values,
-//                            String.format("%s = ?", MessagesTable.CLM_GUID),
-//                            new String[]{guid}
-//                    );
                     if (rowsUpdated == 1) {
-                        Intent ackIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
-                        ackIntent.putExtra(MESSAGE_ID_EXTRA, guid);
-                        ackIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                        localBroadcastManager.sendBroadcast(ackIntent);
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -598,21 +530,15 @@ public class DataProviderService extends Service {
                 if (msgCursor.moveToFirst()) {
                     // Flip back to pending status.
                     ContentValues msgValues = new ContentValues();
-                    msgValues.put(MessagesTable.CLM_ACK, MSG_STATUS_PENDING);
+                    msgValues.put(MessagesTable.CLM_ACK, Message.MSG_STATUS_PENDING);
                     getContentResolver().update(MessageProvider.CONTENT_URI, msgValues,
                             MessagesTable.CLM_GUID + " =?",
                             new String[] { guid});
 
-//                    database.update(MessagesTable.TABLE_NAME, msgValues, String.format("%s = ?", MessagesTable.CLM_GUID), new String[]{guid});
                     String threadId = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_THREAD_ID));
                     String body = msgCursor.getString(msgCursor.getColumnIndex(MessagesTable.CLM_BODY));
                     long timestamp = msgCursor.getLong(msgCursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP));
                     msgCursor.close();
-
-                    Intent statusChangeIntent = new Intent(MSG_STATUS_CHANGED_ACTION);
-                    statusChangeIntent.putExtra(MESSAGE_ID_EXTRA, guid);
-                    statusChangeIntent.putExtra(THREAD_ID_EXTRA, threadId);
-                    localBroadcastManager.sendBroadcast(statusChangeIntent);
 
                     try {
                         sendMessageToFaye(timestamp, guid, threadId, body);
@@ -620,7 +546,7 @@ public class DataProviderService extends Service {
                         App.gLogger.e("JSON exception preparing message to send to faye", e);
                     }
                 } else {
-                    Log.w(LOG_TAG, "UI wanted to retry message with guid " + guid + " but that message can't be found.");
+                    App.gLogger.w("UI wanted to retry message with guid " + guid + " but that message can't be found.");
                 }
 
             }
@@ -637,7 +563,7 @@ public class DataProviderService extends Service {
     }
 
     protected void syncMessagesSync() {
-        long since = (prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
+        long since = (SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
         try {
             BThread[] bThreads = RestService.instance().messaging().getMessages(since + "");
             for (BThread bThread : bThreads) {
@@ -661,7 +587,7 @@ public class DataProviderService extends Service {
      *                  assume they are historical
      */
     protected void upsertThreadAndMessages(final BThread bThread, final boolean broadcast) {
-        long mostRecentMsgTimestamp = prefs.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
+        long mostRecentMsgTimestamp = SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
         // Insert thread into database.
         ContentValues cv = new ContentValues();
@@ -710,7 +636,6 @@ public class DataProviderService extends Service {
                 mostRecentMsgTimestamp = timestamp;
             }
 
-
             // If I am not the author of this message,
             // create a receipt and put into database for further use.
             if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != loggedInUser.id) {
@@ -733,12 +658,11 @@ public class DataProviderService extends Service {
             e.printStackTrace();
         }
 
-
         // If I'm honest, this switch isn't intended to be used this way,
         // but the idea here is only update the timestamp on history sync
         // so that all messages will eventually be dl'd no matter what.
         if (!broadcast) {
-            prefs.edit().putLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp).commit();
+            SharedPreferencesUtil.store(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp);
         }
 
         // Get id of most recent msg.
@@ -930,27 +854,6 @@ public class DataProviderService extends Service {
          */
         public String createThreadSync(Integer[] userIds) throws JSONException, RemoteException, OperationApplicationException {
             return DataProviderService.this.createThreadSync(userIds);
-        }
-
-        /**
-         *
-         * @param threadId
-         * @return
-         */
-        public String getRecipientNames(String threadId) {
-            Cursor cursor = getContentResolver().query(ThreadUserProvider.CONTENT_URI_CONTACT_INFO,
-                    null, BThreadUserTable.CLM_THREAD_ID + "=?",
-                    new String[]{threadId},
-                    null);
-            StringBuilder names = new StringBuilder();
-            if (cursor.moveToFirst()) {
-                do {
-                    names.append(cursor.getString(cursor.getColumnIndexOrThrow(UsersTable.CLM_FIRST_NAME))).append(",");
-                } while (cursor.moveToNext());
-                // Delete the last comma
-                names.deleteCharAt(names.length() - 1);
-            }
-            return names.toString();
         }
 
         /**
