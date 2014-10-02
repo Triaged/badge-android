@@ -125,5 +125,16 @@
     <string name="search_departments">Search departments</string>
     <string name="name">Name</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="login">Log In</string>
+    <string name="sing_up">Sign Up</string>
+    <string name="entrance_slogan">Smart, Business Messaging</string>
+    <string name="title_activity_login">Login</string>
+    <string name="title_activity_sign_up">Create Account</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="email">Email</string>
+    <string name="email_input_hint">you@domain.com</string>
+    <string name="phone_input_hint">+1 (100) 123-4567</string>
+    <string name="phone">Phone</string>
 
 </resources>
