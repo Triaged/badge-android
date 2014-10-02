@@ -10,10 +10,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.home.adapters.UserWithoutHeadingAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
@@ -46,7 +46,7 @@ public class ContactsForDepartmentActivity extends BackButtonActivity implements
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 int clickedId = ((UserWithoutHeadingAdapter.ViewHolder)view.getTag()).id;
                 Intent intent;
-                if (clickedId == App.dataProviderServiceBinding.getLoggedInUser().id) {
+                if (clickedId == SyncManager.getMyUser().id) {
                     //TODO, use profile fragment
                     intent = new Intent(ContactsForDepartmentActivity.this, MainActivity.class);
 //                    intent = new Intent(ContactsForDepartmentActivity.this, MyProfileActivity.class);

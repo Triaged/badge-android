@@ -26,6 +26,7 @@ import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.models.Contact;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
@@ -153,7 +154,7 @@ public class UserAdapter extends CursorAdapter implements StickyListHeadersAdapt
         @OnClick(R.id.message_contact)
         void sendMessage() {
             final Integer[] recipientIds = new Integer[]{contactId,
-                    App.dataProviderServiceBinding.getLoggedInUser().id};
+                    SyncManager.getMyUser().id};
             Arrays.sort(recipientIds);
             new AsyncTask<Void, Void, String>() {
                 @Override

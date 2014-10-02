@@ -127,9 +127,6 @@
 
         <!-- SERVICES -->
         <service
-            android:name="com.triaged.badge.net.DataProviderService"
-            android:enabled="true" />
-        <service
             android:name="com.triaged.badge.location.LocationTrackingService"
             android:enabled="true" />
         <service

@@ -1,13 +1,10 @@
 package com.triaged.badge.app;
 
 import android.app.Application;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.os.Handler;
-import android.os.IBinder;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.gson.FieldNamingPolicy;
@@ -21,8 +18,9 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.triaged.badge.events.LogedinSuccessfully;
+import com.triaged.badge.events.SyncContactPartiallyEvent;
+import com.triaged.badge.events.SyncMessageEvent;
 import com.triaged.badge.helpers.Foreground;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
 import com.triaged.badge.net.LongDeserializer;
 import com.triaged.badge.net.api.RestService;
@@ -49,12 +47,8 @@ public class App extends Application {
 
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
-    public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
     private static App mInstance;
     private static Handler mHandler;
-
-    public Foreground appForeground;
-    public Foreground.Listener foregroundListener;
 
     public static final ILogger gLogger = new LoggerImp(BuildConfig.DEBUG);
     private static Context mContext;
@@ -83,30 +77,9 @@ public class App extends Application {
         setupULI();
     }
 
-    public static ServiceConnection dataProviderServiceConnection;
-    private void setupDataProviderServiceBinding() {
-        dataProviderServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
-                dataProviderServiceBinding.initDatabase();
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-        };
-
-        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnection, BIND_AUTO_CREATE)) {
-            App.gLogger.e("Couldn't bind to data provider service.");
-            unbindService(dataProviderServiceConnection);
-        }
-    }
-
     private void initForeground() {
-        appForeground = Foreground.get(this);
-
-        foregroundListener = new Foreground.Listener() {
+        Foreground appForeground = Foreground.get(this);
+        appForeground.addListener(new Foreground.Listener() {
             @Override
             public void onBecameForeground() {
                 MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(App.this, MIXPANEL_TOKEN);
@@ -115,18 +88,16 @@ public class App extends Application {
                 mixpanelAPI.flush();
 
                 startService(new Intent(getApplicationContext(), FayeService.class));
-                if (dataProviderServiceBinding != null) {
-                    dataProviderServiceBinding.syncMessagesAsync();
-                    dataProviderServiceBinding.partialSyncContactsAsync();
-                }
+
+                EventBus.getDefault().post(new SyncMessageEvent());
+                EventBus.getDefault().post(new SyncContactPartiallyEvent());
             }
 
             @Override
             public void onBecameBackground() {
                 stopService(new Intent(getApplicationContext(), FayeService.class));
             }
-        };
-        appForeground.addListener(foregroundListener);
+        });
     }
 
     private void setupRestAdapter() {
@@ -214,7 +185,7 @@ public class App extends Application {
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
-        setupDataProviderServiceBinding();
+        SyncManager.instance();
         mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
     }

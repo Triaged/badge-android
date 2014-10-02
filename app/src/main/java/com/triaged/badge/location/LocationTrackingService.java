@@ -30,7 +30,7 @@ import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 
 import java.io.FileOutputStream;
@@ -90,21 +90,17 @@ public class LocationTrackingService extends Service implements LocationListener
 
     }
 
-    public static void clearAlarm(DataProviderService.LocalBinding dataProviderServiceBinding, Context context) {
+    public static void clearAlarm(Context context) {
         Intent alarmIntent = new Intent(LOCATION_ALARM_ACTION);
         PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarmMgr.cancel(scheduledAlarmIntent);
-
         // In many cases (phone shutting down), toggling the share location preference,
         // the user is still logged in and may be associated with an office.
         // We try to clear that so that they don't end up "stuck" in that office forever.
-        if (dataProviderServiceBinding != null) {
-            Contact user = dataProviderServiceBinding.getLoggedInUser();
-            if (user != null && user.currentOfficeLocationId > 0)
-                checkOut(user.currentOfficeLocationId, context);
-        }
-
+        Contact user = SyncManager.getMyUser();
+        if (user != null && user.currentOfficeLocationId > 0)
+            checkOut(user.currentOfficeLocationId, context);
     }
 
     public static void justClearAlarm(Context context) {
@@ -213,8 +209,7 @@ public class LocationTrackingService extends Service implements LocationListener
         }
 
         // Check against each office.
-        final DataProviderService.LocalBinding dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        if (dataProviderServiceBinding != null && dataProviderServiceBinding.getLoggedInUser() != null) {
+        if (SyncManager.getMyUser() != null) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {

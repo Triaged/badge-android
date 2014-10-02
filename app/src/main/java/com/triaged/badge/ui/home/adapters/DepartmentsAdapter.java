@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.models.Department;
-import com.triaged.badge.net.DataProviderService;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.DepartmentsTable;
-import com.triaged.badge.net.DataProviderService;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -20,7 +19,6 @@ import butterknife.InjectView;
  */
 public class DepartmentAdapter extends CursorAdapter {
 
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
     private LayoutInflater inflater;
 
     public DepartmentAdapter(Context context, Cursor cursor) {

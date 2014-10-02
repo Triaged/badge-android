@@ -132,7 +132,7 @@ public class SettingsActivity extends BackButtonActivity {
                         if (isChecked) {
                             LocationTrackingService.scheduleAlarm(SettingsActivity.this);
                         } else {
-                            LocationTrackingService.clearAlarm(App.dataProviderServiceBinding, SettingsActivity.this);
+                            LocationTrackingService.clearAlarm(SettingsActivity.this);
                         }
                         EventBus.getDefault().post(new UpdateAccountEvent());
                     }

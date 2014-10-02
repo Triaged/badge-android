@@ -31,6 +31,7 @@ import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.ButtonWithFont;
 import com.triaged.badge.ui.base.views.CustomLayoutParams;
@@ -95,7 +96,7 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
             public void onClick(View v) {
                 if (recipients.size() > 0) {
                     HashSet<Integer> userIdSet = new HashSet<Integer>(recipients.keySet());
-                    userIdSet.add(App.dataProviderServiceBinding.getLoggedInUser().id);
+                    userIdSet.add(SyncManager.getMyUser().id);
                     final Integer[] recipientIds = userIdSet.toArray(new Integer[userIdSet.size()]);
                     Arrays.sort(recipientIds);
                     new AsyncTask<Void, Void, String>() {

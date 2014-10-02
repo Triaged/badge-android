@@ -9,10 +9,10 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.Contact;
+import com.triaged.badge.app.SyncManager;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -34,8 +34,8 @@ public class OfficeLocationsAdapter extends CursorAdapter {
         this.inflater = LayoutInflater.from(context);
         this.context = context;
         this.resourceId = resourceId;
-        usersOffice = App.dataProviderServiceBinding.getLoggedInUser().primaryOfficeLocationId;
-        usersOfficeName = App.dataProviderServiceBinding.getLoggedInUser().officeName;
+        usersOffice = SyncManager.getMyUser().primaryOfficeLocationId;
+        usersOfficeName = SyncManager.getMyUser().officeName;
     }
 
     @Override

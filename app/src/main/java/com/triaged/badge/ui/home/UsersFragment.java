@@ -19,12 +19,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.ui.home.adapters.DepartmentAdapter;
 import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.profile.ProfileActivity;
@@ -131,9 +131,9 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (App.dataProviderServiceBinding.getLoggedInUser() != null) {
+                if (SyncManager.getMyUser() != null) {
                     int clickedId = ((UserAdapter.ViewHolder) view.getTag()).contactId;
-                    if (clickedId != App.dataProviderServiceBinding.getLoggedInUser().id) {
+                    if (clickedId != SyncManager.getMyUser().id) {
                         Intent intent = new Intent(getActivity(), ProfileActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, clickedId);

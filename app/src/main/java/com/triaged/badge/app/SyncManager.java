@@ -1,11 +1,11 @@
-package com.triaged.badge.net;
+package com.triaged.badge.app;
 
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentProviderOperation;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
@@ -14,14 +14,9 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Binder;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.triaged.badge.app.App;
-import com.triaged.badge.app.MessageProcessor;
-import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.DepartmentHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
@@ -29,6 +24,8 @@ import com.triaged.badge.database.provider.DepartmentProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.DepartmentsTable;
+import com.triaged.badge.events.SyncContactPartiallyEvent;
+import com.triaged.badge.events.SyncMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.BThread;
@@ -39,10 +36,7 @@ import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.receivers.GCMReceiver;
-import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -60,35 +54,30 @@ import retrofit.client.Response;
  *
  * @author Created by jc on 7/7/14.
  */
-public class DataProviderService extends Service {
+public class SyncManager extends ContextWrapper {
+
+    private static SyncManager mInstance = new SyncManager(App.context());
 
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
-    public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     public static final String MESSAGE_BODY_EXTRA = "messageBody";
     public static final String MESSAGE_FROM_EXTRA = "messageFrom";
 
-    protected volatile Contact loggedInUser;
-    protected ScheduledExecutorService sqlThread;
+    private static volatile Contact userAccount;
+    protected ScheduledExecutorService managerThread = Executors.newSingleThreadScheduledExecutor();
     protected long lastSynced;
-    protected volatile boolean initialized;
 
-    private LocalBinding localBinding;
     private BroadcastReceiver syncGCMReceiver;
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return localBinding;
+    public static SyncManager instance() {
+        return mInstance;
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    private SyncManager(Context context) {
+        super(context);
         EventBus.getDefault().register(this);
 
         lastSynced = SharedPreferencesUtil.getLong(R.string.pref_last_sync_key, 0);
-        sqlThread = Executors.newSingleThreadScheduledExecutor();
-        localBinding = new LocalBinding();
 
         syncGCMReceiver = new BroadcastReceiver() {
             @Override
@@ -112,14 +101,7 @@ public class DataProviderService extends Service {
         IntentFilter syncActionFilter = new IntentFilter(GCMReceiver.SYNC_GCM_RECEIVED);
         syncActionFilter.addAction(GCMReceiver.SYNC_GCM_RECEIVED);
         LocalBroadcastManager.getInstance(this).registerReceiver(syncGCMReceiver, syncActionFilter);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        EventBus.getDefault().unregister(this);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(syncGCMReceiver);
-        sqlThread.shutdownNow();
+        initialize();
     }
 
     /**
@@ -258,7 +240,7 @@ public class DataProviderService extends Service {
                 dbOperations.clear();
 
                 SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
-                loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+                userAccount = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
             } catch (RemoteException e) {
                 e.printStackTrace();
             } catch (OperationApplicationException e) {
@@ -294,55 +276,23 @@ public class DataProviderService extends Service {
     }
 
     /**
-     * When the service detects that there is no active user
-     * or api token, it calls this function.
-     * <p/>
-     * This launches the login activity in a new task and sends a local
-     * broadcast so that activities can listen and kill themselves.
-     * <p/>
-     * This should only be called on the sql thread.
-     */
-    protected void loggedOut() {
-        Intent logoutIntent = new Intent(LogoutReceiver.ACTION_LOGOUT);
-        logoutIntent.putExtra(LogoutReceiver.RESTART_APP_EXTRA, true);
-        DataProviderService.this.sendBroadcast(logoutIntent);
-    }
-
-    /**
      * Get a writable database and do an incremental sync of new data from the cloud.
      * <p/>
      */
-    protected void initDatabase() {
-        sqlThread.submit(new Runnable() {
+    protected void initialize() {
+        managerThread.submit(new Runnable() {
             @Override
             public void run() {
-                try {
-                    int loggedInContactId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
-
-                    if (loggedInContactId > 0) {
-                        // If we're logged in, and the database isn't empty, the UI should be ready to go.
-                        if ((loggedInUser = getContact(loggedInContactId)) != null) {
-                            initialized = true;
-                        }
-                    } else {
-                        // If there's no logged in user, nothing else will happen so we're done here.
-                        initialized = true;
-                    }
-
+                int loggedInContactId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+                if (loggedInContactId > 0) {
+                    userAccount = getContact(loggedInContactId);
                     // If there's a logged in user, sync the whole company.
-                    if (App.accountId() > 0) {
+                    if (userAccount != null) {
                         syncCompany();
-                        // Edge case avoided here, user was unauthorized
-                        // and now db is empty, this is null.
-                        if (loggedInUser != null) {
-                            syncMessagesSync();
-                        }
+                        syncMessages();
                         // If we had to sync the company first (it was dropped
                         // due to DB upgrade or whatever) noooooow we can
                         // let the UI know we're initialized.
-                        if (!initialized) {
-                            initialized = true;
-                        }
 
                         // Check if this is the first boot of a new install
                         // If it is, since we're logged in, if the user hasnt
@@ -371,18 +321,14 @@ public class DataProviderService extends Service {
                         } catch (PackageManager.NameNotFoundException e) {
                             // Look at all the fucks I give!
                         }
-
-                    } else {
-//                        notifyUILoggedOut();
                     }
-                } catch (Throwable t) {
-                    App.gLogger.e("UNABLE TO GET DATABASE", t);
                 }
             }
         });
     }
 
-    protected void syncMessagesSync() {
+
+    protected void syncMessages() {
         long since = (SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
         try {
             BThread[] bThreads = RestService.instance().messaging().getMessages(since + "");
@@ -395,53 +341,28 @@ public class DataProviderService extends Service {
     }
 
     protected void syncMessagesAsync() {
-        sqlThread.submit(new Runnable() {
+        managerThread.submit(new Runnable() {
             @Override
             public void run() {
-                syncMessagesSync();
+                syncMessages();
             }
         });
     }
 
+    public static Contact getMyUser() {
+        return userAccount;
+    }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
-        loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+        userAccount = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
     }
 
-    /**
-     * Local, non rpc interface for this service.
-     */
-    public class LocalBinding extends Binder {
-        /**
-         * @see DataProviderService#initDatabase()
-         */
-        public void initDatabase() {
-            DataProviderService.this.initDatabase();
-        }
-
-        /**
-         * @return null of not logged in, contact representing user acct otherwise.
-         */
-        public Contact getLoggedInUser() {
-            return loggedInUser;
-        }
-
-        public void refreshContact(int contactId) {
-            DataProviderService.this.getAndStoreUser(contactId);
-        }
-
-        /**
-         * @see DataProviderService#syncMessagesAsync()
-         */
-        public void syncMessagesAsync() {
-            DataProviderService.this.syncMessagesAsync();
-        }
-
-        /**
-         * @see DataProviderService#partialSyncContactsAsync()
-         */
-        public void partialSyncContactsAsync() {
-            DataProviderService.this.partialSyncContactsAsync();
-        }
+    public void onEvent(SyncMessageEvent event) {
+        syncMessagesAsync();
     }
+
+    public void onEvent(SyncContactPartiallyEvent event) {
+        partialSyncContactsAsync();
+    }
+
 }

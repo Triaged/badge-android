@@ -3,12 +3,9 @@ package com.triaged.badge.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.utils.SharedPreferencesUtil;
 
 /**

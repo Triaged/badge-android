@@ -42,6 +42,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -427,7 +428,7 @@ public class EditProfileActivity extends BadgeActivity {
     }
 
     protected void bindView() {
-        Contact loggedInUser = App.dataProviderServiceBinding.getLoggedInUser();
+        Contact loggedInUser = SyncManager.getMyUser();
 
         profileImageMissingView.setText(loggedInUser.initials);
         profileImageMissingView.setVisibility(View.VISIBLE);

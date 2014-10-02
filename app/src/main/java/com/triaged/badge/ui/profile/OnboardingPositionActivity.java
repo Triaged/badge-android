@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -174,7 +175,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
     }
 
     protected void bindView() {
-        final Contact loggedInUser = App.dataProviderServiceBinding.getLoggedInUser();
+        final Contact loggedInUser = SyncManager.getMyUser();
         managerId = loggedInUser.managerId;
         departmentId = loggedInUser.departmentId;
 

@@ -26,6 +26,7 @@ import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.models.Receipt;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
@@ -211,7 +212,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
             final Receipt receipt = new Receipt();
             receipt.setThreadId(newMessageEvent.threadId);
             receipt.setMessageId(newMessageEvent.messageId);
-            receipt.setUserId(App.dataProviderServiceBinding.getLoggedInUser().id + "");
+            receipt.setUserId(SyncManager.getMyUser().id + "");
             receipt.setTimestamp(System.currentTimeMillis() + "");
             receipt.setSyncStatus(Receipt.SYNCED);
 
@@ -232,7 +233,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                             receiptSyncedValues,
                             ReceiptTable.CLM_MESSAGE_ID + "=? AND "
                                     + ReceiptTable.CLM_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
                 }
 
                 @Override
@@ -245,7 +246,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                             receiptSyncedValues,
                             ReceiptTable.CLM_MESSAGE_ID + "=? AND "
                                     + ReceiptTable.CLM_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
                 }
             });
         }

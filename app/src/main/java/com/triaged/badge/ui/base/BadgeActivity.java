@@ -18,14 +18,16 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.models.Device;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.DeviceRequest;
+import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.io.IOException;
+import java.util.logging.LogRecord;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -72,7 +74,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     private void registerForLogoutAction() {
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(DataProviderService.LOGGED_OUT_ACTION);
+        intentFilter.addAction(LogoutReceiver.ACTION_LOGOUT);
         logoutReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -110,8 +112,8 @@ public abstract class BadgeActivity extends MixpanelActivity {
     protected void notifyNewMessage(Intent intent) {
         if (intent.getBooleanExtra(MessageProcessor.IS_INCOMING_MSG_EXTRA, false)) {
             String threadId = intent.getStringExtra(MessageProcessor.THREAD_ID_EXTRA);
-            String from = intent.getStringExtra(DataProviderService.MESSAGE_FROM_EXTRA);
-            String message = intent.getStringExtra(DataProviderService.MESSAGE_BODY_EXTRA);
+            String from = intent.getStringExtra(SyncManager.MESSAGE_FROM_EXTRA);
+            String message = intent.getStringExtra(SyncManager.MESSAGE_BODY_EXTRA);
             Notifier.newNotification(this, from, message, threadId);
         }
     }
