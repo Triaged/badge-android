@@ -22,6 +22,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.models.Contact;
@@ -158,7 +159,7 @@ public class UserAdapter extends CursorAdapter implements StickyListHeadersAdapt
                 @Override
                 protected String doInBackground(Void... params) {
                     try {
-                        return App.dataProviderServiceBinding.createThreadSync(recipientIds);
+                        MessageProcessor.getInstance().createThreadSync(recipientIds);
                     } catch (RetrofitError e) {
                        toastMessage("Network issue occurred. Try again later.");
                         App.gLogger.e(e);

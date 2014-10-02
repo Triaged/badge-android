@@ -27,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.database.table.UsersTable;
@@ -101,7 +102,7 @@ public class MessageNewActivity extends BadgeActivity implements LoaderManager.L
                         @Override
                         protected String doInBackground(Void... params) {
                             try {
-                                return App.dataProviderServiceBinding.createThreadSync(recipientIds);
+                                return MessageProcessor.getInstance().createThreadSync(recipientIds);
                             } catch (RetrofitError e) {
                                 toastMessage("Network issue occurred. Try again later.");
                                 App.gLogger.e(e);

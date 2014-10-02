@@ -15,52 +15,36 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.DepartmentHelper;
-import com.triaged.badge.database.helper.MessageHelper;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
-import com.triaged.badge.database.provider.BThreadProvider;
 import com.triaged.badge.database.provider.DepartmentProvider;
-import com.triaged.badge.database.provider.MessageProvider;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
-import com.triaged.badge.database.provider.ReceiptProvider;
-import com.triaged.badge.database.provider.ThreadUserProvider;
 import com.triaged.badge.database.provider.UserProvider;
-import com.triaged.badge.database.table.BThreadUserTable;
-import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.DepartmentsTable;
-import com.triaged.badge.database.table.MessagesTable;
-import com.triaged.badge.database.table.ReceiptTable;
-import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.BThread;
 import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Contact;
 import com.triaged.badge.models.Department;
-import com.triaged.badge.models.Message;
 import com.triaged.badge.models.OfficeLocation;
-import com.triaged.badge.models.Receipt;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
-import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.receivers.GCMReceiver;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.utils.SharedPreferencesUtil;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -79,7 +63,6 @@ import retrofit.client.Response;
 public class DataProviderService extends Service {
 
     public static final String MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY = "latestMsgTimestampPrefsKey";
-
     public static final String LOGGED_OUT_ACTION = "com.triage.badge.LOGGED_OUT";
 
     public static final String MESSAGE_BODY_EXTRA = "messageBody";
@@ -88,12 +71,9 @@ public class DataProviderService extends Service {
     protected volatile Contact loggedInUser;
     protected ScheduledExecutorService sqlThread;
     protected long lastSynced;
-    protected Handler handler;
     protected volatile boolean initialized;
 
     private LocalBinding localBinding;
-    private LocalBroadcastManager localBroadcastManager;
-
     private BroadcastReceiver syncGCMReceiver;
 
     @Override
@@ -106,11 +86,8 @@ public class DataProviderService extends Service {
         super.onCreate();
         EventBus.getDefault().register(this);
 
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-
         lastSynced = SharedPreferencesUtil.getLong(R.string.pref_last_sync_key, 0);
         sqlThread = Executors.newSingleThreadScheduledExecutor();
-        handler = new Handler();
         localBinding = new LocalBinding();
 
         syncGCMReceiver = new BroadcastReceiver() {
@@ -122,27 +99,26 @@ public class DataProviderService extends Service {
 
                 if (syncType.equals("user")) {
                     // Request contact from server, add it to the db.
-                    getSingleContact(syncId);
+                    getAndStoreUser(syncId);
                 } else if (syncType.equals("office_location")) {
                     // Request office from server, add it to the db.
-                    getSingleOffice(syncId);
+                    getAndStoreOffice(syncId);
                 } else if (syncType.equals("department")) {
                     // Request department from server, add it to the db.
-                    getSingleDepartment(syncId);
+                    getAndStoreDepartment(syncId);
                 }
             }
         };
-
         IntentFilter syncActionFilter = new IntentFilter(GCMReceiver.SYNC_GCM_RECEIVED);
         syncActionFilter.addAction(GCMReceiver.SYNC_GCM_RECEIVED);
-        localBroadcastManager.registerReceiver(syncGCMReceiver, syncActionFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(syncGCMReceiver, syncActionFilter);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         EventBus.getDefault().unregister(this);
-        localBroadcastManager.unregisterReceiver(syncGCMReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(syncGCMReceiver);
         sqlThread.shutdownNow();
     }
 
@@ -151,7 +127,7 @@ public class DataProviderService extends Service {
      * <p/>
      * Only used when called a GCM message is received instructing the client to update itself.
      */
-    protected void getSingleContact(final int syncId) {
+    protected void getAndStoreUser(final int syncId) {
         RestService.instance().badge().getUser(syncId +"", new Callback<User>() {
             @Override
             public void success(User user, Response response) {
@@ -165,7 +141,7 @@ public class DataProviderService extends Service {
         });
     }
 
-    protected void getSingleOffice(final int syncId) {
+    protected void getAndStoreOffice(final int syncId) {
         RestService.instance().badge().getOfficeLocation(syncId + "", new Callback<OfficeLocation>() {
             @Override
             public void success(OfficeLocation officeLocation, Response response) {
@@ -180,7 +156,7 @@ public class DataProviderService extends Service {
         });
     }
 
-    protected void getSingleDepartment(final int syncId) {
+    protected void getAndStoreDepartment(final int syncId) {
         RestService.instance().badge().getDepartment(syncId + "", new Callback<Department>() {
             @Override
             public void success(Department department, Response response) {
@@ -411,7 +387,7 @@ public class DataProviderService extends Service {
         try {
             BThread[] bThreads = RestService.instance().messaging().getMessages(since + "");
             for (BThread bThread : bThreads) {
-                upsertThreadAndMessages(bThread, false);
+                MessageProcessor.getInstance().upsertThreadAndMessages(bThread, false);
             }
         } catch (RetrofitError error) {
             App.gLogger.e(error);
@@ -425,212 +401,6 @@ public class DataProviderService extends Service {
                 syncMessagesSync();
             }
         });
-    }
-
-    /**
-     * If thread doesn't exist yet, save it, and any unsaved
-     * messages as well.
-     * <p/>
-     * If message that has been sent to us is one of our pending
-     * messages, mark it as acknowledged, broadcast it, and sync
-     * timestamp/id with server.
-     *
-     * @param bThread   A badgeThread Object.
-     * @param broadcast if true ,send local broadcast if thread contains new messages, otherwise,
-     *                  assume they are historical
-     */
-    protected void upsertThreadAndMessages(final BThread bThread, final boolean broadcast) {
-        long mostRecentMsgTimestamp = SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
-
-        // Insert thread into database.
-        ContentValues cv = new ContentValues();
-        cv.put(BThreadsTable.COLUMN_ID, bThread.getId());
-        if (bThread.isMuted() != null) cv.put(BThreadsTable.CLM_IS_MUTED, bThread.isMuted());
-        cv.put(BThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
-        if (bThread.getUserIds().length == 2) {
-            cv.put(BThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
-        } else if (bThread.getName() != null){
-            cv.put(BThreadsTable.CLM_NAME, bThread.getName());
-        }
-        getContentResolver().insert(BThreadProvider.CONTENT_URI, cv);
-
-        // For each user into this thread,
-        // put a record into thread_user junction table.
-        ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>(bThread.getMessages().length);
-        for (int userId : bThread.getUserIds()) {
-            ContentValues contentValues = new ContentValues(2);
-            contentValues.put(BThreadUserTable.CLM_USER_ID, userId);
-            contentValues.put(BThreadUserTable.CLM_THREAD_ID, bThread.getId());
-            dbOperations.add(ContentProviderOperation
-                    .newInsert(ThreadUserProvider.CONTENT_URI)
-                    .withValues(contentValues).build());
-        }
-        try {
-            getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-        dbOperations.clear();
-
-        for (Message message : bThread.getMessages()) {
-            // Insert the message into the database.
-            ContentValues contentValues = MessageHelper.toContentValue(message, bThread.getId());
-            dbOperations.add(ContentProviderOperation.newInsert(
-                    MessageProvider.CONTENT_URI).
-                    withValues(contentValues).
-                    build());
-
-            //TODO: why nano? those zeros at the end of timestamp
-            // does not make it unique number!
-            long timestamp = (long) (message.getTimestamp() * 1000000d) /* nanos */;
-            if (timestamp > mostRecentMsgTimestamp) {
-                mostRecentMsgTimestamp = timestamp;
-            }
-
-            // If I am not the author of this message,
-            // create a receipt and put into database for further use.
-            if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != loggedInUser.id) {
-                ContentValues receiptValues = new ContentValues();
-                receiptValues.put(ReceiptTable.CLM_MESSAGE_ID, contentValues.getAsString(MessagesTable.CLM_ID));
-                receiptValues.put(ReceiptTable.CLM_THREAD_ID, bThread.getId());
-                receiptValues.put(ReceiptTable.CLM_USER_ID, loggedInUser.id);
-                receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
-                getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
-                // Announce on event-but that we have new message
-                EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
-                        contentValues.getAsString(MessagesTable.CLM_ID)));
-            }
-        }
-        try {
-            getContentResolver().applyBatch(MessageProvider.AUTHORITY, dbOperations);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-        }
-
-        // If I'm honest, this switch isn't intended to be used this way,
-        // but the idea here is only update the timestamp on history sync
-        // so that all messages will eventually be dl'd no matter what.
-        if (!broadcast) {
-            SharedPreferencesUtil.store(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp);
-        }
-
-        // Get id of most recent msg.
-        Cursor messages = getContentResolver().query(MessageProvider.CONTENT_URI, null,
-                MessagesTable.CLM_THREAD_ID + "=?",
-                new String[]{bThread.getId()},
-                MessagesTable.CLM_TIMESTAMP + " ASC");
-        if (messages.moveToLast()) {
-            String mostRecentGuid = messages.getString(messages.getColumnIndex(MessagesTable.CLM_GUID));
-            final String mostRecentId = messages.getString(messages.getColumnIndex(MessagesTable.CLM_ID));
-            if ("Inf".equals(mostRecentGuid)) {
-                // Dang! Crash the app to get a report.
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        throw new RuntimeException("Crashing app. Couldn't set head of thread " + bThread.getId()
-                                + " because message guid came back 'Inf' message id is " + mostRecentId);
-                    }
-                });
-            }
-            messages.close();
-
-        } else {
-            messages.close();
-        }
-    }
-
-    /**
-     * SYNCHRONOUSLY creates a thread using the REST badge api.
-     * <strong>ONLY CALL THIS FROM A BACKGROUND TASK</strong>
-     *
-     * @param recipientIds
-     * @return
-     */
-    protected String createThreadSync(final Integer[] recipientIds) throws JSONException,  RemoteException, OperationApplicationException {
-        String threadKey = userIdArrayToKey(recipientIds);
-        Cursor cursor = getContentResolver().query(BThreadProvider.CONTENT_URI,
-                new String[]{BThreadsTable.COLUMN_ID},
-                BThreadsTable.CLM_USERS_KEY + "=?",
-                new String[]{threadKey},
-                null);
-        if (cursor.moveToFirst()) {
-            return cursor.getString(0);
-        } else {
-            JSONObject postBody = new JSONObject();
-            JSONObject messageThread = new JSONObject();
-            JSONArray userIds = new JSONArray();
-            postBody.put("message_thread", messageThread);
-            for (int i : recipientIds) {
-                userIds.put(i);
-            }
-            messageThread.put("user_ids", userIds);
-            TypedJsonString typedJsonString = new TypedJsonString(postBody.toString());
-            BThread resultThread;
-            resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
-            ContentValues cv = new ContentValues();
-            cv.put(BThreadsTable.COLUMN_ID, resultThread.getId());
-            cv.put(BThreadsTable.CLM_USERS_KEY, threadKey);
-            cv.put(BThreadsTable.CLM_IS_MUTED, false);
-            cv.put(BThreadsTable.CLM_NAME, createThreadName(recipientIds));
-            getContentResolver().insert(BThreadProvider.CONTENT_URI, cv);
-
-            ArrayList<ContentProviderOperation> dbOperations =
-                    new ArrayList<ContentProviderOperation>(resultThread.getUserIds().length);
-            for (int participantId : resultThread.getUserIds()) {
-                dbOperations.add(ContentProviderOperation.newInsert(
-                        ThreadUserProvider.CONTENT_URI)
-                        .withValue(BThreadUserTable.CLM_THREAD_ID, resultThread.getId())
-                        .withValue(BThreadUserTable.CLM_USER_ID, participantId)
-                        .build());
-            }
-            getContentResolver().applyBatch(ThreadUserProvider.AUTHORITY, dbOperations);
-            return resultThread.getId();
-        }
-    }
-
-    private String createThreadName(Integer[] recipientIds) {
-        if (recipientIds.length == 2) {
-            String[] name = new String[2];
-            for (int userId : recipientIds) {
-                if (userId == App.accountId()) continue;
-                name = UserHelper.getUserName(this, recipientIds[0]);
-            }
-            return String.format("%s %s", name[0], name[1]);
-        } else {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int userId : recipientIds) {
-                if (userId == App.accountId()) continue;
-                String firstName = UserHelper.getUserName(this, userId)[0];
-                if (firstName != null) {
-                    stringBuilder.append(firstName).append(", ");
-                }
-            }
-            if (stringBuilder.length() > 2) {
-                stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length());
-            }
-            return stringBuilder.toString();
-        }
-    }
-
-    /**
-     * Sort the ids in the json array and join them with a comma.
-     *
-     * @param userIdArr json array of user ids
-     * @return a comma delimited string of sorted ids from userIdArr
-     */
-    private static String userIdArrayToKey(Integer[] userIdArr) {
-        Arrays.sort(userIdArr);
-        StringBuilder delimString = new StringBuilder();
-        String delim = "";
-        for (int userId : userIdArr) {
-            delimString.append(delim).append(userId);
-            delim = ",";
-        }
-        return delimString.toString();
     }
 
     /**
@@ -680,26 +450,7 @@ public class DataProviderService extends Service {
         }
 
         public void refreshContact(int contactId) {
-            DataProviderService.this.getSingleContact(contactId);
-        }
-
-        /**
-         * @see DataProviderService#upsertThreadAndMessages(com.triaged.badge.models.BThread, boolean)
-         */
-        public void upsertThreadAndMessagesAsync(final BThread bThread) {
-            sqlThread.submit(new Runnable() {
-                @Override
-                public void run() {
-                    DataProviderService.this.upsertThreadAndMessages(bThread, true);
-                }
-            });
-        }
-
-        /**
-         * @see DataProviderService#createThreadSync(Integer[])
-         */
-        public String createThreadSync(Integer[] userIds) throws JSONException, RemoteException, OperationApplicationException {
-            return DataProviderService.this.createThreadSync(userIds);
+            DataProviderService.this.getAndStoreUser(contactId);
         }
 
         /**
@@ -715,7 +466,5 @@ public class DataProviderService extends Service {
         public void partialSyncContactsAsync() {
             DataProviderService.this.partialSyncContactsAsync();
         }
-
     }
-
 }

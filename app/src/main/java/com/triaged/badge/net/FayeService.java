@@ -11,6 +11,7 @@ import android.util.Log;
 import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.BuildConfig;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.events.MessageForFayEvent;
 import com.triaged.badge.models.BThread;
@@ -160,7 +161,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
         }
         try {
             BThread messageThread = App.gson.fromJson(json.getJSONObject("message_thread").toString(), BThread.class);
-            App.dataProviderServiceBinding.upsertThreadAndMessagesAsync(messageThread);
+            MessageProcessor.getInstance().upsertThreadAndMessages(messageThread, true);
         } catch (JSONException e) {
             Log.w(LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e);
         }
