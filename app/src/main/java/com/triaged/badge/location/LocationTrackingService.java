@@ -214,7 +214,7 @@ public class LocationTrackingService extends Service implements LocationListener
 
         // Check against each office.
         final DataProviderService.LocalBinding dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        if (dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() && dataProviderServiceBinding.getLoggedInUser() != null) {
+        if (dataProviderServiceBinding != null && dataProviderServiceBinding.getLoggedInUser() != null) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {

@@ -420,15 +420,6 @@ public class DataProviderService extends Service {
         }
 
         /**
-         * Reports whether the database is initialized and ready to return data.
-         *
-         * @return true if data is available
-         */
-        public boolean isInitialized() {
-            return initialized;
-        }
-
-        /**
          * @return null of not logged in, contact representing user acct otherwise.
          */
         public Contact getLoggedInUser() {
