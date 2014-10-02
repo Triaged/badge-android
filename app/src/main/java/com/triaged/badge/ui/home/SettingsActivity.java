@@ -70,7 +70,7 @@ public class SettingsActivity extends BackButtonActivity {
             @Override
             public void onClick(View v) {
 
-                JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+                JSONObject props = new JSONObject();
                 mixpanel.track("logout", props);
 
                 int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);

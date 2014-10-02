@@ -403,12 +403,6 @@ public class DataProviderService extends Service {
         });
     }
 
-    /**
-     * Construct JSONObject of user data to send with Mixpanel event tracking
-     */
-    protected JSONObject getBasicMixpanelData() {
-        return new JSONObject();
-    }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
         loggedInUser = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
@@ -439,14 +433,6 @@ public class DataProviderService extends Service {
          */
         public Contact getLoggedInUser() {
             return loggedInUser;
-        }
-
-
-        /**
-         * @see DataProviderService#getBasicMixpanelData() (int)
-         */
-        public JSONObject getBasicMixpanelData() {
-            return DataProviderService.this.getBasicMixpanelData();
         }
 
         public void refreshContact(int contactId) {

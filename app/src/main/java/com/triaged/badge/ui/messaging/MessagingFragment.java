@@ -84,7 +84,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         if (!msg.equals("")) {
             MessageProcessor.getInstance().sendMessage(mThreadId, msg);
             postBox.setText("");
-            JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+            JSONObject props = new JSONObject();
             try {
                 props.put("recipient_id", mThreadId);
                 mixpanel.track("message_sent", props);

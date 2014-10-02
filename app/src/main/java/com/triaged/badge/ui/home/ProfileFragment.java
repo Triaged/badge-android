@@ -167,7 +167,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         bindOfficeView();
         bindBossView();
 
-        JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+        JSONObject props = new JSONObject();
         try {
             props.put("user_id", String.valueOf(mCurrentUser.getId()));
             mixpanel.track("profile_viewed", props);
@@ -336,7 +336,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
             bossView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+                    JSONObject props = new JSONObject();
                     try {
                         props.put("manager_id", String.valueOf(bossView.profileId));
                         mixpanel.track("manager_tapped", props);
@@ -400,7 +400,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                 newView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+                        JSONObject props = new JSONObject();
                         try {
                             props.put("subordinate_id", String.valueOf(newView.profileId));
                             mixpanel.track("subordinate_tapped", props);
