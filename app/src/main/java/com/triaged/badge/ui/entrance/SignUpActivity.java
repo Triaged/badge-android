@@ -116,6 +116,8 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
         RestService.instance().badge().signUp(typedJsonString, new Callback<AuthenticationResponse>() {
             @Override
             public void success(AuthenticationResponse authenticationResponse, Response response) {
+                progressDialog.dismiss();
+
                 // Store account info in shared preferences.
                 SharedPreferencesHelper.instance()
                         .putBoolean(R.string.pref_is_a_company_email_key, isACompanyEmail(emailView.getText().toString()))
@@ -123,13 +125,13 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
                         .putInt(R.string.pref_account_id_key, authenticationResponse.id())
                         .commit();
 
-                progressDialog.dismiss();
+                startActivity(new Intent(SignUpActivity.this, VerifyActivity.class));
             }
 
             @Override
             public void failure(RetrofitError error) {
-                Toast.makeText(SignUpActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
                 progressDialog.dismiss();
+                Toast.makeText(SignUpActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
             }
         });
     }

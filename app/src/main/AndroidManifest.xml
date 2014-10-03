@@ -60,13 +60,19 @@
             android:name="com.triaged.badge.ui.entrance.LoginActivity"
             android:label="@string/title_activity_login"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Blue_badge">
+            android:theme="@style/Theme.Blue_badge" >
         </activity>
         <activity
             android:name="com.triaged.badge.ui.entrance.SignUpActivity"
             android:label="@string/title_activity_sign_up"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.Blue_badge">
+            android:theme="@style/Theme.Blue_badge" >
+        </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.VerifyActivity"
+            android:label="@string/title_activity_verify"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Blue_badge" >
         </activity>
         <activity
             android:name="com.triaged.badge.ui.entrance.OnboardingActivity"

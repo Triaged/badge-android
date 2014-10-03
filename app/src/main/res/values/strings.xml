@@ -136,5 +136,8 @@
     <string name="email_input_hint">you@domain.com</string>
     <string name="phone_input_hint">+1 (100) 123-4567</string>
     <string name="phone">Phone</string>
+    <string name="title_activity_verify">Verify Email</string>
+    <string name="verify_email_activity_message">We have sent you an Email with a verification code. Please enter the 4-digit validation code.</string>
+    <string name="four_digit_code">4-digit code</string>
 
 </resources>

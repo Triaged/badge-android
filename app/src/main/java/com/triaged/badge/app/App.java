@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.gson.FieldNamingPolicy;
@@ -189,6 +190,10 @@ public class App extends Application {
         SyncManager.instance();
         mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
+    }
+
+    public static void toast(String message) {
+        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
     }
 
 }
