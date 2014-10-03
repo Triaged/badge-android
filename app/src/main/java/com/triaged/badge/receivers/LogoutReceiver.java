@@ -7,12 +7,15 @@ import android.content.Intent;
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
+import com.triaged.badge.events.LogoutEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * Handle a logout request.
@@ -31,6 +34,7 @@ public class LogoutReceiver extends BroadcastReceiver {
         //TODO: need to send check out of office request to the server
         //TODO: need to send unregister request to the server
 
+        EventBus.getDefault().postSticky(new LogoutEvent());
         LocationTrackingService.justClearAlarm(context);
         // Stop running services
         GeneralUtils.stopAllRunningServices(context);

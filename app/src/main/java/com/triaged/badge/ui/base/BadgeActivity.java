@@ -1,14 +1,11 @@
 package com.triaged.badge.ui.base;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -17,17 +14,18 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
-import com.triaged.badge.models.Device;
 import com.triaged.badge.app.SyncManager;
+import com.triaged.badge.events.LogoutEvent;
+import com.triaged.badge.models.Device;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.DeviceRequest;
-import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.IOException;
 
+import de.greenrobot.event.EventBus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -57,49 +55,21 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
-    private IntentFilter newMessageIntentFilter = new IntentFilter(MessageProcessor.NEW_MSG_ACTION);
-    private BroadcastReceiver logoutReceiver;
-    private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            notifyNewMessage(intent);
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        registerForLogoutAction();
+        EventBus.getDefault().register(this);
         super.onCreate(savedInstanceState);
-    }
-
-    private void registerForLogoutAction() {
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LogoutReceiver.ACTION_LOGOUT);
-        logoutReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                logout();
-            }
-        };
-        LocalBroadcastManager.getInstance(this).registerReceiver(logoutReceiver, intentFilter);
     }
 
     @Override
     protected void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(logoutReceiver);
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, newMessageIntentFilter);
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(newMessageReceiver);
+    public void onEvent(LogoutEvent event) {
+        finish();
     }
 
     /**
@@ -116,16 +86,6 @@ public abstract class BadgeActivity extends MixpanelActivity {
             String message = intent.getStringExtra(SyncManager.MESSAGE_BODY_EXTRA);
             Notifier.newNotification(this, from, message, threadId);
         }
-    }
-
-    /**
-     * Override this method in the activity impl to change activity
-     * behavior when a logged out state is detected.
-     * <p/>
-     * Default behavior is to close the activity.
-     */
-    protected void logout() {
-        finish();
     }
 
     /**
