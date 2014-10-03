@@ -2,17 +2,18 @@ package com.triaged.badge.ui.entrance;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.graphics.Rect;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.gson.JsonObject;
+import com.makeramen.RoundedImageView;
 import com.mobsandgeeks.saripaar.Rule;
 import com.mobsandgeeks.saripaar.Validator;
 import com.mobsandgeeks.saripaar.annotation.Email;
@@ -21,21 +22,26 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
 import com.triaged.badge.net.mime.TypedJsonString;
+import com.triaged.utils.MediaPickerUtils;
 import com.triaged.utils.SharedPreferencesUtil;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 import hugo.weaving.DebugLog;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 public class SignUpActivity extends Activity implements Validator.ValidationListener  {
+
+    private static final int request_code_gallery = 1000;
 
     Validator validator;
     ProgressDialog progressDialog;
@@ -46,6 +52,15 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
     @Required(order = 3) @Email(order = 4, messageResId = R.string.invalid_email_error)
     @InjectView(R.id.email_edit_text) EditText emailView;
     @InjectView(R.id.phone_edit_text) EditText phoneView;
+    @InjectView(R.id.user_image) RoundedImageView userImage;
+
+
+
+
+    @OnClick(R.id.add_image_layout)
+    void selectImage() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
