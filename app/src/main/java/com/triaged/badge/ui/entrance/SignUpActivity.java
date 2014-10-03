@@ -70,7 +70,6 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
         ButterKnife.inject(this);
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setDisplayShowHomeEnabled(false);
 
         validator = new Validator(this);
         validator.setValidationListener(this);

@@ -51,7 +51,6 @@ public class VerifyActivity extends Activity implements Validator.ValidationList
         validator.setValidationListener(this);
 
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        getActionBar().setDisplayShowHomeEnabled(false);
     }
 
 
