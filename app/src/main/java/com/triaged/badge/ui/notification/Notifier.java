@@ -13,7 +13,7 @@ import android.preference.PreferenceManager;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.badge.ui.messaging.MessagingActivity;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class Notifier {
             prefs = PreferenceManager.getDefaultSharedPreferences(context);
         }
 
-        if (SharedPreferencesUtil.getBoolean("is_mute_" + threadId, false)) {
+        if (SharedPreferencesHelper.instance().getBoolean("is_mute_" + threadId, false)) {
             return;
         }
 

@@ -4,15 +4,13 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v13.app.FragmentStatePagerAdapter;
 import android.text.TextUtils;
 import com.triaged.badge.app.R;
 import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.ui.base.views.NonSwipeableViewPager;
 import com.triaged.badge.ui.home.MainActivity;
-import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ public class OnboardingActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!TextUtils.isEmpty(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
+        if (!TextUtils.isEmpty(SharedPreferencesHelper.instance().getString(R.string.pref_api_token, ""))) {
             EventBus.getDefault().post(new LogedinSuccessfully());
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -61,7 +59,7 @@ public class OnboardingActivity extends Activity implements
         });
 
         // If already singed up, go to the confirmation fragment.
-        if (SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1) > 0 ) {
+        if (SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1) > 0 ) {
             viewPager.setCurrentItem(1);
         }
     }

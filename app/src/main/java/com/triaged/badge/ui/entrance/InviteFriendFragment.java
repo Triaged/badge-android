@@ -24,7 +24,7 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.IRow;
 import com.triaged.badge.ui.home.MainActivity;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,8 +58,8 @@ public class InviteFriendFragment extends Fragment {
 
         getActivity().getActionBar().show();
 
-        isFromACompany = SharedPreferencesUtil.getBoolean(R.string.pref_is_a_company_email_key, false);
-        String accountEmail = SharedPreferencesUtil.getString(R.string.pref_account_email_key, "");
+        isFromACompany = SharedPreferencesHelper.instance().getBoolean(R.string.pref_is_a_company_email_key, false);
+        String accountEmail = SharedPreferencesHelper.instance().getString(R.string.pref_account_email_key, "");
         int atSignIndex = accountEmail.lastIndexOf('@');
         if (atSignIndex > 0) {
             myAccountHost = accountEmail.substring(atSignIndex + 1);

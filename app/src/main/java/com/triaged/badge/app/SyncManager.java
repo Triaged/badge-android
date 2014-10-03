@@ -36,7 +36,7 @@ import com.triaged.badge.models.OfficeLocation;
 import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.receivers.GCMReceiver;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -77,7 +77,7 @@ public class SyncManager extends ContextWrapper {
         super(context);
         EventBus.getDefault().register(this);
 
-        lastSynced = SharedPreferencesUtil.getLong(R.string.pref_last_sync_key, 0);
+        lastSynced = SharedPreferencesHelper.instance().getLong(R.string.pref_last_sync_key, 0);
 
         syncGCMReceiver = new BroadcastReceiver() {
             @Override
@@ -169,7 +169,9 @@ public class SyncManager extends ContextWrapper {
         }
         long previousSync = lastSynced;
         lastSynced = System.currentTimeMillis();
-        SharedPreferencesUtil.store(R.string.pref_last_sync_key, lastSynced);
+        SharedPreferencesHelper.instance()
+                .putLong(R.string.pref_last_sync_key, lastSynced)
+                .commit();
 
         RestService.instance().badge().getCompany((previousSync - 60000) + "" /* one minute of buffer */, new Callback<Company>() {
             @Override
@@ -207,7 +209,9 @@ public class SyncManager extends ContextWrapper {
             return;
         }
         lastSynced = System.currentTimeMillis();
-        SharedPreferencesUtil.store(R.string.pref_last_sync_key, lastSynced);
+        SharedPreferencesHelper.instance()
+                .putLong(R.string.pref_last_sync_key, lastSynced)
+                .commit();
         try {
             Company company = RestService.instance().badge().getCompany("0");
 //            getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
@@ -235,12 +239,15 @@ public class SyncManager extends ContextWrapper {
                             OfficeLocationProvider.CONTENT_URI).withValues(
                             OfficeLocationHelper.toContentValue(officeLocation)).build());
                 }
-                SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
+                SharedPreferencesHelper.instance()
+                        .putBoolean(R.string.pref_does_fetched_company_already, true)
+                        .commit();
                 getContentResolver().applyBatch(OfficeLocationProvider.AUTHORITY, dbOperations);
                 dbOperations.clear();
 
-                SharedPreferencesUtil.store(R.string.pref_does_fetched_company_already, true);
-                userAccount = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+                SharedPreferencesHelper.instance().putBoolean(R.string.pref_does_fetched_company_already, true)
+                        .commit();
+                userAccount = getContact(SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1));
             } catch (RemoteException e) {
                 e.printStackTrace();
             } catch (OperationApplicationException e) {
@@ -283,7 +290,7 @@ public class SyncManager extends ContextWrapper {
         managerThread.submit(new Runnable() {
             @Override
             public void run() {
-                int loggedInContactId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+                int loggedInContactId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
                 if (loggedInContactId > 0) {
                     userAccount = getContact(loggedInContactId);
                     // If there's a logged in user, sync the whole company.
@@ -299,9 +306,11 @@ public class SyncManager extends ContextWrapper {
                         // disabled location tracking, start the tracking service.
                         try {
                             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                            if (pInfo.versionCode > SharedPreferencesUtil.getInteger(R.string.pref_app_previous_version_key, -1)) {
-                                SharedPreferencesUtil.store(R.string.pref_app_previous_version_key, pInfo.versionCode);
-                                if (SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
+                            if (pInfo.versionCode > SharedPreferencesHelper.instance().getInteger(R.string.pref_app_previous_version_key, -1)) {
+                                SharedPreferencesHelper.instance()
+                                        .putInt(R.string.pref_app_previous_version_key, pInfo.versionCode)
+                                        .commit();
+                                if (SharedPreferencesHelper.instance().getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true)) {
                                     // startService( new Intent( getApplicationContext(), LocationTrackingService.class ) );
 //                                    saveSharingLocationAsync(true, new DataProviderService.AsyncSaveCallback() {
 //                                        @Override
@@ -329,7 +338,7 @@ public class SyncManager extends ContextWrapper {
 
 
     protected void syncMessages() {
-        long since = (SharedPreferencesUtil.getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
+        long since = (SharedPreferencesHelper.instance().getLong(MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0) - 10000000) / 1000000l; /* 10 seconds of buffer */
         try {
             BThread[] bThreads = RestService.instance().messaging().getMessages(since + "");
             for (BThread bThread : bThreads) {
@@ -354,7 +363,7 @@ public class SyncManager extends ContextWrapper {
     }
 
     public void onEvent(UpdateAccountEvent updateAccountEvent) {
-        userAccount = getContact(SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+        userAccount = getContact(SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1));
     }
 
     public void onEvent(SyncMessageEvent event) {

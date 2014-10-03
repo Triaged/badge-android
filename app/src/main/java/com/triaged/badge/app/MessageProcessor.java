@@ -27,7 +27,7 @@ import com.triaged.badge.models.Message;
 import com.triaged.badge.models.Receipt;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.mime.TypedJsonString;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -189,7 +189,7 @@ public class MessageProcessor {
      *                  assume they are historical
      */
     public void upsertThreadAndMessages(final BThread bThread, final boolean broadcast) {
-        long mostRecentMsgTimestamp = SharedPreferencesUtil.getLong(SyncManager.MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
+        long mostRecentMsgTimestamp = SharedPreferencesHelper.instance().getLong(SyncManager.MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, 0);
 
         // Insert thread into database.
         ContentValues cv = new ContentValues();
@@ -264,7 +264,9 @@ public class MessageProcessor {
         // but the idea here is only update the timestamp on history sync
         // so that all messages will eventually be dl'd no matter what.
         if (!broadcast) {
-            SharedPreferencesUtil.store(SyncManager.MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp);
+            SharedPreferencesHelper.instance()
+                    .putLong(SyncManager.MOST_RECENT_MSG_TIMESTAMP_PREFS_KEY, mostRecentMsgTimestamp)
+                    .commit();
         }
 
         // Get id of most recent msg.

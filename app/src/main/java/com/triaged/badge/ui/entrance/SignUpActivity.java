@@ -23,7 +23,7 @@ import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.utils.MediaPickerUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -117,10 +117,11 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
             @Override
             public void success(AuthenticationResponse authenticationResponse, Response response) {
                 // Store account info in shared preferences.
-                SharedPreferencesUtil.store(R.string.pref_is_a_company_email_key,
-                        isACompanyEmail(emailView.getText().toString()));
-                SharedPreferencesUtil.store(R.string.pref_account_email_key, emailView.getText().toString());
-                SharedPreferencesUtil.store(R.string.pref_account_id_key, emailView.getText().toString());
+                SharedPreferencesHelper.instance()
+                        .putBoolean(R.string.pref_is_a_company_email_key, isACompanyEmail(emailView.getText().toString()))
+                        .putString(R.string.pref_account_email_key, emailView.getText().toString())
+                        .putInt(R.string.pref_account_id_key, authenticationResponse.id())
+                        .commit();
 
                 progressDialog.dismiss();
             }

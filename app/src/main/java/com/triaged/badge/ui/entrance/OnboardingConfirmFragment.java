@@ -23,12 +23,11 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.events.LogedinSuccessfully;
-import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.apache.http.HttpStatus;
 
@@ -68,7 +67,7 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
         progressDialog.show();
 
         JsonObject authParams = new JsonObject();
-        authParams.addProperty("id", SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1));
+        authParams.addProperty("id", SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1));
         authParams.addProperty("challenge_code", pinHidden.getText().toString());
 
         JsonObject postData = new JsonObject();
@@ -79,8 +78,10 @@ public class OnboardingConfirmFragment extends Fragment implements View.OnFocusC
             public void success(Account account, Response response) {
                 progressDialog.dismiss();
                 // TODO: Need to check for null values
-                SharedPreferencesUtil.store(R.string.pref_api_token, account.getAuthenticationToken());
-                SharedPreferencesUtil.store(R.string.pref_account_company_id_key, account.getCompanyId());
+                SharedPreferencesHelper.instance()
+                        .putString(R.string.pref_api_token, account.getAuthenticationToken())
+                        .putString(R.string.pref_account_company_id_key, account.getCompanyId())
+                        .commit();
                 getActivity().getContentResolver().insert(UserProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
                 EventBus.getDefault().post(new LogedinSuccessfully());
 

@@ -18,7 +18,7 @@ import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.BThreadsTable;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -99,7 +99,7 @@ public class HistoryAdapter extends CursorAdapter {
         holder.messagePreview.setText(body);
         //TODO: It's very bad idea to try to access shared preferences,
         // In bindView, Doing IO is expensive and make list laggy.
-        String usersArrayString = SharedPreferencesUtil.getString(holder.threadId, "");
+        String usersArrayString = SharedPreferencesHelper.instance().getString(holder.threadId, "");
         try {
             JSONArray users = new JSONArray(usersArrayString);
             if (users.length() == 2) {
@@ -114,7 +114,7 @@ public class HistoryAdapter extends CursorAdapter {
                 //TODO: It's bad idea, to access share preferences,
                 // in bindVeiw, but since we don't have proper database design,
                 // it's okay for now.
-                String groupName = SharedPreferencesUtil.getString("name_" + holder.threadId, null);
+                String groupName = SharedPreferencesHelper.instance().getString("name_" + holder.threadId, null);
                 if (!TextUtils.isEmpty(groupName)) {
                     holder.name.setText(groupName);
                 }

@@ -23,7 +23,7 @@ import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.R;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.responses.AuthenticationResponse;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -179,10 +179,11 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                SharedPreferencesUtil.store(R.string.pref_is_a_company_email_key,
-                        isACompanyEmail(accountEmail));
-                SharedPreferencesUtil.store(R.string.pref_account_email_key, accountEmail);
-                SharedPreferencesUtil.store(R.string.pref_account_id_key, accountId);
+                SharedPreferencesHelper.instance()
+                        .putBoolean(R.string.pref_is_a_company_email_key, isACompanyEmail(accountEmail))
+                        .putString(R.string.pref_account_email_key, accountEmail)
+                        .putInt(R.string.pref_account_id_key, accountId)
+                        .commit();
             }
         });
         thread.start();

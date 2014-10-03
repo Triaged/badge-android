@@ -27,7 +27,7 @@ import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
 import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONObject;
 
@@ -71,7 +71,8 @@ public class App extends Application {
         mContext = this;
         mHandler = new Handler(getMainLooper());
 
-        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+        SharedPreferencesHelper.prepare(this);
+        mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
         initForeground();
         setupULI();
@@ -101,7 +102,7 @@ public class App extends Application {
     }
 
     private void setupRestAdapter() {
-        final String authorization = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
+        final String authorization = SharedPreferencesHelper.instance().getString(R.string.pref_api_token, "");
         final String userAgent = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
         RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
@@ -186,7 +187,7 @@ public class App extends Application {
 
     public void onEvent(LogedinSuccessfully event) {
         SyncManager.instance();
-        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+        mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
     }
 

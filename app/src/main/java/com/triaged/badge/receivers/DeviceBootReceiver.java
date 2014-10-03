@@ -6,7 +6,7 @@ import android.content.Intent;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 /**
  * Fires when the app starts and starts tracking COARSE
@@ -19,8 +19,8 @@ import com.triaged.utils.SharedPreferencesUtil;
 public class DeviceBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true) &&
-                !"".equals(SharedPreferencesUtil.getString(R.string.pref_api_token, ""))) {
+        if (SharedPreferencesHelper.instance().getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true) &&
+                !"".equals(SharedPreferencesHelper.instance().getString(R.string.pref_api_token, ""))) {
             LocationTrackingService.scheduleAlarm(context);
         }
     }

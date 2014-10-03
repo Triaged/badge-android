@@ -15,7 +15,7 @@ import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.events.MessageForFayEvent;
 import com.triaged.badge.models.BThread;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,8 +63,8 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
         heartbeatThread = Executors.newSingleThreadScheduledExecutor();
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        loggedInUserId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
-        authToken = SharedPreferencesUtil.getString(R.string.pref_api_token, "");
+        loggedInUserId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
+        authToken = SharedPreferencesHelper.instance().getString(R.string.pref_api_token, "");
         if (loggedInUserId <= 0) {
             stopSelf();
         } else {

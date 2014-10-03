@@ -23,7 +23,7 @@ import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.ChangePasswordActivity;
 import com.triaged.badge.ui.profile.EditProfileActivity;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -73,7 +73,7 @@ public class SettingsActivity extends BackButtonActivity {
                 JSONObject props = new JSONObject();
                 mixpanel.track("logout", props);
 
-                int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);
+                int deviceId = SharedPreferencesHelper.instance().getInteger(R.string.pref_device_id_key, -1);
                 if (deviceId > -1) {
                     RestService.instance().badge().signOut(deviceId);
                 }
@@ -100,7 +100,8 @@ public class SettingsActivity extends BackButtonActivity {
         });
 
         Switch broadcastOfficeLocationSwitch = (Switch) findViewById(R.id.office_location_switch);
-        broadcastOfficeLocationSwitch.setChecked(SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
+        broadcastOfficeLocationSwitch.setChecked(SharedPreferencesHelper.instance()
+                .getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
         broadcastOfficeLocationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
@@ -119,7 +120,9 @@ public class SettingsActivity extends BackButtonActivity {
                 RestService.instance().badge().updateAccount(typedJsonString, new Callback<Account>() {
                     @Override
                     public void success(Account account, Response response) {
-                        SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
+                        SharedPreferencesHelper.instance()
+                                .putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked)
+                                .commit();
 
                         ContentValues values = new ContentValues(1);
                         values.put(UsersTable.CLM_SHARING_OFFICE_LOCATION,

@@ -3,15 +3,13 @@ package com.triaged.badge.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.location.LocationTrackingService;
-import com.triaged.badge.app.SyncManager;
 import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -38,7 +36,7 @@ public class LogoutReceiver extends BroadcastReceiver {
         GeneralUtils.stopAllRunningServices(context);
 
         // Clear application data
-        SharedPreferencesUtil.clearSharedPref();
+        SharedPreferencesHelper.instance().clearSharedPref();
         DatabaseHelper.deleteDatabase();
         MixpanelAPI.getInstance(context, App.MIXPANEL_TOKEN).clearSuperProperties();
 

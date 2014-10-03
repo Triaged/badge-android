@@ -24,10 +24,9 @@ import com.triaged.badge.net.api.requests.DeviceRequest;
 import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.IOException;
-import java.util.logging.LogRecord;
 
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -47,7 +46,8 @@ public abstract class BadgeActivity extends MixpanelActivity {
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-    protected static int myUserId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+    protected static int myUserId = SharedPreferencesHelper.instance()
+            .getInteger(R.string.pref_account_id_key, -1);
 
     /**
      * Badge Sender ID. This is the project number you got
@@ -221,7 +221,8 @@ public abstract class BadgeActivity extends MixpanelActivity {
                     RestService.instance().badge().registerDevice(new DeviceRequest(device), new Callback<Device>() {
                         @Override
                         public void success(Device device, Response response) {
-                            SharedPreferencesUtil.store(R.string.pref_device_id_key, device.getId());
+                            SharedPreferencesHelper.instance()
+                                    .putInt(R.string.pref_device_id_key, device.getId()).apply();
                         }
 
                         @Override
