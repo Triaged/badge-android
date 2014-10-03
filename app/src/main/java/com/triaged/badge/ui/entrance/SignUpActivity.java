@@ -59,7 +59,7 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
 
     @OnClick(R.id.add_image_layout)
     void selectImage() {
-
+        MediaPickerUtils.getImageFromGallery(this, request_code_gallery);
     }
 
     @Override
@@ -169,4 +169,16 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
         return true;
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == request_code_gallery) {
+            if (resultCode == RESULT_OK) {
+                String imagePath = MediaPickerUtils.processImagePath(data, this);
+                if (!TextUtils.isEmpty(imagePath)) {
+                    Uri imageUri = Uri.fromFile(new File(imagePath));
+                    userImage.setImageURI(imageUri);
+                }
+            }
+        }
+    }
 }
