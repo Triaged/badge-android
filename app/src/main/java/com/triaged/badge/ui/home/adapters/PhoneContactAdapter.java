@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.triaged.badge.app.App;
@@ -61,10 +62,10 @@ public class PhoneContactAdapter extends ArrayAdapter<IRow> {
             }
 
             if (phoneContact.hasInvited) {
-                holder.inviteView.setText("Sent!");
+                holder.inviteView.setImageResource(R.drawable.invite_tick_button);
                 holder.inviteView.setEnabled(false);
             } else {
-                holder.inviteView.setText("Invite");
+                holder.inviteView.setImageResource(R.drawable.invite_add_button);
                 holder.inviteView.setEnabled(true);
             }
 
@@ -98,8 +99,7 @@ public class PhoneContactAdapter extends ArrayAdapter<IRow> {
         int position;
         @InjectView(R.id.contact_name) TextView nameView;
         @InjectView(R.id.subtext_view) TextView subtextView;
-        @InjectView(R.id.invite_button)
-        Button inviteView;
+        @InjectView(R.id.invite_button) ImageButton inviteView;
 
         @OnClick(R.id.invite_button)
         void sendInvitation() {

@@ -1,46 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="64dp"
+    android:background="@color/white"
+    android:gravity="center_vertical"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp">
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/contact_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_toLeftOf="@+id/invite_button"
+        android:gravity="left"
+        android:singleLine="true"
+        android:text="Medium Text"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="64dp"
-        android:gravity="center_vertical"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp">
+    <TextView
+        android:id="@+id/subtext_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/contact_name"
+        android:layout_marginTop="4dp"
+        android:layout_toLeftOf="@+id/invite_button"
+        android:singleLine="true"
+        android:text="Small Text"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="@color/sub_text_gray" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Medium Text"
-            android:id="@+id/contact_name"
-            android:singleLine="true"
-            android:layout_alignParentLeft="true"
-            android:layout_toLeftOf="@+id/invite_button"
-            android:gravity="left" />
+    <ImageButton
+        android:id="@+id/invite_button"
+        android:layout_width="31dp"
+        android:layout_height="31dp"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/invite_add_button"
+        android:layout_margin="8dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="Small Text"
-            android:id="@+id/subtext_view"
-            android:layout_below="@+id/contact_name"
-            android:textColor="@color/sub_text_gray"
-            android:layout_marginTop="4dp"
-            android:singleLine="true"
-            android:layout_toLeftOf="@+id/invite_button"
-            android:layout_alignParentLeft="true" />
-
-        <Button
-            android:layout_width="84dp"
-            android:layout_height="wrap_content"
-            android:text="Invite"
-            android:id="@+id/invite_button"
-            android:layout_alignParentRight="true"
-            android:singleLine="false" />
-    </RelativeLayout>
-</LinearLayout>
+</RelativeLayout>
