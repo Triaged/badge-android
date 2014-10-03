@@ -73,6 +73,8 @@ public class VerifyActivity extends Activity implements Validator.ValidationList
         if (id == R.id.action_next) {
             validator.validate();
             return true;
+        } else if (id == android.R.id.home) {
+            finish();
         }
 
         return super.onOptionsItemSelected(item);
@@ -109,7 +111,8 @@ public class VerifyActivity extends Activity implements Validator.ValidationList
                 EventBus.getDefault().post(new LogedinSuccessfully());
 
                 GeneralUtils.dismissKeyboard(VerifyActivity.this);
-                startActivity(new Intent(VerifyActivity.this, MainActivity.class));
+                setResult(RESULT_OK);
+                finish();
             }
 
             @Override

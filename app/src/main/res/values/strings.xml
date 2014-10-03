@@ -139,5 +139,6 @@
     <string name="title_activity_verify">Verify Email</string>
     <string name="verify_email_activity_message">We have sent you an Email with a verification code. Please enter the 4-digit validation code.</string>
     <string name="four_digit_code">4-digit code</string>
+    <string name="title_activity_onboarding_invite_colleague">Invite Coworkers</string>
 
 </resources>

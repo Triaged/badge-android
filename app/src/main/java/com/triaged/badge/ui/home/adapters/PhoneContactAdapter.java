@@ -1,4 +1,4 @@
-package com.triaged.badge.ui.entrance;
+package com.triaged.badge.ui.home.adapters;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -15,6 +15,7 @@ import com.triaged.badge.models.Invite;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.InviteRequest;
 import com.triaged.badge.ui.IRow;
+import com.triaged.badge.ui.home.InviteFriendFragment;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ import retrofit.client.Response;
 /**
 * Created by Sadegh Kazemy on 9/25/14.
 */
-class PhoneContactAdapter extends ArrayAdapter<IRow> {
+public class PhoneContactAdapter extends ArrayAdapter<IRow> {
 
     public PhoneContactAdapter(Context context, int resource, List<IRow> contactList) {
         super(context, resource, contactList);

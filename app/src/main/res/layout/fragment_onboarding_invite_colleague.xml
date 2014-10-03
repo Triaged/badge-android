@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:background="@color/white"
+    tools:context="com.triaged.badge.ui.entrance.OnboardingInviteColleagueActivity$PlaceholderFragment"
+    android:orientation="vertical" >
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/invite_placeholder"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="52dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Welcome"
+        android:id="@+id/welcome_textview"
+        android:layout_marginTop="64dp"
+        android:textSize="24sp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="To get most of Badge you should start by adding your coworkers to your team. "
+        android:textSize="18sp"
+        android:textColor="@color/prime_gray"
+        android:layout_margin="12dp" />
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Organize my team"
+        android:id="@+id/organize_button"
+        android:textColor="@color/white"
+        android:background="@drawable/blue_button_selector" />
+</LinearLayout>

@@ -41,7 +41,8 @@ import retrofit.client.Response;
 
 public class SignUpActivity extends Activity implements Validator.ValidationListener  {
 
-    private static final int request_code_gallery = 1000;
+    private static final int REQUEST_CODE_GALLERY = 1000;
+    private static final int REQUEST_CODE_VERIFY = 2000;
 
     Validator validator;
     ProgressDialog progressDialog;
@@ -59,7 +60,7 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
 
     @OnClick(R.id.add_image_layout)
     void selectImage() {
-        MediaPickerUtils.getImageFromGallery(this, request_code_gallery);
+        MediaPickerUtils.getImageFromGallery(this, REQUEST_CODE_GALLERY);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
                         .putInt(R.string.pref_account_id_key, authenticationResponse.id())
                         .commit();
 
-                startActivity(new Intent(SignUpActivity.this, VerifyActivity.class));
+                startActivityForResult(new Intent(SignUpActivity.this, VerifyActivity.class), REQUEST_CODE_VERIFY);
             }
 
             @Override
@@ -174,14 +175,22 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == request_code_gallery) {
-            if (resultCode == RESULT_OK) {
-                String imagePath = MediaPickerUtils.processImagePath(data, this);
-                if (!TextUtils.isEmpty(imagePath)) {
-                    Uri imageUri = Uri.fromFile(new File(imagePath));
-                    userImage.setImageURI(imageUri);
+        switch (requestCode) {
+            case REQUEST_CODE_GALLERY:
+                if (resultCode == RESULT_OK) {
+                    String imagePath = MediaPickerUtils.processImagePath(data, this);
+                    if (!TextUtils.isEmpty(imagePath)) {
+                        Uri imageUri = Uri.fromFile(new File(imagePath));
+                        userImage.setImageURI(imageUri);
+                    }
                 }
-            }
+                break;
+
+            case REQUEST_CODE_VERIFY:
+                if (resultCode == RESULT_OK) {
+                    setResult(RESULT_OK);
+                    finish();
+                }
         }
     }
 }

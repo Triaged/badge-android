@@ -1,4 +1,4 @@
-package com.triaged.badge.ui.entrance;
+package com.triaged.badge.ui.home;
 
 
 import android.app.Fragment;
@@ -23,7 +23,7 @@ import android.widget.ProgressBar;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.IRow;
-import com.triaged.badge.ui.home.MainActivity;
+import com.triaged.badge.ui.home.adapters.PhoneContactAdapter;
 import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.ArrayList;
@@ -55,8 +55,6 @@ public class InviteFriendFragment extends Fragment {
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_invite_friend, container, false);
         ButterKnife.inject(this, root);
-
-        getActivity().getActionBar().show();
 
         isFromACompany = SharedPreferencesHelper.instance().getBoolean(R.string.pref_is_a_company_email_key, false);
         String accountEmail = SharedPreferencesHelper.instance().getString(R.string.pref_account_email_key, "");
@@ -197,7 +195,7 @@ public class InviteFriendFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.invite_friend_fragment_menu, menu);
+        inflater.inflate(R.menu.invite_fragment, menu);
     }
 
     @Override
@@ -210,15 +208,15 @@ public class InviteFriendFragment extends Fragment {
         return false;
     }
 
-    static class PhoneContact implements IRow {
-        String id;
-        String name;
-        String phone;
-        String email;
-        String avatarUri;
-        boolean hasInvited;
-        boolean isColleague;
-        boolean hideSubtext;
+    public static class PhoneContact implements IRow {
+        public String id;
+        public String name;
+        public String phone;
+        public String email;
+        public String avatarUri;
+        public boolean hasInvited;
+        public boolean isColleague;
+        public boolean hideSubtext;
 
         @Override
         public int getType() {
@@ -226,8 +224,8 @@ public class InviteFriendFragment extends Fragment {
         }
     }
 
-    static class HeaderRow implements IRow {
-        String name;
+    public static class HeaderRow implements IRow {
+        public String name;
 
         HeaderRow(String name) {
             this.name = name;
