@@ -42,6 +42,8 @@
         <item name="android:backgroundSplit">@drawable/ab_bottom_solid_blue_badge</item>
         <item name="android:progressBarStyle">@style/ProgressBar.Blue_badge</item>
         <item name="android:displayOptions">showTitle</item>
+        <!--Prevent to show actionbar logo when search is expanded-->
+        <item name="android:icon">@android:color/transparent</item>
     </style>
 
     <style name="ActionBar.Transparent.Blue_badge" parent="@android:style/Widget.Holo.Light.ActionBar">
