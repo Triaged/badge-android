@@ -1,12 +1,12 @@
 package com.triaged.badge.ui.home.adapters;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
@@ -18,6 +18,7 @@ import com.triaged.badge.net.api.requests.InviteRequest;
 import com.triaged.badge.ui.IRow;
 import com.triaged.badge.ui.home.InviteFriendFragment;
 
+import java.util.HashSet;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -28,12 +29,19 @@ import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 /**
-* Created by Sadegh Kazemy on 9/25/14.
-*/
+ * Created by Sadegh Kazemy on 9/25/14.
+ */
 public class PhoneContactAdapter extends ArrayAdapter<IRow> {
 
+    HashSet invitedSet;
+    SharedPreferences invitedSharedPreferences = getContext().getSharedPreferences("invited", Context.MODE_PRIVATE);
     public PhoneContactAdapter(Context context, int resource, List<IRow> contactList) {
         super(context, resource, contactList);
+        String invitedString = invitedSharedPreferences.getString("invited_set", "");
+        invitedSet = App.gson.fromJson(invitedString, HashSet.class);
+        if (invitedSet == null) {
+            invitedSet = new HashSet<String>(2);
+        }
     }
 
     @Override
@@ -54,8 +62,18 @@ public class PhoneContactAdapter extends ArrayAdapter<IRow> {
             holder.position = position;
             if (TextUtils.isEmpty(phoneContact.email)) {
                 holder.subtextView.setText(phoneContact.phone);
+                if (invitedSet.contains(phoneContact.phone)) {
+                    phoneContact.hasInvited = true;
+                } else {
+                    phoneContact.hasInvited = false;
+                }
             } else {
                 holder.subtextView.setText(phoneContact.email);
+                if (invitedSet.contains(phoneContact.email)) {
+                    phoneContact.hasInvited = true;
+                } else {
+                    phoneContact.hasInvited = false;
+                }
                 if (phoneContact.email.equals(phoneContact.name)) {
                     holder.subtextView.setVisibility(View.INVISIBLE);
                 }
@@ -109,6 +127,12 @@ public class PhoneContactAdapter extends ArrayAdapter<IRow> {
             RestService.instance().badge().invite(inviteRequest, new Callback<Response>() {
                 @Override
                 public void success(Response response, Response response2) {
+                    if (phoneContact.email != null)
+                        invitedSet.add(phoneContact.email);
+                    if (phoneContact.phone != null)
+                        invitedSet.add(phoneContact.phone);
+                    invitedSharedPreferences.edit().putString("invited_set", App.gson.toJson(invitedSet)).commit();
+
                     phoneContact.hasInvited = true;
                     notifyDataSetChanged();
                 }
