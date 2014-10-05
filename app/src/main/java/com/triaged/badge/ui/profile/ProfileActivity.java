@@ -1,15 +1,9 @@
 package com.triaged.badge.ui.profile;
 
 import android.app.Activity;
-import android.app.ActionBar;
-import android.app.Fragment;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.home.ProfileFragment;
@@ -28,8 +22,8 @@ public class ProfileActivity extends Activity {
                     .add(R.id.container, ProfileFragment.newInstance(profileId))
                     .commit();
         }
+        getActionBar().setDisplayHomeAsUpEnabled(true);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -38,4 +32,12 @@ public class ProfileActivity extends Activity {
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return false;
+    }
 }
