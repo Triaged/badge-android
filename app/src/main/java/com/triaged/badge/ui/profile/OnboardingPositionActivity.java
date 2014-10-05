@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
@@ -16,15 +17,15 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.OnboardingDotsView;
@@ -96,11 +97,11 @@ public class OnboardingPositionActivity extends BadgeActivity {
                         public void success(Account account, Response response) {
                             // Put updated data into database.
                             ContentValues values = new ContentValues();
-                            values.put(ContactsTable.COLUMN_CONTACT_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
-                            values.put(ContactsTable.COLUMN_CONTACT_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
-                            values.put(ContactsTable.COLUMN_CONTACT_MANAGER_ID, account.getCurrentUser().getManagerId());
-                            getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                    ContactsTable.COLUMN_ID + " =?",
+                            values.put(UsersTable.CLM_JOB_TITLE, account.getCurrentUser().getEmployeeInfo().getJobTitle());
+                            values.put(UsersTable.CLM_DEPARTMENT_ID, account.getCurrentUser().getDepartmentId());
+                            values.put(UsersTable.CLM_MANAGER_ID, account.getCurrentUser().getManagerId());
+                            getContentResolver().update(UserProvider.CONTENT_URI, values,
+                                    UsersTable.COLUMN_ID + " =?",
                                     new String[] { App.accountId() + ""});
                             EventBus.getDefault().post(new UpdateAccountEvent());
 
@@ -138,7 +139,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
                 startActivityForResult(intent, MANAGER_REQUEST_CODE);
             }
         });
-        localBroadcastManager.registerReceiver(onboardingFinishedReceiver, new IntentFilter(ONBOARDING_FINISHED_ACTION));
+        LocalBroadcastManager.getInstance(this).registerReceiver(onboardingFinishedReceiver, new IntentFilter(ONBOARDING_FINISHED_ACTION));
 
         nametag = (ImageView) findViewById(R.id.nametag);
         tellUsMoreTitle = (TextView) findViewById(R.id.tell_us_more_title);
@@ -170,11 +171,11 @@ public class OnboardingPositionActivity extends BadgeActivity {
             }
         });
 
+        bindView();
     }
 
-    @Override
-    protected void onDatabaseReady() {
-        final Contact loggedInUser = dataProviderServiceBinding.getLoggedInUser();
+    protected void bindView() {
+        final Contact loggedInUser = SyncManager.getMyUser();
         managerId = loggedInUser.managerId;
         departmentId = loggedInUser.departmentId;
 
@@ -220,7 +221,7 @@ public class OnboardingPositionActivity extends BadgeActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        localBroadcastManager.unregisterReceiver(onboardingFinishedReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(onboardingFinishedReceiver);
     }
 
     @Override

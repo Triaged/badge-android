@@ -1,12 +1,11 @@
 package com.triaged.badge.app;
 
 import android.app.Application;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.Bitmap;
-import android.os.IBinder;
+import android.os.Handler;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.gson.FieldNamingPolicy;
@@ -20,14 +19,16 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
 import com.triaged.badge.events.LogedinSuccessfully;
+import com.triaged.badge.events.SyncContactPartiallyEvent;
+import com.triaged.badge.events.SyncMessageEvent;
 import com.triaged.badge.helpers.Foreground;
-import com.triaged.badge.net.ApiClient;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.FayeService;
+import com.triaged.badge.net.LongDeserializer;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.GeneralUtils;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONObject;
 
@@ -47,57 +48,40 @@ public class App extends Application {
 
     public static final String MIXPANEL_TOKEN = "ec6f12813c52d6dc6709aab1bf5cb1b9";
 
-    public static DataProviderService.LocalBinding dataProviderServiceBinding = null;
-    public ServiceConnection dataProviderServiceConnnection = null;
-
-    public Foreground appForeground;
-    public Foreground.Listener foregroundListener;
+    private static App mInstance;
+    private static Handler mHandler;
 
     public static final ILogger gLogger = new LoggerImp(BuildConfig.DEBUG);
-    public static Context mContext;
+    private static Context mContext;
     public static RestAdapter restAdapterMessaging;
     public static RestAdapter restAdapter;
     private static int mAccountId;
+    public static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(long.class, new LongDeserializer())
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mInstance = this;
         if (!BuildConfig.DEBUG) {
             Crashlytics.start(this);
         }
         EventBus.getDefault().register(this);
         mContext = this;
+        mHandler = new Handler(getMainLooper());
 
-        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+        SharedPreferencesHelper.prepare(this);
+        mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
-        setupDataProviderServicebinding();
         initForeground();
         setupULI();
     }
 
-    private void setupDataProviderServicebinding() {
-        dataProviderServiceConnnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                dataProviderServiceBinding = (DataProviderService.LocalBinding) service;
-                dataProviderServiceBinding.initDatabase();
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-        };
-
-        if (!bindService(new Intent(this, DataProviderService.class), dataProviderServiceConnnection, BIND_AUTO_CREATE)) {
-            App.gLogger.e("Couldn't bind to data provider service.");
-            unbindService(dataProviderServiceConnnection);
-        }
-    }
-
     private void initForeground() {
-        appForeground = Foreground.get(this);
-
-        foregroundListener = new Foreground.Listener() {
+        Foreground appForeground = Foreground.get(this);
+        appForeground.addListener(new Foreground.Listener() {
             @Override
             public void onBecameForeground() {
                 MixpanelAPI mixpanelAPI = MixpanelAPI.getInstance(App.this, MIXPANEL_TOKEN);
@@ -106,32 +90,26 @@ public class App extends Application {
                 mixpanelAPI.flush();
 
                 startService(new Intent(getApplicationContext(), FayeService.class));
-                if (dataProviderServiceBinding != null) {
-                    dataProviderServiceBinding.syncMessagesAsync();
-                    dataProviderServiceBinding.partialSyncContactsAsync();
-                }
+
+                EventBus.getDefault().post(new SyncMessageEvent());
+                EventBus.getDefault().post(new SyncContactPartiallyEvent());
             }
 
             @Override
             public void onBecameBackground() {
                 stopService(new Intent(getApplicationContext(), FayeService.class));
             }
-        };
-        appForeground.addListener(foregroundListener);
+        });
     }
 
     private void setupRestAdapter() {
-        final String authorization = SharedPreferencesUtil.getString("apiToken", "");
-
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-                .create();
-
+        final String authorization = SharedPreferencesHelper.instance().getString(R.string.pref_api_token, "");
+        final String userAgent = "Badge-android/" + GeneralUtils.getAppVersionName(App.context());
         RestAdapter.Builder restBuilderMessaging = new RestAdapter.Builder()
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
-                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
+                        request.addHeader("User-Agent", userAgent);
                         request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
@@ -145,7 +123,7 @@ public class App extends Application {
                 .setRequestInterceptor(new RequestInterceptor() {
                     @Override
                     public void intercept(RequestInterceptor.RequestFacade request) {
-                        request.addHeader("User-Agent", ApiClient.USER_AGENT);
+                        request.addHeader("User-Agent", userAgent);
                         request.addHeader("User-Id", mAccountId + "");
                         request.addHeader("Authorization", authorization);
                         request.addHeader("Accept", "*/*");
@@ -165,10 +143,10 @@ public class App extends Application {
 
         restAdapterMessaging = restBuilderMessaging.build();
         restAdapter = restBuilder.build();
+        RestService.prepare(restAdapterMessaging, restAdapter);
     }
 
     private void setupULI() {
-
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
                 .cacheInMemory(true)
                 .cacheOnDisk(true)
@@ -194,16 +172,28 @@ public class App extends Application {
         return mContext;
     }
 
+    public static Handler uiHandler() {
+        return mHandler;
+    }
+
     public static int accountId() {
         return mAccountId;
+    }
+
+    public static App getInstance(){
+        return mInstance;
     }
 
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
-        mAccountId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+        SyncManager.instance();
+        mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
-        RestService.prepare(restAdapterMessaging, restAdapter);
+    }
+
+    public static void toast(String message) {
+        Toast.makeText(mContext, message, Toast.LENGTH_LONG).show();
     }
 
 }

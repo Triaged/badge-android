@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 
-import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BadgeActivity;
 
@@ -74,7 +73,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
         });
 
         messagesFragment = MessagesFragments.newInstance();
-        contactFragment = ContactsFragment.newInstance();
+        contactFragment = UsersFragment.newInstance();
         myProfileFragment = ProfileFragment.newInstance(myUserId);
 
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
@@ -144,26 +143,4 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction ft) {
 
     }
-
-
-    /**
-     * Every time we get to the contacts screen, do a quick check to see if we've registered the device yet.
-     * If not, do it assuming the user is logged in!
-     */
-    private void lazyDeviceRegistration() {
-        if (shouldRegister && dataProviderServiceBinding.getLoggedInUser() != null) {
-            String regId = getRegistrationId(this);
-            if (regId.isEmpty()) {
-                // This will async generate a new reg id and
-                // send it up to the cloud
-                ensureGcmRegistration();
-            } else {
-                // Re-register device
-                ((App) getApplication()).dataProviderServiceBinding.registerDevice(regId);
-            }
-            shouldRegister = false;
-        }
-    }
-
-
 }

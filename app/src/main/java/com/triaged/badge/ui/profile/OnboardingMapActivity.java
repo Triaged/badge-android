@@ -26,13 +26,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.OfficeLocationProvider;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.models.OfficeLocation;
-import com.triaged.badge.net.DataProviderService;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.adapters.PlacesAutocompleteAdapter;
@@ -109,17 +108,15 @@ public class OnboardingMapActivity extends BackButtonActivity implements
                                 // Save into database.
                                 ContentValues values = new ContentValues();
                                 values.put(OfficeLocationsTable.COLUMN_ID, officeLocation.getId());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME, officeLocation.getName());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ADDRESS, officeLocation.getStreetAddress());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_CITY, officeLocation.getCity());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_STATE, officeLocation.getState());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_ZIP, officeLocation.getZipCode());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_COUNTRY, officeLocation.getCountry());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT, officeLocation.getLatitude());
-                                values.put(OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG, officeLocation.getLongitude());
+                                values.put(OfficeLocationsTable.CLM_NAME, officeLocation.getName());
+                                values.put(OfficeLocationsTable.CLM_ADDRESS, officeLocation.getStreetAddress());
+                                values.put(OfficeLocationsTable.CLM_CITY, officeLocation.getCity());
+                                values.put(OfficeLocationsTable.CLM_STATE, officeLocation.getState());
+                                values.put(OfficeLocationsTable.CLM_ZIP, officeLocation.getZipCode());
+                                values.put(OfficeLocationsTable.CLM_COUNTRY, officeLocation.getCountry());
+                                values.put(OfficeLocationsTable.CLM_LAT, officeLocation.getLatitude());
+                                values.put(OfficeLocationsTable.CLM_LNG, officeLocation.getLongitude());
                                 getContentResolver().insert(OfficeLocationProvider.CONTENT_URI, values);
-
-                                setResult(officeLocation.getId());
                                 finish();
                             }
 

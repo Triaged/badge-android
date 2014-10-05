@@ -74,17 +74,4 @@
         android:divider="@null"
         android:dividerHeight="0dp" />
 
-    <ListView
-        android:id="@+id/search_results_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="invisible"
-        android:layout_below="@id/to_box"
-        android:scrollbarStyle="outsideOverlay"
-        android:clipToPadding="false"
-        android:fastScrollEnabled="true"
-        android:overScrollMode="never"
-        android:divider="@null"
-        android:dividerHeight="0dp" />
-
 </RelativeLayout>

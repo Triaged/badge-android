@@ -11,44 +11,34 @@ public class MessagesTable extends AbstractTable {
 
     public static final String TABLE_NAME = "messages";
 
-    public static final String COLUMN_MESSAGES_ID = "server_msg_id";
-    public static final String COLUMN_MESSAGES_BODY = "body";
-    public static final String COLUMN_MESSAGES_THREAD_ID = "thread_id";
-    public static final String COLUMN_MESSAGES_FROM_ID = "from_user_id";
-    public static final String COLUMN_MESSAGES_TIMESTAMP = "timestamp";
-    public static final String COLUMN_MESSAGES_THREAD_HEAD = "thread_head";
-    public static final String COLUMN_MESSAGES_THREAD_PARTICIPANTS = "thread_names";
-    public static final String COLUMN_MESSAGES_AVATAR_URL = "avatar_url";
-    public static final String COLUMN_MESSAGES_ACK = "message_acknowledged";
-    public static final String COLUMN_MESSAGES_IS_READ = "is_read";
-    public static final String COLUMN_MESSAGES_GUID = "guid";
-
+    public static final String CLM_ID = "server_msg_id";
+    public static final String CLM_BODY = "body";
+    public static final String CLM_THREAD_ID = "bthread_id";
+    public static final String CLM_AUTHOR_ID = "author_id";
+    public static final String CLM_TIMESTAMP = "timestamp";
+    public static final String CLM_ACK = "message_acknowledged";
+    public static final String CLM_IS_READ = "is_read";
+    public static final String CLM_GUID = "guid";
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
         StringBuilder createSql = new StringBuilder();
         createSql.append("CREATE TABLE ").append(TABLE_NAME).append("(")
                 .append(COLUMN_ID).append(" INTEGER PRIMARY KEY AUTOINCREMENT, ")
-                .append(COLUMN_MESSAGES_ID).append(" TEXT, ")
-                .append(COLUMN_MESSAGES_THREAD_ID).append(" TEXT, ")
-                .append(COLUMN_MESSAGES_FROM_ID).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_BODY).append(" TEXT, ")
-                .append(COLUMN_MESSAGES_TIMESTAMP).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_ACK).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_THREAD_HEAD).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_THREAD_PARTICIPANTS).append(" TEXT, ")
-                .append(COLUMN_MESSAGES_AVATAR_URL).append(" TEXT, ")
-                .append(COLUMN_MESSAGES_IS_READ).append(" INTEGER, ")
-                .append(COLUMN_MESSAGES_GUID).append(" TEXT UNIQUE")
+                .append(CLM_ID).append(" TEXT, ")
+                .append(CLM_THREAD_ID).append(" TEXT, ")
+                .append(CLM_AUTHOR_ID).append(" INTEGER, ")
+                .append(CLM_BODY).append(" TEXT, ")
+                .append(CLM_TIMESTAMP).append(" INTEGER, ")
+                .append(CLM_ACK).append(" INTEGER, ")
+                .append(CLM_IS_READ).append(" INTEGER, ")
+                .append(CLM_GUID).append(" TEXT UNIQUE")
                 .append(");");
 
         db.execSQL(createSql.toString());
-
         db.execSQL("CREATE INDEX message_id_index ON " + TABLE_NAME + "(" + COLUMN_ID + ");");
-        db.execSQL("CREATE INDEX message_thread_id_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_THREAD_ID + ");");
-        db.execSQL("CREATE INDEX message_thread_head_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_THREAD_HEAD + ");");
-        db.execSQL("CREATE INDEX message_thread_body_index ON " + TABLE_NAME + "(" + COLUMN_MESSAGES_BODY + ");");
+        db.execSQL("CREATE INDEX message_thread_id_index ON " + TABLE_NAME + "(" + CLM_THREAD_ID + ");");
+        db.execSQL("CREATE INDEX message_thread_body_index ON " + TABLE_NAME + "(" + CLM_BODY + ");");
     }
 
     @Override

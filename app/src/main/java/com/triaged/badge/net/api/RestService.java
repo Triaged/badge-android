@@ -1,17 +1,22 @@
 package com.triaged.badge.net.api;
 
-import com.squareup.okhttp.Response;
-import com.triaged.badge.TypedJsonString;
-import com.triaged.badge.app.App;
+import com.triaged.badge.models.BThread;
+import com.triaged.badge.net.api.requests.InviteRequest;
+import com.triaged.badge.net.api.requests.MessageBThreadRequest;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.models.Account;
+import com.triaged.badge.models.Company;
 import com.triaged.badge.models.Department;
+import com.triaged.badge.models.Device;
 import com.triaged.badge.models.OfficeLocation;
+import com.triaged.badge.models.User;
 import com.triaged.badge.net.api.requests.DeviceRequest;
-import com.triaged.badge.net.api.requests.MessageThreadRequest;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
+import com.triaged.badge.net.api.responses.AuthenticationResponse;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
+import retrofit.client.Response;
 import retrofit.http.Body;
 import retrofit.http.DELETE;
 import retrofit.http.GET;
@@ -21,6 +26,7 @@ import retrofit.http.POST;
 import retrofit.http.PUT;
 import retrofit.http.Part;
 import retrofit.http.Path;
+import retrofit.http.Query;
 import retrofit.mime.TypedFile;
 import retrofit.mime.TypedInput;
 
@@ -62,9 +68,13 @@ public class RestService {
 
 
     public interface MessagingService {
+
+        @POST("/api/v1/message_threads")
+        BThread createMessageThread(@Body TypedInput threadBody);
+
         @PUT("/api/v1/message_threads/{message_thread_id}")
         void threadSetName(@Path("message_thread_id") String threadId,
-                           @Body MessageThreadRequest messageThreadRequest,
+                           @Body MessageBThreadRequest messageBThreadRequest,
                            Callback<retrofit.client.Response> callback);
 
         @POST("/api/v1/message_threads/{message_thread_id}/unmute")
@@ -76,6 +86,12 @@ public class RestService {
 
         @POST("/api/v1/read_receipts")
         void reportReceipts(@Body ReceiptsReportRequest receiptsReportRequest, Callback<retrofit.client.Response> callback);
+
+        @GET("/api/v1/user/messages")
+        void getMessages(@Query("timestamp") String sinceMilliSecs, Callback<BThread[]> callback );
+
+        @GET("/api/v1/user/messages")
+        BThread[] getMessages(@Query("timestamp") String sinceMilliSecs);
     }
 
     public interface BadgeService {
@@ -89,6 +105,8 @@ public class RestService {
         @POST("/v1/account/avatar")
         void postAvatar(@Part("user[avatar]") TypedFile avatar, Callback<Account> callback);
 
+        @GET("/v1/users/{id}")
+        void getUser(@Path("id") String id, Callback<User> callback);
 
         @POST("/v1/departments")
         void createDepartment(@Body TypedInput requestBody, Callback<Department> callback);
@@ -98,7 +116,7 @@ public class RestService {
 
 
         @POST("v1/devices")
-        void registerDevice(@Body DeviceRequest deviceRequest);
+        void registerDevice(@Body DeviceRequest deviceRequest, Callback<Device> callback);
 
         @DELETE("v1/devices/{device_id}/sign_out")
         void signOut(@Path("device_id") int deviceId);
@@ -106,6 +124,12 @@ public class RestService {
 
         @POST("/v1/sessions")
         void login(@Body TypedInput requestBody, Callback<Account> callback);
+
+        @POST("/v1/authentications")
+        void signUp(@Body TypedInput requestBody, Callback<AuthenticationResponse> callback);
+
+        @POST("/v1/authentications/valid")
+        void validate(@Body TypedInput requestBody, Callback<Account> callback);
 
 
         @POST("/v1/office_locations")
@@ -116,6 +140,18 @@ public class RestService {
 
         @PUT("/v1/office_locations/{id}/exited")
         void checkOutOfOffice(@Path("id") String officeId, Callback<Response> callback);
+
+        @GET("/v1/office_locations/{id}")
+        void getOfficeLocation(@Path("id") String id, Callback<OfficeLocation> callback);
+
+        @GET("/v1/company")
+        void getCompany(@Query("timestamp") String timestamp, Callback<Company> callback);
+
+        @GET("/v1/company")
+        Company getCompany(@Query("timestamp") String timestamp);
+
+        @POST("/v1/invites")
+        void invite(@Body InviteRequest inviteRequest, Callback<Response> callback);
     }
 
 }

@@ -13,7 +13,7 @@ import android.preference.PreferenceManager;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.home.MainActivity;
 import com.triaged.badge.ui.messaging.MessagingActivity;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class Notifier {
             prefs = PreferenceManager.getDefaultSharedPreferences(context);
         }
 
-        if (SharedPreferencesUtil.getBoolean("is_mute_" + threadId, false)) {
+        if (SharedPreferencesHelper.instance().getBoolean("is_mute_" + threadId, false)) {
             return;
         }
 
@@ -61,7 +61,6 @@ public class Notifier {
             // Creates an explicit intent for an Activity in your app
             Intent resultIntent = new Intent(context, MessagingActivity.class);
             resultIntent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
-            resultIntent.putExtra(MessagingActivity.THREAD_NAME_EXTRA , from);
             PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             mBuilder.setContentIntent(resultPendingIntent);
             NotificationManager mNotificationManager =

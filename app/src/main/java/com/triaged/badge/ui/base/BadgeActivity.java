@@ -1,27 +1,34 @@
 package com.triaged.badge.ui.base;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.v4.content.LocalBroadcastManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.app.SyncManager;
+import com.triaged.badge.events.LogoutEvent;
+import com.triaged.badge.models.Device;
+import com.triaged.badge.net.api.RestService;
+import com.triaged.badge.net.api.requests.DeviceRequest;
 import com.triaged.badge.ui.notification.Notifier;
 import com.triaged.utils.GeneralUtils;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.IOException;
+
+import de.greenrobot.event.EventBus;
+import retrofit.Callback;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * All app activities should inherit from this super
@@ -37,7 +44,8 @@ public abstract class BadgeActivity extends MixpanelActivity {
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
-    protected static int myUserId = SharedPreferencesUtil.getInteger(R.string.pref_account_id_key, -1);
+    protected static int myUserId = SharedPreferencesHelper.instance()
+            .getInteger(R.string.pref_account_id_key, -1);
 
     /**
      * Badge Sender ID. This is the project number you got
@@ -47,103 +55,21 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     protected static final String ONBOARDING_FINISHED_ACTION = "onboardingFinished";
 
-    protected LocalBroadcastManager localBroadcastManager;
-    protected BroadcastReceiver databaseReadyReceiver;
-    protected DataProviderService.LocalBinding dataProviderServiceBinding;
-    private BroadcastReceiver logoutListener;
-    private BroadcastReceiver newMessageReceiver;
-    IntentFilter newMessageIntentFilter;
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(DataProviderService.LOGGED_OUT_ACTION);
-        logoutListener = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                logout();
-            }
-        };
-
-        localBroadcastManager.registerReceiver(logoutListener, intentFilter);
-
-        newMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                notifyNewMessage(intent);
-            }
-        };
-        newMessageIntentFilter = new IntentFilter(DataProviderService.NEW_MSG_ACTION);
-
-        databaseReadyReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(DataProviderService.DB_AVAILABLE_ACTION)) {
-                    dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-                    onDatabaseReady();
-                } else if (intent.getAction().equals(DataProviderService.DB_UPDATED_ACTION)) {
-                    onDatabaseUpdated();
-                }
-            }
-        };
-        IntentFilter dbActionFilter = new IntentFilter(DataProviderService.DB_AVAILABLE_ACTION);
-        dbActionFilter.addAction(DataProviderService.DB_UPDATED_ACTION);
-        localBroadcastManager.registerReceiver(databaseReadyReceiver, dbActionFilter);
-        dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        if (dataProviderServiceBinding != null) {
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    onDatabaseReady();
-                }
-            });
-
-        }
+        EventBus.getDefault().register(this);
         super.onCreate(savedInstanceState);
     }
 
     @Override
     protected void onDestroy() {
-        localBroadcastManager.unregisterReceiver(databaseReadyReceiver);
-        localBroadcastManager.unregisterReceiver(logoutListener);
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        localBroadcastManager.registerReceiver(newMessageReceiver, newMessageIntentFilter);
-    }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        localBroadcastManager.unregisterReceiver(newMessageReceiver);
-    }
-
-    /**
-     * Implement this method to do any activity set up
-     * that requires access to badge data.
-     * <p/>
-     * Do not attempt to access {@link #dataProviderServiceBinding}
-     * until this has been called.
-     * <p/>
-     * This is always invoked after {@link android.app.Activity#onCreate(android.os.Bundle)}
-     * <p/>
-     * Default impl does nothing.
-     */
-    protected void onDatabaseReady() {
-    }
-
-    /**
-     * Default impl does nothing. Override to be notified
-     * when the database has been re-synced.
-     */
-    protected void onDatabaseUpdated() {
-
+    public void onEvent(LogoutEvent event) {
+        finish();
     }
 
     /**
@@ -154,27 +80,12 @@ public abstract class BadgeActivity extends MixpanelActivity {
      * @param intent
      */
     protected void notifyNewMessage(Intent intent) {
-        if (intent.getBooleanExtra(DataProviderService.IS_INCOMING_MSG_EXTRA, false)) {
-            String threadId = intent.getStringExtra(DataProviderService.THREAD_ID_EXTRA);
-            String from = intent.getStringExtra(DataProviderService.MESSAGE_FROM_EXTRA);
-            String message = intent.getStringExtra(DataProviderService.MESSAGE_BODY_EXTRA);
+        if (intent.getBooleanExtra(MessageProcessor.IS_INCOMING_MSG_EXTRA, false)) {
+            String threadId = intent.getStringExtra(MessageProcessor.THREAD_ID_EXTRA);
+            String from = intent.getStringExtra(SyncManager.MESSAGE_FROM_EXTRA);
+            String message = intent.getStringExtra(SyncManager.MESSAGE_BODY_EXTRA);
             Notifier.newNotification(this, from, message, threadId);
         }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    /**
-     * Override this method in the activity impl to change activity
-     * behavior when a logged out state is detected.
-     * <p/>
-     * Default behavior is to close the activity.
-     */
-    protected void logout() {
-        finish();
     }
 
     /**
@@ -243,7 +154,6 @@ public abstract class BadgeActivity extends MixpanelActivity {
             protected String doInBackground(Void... params) {
                 String msg = "";
                 try {
-
                     GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(BadgeActivity.this);
                     String regid = gcm.register(SENDER_ID);
                     msg = "Device registered, registration ID=" + regid;
@@ -261,7 +171,27 @@ public abstract class BadgeActivity extends MixpanelActivity {
                     // Persist the regID - no need to register again.
                     storeRegistrationId(BadgeActivity.this, regid);
                     // Send it up to the api.
-                    ((App) getApplication()).dataProviderServiceBinding.registerDevice(regid);
+
+                    Device device = new Device();
+                    device.setToken(regid);
+                    device.setService("android");
+                    device.setApplicationId(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
+                    device.setOsVersion(android.os.Build.VERSION.SDK_INT + "");
+
+                    RestService.instance().badge().registerDevice(new DeviceRequest(device), new Callback<Device>() {
+                        @Override
+                        public void success(Device device, Response response) {
+                            SharedPreferencesHelper.instance()
+                                    .putInt(R.string.pref_device_id_key, device.getId()).apply();
+                        }
+
+                        @Override
+                        public void failure(RetrofitError error) {
+                            App.gLogger.e(error);
+                            App.gLogger.w("Something went wrong during device registration for gcm id");
+                        }
+                    });
+
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // If there is an error, don't just keep trying to register.

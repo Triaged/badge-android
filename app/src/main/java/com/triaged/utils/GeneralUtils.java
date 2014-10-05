@@ -12,6 +12,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
 import com.triaged.badge.app.App;
@@ -53,6 +54,30 @@ public class GeneralUtils {
             imm.hideSoftInputFromWindow(activity.getWindow().getCurrentFocus().getWindowToken(), 0);
         }
     }
+
+    /**
+     * Bring up the virtual keyboard if it is not visible.
+     *
+     * @param activity the activity which is having the keyboard.
+     */
+    public static void showKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+
+        if (activity.getWindow().getCurrentFocus() != null) {
+            imm.showSoftInputFromInputMethod(activity.getWindow().getCurrentFocus().getWindowToken(), 0);
+        }
+    }
+
+    /**
+     * Bring up the virtual keyboard if it is not visible.
+     *
+     */
+    public static void showKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) view.getContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(view, 0);
+    }
+
 
     /**
      * Exit the app and start it again.
@@ -151,5 +176,37 @@ public class GeneralUtils {
 
     public static int sdkNumber() {
         return Build.VERSION.SDK_INT;
+    }
+
+    /**
+     * Uses static final constants to detect if the device's platform version is Gingerbread or
+     * later.
+     */
+    public static boolean hasGingerbread() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD;
+    }
+
+    /**
+     * Uses static final constants to detect if the device's platform version is Honeycomb or
+     * later.
+     */
+    public static boolean hasHoneycomb() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
+    }
+
+    /**
+     * Uses static final constants to detect if the device's platform version is Honeycomb MR1 or
+     * later.
+     */
+    public static boolean hasHoneycombMR1() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1;
+    }
+
+    /**
+     * Uses static final constants to detect if the device's platform version is ICS or
+     * later.
+     */
+    public static boolean hasICS() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
     }
 }

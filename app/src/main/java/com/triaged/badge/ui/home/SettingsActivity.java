@@ -9,11 +9,11 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.location.LocationTrackingService;
 import com.triaged.badge.models.Account;
@@ -23,7 +23,7 @@ import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.base.BackButtonActivity;
 import com.triaged.badge.ui.profile.ChangePasswordActivity;
 import com.triaged.badge.ui.profile.EditProfileActivity;
-import com.triaged.utils.SharedPreferencesUtil;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -70,10 +70,10 @@ public class SettingsActivity extends BackButtonActivity {
             @Override
             public void onClick(View v) {
 
-                JSONObject props = dataProviderServiceBinding.getBasicMixpanelData();
+                JSONObject props = new JSONObject();
                 mixpanel.track("logout", props);
 
-                int deviceId = SharedPreferencesUtil.getInteger(R.string.pref_device_id_key, -1);
+                int deviceId = SharedPreferencesHelper.instance().getInteger(R.string.pref_device_id_key, -1);
                 if (deviceId > -1) {
                     RestService.instance().badge().signOut(deviceId);
                 }
@@ -100,7 +100,8 @@ public class SettingsActivity extends BackButtonActivity {
         });
 
         Switch broadcastOfficeLocationSwitch = (Switch) findViewById(R.id.office_location_switch);
-        broadcastOfficeLocationSwitch.setChecked(SharedPreferencesUtil.getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
+        broadcastOfficeLocationSwitch.setChecked(SharedPreferencesHelper.instance()
+                .getBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, true));
         broadcastOfficeLocationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
@@ -119,20 +120,22 @@ public class SettingsActivity extends BackButtonActivity {
                 RestService.instance().badge().updateAccount(typedJsonString, new Callback<Account>() {
                     @Override
                     public void success(Account account, Response response) {
-                        SharedPreferencesUtil.store(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked);
+                        SharedPreferencesHelper.instance()
+                                .putBoolean(LocationTrackingService.TRACK_LOCATION_PREFS_KEY, isChecked)
+                                .commit();
 
                         ContentValues values = new ContentValues(1);
-                        values.put(ContactsTable.COLUMN_CONTACT_SHARING_OFFICE_LOCATION,
+                        values.put(UsersTable.CLM_SHARING_OFFICE_LOCATION,
                                 isChecked ? User.SHARING_LOCATION_ONE : User.SHARING_LOCATION_OFF);
 
-                        getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                                ContactsTable.COLUMN_ID + " =?",
+                        getContentResolver().update(UserProvider.CONTENT_URI, values,
+                                UsersTable.COLUMN_ID + " =?",
                                 new String[]{App.accountId() + ""});
 
                         if (isChecked) {
                             LocationTrackingService.scheduleAlarm(SettingsActivity.this);
                         } else {
-                            LocationTrackingService.clearAlarm(dataProviderServiceBinding, SettingsActivity.this);
+                            LocationTrackingService.clearAlarm(SettingsActivity.this);
                         }
                         EventBus.getDefault().post(new UpdateAccountEvent());
                     }

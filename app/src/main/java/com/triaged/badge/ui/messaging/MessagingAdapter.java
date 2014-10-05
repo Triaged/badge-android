@@ -14,12 +14,13 @@ import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
-import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.models.Message;
+import com.triaged.badge.app.SyncManager;
 
 import org.ocpsoft.prettytime.PrettyTime;
 
@@ -67,8 +68,8 @@ public class MessagingAdapter  extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         final MessageHolder holder = (MessageHolder) view.getTag();
-        holder.message.setText(cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_BODY)));
-        long messageTimeMillis = cursor.getLong(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_TIMESTAMP)) / 1000l;
+        holder.message.setText(cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_BODY)));
+        long messageTimeMillis = cursor.getLong(cursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP)) / 1000l;
         if (messageTimeMillis > System.currentTimeMillis()) {
             messageTimeMillis = System.currentTimeMillis() - 5000;
         }
@@ -77,11 +78,11 @@ public class MessagingAdapter  extends CursorAdapter {
         holder.timestamp.setText(prettyTime.format(messageDate));
         holder.userPhoto.setVisibility(View.VISIBLE);
         holder.userPhoto.setImageBitmap(null);
-        String first = cursor.getString(cursor.getColumnIndex(ContactsTable.COLUMN_CONTACT_FIRST_NAME));
-        String last = cursor.getString(cursor.getColumnIndex(ContactsTable.COLUMN_CONTACT_LAST_NAME));
+        String first = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
+        String last = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));
         holder.photoPlaceholder.setText(Contact.constructInitials(first, last));
         holder.photoPlaceholder.setVisibility(View.VISIBLE);
-        String avatarUrl = cursor.getString(cursor.getColumnIndex(ContactsTable.COLUMN_CONTACT_AVATAR_URL));
+        String avatarUrl = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_AVATAR_URL));
 
         ImageLoader.getInstance().displayImage(avatarUrl, holder.userPhoto, new SimpleImageLoadingListener() {
             @Override
@@ -91,28 +92,28 @@ public class MessagingAdapter  extends CursorAdapter {
         });
 
 
-        if (cursor.getInt(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_FROM_ID)) == App.dataProviderServiceBinding.getLoggedInUser().id) {
+        if (cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_AUTHOR_ID)) == SyncManager.getMyUser().id) {
             holder.progressBar.setVisibility(View.GONE);
             holder.messageFailedButton.setVisibility(View.GONE);
-            int status = cursor.getInt(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_ACK));
-            if (status == DataProviderService.MSG_STATUS_ACKNOWLEDGED) {
-                // Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
-            } else if (status == DataProviderService.MSG_STATUS_PENDING) {
+            int status = cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_ACK));
+            if (status == Message.MSG_STATUS_ACKNOWLEDGED) {
+                // Log.d(MessageThreadAdapter.class.getName(), "ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.CLM_BODY)));
+            } else if (status == Message.MSG_STATUS_PENDING) {
                 // Pending
-                // Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.COLUMN_MESSAGES_BODY)));
+                // Log.d(MessageThreadAdapter.class.getName(), "HAVE NOT ACKd " + cursor.getString(cursor.getColumnIndex(CompanySQLiteHelper.CLM_BODY)));
                 holder.progressBar.setVisibility(View.VISIBLE);
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
-            } else if (status == DataProviderService.MSG_STATUS_FAILED) {
+            } else if (status == Message.MSG_STATUS_FAILED) {
                 holder.messageFailedButton.setVisibility(View.VISIBLE);
                 holder.photoPlaceholder.setVisibility(View.GONE);
                 holder.userPhoto.setVisibility(View.GONE);
             }
-            final String guid = cursor.getString(cursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_GUID));
+            final String guid = cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_GUID));
             holder.messageFailedButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    App.dataProviderServiceBinding.retryMessageAsync(guid);
+                    MessageProcessor.getInstance().retryMessage(guid);
                 }
             });
         }
@@ -138,7 +139,7 @@ public class MessagingAdapter  extends CursorAdapter {
      * Determine which view to use based on whether it's my msg or not
      */
     public int getItemViewType(Cursor messageCursor) {
-        if (messageCursor.getInt(messageCursor.getColumnIndex(MessagesTable.COLUMN_MESSAGES_FROM_ID)) == App.dataProviderServiceBinding.getLoggedInUser().id) {
+        if (messageCursor.getInt(messageCursor.getColumnIndex(MessagesTable.CLM_AUTHOR_ID)) == SyncManager.getMyUser().id) {
             return 0;
         } else {
             return 1;

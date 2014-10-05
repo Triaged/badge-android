@@ -51,7 +51,7 @@ public class LoggerImp implements ILogger {
     public void e(String msg, Throwable throwable) {
         if (isEnable) {
             out(msg, ERROR_LOG);
-            out(msg, ERROR_LOG);
+            e(throwable);
             throwable.printStackTrace();
         }
     }

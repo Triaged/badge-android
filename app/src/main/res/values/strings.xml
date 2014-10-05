@@ -5,6 +5,9 @@
     <string name="app_name">Badge</string>
     <string name="action_show_participants">Show Participants</string>
 
+    <!-- ONBOARDING SIGN UP -->
+    <string name="invalid_email_error">Invalid email address</string>
+
     <!-- LOGIN ACTIVITY -->
     <string name="login_title">Login to Badge</string>
     <string name="login_info">Log in with your company email address</string>
@@ -121,5 +124,22 @@
     <string name="search_contacts">Search contacts</string>
     <string name="search_departments">Search departments</string>
     <string name="name">Name</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="login">Log In</string>
+    <string name="sing_up">Sign Up</string>
+    <string name="entrance_slogan">Smart, Business Messaging</string>
+    <string name="title_activity_login">Login</string>
+    <string name="title_activity_sign_up">Create Account</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="email">Email</string>
+    <string name="email_input_hint">you@domain.com</string>
+    <string name="phone_input_hint">+1 (100) 123-4567</string>
+    <string name="phone">Phone</string>
+    <string name="title_activity_verify">Verify Email</string>
+    <string name="verify_email_activity_message">We have sent you an Email with a verification code. Please enter the 4-digit validation code.</string>
+    <string name="four_digit_code">4-digit code</string>
+    <string name="title_activity_onboarding_invite_colleague">Invite Coworkers</string>
+    <string name="search">Search</string>
 
 </resources>

@@ -23,14 +23,14 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.squareup.okhttp.Response;
 import com.triaged.badge.app.App;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.helper.OfficeLocationHelper;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Contact;
-import com.triaged.badge.net.DataProviderService;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 
 import java.io.FileOutputStream;
@@ -41,6 +41,7 @@ import java.util.Date;
 import de.greenrobot.event.EventBus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 /**
  * Tracks location in the background if hte user has enabled.
@@ -89,21 +90,17 @@ public class LocationTrackingService extends Service implements LocationListener
 
     }
 
-    public static void clearAlarm(DataProviderService.LocalBinding dataProviderServiceBinding, Context context) {
+    public static void clearAlarm(Context context) {
         Intent alarmIntent = new Intent(LOCATION_ALARM_ACTION);
         PendingIntent scheduledAlarmIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         AlarmManager alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarmMgr.cancel(scheduledAlarmIntent);
-
         // In many cases (phone shutting down), toggling the share location preference,
         // the user is still logged in and may be associated with an office.
         // We try to clear that so that they don't end up "stuck" in that office forever.
-        if (dataProviderServiceBinding != null) {
-            Contact user = dataProviderServiceBinding.getLoggedInUser();
-            if (user != null && user.currentOfficeLocationId > 0)
-                checkOut(user.currentOfficeLocationId, context);
-        }
-
+        Contact user = SyncManager.getMyUser();
+        if (user != null && user.currentOfficeLocationId > 0)
+            checkOut(user.currentOfficeLocationId, context);
     }
 
     public static void justClearAlarm(Context context) {
@@ -212,18 +209,17 @@ public class LocationTrackingService extends Service implements LocationListener
         }
 
         // Check against each office.
-        final DataProviderService.LocalBinding dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
-        if (dataProviderServiceBinding != null && dataProviderServiceBinding.isInitialized() && dataProviderServiceBinding.getLoggedInUser() != null) {
+        if (SyncManager.getMyUser() != null) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... params) {
-                    Cursor officeLocations = dataProviderServiceBinding.getOfficeLocationsCursor();
+                    Cursor officeLocations = OfficeLocationHelper.getOfficeLocationsCursor(LocationTrackingService.this);
                     Location officeLocation = new Location(LocationManager.NETWORK_PROVIDER);
                     while (officeLocations.moveToNext()) {
-                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LAT);
-                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_LNG);
+                        String latStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_LAT);
+                        String lngStr = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_LNG);
                         final int officeId = Contact.getIntSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_ID);
-                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
+                        String officeName = Contact.getStringSafelyFromCursor(officeLocations, OfficeLocationsTable.CLM_NAME);
                         if (latStr != null && !"".equals(latStr)) {
                             officeLocation.setLatitude(Float.parseFloat(latStr));
                             officeLocation.setLongitude(Float.parseFloat(lngStr));
@@ -265,9 +261,9 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, -1);
-                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                values.put(UsersTable.CLM_CURRENT_OFFICE_LOCATION_ID, -1);
+                context.getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
             }
@@ -284,9 +280,9 @@ public class LocationTrackingService extends Service implements LocationListener
             @Override
             public void success(Response response, retrofit.client.Response response2) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_CURRENT_OFFICE_LOCATION_ID, officeId);
-                context.getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                values.put(UsersTable.CLM_CURRENT_OFFICE_LOCATION_ID, officeId);
+                context.getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
             }

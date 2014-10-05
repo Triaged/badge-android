@@ -1,57 +1,63 @@
 package com.triaged.badge.ui.profile;
 
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Rect;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.ui.base.BackButtonActivity;
-import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
-import com.triaged.badge.ui.home.adapters.MyContactAdapter;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
  * Allow the logged in user to select their manager.
  * <p/>
  * Created by Will on 7/14/14.
+ * Revised by Sadegh on 9/26/14.
  */
-public class OnboardingReportingToActivity extends BackButtonActivity {
+public class OnboardingReportingToActivity extends BackButtonActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String MGR_NAME_EXTRA = "mgrName";
-    private StickyListHeadersListView contactsListView = null;
-    private MyContactAdapter contactsAdapter;
-    private ContactsWithoutHeadingsAdapter searchResultsAdapter;
-
-    private EditText searchBar = null;
-    private ImageButton clearButton = null;
-    private ListView searchResultsList = null;
-
+    private UserAdapter contactsAdapter;
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
+    private String mSearchTerm = null;
+
+    @InjectView(R.id.contacts_list) StickyListHeadersListView contactsListView;
+    @InjectView(R.id.search_bar) EditText searchBar;
+    @InjectView(R.id.clear_search) ImageButton clearSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_reporting_to);
+        ButterKnife.inject(this);
+
         backButton.setText("Reporting To");
-        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
-        contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
+        contactsAdapter = new UserAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView.setAdapter(contactsAdapter);
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
+                UserAdapter.ViewHolder holder = (UserAdapter.ViewHolder) view.getTag();
                 Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
                 intent.putExtra(MGR_NAME_EXTRA, holder.name);
                 setResult(holder.contactId, intent);
@@ -59,54 +65,37 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
             }
         });
 
-        searchResultsAdapter = new ContactsWithoutHeadingsAdapter(this, null, null);
-        searchResultsList = (ListView) findViewById(R.id.search_results_list);
-        searchResultsList.setAdapter(searchResultsAdapter);
-        searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        searchBar.addTextChangedListener( new TextWatcher() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                ContactsWithoutHeadingsAdapter.ViewHolder holder = (ContactsWithoutHeadingsAdapter.ViewHolder) view.getTag();
-                Intent intent = new Intent(OnboardingReportingToActivity.this, OnboardingPositionActivity.class);
-                intent.putExtra(MGR_NAME_EXTRA, holder.name);
-                setResult(holder.id, intent);
-                finish();
-            }
-        });
-
-        searchBar = (EditText) findViewById(R.id.search_bar);
-
-        TextWatcher tw = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String text = searchBar.getText().toString();
-                if (text.length() > 0) {
-                    clearButton.setVisibility(View.VISIBLE);
-                    searchResultsAdapter.setFilter(text);
-                    searchResultsList.setVisibility(View.VISIBLE);
-                    contactsListView.setVisibility(View.GONE);
-
-                } else {
-                    clearButton.setVisibility(View.GONE);
-                    contactsListView.setVisibility(View.VISIBLE);
-                    searchResultsList.setVisibility(View.GONE);
+                String newFilter = !TextUtils.isEmpty(s) ? String.valueOf(s) : null;
+                if (s == null || s.length() == 0) {
+                    clearSearch.setVisibility(View.INVISIBLE);
                 }
+                // Don't do anything if the filter is empty
+                if (mSearchTerm == null && newFilter == null) {
+                    return;
+                }
+                // Don't do anything if the new filter is the same as the current filter
+                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
+                    return;
+                }
+                clearSearch.setVisibility(View.VISIBLE);
+                // Updates current filter to new filter
+                mSearchTerm = newFilter;
+                // Restarts the loader. This triggers onCreateLoader(), which builds the
+                // necessary content Uri from mSearchTerm.
+                getLoaderManager().restartLoader(0, null, OnboardingReportingToActivity.this);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
+            public void afterTextChanged(Editable s) { }
+        });
 
-            }
-        };
-        searchBar.addTextChangedListener(tw);
-
-        clearButton = (ImageButton) findViewById(R.id.clear_search);
-
-        clearButton.setOnClickListener(new View.OnClickListener() {
+        clearSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 searchBar.setText("");
@@ -135,47 +124,35 @@ public class OnboardingReportingToActivity extends BackButtonActivity {
             }
         });
 
+        getLoaderManager().initLoader(0, savedInstanceState, this);
     }
 
     @Override
-    protected void onDatabaseReady() {
-        loadContacts();
-    }
-
-    private void loadContacts() {
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (searchResultsAdapter != null) {
-                            searchResultsAdapter.changeCursor(searchCursor);
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    searchResultsAdapter = new ContactsWithoutHeadingsAdapter(OnboardingReportingToActivity.this, searchCursor, dataProviderServiceBinding, false);
-                                    searchResultsList.setAdapter(searchResultsAdapter);
-                                }
-                            });
-                        }
-                        contactsAdapter.changeCursor(contactsCursor);
-                    }
-                });
-                return null;
-            }
-        }.execute();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (searchResultsAdapter != null) {
-            searchResultsAdapter.destroy();
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (mSearchTerm == null) {
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + " <>?",
+                    new String[]{App.accountId()+""},
+                    null);
+        } else {
+            String filterString = "%" + mSearchTerm + "%";
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + "<> ? AND ("
+                            + UsersTable.CLM_LAST_NAME + " LIKE ? OR "
+                            + UsersTable.CLM_FIRST_NAME + " LIKE ?)  AND "
+                            + UsersTable.CLM_IS_ARCHIVED + " = 0",
+                    new String[] { App.accountId() + "" , filterString, filterString},
+                    UsersTable.CLM_FIRST_NAME);
         }
-        super.onDestroy();
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        contactsAdapter.changeCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

@@ -3,7 +3,6 @@ package com.triaged.badge.net;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -12,6 +11,11 @@ import android.util.Log;
 import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.BuildConfig;
+import com.triaged.badge.app.MessageProcessor;
+import com.triaged.badge.app.R;
+import com.triaged.badge.events.MessageForFayEvent;
+import com.triaged.badge.models.BThread;
+import com.triaged.utils.SharedPreferencesHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,6 +25,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import de.greenrobot.event.EventBus;
+import hugo.weaving.DebugLog;
 
 
 /**
@@ -42,24 +49,22 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     protected int loggedInUserId;
     protected String authToken;
     protected ScheduledExecutorService heartbeatThread;
-    private LocalBinding localBinding;
     private ScheduledFuture<?> heartbeatFuture;
-    private DataProviderService.LocalBinding dataProviderServiceBinding;
-    protected int timesStarted = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
-        return localBinding;
+        return null;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        localBinding = new LocalBinding();
+        EventBus.getDefault().register(this);
+
         heartbeatThread = Executors.newSingleThreadScheduledExecutor();
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        loggedInUserId = prefs.getInt(DataProviderService.LOGGED_IN_USER_ID_PREFS_KEY, -1);
-        authToken = prefs.getString(DataProviderService.API_TOKEN_PREFS_KEY, "");
+        loggedInUserId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
+        authToken = SharedPreferencesHelper.instance().getString(R.string.pref_api_token, "");
         if (loggedInUserId <= 0) {
             stopSelf();
         } else {
@@ -70,7 +75,6 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Log.d( LOG_TAG, "Faye service object started " + timesStarted++ + " times" );
         if (loggedInUserId > 0) {
             JSONObject extension = new JSONObject();
             try {
@@ -89,6 +93,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
 
     @Override
     public void onDestroy() {
+        EventBus.getDefault().unregister(this);
         if (heartbeatFuture != null) {
             heartbeatFuture.cancel(true);
         }
@@ -149,32 +154,23 @@ public class FayeService extends Service implements FayeClient.FayeListener {
      * @param json
      */
     @Override
+    @DebugLog
     public void messageReceived(final JSONObject json) {
         if (json.has("ping")) {
             return;
         }
-        ensureDataServiceBinding();
         try {
-            dataProviderServiceBinding.upsertThreadAndMessagesAsync(json.getJSONObject("message_thread"));
-            // Do actual work.
-
+            BThread messageThread = App.gson.fromJson(json.getJSONObject("message_thread").toString(), BThread.class);
+            MessageProcessor.getInstance().upsertThreadAndMessages(messageThread, true);
         } catch (JSONException e) {
             Log.w(LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e);
         }
-        // Log.d( LOG_TAG, "Message: " + json.toString() );
     }
 
-    public class LocalBinding extends Binder {
-        public void sendMessage(String threadId, JSONObject msg) {
-            if (fayeConnected) {
-                faye.publish(String.format("/threads/messages/%s", threadId), msg);
-            }
-        }
-    }
 
-    protected void ensureDataServiceBinding() {
-        if (dataProviderServiceBinding == null) {
-            dataProviderServiceBinding = ((App) getApplication()).dataProviderServiceBinding;
+    public void onEvent(MessageForFayEvent event) {
+        if (fayeConnected) {
+            faye.publish(String.format("/threads/messages/%s", event.getThreadId()), event.getMessage());
         }
     }
 }

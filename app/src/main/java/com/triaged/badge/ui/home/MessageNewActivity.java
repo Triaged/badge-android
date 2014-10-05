@@ -2,13 +2,19 @@ package com.triaged.badge.ui.home;
 
 import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,48 +23,52 @@ import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.base.views.ButtonWithFont;
 import com.triaged.badge.ui.base.views.CustomLayoutParams;
 import com.triaged.badge.ui.base.views.FlowLayout;
-import com.triaged.badge.ui.home.adapters.ContactsWithoutHeadingsAdapter;
-import com.triaged.badge.ui.home.adapters.MyContactAdapter;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import retrofit.RetrofitError;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
  * Created by Will on 7/28/14.
+ *
+ * Revised by Sadegh on 9/26/14.
  */
-public class MessageNewActivity extends BadgeActivity {
+public class MessageNewActivity extends BadgeActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    public static final String RECIPIENT_IDS_EXTRA = "recipient_id";
-
-    private StickyListHeadersListView contactsListView = null;
-    private MyContactAdapter contactsAdapter = null;
-    private ContactsWithoutHeadingsAdapter searchResultsAdapter = null;
-
-    private EditText searchBar = null;
-    private ImageButton clearButton = null;
-    private ListView searchResultsList = null;
     private HashMap<Integer, String> recipients = null;
-
-    private FlowLayout userTagsWrapper = null;
     private CustomLayoutParams tagItemLayoutParams;
     private float densityMultiplier = 1;
     private boolean keyboardVisible = false;
+    private String mSearchTerm = null;
+    private UserAdapter contactsAdapter = null;
+
+    @InjectView(R.id.contacts_list) StickyListHeadersListView contactsListView;
+    @InjectView(R.id.search_bar) EditText searchBar;
+    @InjectView(R.id.clear_search) ImageButton clearSearch;
+    @InjectView(R.id.user_tags) FlowLayout userTagsWrapper;
+    @InjectView(R.id.activity_root) View rootView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,28 +96,23 @@ public class MessageNewActivity extends BadgeActivity {
             public void onClick(View v) {
                 if (recipients.size() > 0) {
                     HashSet<Integer> userIdSet = new HashSet<Integer>(recipients.keySet());
-                    userIdSet.add(dataProviderServiceBinding.getLoggedInUser().id);
-                    final Integer[] recipientIds = userIdSet.toArray(new Integer[]{});
+                    userIdSet.add(SyncManager.getMyUser().id);
+                    final Integer[] recipientIds = userIdSet.toArray(new Integer[userIdSet.size()]);
                     Arrays.sort(recipientIds);
                     new AsyncTask<Void, Void, String>() {
                         @Override
                         protected String doInBackground(Void... params) {
                             try {
-                                return dataProviderServiceBinding.createThreadSync(recipientIds);
+                                return MessageProcessor.getInstance().createThreadSync(recipientIds);
+                            } catch (RetrofitError e) {
+                                toastMessage("Network issue occurred. Try again later.");
+                                App.gLogger.e(e);
                             } catch (JSONException e) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MessageNewActivity.this, "Unexpected response from server.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            } catch (IOException e) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MessageNewActivity.this, "Network issue occurred. Try again later.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                toastMessage("Unexpected response from server.");
+                            } catch (OperationApplicationException e ) {
+                                toastMessage("Unexpected response from server.");
+                            } catch ( RemoteException  e){
+                                toastMessage("Unexpected response from server.");
                             }
                             return null;
                         }
@@ -115,10 +120,8 @@ public class MessageNewActivity extends BadgeActivity {
                         @Override
                         protected void onPostExecute(String threadId) {
                             if (threadId != null) {
-
                                 Intent intent = new Intent(MessageNewActivity.this, MessagingActivity.class);
                                 intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
-                                intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, dataProviderServiceBinding.getRecipientNames(threadId));
                                 intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                                 startActivity(intent);
                                 overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
@@ -136,83 +139,69 @@ public class MessageNewActivity extends BadgeActivity {
         actionBar.setDisplayShowCustomEnabled(true);
 
         setContentView(R.layout.activity_messages_new);
+        ButterKnife.inject(this);
 
         recipients = new HashMap<Integer, String>();
-        userTagsWrapper = (FlowLayout) findViewById(R.id.user_tags);
 
-        contactsAdapter = new MyContactAdapter(this, null, R.layout.item_contact_no_msg);
-        contactsListView = (StickyListHeadersListView) findViewById(R.id.contacts_list);
+        contactsAdapter = new UserAdapter(this, null, R.layout.item_contact_no_msg);
         contactsListView.setAdapter(contactsAdapter);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                MyContactAdapter.ViewHolder holder = (MyContactAdapter.ViewHolder) view.getTag();
+                UserAdapter.ViewHolder holder = (UserAdapter.ViewHolder) view.getTag();
                 addRecipient(holder.contactId, holder.name);
                 searchBar.setText("");
             }
         });
 
-        searchResultsList = (ListView) findViewById(R.id.search_results_list);
-        searchResultsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        searchBar.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                addRecipient(searchResultsAdapter.getCachedContact(position).id, searchResultsAdapter.getCachedContact(position).name);
-                searchBar.setText("");
-            }
-        });
-
-        searchBar = (EditText) findViewById(R.id.search_bar);
-
-        TextWatcher tw = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String text = searchBar.getText().toString();
-                if (text.length() > 0) {
-                    clearButton.setVisibility(View.VISIBLE);
-                    searchResultsAdapter.setFilter(text);
-                    searchResultsList.setVisibility(View.VISIBLE);
-                    contactsListView.setVisibility(View.GONE);
-                } else {
-                    clearButton.setVisibility(View.GONE);
-                    contactsListView.setVisibility(View.VISIBLE);
-                    searchResultsList.setVisibility(View.GONE);
+                String newFilter = !TextUtils.isEmpty(s) ? String.valueOf(s) : null;
+
+                if (s == null || s.length() == 0) {
+                    clearSearch.setVisibility(View.INVISIBLE);
                 }
+
+                // Don't do anything if the filter is empty
+                if (mSearchTerm == null && newFilter == null) {
+                    return;
+                }
+                // Don't do anything if the new filter is the same as the current filter
+                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
+                    return;
+                }
+                clearSearch.setVisibility(View.VISIBLE);
+                // Updates current filter to new filter
+                mSearchTerm = newFilter;
+                // Restarts the loader. This triggers onCreateLoader(), which builds the
+                // necessary content Uri from mSearchTerm.
+                getLoaderManager().restartLoader(0, null, MessageNewActivity.this);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
+            public void afterTextChanged(Editable s) { }
+        });
 
-            }
-        };
-        searchBar.addTextChangedListener(tw);
-
-        clearButton = (ImageButton) findViewById(R.id.clear_search);
-
-        clearButton.setOnClickListener(new View.OnClickListener() {
+        clearSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 searchBar.setText("");
             }
         });
 
-
         densityMultiplier = getResources().getDisplayMetrics().density;
-        final View activityRootView = findViewById(R.id.activity_root);
-        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                int rootViewHeight = activityRootView.getRootView().getHeight();
-
+                int rootViewHeight = rootView.getRootView().getHeight();
                 Rect r = new Rect();
                 //r will be populated with the coordinates of your view that area still visible.
-                activityRootView.getWindowVisibleDisplayFrame(r);
-
+                rootView.getWindowVisibleDisplayFrame(r);
                 int heightDiff = rootViewHeight - (r.bottom - r.top);
                 if (heightDiff > (densityMultiplier * 75)) { // if more than 75 dp, its probably a keyboard...
                     keyboardVisible = true;
@@ -226,48 +215,8 @@ public class MessageNewActivity extends BadgeActivity {
 
         tagItemLayoutParams = new CustomLayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tagItemLayoutParams.setMargins(0, (int) (4 * densityMultiplier), (int) (4 * densityMultiplier), 0);
-    }
 
-    @Override
-    protected void onDatabaseReady() {
-        loadContacts();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (searchResultsAdapter != null) {
-            searchResultsAdapter.destroy();
-        }
-        super.onDestroy();
-    }
-
-    private void loadContacts() {
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                final Cursor contactsCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-                final Cursor searchCursor = dataProviderServiceBinding.getContactsCursorExcludingLoggedInUser();
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (searchResultsAdapter != null) {
-                            searchResultsAdapter.changeCursor(searchCursor);
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    searchResultsAdapter = new ContactsWithoutHeadingsAdapter(MessageNewActivity.this, searchCursor, dataProviderServiceBinding, false);
-                                    searchResultsList.setAdapter(searchResultsAdapter);
-                                }
-                            });
-                        }
-                        contactsAdapter.changeCursor(contactsCursor);
-                    }
-                });
-                return null;
-            }
-        }.execute();
+        getLoaderManager().initLoader(0, savedInstanceState, this);
     }
 
     private void addRecipient(final int contactId, final String contactName) {
@@ -311,4 +260,43 @@ public class MessageNewActivity extends BadgeActivity {
         }
     }
 
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        if (mSearchTerm == null) {
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + " <>?",
+                    new String[]{App.accountId()+""},
+                    null);
+        } else {
+            String filterString = "%" + mSearchTerm + "%";
+            return new CursorLoader(this, UserProvider.CONTENT_URI, null,
+                    UsersTable.COLUMN_ID + "<> ? AND ("
+                            + UsersTable.CLM_LAST_NAME + " LIKE ? OR "
+                            + UsersTable.CLM_FIRST_NAME + " LIKE ?)  AND "
+                            + UsersTable.CLM_IS_ARCHIVED + " = 0",
+                    new String[] { App.accountId() + "" , filterString, filterString},
+                    UsersTable.CLM_FIRST_NAME);
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        contactsAdapter.changeCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+
+    private void toastMessage(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
 }

@@ -4,7 +4,9 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.triaged.badge.database.table.ContactsTable;
+import com.triaged.badge.database.table.BThreadUserTable;
+import com.triaged.badge.database.table.BThreadsTable;
+import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.DepartmentsTable;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
@@ -17,7 +19,7 @@ import com.triaged.badge.database.table.ReceiptTable;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final String DATABASE_NAME = "badge.db";
-    protected static final int DATABASE_VERSION = 24;
+    protected static final int DATABASE_VERSION = 25;
 
     private static Context mContext;
 
@@ -26,34 +28,33 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String JOINED_MANAGER_LAST_NAME = "manager_last_name";
     public static final String JOINED_OFFICE_NAME = "office_name";
 
-//    private DataProviderService dataProviderService;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-//        this.dataProviderService = dataProviderService;
         mContext = context;
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
 //        db.execSQL("PRAGMA foreign_keys=ON;");
-
-        new ContactsTable().onCreate(db);
+        new UsersTable().onCreate(db);
         new DepartmentsTable().onCreate(db);
         new MessagesTable().onCreate(db);
         new OfficeLocationsTable().onCreate(db);
         new ReceiptTable().onCreate(db);
-
-//        dataProviderService.dataClearedCallback();
+        new BThreadsTable().onCreate(db);
+        new BThreadUserTable().onCreate(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        new ContactsTable().onUpgrade(db, oldVersion, newVersion);
+        new UsersTable().onUpgrade(db, oldVersion, newVersion);
         new DepartmentsTable().onUpgrade(db, oldVersion, newVersion);
         new MessagesTable().onUpgrade(db, oldVersion, newVersion);
         new OfficeLocationsTable().onUpgrade(db, oldVersion, newVersion);
         new ReceiptTable().onUpgrade(db, oldVersion, newVersion);
+        new BThreadsTable().onUpgrade(db, oldVersion, newVersion);
+        new BThreadUserTable().onUpgrade(db, oldVersion, newVersion);
 
         onCreate(db);
     }

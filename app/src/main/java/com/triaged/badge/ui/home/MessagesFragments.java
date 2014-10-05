@@ -17,8 +17,7 @@ import android.widget.TextView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.MessageProvider;
-import com.triaged.badge.database.table.MessagesTable;
-import com.triaged.badge.ui.home.adapters.MyMessagesAdapter;
+import com.triaged.badge.ui.home.adapters.HistoryAdapter;
 import com.triaged.badge.ui.messaging.MessagingActivity;
 import com.triaged.badge.ui.notification.Notifier;
 
@@ -36,13 +35,12 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
     @InjectView(R.id.no_messages_title) TextView noMessagesTitle;
     @InjectView(R.id.no_messages_info)  TextView noMessagesInfo;
 
-    protected MyMessagesAdapter adapter;
+    protected HistoryAdapter adapter;
 
     @OnItemClick(R.id.messages_list)
     void messageItemClicked(AdapterView<?> parent, View view, int position, long id) {
         Intent intent = new Intent(getActivity(), MessagingActivity.class);
-        intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).threadId);
-        intent.putExtra(MessagingActivity.THREAD_NAME_EXTRA, ((MyMessagesAdapter.ViewHolder) view.getTag()).name.getText().toString());
+        intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, ((HistoryAdapter.ViewHolder) view.getTag()).threadId);
         startActivity(intent);
     }
 
@@ -66,7 +64,7 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
         View root = inflater.inflate(R.layout.fragment_messages, container, false);
         ButterKnife.inject(this, root);
 
-        adapter = new MyMessagesAdapter(getActivity(), null);
+        adapter = new HistoryAdapter(getActivity(), null);
         messagesList.setAdapter(adapter);
         checkListEmptiness();
 
@@ -83,9 +81,8 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI,
-                null, MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1", null,
-                MessagesTable.COLUMN_MESSAGES_TIMESTAMP + " DESC");
+        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_HISTORY,
+                null, null, null, null);
     }
 
     @Override
@@ -93,7 +90,6 @@ public class MessagesFragments extends Fragment implements LoaderManager.LoaderC
         if (data != null) {
             adapter.swapCursor(data);
             checkListEmptiness();
-
         }
     }
 

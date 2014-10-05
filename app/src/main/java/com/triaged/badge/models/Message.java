@@ -5,6 +5,10 @@ package com.triaged.badge.models;
  */
 public class Message {
 
+    public static final int MSG_STATUS_PENDING = 0;
+    public static final int MSG_STATUS_ACKNOWLEDGED = 1;
+    public static final int MSG_STATUS_FAILED = 2;
+
     String id;
     String body;
     String authorId;

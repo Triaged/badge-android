@@ -1,9 +1,13 @@
 package com.triaged.badge.ui.profile;
 
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -13,11 +17,12 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-import com.triaged.badge.TypedJsonString;
+import com.triaged.badge.database.provider.OfficeLocationProvider;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.database.table.UsersTable;
+import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
-import com.triaged.badge.database.provider.ContactProvider;
-import com.triaged.badge.database.table.ContactsTable;
 import com.triaged.badge.database.table.OfficeLocationsTable;
 import com.triaged.badge.events.UpdateAccountEvent;
 import com.triaged.badge.models.Account;
@@ -31,6 +36,10 @@ import com.triaged.badge.ui.profile.adapters.OfficeLocationsAdapter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
+import butterknife.OnItemClick;
 import de.greenrobot.event.EventBus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -41,44 +50,41 @@ import retrofit.client.Response;
  * <p/>
  * Created by Will on 7/10/14.
  */
-public class OnboardingLocationActivity extends BadgeActivity {
+public class OnboardingLocationActivity extends BadgeActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    protected static final int ADD_OFFICE_REQUEST_CODE = 1;
+    protected OfficeLocationsAdapter officeLocationsAdapter;
 
-    protected Button continueButton = null;
-    protected ListView officeLocationsList = null;
-    protected ImageView noLocationCheck = null;
-    protected OfficeLocationsAdapter officeLocationsAdapter = null;
+    @InjectView(R.id.continue_button) Button continueButton;
+    @InjectView(R.id.office_locations_list) ListView officeLocationsList;
+    ImageView noLocationCheck;
+
+    @OnClick(R.id.continue_button)
+    void continueClicked() {
+        onContinue();
+    }
+
+    @OnItemClick(R.id.office_locations_list)
+    void onLocationClicked(AdapterView<?> parent, View view, int position, long id) {
+        if (position != 0) {
+            Cursor officeCursor = (Cursor) officeLocationsAdapter.getItem(position - 1);
+            officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_ID);
+            officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, OfficeLocationsTable.CLM_NAME);
+            officeLocationsAdapter.notifyDataSetChanged();
+            noLocationCheck.setVisibility(View.GONE);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_onboarding_location);
+        ButterKnife.inject(this);
 
-        continueButton = (Button) findViewById(R.id.continue_button);
-        continueButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onContinue();
-            }
-        });
-
-        officeLocationsList = (ListView) findViewById(R.id.office_locations_list);
-        officeLocationsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position != 0) {
-                    Cursor officeCursor = (Cursor) officeLocationsAdapter.getItem(position - 1);
-                    officeLocationsAdapter.usersOffice = Contact.getIntSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_ID);
-                    officeLocationsAdapter.usersOfficeName = Contact.getStringSafelyFromCursor(officeCursor, OfficeLocationsTable.COLUMN_OFFICE_LOCATION_NAME);
-                    officeLocationsAdapter.notifyDataSetChanged();
-                    noLocationCheck.setVisibility(View.GONE);
-                }
-            }
-        });
+        officeLocationsAdapter = new OfficeLocationsAdapter(this, null, R.layout.item_office_location);
+        officeLocationsList.setAdapter(officeLocationsAdapter);
+        getLoaderManager().initLoader(0, savedInstanceState, this);
 
         LayoutInflater inflater = LayoutInflater.from(this);
-
         RelativeLayout locationHeader = (RelativeLayout) inflater.inflate(R.layout.include_onboarding_location_header, null);
         OnboardingDotsView onboardingDotsView = (OnboardingDotsView) locationHeader.findViewById(R.id.onboarding_dots);
         onboardingDotsView.currentDotIndex = 2;
@@ -96,7 +102,6 @@ public class OnboardingLocationActivity extends BadgeActivity {
                 officeLocationsAdapter.usersOfficeName = null;
                 officeLocationsAdapter.notifyDataSetChanged();
                 noLocationCheck.setVisibility(View.VISIBLE);
-                //Toast.makeText(OnboardingLocationActivity.this, "NO LOCATION", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -106,46 +111,15 @@ public class OnboardingLocationActivity extends BadgeActivity {
         addView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(OnboardingLocationActivity.this, OnboardingMapActivity.class);
-                startActivityForResult(intent, ADD_OFFICE_REQUEST_CODE);
+                startActivity(new Intent(OnboardingLocationActivity.this, OnboardingMapActivity.class));
             }
         });
-
-
-    }
-
-    @Override
-    protected void onDatabaseReady() {
-        officeLocationsAdapter = new OfficeLocationsAdapter(this, dataProviderServiceBinding, R.layout.item_office_location);
-        officeLocationsList.setAdapter(officeLocationsAdapter);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        officeLocationsAdapter.destroy();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == ADD_OFFICE_REQUEST_CODE && resultCode != RESULT_CANCELED) {
-            officeLocationsAdapter.usersOffice = resultCode;
-            officeLocationsAdapter.refresh();
-            noLocationCheck.setVisibility(View.GONE);
-        }
     }
 
     /**
      * Called when the "Continue" Button is clicked. Subclasses may override
      */
     protected void onContinue() {
-
         JSONObject postData = new JSONObject();
         JSONObject user = new JSONObject();
         try {
@@ -160,16 +134,16 @@ public class OnboardingLocationActivity extends BadgeActivity {
             @Override
             public void success(Account account, Response response) {
                 ContentValues values = new ContentValues();
-                values.put(ContactsTable.COLUMN_CONTACT_PRIMARY_OFFICE_LOCATION_ID,
+                values.put(UsersTable.CLM_PRIMARY_OFFICE_LOCATION_ID,
                         officeLocationsAdapter.usersOffice);
-                getContentResolver().update(ContactProvider.CONTENT_URI, values,
-                        ContactsTable.COLUMN_ID + " =?",
+                getContentResolver().update(UserProvider.CONTENT_URI, values,
+                        UsersTable.COLUMN_ID + " =?",
                         new String[]{App.accountId() + ""});
                 EventBus.getDefault().post(new UpdateAccountEvent());
 
                 Intent intent = new Intent(OnboardingLocationActivity.this, MainActivity.class);
                 startActivity(intent);
-                localBroadcastManager.sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
+                LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(new Intent(ONBOARDING_FINISHED_ACTION));
                 finish();
             }
 
@@ -184,5 +158,21 @@ public class OnboardingLocationActivity extends BadgeActivity {
     public void onBackPressed() {
         super.onBackPressed();
         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(this, OfficeLocationProvider.CONTENT_URI,
+                null, null, null, OfficeLocationsTable.CLM_NAME);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        officeLocationsAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

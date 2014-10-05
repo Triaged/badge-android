@@ -19,13 +19,14 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
 
     <application
-        android:name=".App"
+        android:name="com.triaged.badge.app.App"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
@@ -44,15 +45,46 @@
 
         <!-- ACTIVITIES -->
         <activity
-            android:name="com.triaged.badge.ui.entrance.LoginActivity"
+            android:name="com.triaged.badge.ui.entrance.EntranceActivity"
             android:label="@string/app_name"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Light.NoTitleBar"
+            android:windowSoftInputMode="stateHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.LoginActivity"
+            android:label="@string/title_activity_login"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Blue_badge" >
+        </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.SignUpActivity"
+            android:label="@string/title_activity_sign_up"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Blue_badge" >
+        </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.VerifyActivity"
+            android:label="@string/title_activity_verify"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Blue_badge" >
+        </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.OnboardingInviteColleagueActivity"
+            android:label="@string/title_activity_onboarding_invite_colleague"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Blue_badge" >
+        </activity>
+        <activity
+            android:name="com.triaged.badge.ui.entrance.OnboardingActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/Badge" />
         <activity
             android:name="com.triaged.badge.ui.home.MainActivity"
             android:label="@string/app_name"
@@ -67,19 +99,8 @@
             android:name="com.triaged.badge.ui.messaging.MessagingActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Badge"
-            android:windowSoftInputMode="stateHidden">
+            android:windowSoftInputMode="stateHidden" >
         </activity>
-
-        <activity
-            android:name="com.triaged.badge.ui.entrance.ForgotPasswordActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/BackTheme" />
-        <activity
-            android:name="com.triaged.badge.ui.entrance.WelcomeActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name="com.triaged.badge.ui.profile.OnboardingPositionActivity"
             android:label="@string/app_name"
@@ -104,12 +125,11 @@
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme" />
         <activity
-            android:name="com.triaged.badge.ui.profile.OtherProfileActivity"
+            android:name="com.triaged.badge.ui.profile.ProfileActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@style/BackTheme"
             android:windowSoftInputMode="stateHidden" />
-
         <activity
             android:name="com.triaged.badge.ui.home.SettingsActivity"
             android:label="@string/app_name"
@@ -136,9 +156,6 @@
             android:theme="@style/BackTheme" />
 
         <!-- SERVICES -->
-        <service
-            android:name="com.triaged.badge.net.DataProviderService"
-            android:enabled="true" />
         <service
             android:name="com.triaged.badge.location.LocationTrackingService"
             android:enabled="true" />
@@ -184,8 +201,8 @@
         <!-- CONTENT PROVIDERS -->
 
         <provider
-            android:name="com.triaged.badge.database.provider.ContactProvider"
-            android:authorities="com.triaged.badge.provider.contacts"
+            android:name="com.triaged.badge.database.provider.UserProvider"
+            android:authorities="com.triaged.badge.provider.users"
             android:enabled="true"
             android:exported="false" />
         <provider
@@ -208,7 +225,16 @@
             android:authorities="com.triaged.badge.provider.receipts"
             android:enabled="true"
             android:exported="false" />
-
+        <provider
+            android:name="com.triaged.badge.database.provider.BThreadProvider"
+            android:authorities="com.triaged.badge.provider.bthreads"
+            android:enabled="true"
+            android:exported="false" />
+        <provider
+            android:name="com.triaged.badge.database.provider.ThreadUserProvider"
+            android:authorities="com.triaged.badge.provider.thread_users"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

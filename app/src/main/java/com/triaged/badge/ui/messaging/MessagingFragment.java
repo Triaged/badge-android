@@ -17,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.ReceiptHelper;
 import com.triaged.badge.database.provider.MessageProvider;
@@ -25,6 +26,7 @@ import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.events.NewMessageEvent;
 import com.triaged.badge.models.Receipt;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
@@ -64,7 +66,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     //    @InjectView(R.id.post_box_wrapper) RelativeLayout postBoxWrapper;
     @InjectView(R.id.send_now_button) ImageButton sendButton;
-    @InjectView(R.id.message_thread) ListView threadList;
+    @InjectView(R.id.message_listview) ListView threadList;
     @InjectView(R.id.input_box) EditText postBox;
 
     @OnTextChanged(R.id.input_box)
@@ -81,9 +83,9 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     void sendMessage() {
         String msg = postBox.getText().toString();
         if (!msg.equals("")) {
-            App.dataProviderServiceBinding.sendMessageAsync(mThreadId, msg);
+            MessageProcessor.getInstance().sendMessage(mThreadId, msg);
             postBox.setText("");
-            JSONObject props = App.dataProviderServiceBinding.getBasicMixpanelData();
+            JSONObject props = new JSONObject();
             try {
                 props.put("recipient_id", mThreadId);
                 mixpanel.track("message_sent", props);
@@ -155,7 +157,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         //TODO: must optimized the columns projection
         return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_WITH_CONTACTS_INFO,
-                null, MessagesTable.COLUMN_MESSAGES_THREAD_ID + " =?",
+                null, MessagesTable.CLM_THREAD_ID + " =?",
                 new String[] { mThreadId},
                 null);
     }
@@ -177,13 +179,13 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     private void prepareAndSendReceipts() {
         ReceiptHelper.setTimestamp(getActivity(), mThreadId);
-        List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.mContext);
+        List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.context());
         if (receiptList.size() > 0) {
             ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
             RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
                 @Override
                 public void success(Response response, Response response2) {
-                    ReceiptHelper.setAllSeenReceiptsSync(App.mContext);
+                    ReceiptHelper.setAllSeenReceiptsSync(App.context());
                 }
 
                 @Override
@@ -197,11 +199,9 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     private void markMessagesAsRead() {
         ContentValues values = new ContentValues();
-        values.put(MessagesTable.COLUMN_MESSAGES_IS_READ, 1);
-
+        values.put(MessagesTable.CLM_IS_READ, 1);
         getActivity().getContentResolver().update(MessageProvider.CONTENT_URI, values,
-                MessagesTable.COLUMN_MESSAGES_THREAD_ID +   " =? AND " +
-                        MessagesTable.COLUMN_MESSAGES_THREAD_HEAD + " = 1",
+                MessagesTable.CLM_THREAD_ID + " =?",
                 new String[] { mThreadId});
     }
 
@@ -212,7 +212,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
             final Receipt receipt = new Receipt();
             receipt.setThreadId(newMessageEvent.threadId);
             receipt.setMessageId(newMessageEvent.messageId);
-            receipt.setUserId(App.dataProviderServiceBinding.getLoggedInUser().id + "");
+            receipt.setUserId(SyncManager.getMyUser().id + "");
             receipt.setTimestamp(System.currentTimeMillis() + "");
             receipt.setSyncStatus(Receipt.SYNCED);
 
@@ -227,26 +227,26 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
                     ContentValues receiptSyncedValues = new ContentValues(2);
                     receiptSyncedValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
-                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.COLUMN_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.CLM_USER_ID + "=?",
+                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
                 }
 
                 @Override
                 public void failure(RetrofitError error) {
                     App.gLogger.e(error.getMessage());
                     ContentValues receiptSyncedValues = new ContentValues(1);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_SEEN_TIMESTAMP, receipt.getTimestamp());
+                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
 
                     getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
                             receiptSyncedValues,
-                            ReceiptTable.COLUMN_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.COLUMN_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, App.dataProviderServiceBinding.getLoggedInUser().id + ""});
+                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
+                                    + ReceiptTable.CLM_USER_ID + "=?",
+                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
                 }
             });
         }
