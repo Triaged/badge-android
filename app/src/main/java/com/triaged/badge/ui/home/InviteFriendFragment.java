@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SearchView;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
@@ -51,7 +52,7 @@ public class InviteFriendFragment extends Fragment {
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_invite_friend, container, false);
@@ -66,6 +67,9 @@ public class InviteFriendFragment extends Fragment {
             throw new IllegalStateException("Cannot find an email address associated with the current account!");
         }
 
+        contactAdapter = new PhoneContactAdapter(getActivity(), R.layout.row_phone_contact_invite, new ArrayList<IRow>(50));
+        contactsListView.setAdapter(contactAdapter);
+
         getLoaderManager().initLoader(0, savedInstanceState, new LoaderManager.LoaderCallbacks<List<IRow>>() {
             @Override
             public Loader<List<IRow>> onCreateLoader(int id, Bundle args) {
@@ -75,8 +79,7 @@ public class InviteFriendFragment extends Fragment {
             @Override
             public void onLoadFinished(Loader<List<IRow>> loader, List<IRow> data) {
                 progressBar.setVisibility(View.GONE);
-                contactAdapter = new PhoneContactAdapter(getActivity(), R.layout.row_phone_contact_invite, data);
-                contactsListView.setAdapter(contactAdapter);
+                contactAdapter.addAll(data);
             }
 
             @Override
@@ -182,23 +185,23 @@ public class InviteFriendFragment extends Fragment {
         return  contacts;
     }
 
-    static class ContactLoader extends AsyncTaskLoader<List<IRow>> {
-        public ContactLoader(Context context) {
-            super(context);
-        }
-
-        @Override
-        public List<IRow> loadInBackground() {
-            return createContactsList();
-        }
-    }
-
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.invite_fragment, menu);
         BadgeSearchView searchView = (BadgeSearchView) menu.findItem(R.id.search).getActionView();
         searchView.setHintText("Search in your colleagues");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                contactAdapter.getFilter().filter(newText);
+                return true;
+            }
+        });
     }
 
     @Override
@@ -209,6 +212,18 @@ public class InviteFriendFragment extends Fragment {
             return true;
         }
         return false;
+    }
+
+
+    static class ContactLoader extends AsyncTaskLoader<List<IRow>> {
+        public ContactLoader(Context context) {
+            super(context);
+        }
+
+        @Override
+        public List<IRow> loadInBackground() {
+            return createContactsList();
+        }
     }
 
     public static class PhoneContact implements IRow {
@@ -224,6 +239,11 @@ public class InviteFriendFragment extends Fragment {
         @Override
         public int getType() {
             return IRow.CONTENT_ROW;
+        }
+
+        @Override
+        public String toString() {
+            return name != null? name : "";
         }
     }
 
