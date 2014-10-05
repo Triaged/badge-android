@@ -23,6 +23,7 @@ import android.widget.ProgressBar;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.IRow;
+import com.triaged.badge.ui.base.views.BadgeSearchView;
 import com.triaged.badge.ui.home.adapters.PhoneContactAdapter;
 import com.triaged.utils.SharedPreferencesHelper;
 
@@ -196,6 +197,8 @@ public class InviteFriendFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.invite_fragment, menu);
+        BadgeSearchView searchView = (BadgeSearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setHintText("Search in your colleagues");
     }
 
     @Override

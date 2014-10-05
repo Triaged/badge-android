@@ -1,7 +1,6 @@
 package com.triaged.badge.ui.entrance;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,15 +10,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
-import android.widget.Button;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.home.InviteFriendFragment;
 import com.triaged.badge.ui.home.MainActivity;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
 
 public class OnboardingInviteColleagueActivity extends Activity {
