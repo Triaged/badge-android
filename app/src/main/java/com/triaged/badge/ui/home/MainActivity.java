@@ -74,7 +74,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
 
         messagesFragment = MessagesFragments.newInstance();
         contactFragment = UsersFragment.newInstance();
-        myProfileFragment = ProfileFragment.newInstance(myUserId);
+        myProfileFragment = ProfileFragment.newInstance(myUserId, false);
 
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
             @Override

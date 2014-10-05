@@ -51,10 +51,18 @@ import hugo.weaving.DebugLog;
 public class ProfileFragment extends MixpanelFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String CONTACT_ID_ARG = "contact_id_arg";
+    /**
+     * This argument indicate that when a user clicked,
+     * just fetch that user's data and update the fragment,
+     * or start profile activity.
+     */
+    private static final String SHOULD_JUST_REFRESH_ARG = "should_just_refresh_arg";
+
     private static final int CONTACT_LOAD_REQUEST_ID = 0;
     private static final int MANAGES_LOAD_REQUEST_ID = 1;
 
     private long mContactId;
+    private boolean shouldJustRefresh = false;
     protected User mCurrentUser = null;
 
     @InjectView(R.id.profile_name) TextView profileName;
@@ -104,6 +112,29 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
 
     private int numberManagedByPrevious = 0;
 
+    protected View.OnClickListener onContactClickedListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int contactId = (int) ((ProfileReportsToView) v).profileId;
+            JSONObject props = new JSONObject();
+            try {
+                props.put("subordinate_id", String.valueOf(contactId));
+                mixpanel.track("subordinate_tapped", props);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            if (shouldJustRefresh) {
+                mContactId = contactId;
+                loadContactData();
+            } else {
+                Intent intent = new Intent(getActivity(), ProfileActivity.class);
+                intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, contactId);
+                startActivity(intent);
+            }
+        }
+    };
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -111,10 +142,11 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
      * @param userId .
      * @return A new instance of fragment ProfileFragment.
      */
-    public static ProfileFragment newInstance(long userId) {
+    public static ProfileFragment newInstance(long userId, boolean shouldJustRefresh) {
         ProfileFragment fragment = new ProfileFragment();
         Bundle args = new Bundle();
         args.putLong(CONTACT_ID_ARG, userId);
+        args.putBoolean(SHOULD_JUST_REFRESH_ARG, shouldJustRefresh);
         fragment.setArguments(args);
         return fragment;
     }
@@ -127,6 +159,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mContactId = getArguments().getLong(CONTACT_ID_ARG);
+            shouldJustRefresh = getArguments().getBoolean(SHOULD_JUST_REFRESH_ARG);
         }
     }
 
@@ -135,9 +168,13 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_profile, container, false);
         ButterKnife.inject(this, root);
-        getLoaderManager().initLoader(CONTACT_LOAD_REQUEST_ID, null, this);
-        getLoaderManager().initLoader(MANAGES_LOAD_REQUEST_ID, null, this);
+        loadContactData();
         return root;
+    }
+
+    private void loadContactData() {
+        getLoaderManager().restartLoader(CONTACT_LOAD_REQUEST_ID, null, this).forceLoad();
+        getLoaderManager().restartLoader(MANAGES_LOAD_REQUEST_ID, null, this).forceLoad();
     }
 
 
@@ -166,6 +203,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         bindStartDateView();
         bindOfficeView();
         bindBossView();
+        scrollView.smoothScrollTo(0, 0);
 
         JSONObject props = new JSONObject();
         try {
@@ -333,28 +371,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
             bossView.noPhotoThumb.setText(boss.initials());
             bossView.noPhotoThumb.setVisibility(View.VISIBLE);
 
-            bossView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    JSONObject props = new JSONObject();
-                    try {
-                        props.put("manager_id", String.valueOf(bossView.profileId));
-                        mixpanel.track("manager_tapped", props);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (bossView.userId == bossView.profileId) {
-                        // Normally won't happen
-                        scrollView.smoothScrollBy(0, 0);
-                    } else {
-                        Intent intent = new Intent(getActivity(), ProfileActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, (int) bossView.profileId);
-                        startActivity(intent);
-                    }
-                }
-            });
+            bossView.setOnClickListener(onContactClickedListener);
             if (boss.getAvatarFaceUrl() != null) {
                 ImageLoader.getInstance().displayImage(boss.getAvatarFaceUrl(), bossView.thumbImage, new SimpleImageLoadingListener() {
                     @Override
@@ -397,28 +414,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
                 newView.setupView(newContact);
                 newView.noPhotoThumb.setText(newContact.initials());
                 newView.noPhotoThumb.setVisibility(View.VISIBLE);
-                newView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        JSONObject props = new JSONObject();
-                        try {
-                            props.put("subordinate_id", String.valueOf(newView.profileId));
-                            mixpanel.track("subordinate_tapped", props);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                        if (userId == newView.profileId) {
-                            // Normally won't happen
-                            scrollView.smoothScrollBy(0, 0);
-                        } else {
-                            Intent intent = new Intent(getActivity(), ProfileActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                            intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, (int) newView.profileId);
-                            startActivity(intent);
-                        }
-                    }
-                });
+                newView.setOnClickListener(onContactClickedListener);
                 if (newContact.getAvatarFaceUrl() != null) {
 //                dataProviderServiceBinding.setSmallContactImage(newContact, newView.thumbImage, newView.noPhotoThumb);
                     ImageLoader.getInstance().displayImage(newContact.getAvatarFaceUrl(), newView.thumbImage, new SimpleImageLoadingListener() {
@@ -433,6 +429,27 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
             } while (reportsCursor.moveToNext());
         } else {
             managesHeader.setVisibility(View.GONE);
+        }
+        scrollView.smoothScrollTo(0, 0);
+    }
+
+
+    protected void onContactClicked(int contactId) {
+        JSONObject props = new JSONObject();
+        try {
+            props.put("subordinate_id", String.valueOf(contactId));
+            mixpanel.track("subordinate_tapped", props);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (shouldJustRefresh) {
+            mContactId = contactId;
+            loadContactData();
+        } else {
+            Intent intent = new Intent(getActivity(), ProfileActivity.class);
+            intent.putExtra(ProfileActivity.PROFILE_ID_EXTRA, contactId);
+            startActivity(intent);
         }
     }
 

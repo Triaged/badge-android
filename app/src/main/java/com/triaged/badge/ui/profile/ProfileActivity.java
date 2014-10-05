@@ -19,7 +19,7 @@ public class ProfileActivity extends Activity {
         if (savedInstanceState == null) {
             int profileId = getIntent().getIntExtra(PROFILE_ID_EXTRA, -1);
             getFragmentManager().beginTransaction()
-                    .add(R.id.container, ProfileFragment.newInstance(profileId))
+                    .add(R.id.container, ProfileFragment.newInstance(profileId, true))
                     .commit();
         }
         getActionBar().setDisplayHomeAsUpEnabled(true);
