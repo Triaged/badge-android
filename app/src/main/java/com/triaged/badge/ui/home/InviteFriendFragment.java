@@ -23,6 +23,7 @@ import android.widget.SearchView;
 
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.receivers.LogoutReceiver;
 import com.triaged.badge.ui.IRow;
 import com.triaged.badge.ui.base.views.BadgeSearchView;
 import com.triaged.badge.ui.home.adapters.PhoneContactAdapter;
@@ -64,7 +65,11 @@ public class InviteFriendFragment extends Fragment {
         if (atSignIndex > 0) {
             myAccountHost = accountEmail.substring(atSignIndex + 1);
         } else {
-            throw new IllegalStateException("Cannot find an email address associated with the current account!");
+            // If account's email address was not found,
+            // send a logout broadcast.
+            Intent intent = new Intent(LogoutReceiver.ACTION_LOGOUT);
+            getActivity().sendBroadcast(intent);
+            return root;
         }
 
         contactAdapter = new PhoneContactAdapter(getActivity(), R.layout.row_phone_contact_invite, new ArrayList<IRow>(50));
