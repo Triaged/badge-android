@@ -348,7 +348,7 @@ public class MessageProcessor {
             String[] name = new String[2];
             for (int userId : recipientIds) {
                 if (userId == App.accountId()) continue;
-                name = UserHelper.getUserName(mContext, recipientIds[0]);
+                name = UserHelper.getUserName(mContext, userId);
             }
             return String.format("%s %s", name[0], name[1]);
         } else {
