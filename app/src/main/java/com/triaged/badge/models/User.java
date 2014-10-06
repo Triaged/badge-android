@@ -2,8 +2,6 @@ package com.triaged.badge.models;
 
 import android.text.TextUtils;
 
-import java.util.concurrent.TimeoutException;
-
 /**
  * Created by Sadegh Kazemy on 9/19/14.
  */
@@ -22,7 +20,7 @@ public class User {
     long primaryOfficeLocationId;
     long currentOfficeLocationId;
     long departmentId;
-    boolean isSharingOfficeLocation;
+    boolean sharingOfficeLocation;
     boolean installedApp;
 
     EmployeeInfo employeeInfo;
@@ -137,11 +135,11 @@ public class User {
     }
 
     public boolean isSharingLocation() {
-        return isSharingOfficeLocation;
+        return sharingOfficeLocation;
     }
 
     public void setSharingOfficeLocationStatus(boolean sharingOfficeLocationStatus) {
-        this.isSharingOfficeLocation = sharingOfficeLocationStatus;
+        this.sharingOfficeLocation = sharingOfficeLocationStatus;
     }
 
     public EmployeeInfo getEmployeeInfo() {
