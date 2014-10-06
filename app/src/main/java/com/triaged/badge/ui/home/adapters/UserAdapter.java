@@ -160,7 +160,7 @@ public class UserAdapter extends CursorAdapter implements StickyListHeadersAdapt
                 @Override
                 protected String doInBackground(Void... params) {
                     try {
-                        MessageProcessor.getInstance().createThreadSync(recipientIds);
+                        return MessageProcessor.getInstance().createThreadSync(recipientIds);
                     } catch (RetrofitError e) {
                        toastMessage("Network issue occurred. Try again later.");
                         App.gLogger.e(e);
