@@ -6,9 +6,13 @@ import android.content.ContentUris;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +25,9 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.triaged.badge.app.App;
+import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
+import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.database.helper.OfficeLocationHelper;
 import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.UserProvider;
@@ -37,16 +43,20 @@ import com.triaged.badge.ui.base.views.ProfileContactInfoView;
 import com.triaged.badge.ui.base.views.ProfileCurrentLocationView;
 import com.triaged.badge.ui.base.views.ProfileManagesUserView;
 import com.triaged.badge.ui.base.views.ProfileReportsToView;
+import com.triaged.badge.ui.messaging.MessagingActivity;
 import com.triaged.badge.ui.profile.ProfileActivity;
 import com.triaged.utils.GeneralUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import hugo.weaving.DebugLog;
+import retrofit.RetrofitError;
 
 public class ProfileFragment extends MixpanelFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -61,7 +71,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     private static final int CONTACT_LOAD_REQUEST_ID = 0;
     private static final int MANAGES_LOAD_REQUEST_ID = 1;
 
-    private long mContactId;
+    private int mContactId;
     private boolean shouldJustRefresh = false;
     protected User mCurrentUser = null;
 
@@ -87,6 +97,70 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     @InjectView(R.id.availability_header)  TextView availabilityHeader ;
     @InjectView(R.id.profile_root_view) LinearLayout profileRootView;
     @InjectView(R.id.profile_scrollview) ScrollView scrollView;
+
+    @InjectView(R.id.message_button) View messageButton;
+    @InjectView(R.id.email_button) View emailButton;
+    @InjectView(R.id.call_button) View callButton;
+    @InjectView(R.id.settings_button) View settingButton;
+
+    @OnClick(R.id.message_button)
+    void openMessage() {
+        final Integer[] recipientIds = new Integer[]{ mContactId, SyncManager.getMyUser().id};
+        Arrays.sort(recipientIds);
+        new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... params) {
+                try {
+                    return MessageProcessor.getInstance().createThreadSync(recipientIds);
+                } catch (RetrofitError e) {
+                    App.toast("Network issue occurred. Try again later.");
+                    App.gLogger.e(e);
+                } catch (JSONException e) {
+                    App.toast("Unexpected response from server.");
+                } catch (OperationApplicationException e ) {
+                    App.toast("Unexpected response from server.");
+                } catch ( RemoteException e) {
+                    App.toast("Unexpected response from server.");
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String threadId) {
+                if (threadId != null) {
+                    //TODO: should not create new activity,
+                    // just update the thread id and refresh the fragment.
+                    Intent intent = new Intent(getActivity(), MessagingActivity.class);
+                    intent.putExtra(MessagingActivity.THREAD_ID_EXTRA, threadId);
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    getActivity().startActivity(intent);
+                } else {
+                    App.toast("A problem occurred, please try later");
+                }
+            }
+        }.execute();
+    }
+
+    @OnClick(R.id.call_button)
+    void call() {
+        if (!TextUtils.isEmpty(mCurrentUser.getEmployeeInfo().getCellPhone())) {
+            trackProfileButtonEvent("phone");
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + mCurrentUser.getEmployeeInfo().getCellPhone()));
+            startActivity(intent);
+        }
+    }
+
+    @OnClick(R.id.email_button)
+    void email() {
+        if (!TextUtils.isEmpty(mCurrentUser.getEmail())) {
+            trackProfileButtonEvent("email");
+            Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
+            emailIntent.setType("plain/text");
+            emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{mCurrentUser.getEmail()});
+            emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, "\n\n--\nsent via badge");
+            startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+        }
+    }
 
     @OnClick(R.id.settings_button)
     void openSettings(){
@@ -142,10 +216,10 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
      * @param userId .
      * @return A new instance of fragment ProfileFragment.
      */
-    public static ProfileFragment newInstance(long userId, boolean shouldJustRefresh) {
+    public static ProfileFragment newInstance(int userId, boolean shouldJustRefresh) {
         ProfileFragment fragment = new ProfileFragment();
         Bundle args = new Bundle();
-        args.putLong(CONTACT_ID_ARG, userId);
+        args.putInt(CONTACT_ID_ARG, userId);
         args.putBoolean(SHOULD_JUST_REFRESH_ARG, shouldJustRefresh);
         fragment.setArguments(args);
         return fragment;
@@ -158,7 +232,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mContactId = getArguments().getLong(CONTACT_ID_ARG);
+            mContactId = getArguments().getInt(CONTACT_ID_ARG);
             shouldJustRefresh = getArguments().getBoolean(SHOULD_JUST_REFRESH_ARG);
         }
     }
@@ -191,6 +265,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         }
         profileName.setText(mCurrentUser.getFullName());
         profileTitle.setText(mCurrentUser.getEmployeeInfo().getJobTitle());
+        setupBottomLayout();
         bindAvatarView();
         bindDepartmentView();
         bindEmailView();
@@ -211,6 +286,29 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
             mixpanel.track("profile_viewed", props);
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void setupBottomLayout() {
+        if (mContactId == App.accountId()) {
+            messageButton.setVisibility(View.INVISIBLE);
+            emailButton.setVisibility(View.INVISIBLE);
+            callButton.setVisibility(View.INVISIBLE);
+            settingButton.setVisibility(View.VISIBLE);
+        } else {
+            if (!TextUtils.isEmpty(mCurrentUser.getEmail())) {
+                emailButton.setVisibility(View.VISIBLE);
+            } else {
+                emailButton.setVisibility(View.INVISIBLE);
+            }
+
+            if (!TextUtils.isEmpty(mCurrentUser.getEmployeeInfo().getCellPhone())) {
+                callButton.setVisibility(View.VISIBLE);
+            } else {
+                callButton.setVisibility(View.INVISIBLE);
+            }
+            messageButton.setVisibility(View.VISIBLE);
+            settingButton.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -482,5 +580,15 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
 
+    }
+
+    private void trackProfileButtonEvent(String eventType) {
+        JSONObject props = new JSONObject();
+        try {
+            props.put("button", eventType);
+            mixpanel.track("profile_button_touched", props);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

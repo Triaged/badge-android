@@ -233,8 +233,39 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="@color/main_orange"
-        android:layout_alignParentBottom="true"
-        >
+        android:layout_alignParentBottom="true" >
+
+        <ImageButton
+            android:id="@+id/message_button"
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:src="@drawable/ic_action_chat_beige"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@drawable/orange_button_bg"
+            android:layout_centerVertical="true" />
+
+        <ImageButton
+            android:id="@+id/email_button"
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:src="@drawable/ic_action_new_email_beige"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@drawable/orange_button_bg"
+            android:layout_centerInParent="true" />
+
+        <ImageButton
+            android:id="@+id/call_button"
+            android:layout_width="54dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:src="@drawable/ic_action_call_beige"
+            android:layout_alignParentRight="true"
+            android:contentDescription="@string/content_description_my_settings"
+            android:background="@drawable/orange_button_bg"
+            android:layout_centerVertical="true" />
+
         <ImageButton
             android:id="@+id/settings_button"
             android:layout_width="54dp"
@@ -244,8 +275,7 @@
             android:layout_alignParentRight="true"
             android:contentDescription="@string/content_description_my_settings"
             android:background="@drawable/orange_button_bg"
-            android:layout_centerVertical="true"
-            />
+            android:layout_centerVertical="true" />
     </RelativeLayout>
 
 </RelativeLayout>
