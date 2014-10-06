@@ -19,7 +19,7 @@ public class BThreadUserTable extends AbstractTable {
                 + CLM_USER_ID + " INTEGER NOT NULL, "
                 + "PRIMARY KEY (" + CLM_USER_ID + ", " + CLM_THREAD_ID + "), "
                 + "FOREIGN KEY (" + CLM_THREAD_ID + ") REFERENCES "
-                    + BThreadsTable.TABLE_NAME + "(" + BThreadsTable.COLUMN_ID + "),"
+                    + BThreadsTable.TABLE_NAME + "(" + BThreadsTable.CLM_THREAD_ID + "),"
                 + "FOREIGN KEY (" + CLM_USER_ID + ") REFERENCES "
                     + UsersTable.TABLE_NAME + "(" + UsersTable.COLUMN_ID + ")"
                 + ");");
