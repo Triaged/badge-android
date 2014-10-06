@@ -24,6 +24,7 @@ import com.triaged.badge.events.SyncMessageEvent;
 import com.triaged.badge.helpers.Foreground;
 import com.triaged.badge.net.FayeService;
 import com.triaged.badge.net.LongDeserializer;
+import com.triaged.badge.net.api.ApiErrorHandler;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.logger.ILogger;
 import com.triaged.logger.LoggerImp;
@@ -117,6 +118,7 @@ public class App extends Application {
                 })
                 .setEndpoint(BuildConfig.API_MESSAGING_SERVER_URL)
                 .setConverter(new GsonConverter(gson))
+                .setErrorHandler(new ApiErrorHandler())
                 .setLog(new AndroidLog("retrofit"));
 
         RestAdapter.Builder restBuilder = new RestAdapter.Builder()
@@ -131,6 +133,7 @@ public class App extends Application {
                 })
                 .setEndpoint(BuildConfig.API_URL)
                 .setConverter(new GsonConverter(gson))
+                .setErrorHandler(new ApiErrorHandler())
                 .setLog(new AndroidLog("retrofit"));
 
         if (BuildConfig.DEBUG) {

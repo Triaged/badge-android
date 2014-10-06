@@ -57,7 +57,7 @@ public abstract class BadgeActivity extends MixpanelActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        EventBus.getDefault().register(this);
+        EventBus.getDefault().registerSticky(this);
         super.onCreate(savedInstanceState);
     }
 

@@ -1,14 +1,14 @@
 package com.triaged.badge.ui.profile;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.triaged.badge.app.R;
+import com.triaged.badge.ui.base.BadgeActivity;
 import com.triaged.badge.ui.home.ProfileFragment;
 
-public class ProfileActivity extends Activity {
+public class ProfileActivity extends BadgeActivity {
 
     public static final String PROFILE_ID_EXTRA = "profile_id_extra";
 

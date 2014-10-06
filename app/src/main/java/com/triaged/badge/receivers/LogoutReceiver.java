@@ -1,14 +1,18 @@
 package com.triaged.badge.receivers;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 
 import com.mixpanel.android.mpmetrics.MixpanelAPI;
 import com.triaged.badge.app.App;
 import com.triaged.badge.database.DatabaseHelper;
 import com.triaged.badge.events.LogoutEvent;
 import com.triaged.badge.location.LocationTrackingService;
+import com.triaged.badge.ui.entrance.EntranceActivity;
 import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesHelper;
 
@@ -44,15 +48,17 @@ public class LogoutReceiver extends BroadcastReceiver {
         DatabaseHelper.deleteDatabase();
         MixpanelAPI.getInstance(context, App.MIXPANEL_TOKEN).clearSuperProperties();
 
-//        // Schedule to start application if needed.
-//        Bundle bundle = intent.getExtras();
-//        if (bundle != null) {
-//            if (bundle.getBoolean(RESTART_APP_EXTRA)) {
-//                Intent loginIntent = new Intent(context, OnboardingActivity.class);
-//                loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                context.startActivity(loginIntent);
-//            }
-//        }
+        // Schedule to start application if needed.
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            if (bundle.getBoolean(RESTART_APP_EXTRA)) {
+                Intent launchIntent = new Intent(context, EntranceActivity.class);
+                PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, launchIntent , 0);
+                AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+                manager.set(AlarmManager.RTC, System.currentTimeMillis() + 1800, pendingIntent);
+            }
+        }
+
         Timer timer = new Timer(true);
         timer.schedule(new TimerTask() {
             @Override
