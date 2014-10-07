@@ -167,13 +167,8 @@ public class SyncManager extends ContextWrapper {
         if (lastSynced > System.currentTimeMillis() - 120000 ) {
             return;
         }
-        long previousSync = lastSynced;
-        lastSynced = System.currentTimeMillis();
-        SharedPreferencesHelper.instance()
-                .putLong(R.string.pref_last_sync_key, lastSynced)
-                .commit();
-
-        RestService.instance().badge().getCompany((previousSync - 60000) + "" /* one minute of buffer */, new Callback<Company>() {
+        final long startTime = System.currentTimeMillis();
+        RestService.instance().badge().getCompany((lastSynced - 60000) + "" /* one minute of buffer */, new Callback<Company>() {
             @Override
             public void success(Company company, Response response) {
                 ArrayList<ContentProviderOperation> dbOperations = new ArrayList<ContentProviderOperation>();
@@ -183,6 +178,11 @@ public class SyncManager extends ContextWrapper {
                 }
                 try {
                     getContentResolver().applyBatch(UserProvider.AUTHORITY, dbOperations);
+                    lastSynced = startTime;
+                    SharedPreferencesHelper.instance()
+                            .putLong(R.string.pref_last_sync_key, lastSynced)
+                            .commit();
+
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 } catch (OperationApplicationException e) {
@@ -208,10 +208,7 @@ public class SyncManager extends ContextWrapper {
         if (info == null || !info.isConnected()) {// TODO listen for network becoming available so we can sync then.
             return;
         }
-        lastSynced = System.currentTimeMillis();
-        SharedPreferencesHelper.instance()
-                .putLong(R.string.pref_last_sync_key, lastSynced)
-                .commit();
+        long startTime = System.currentTimeMillis();
         try {
             Company company = RestService.instance().badge().getCompany("0");
 //            getContentResolver().delete(ContactProvider.CONTENT_URI, null, null);
@@ -248,6 +245,11 @@ public class SyncManager extends ContextWrapper {
                 SharedPreferencesHelper.instance().putBoolean(R.string.pref_does_fetched_company_already, true)
                         .commit();
                 userAccount = getContact(SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1));
+
+                lastSynced = startTime;
+                SharedPreferencesHelper.instance()
+                        .putLong(R.string.pref_last_sync_key, lastSynced)
+                        .commit();
             } catch (RemoteException e) {
                 e.printStackTrace();
             } catch (OperationApplicationException e) {
