@@ -19,6 +19,7 @@ import com.mobsandgeeks.saripaar.Rule;
 import com.mobsandgeeks.saripaar.Validator;
 import com.mobsandgeeks.saripaar.annotation.Email;
 import com.mobsandgeeks.saripaar.annotation.Required;
+import com.triaged.badge.models.Account;
 import com.triaged.badge.net.mime.TypedJsonString;
 import com.triaged.badge.app.R;
 import com.triaged.badge.net.api.RestService;
@@ -159,10 +160,10 @@ public class OnboardingCreateFragment extends Fragment implements Validator.Vali
         JsonObject postData = new JsonObject();
         postData.add("auth_params", authParams);
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        RestService.instance().badge().signUp(typedJsonString, new Callback<AuthenticationResponse>() {
+        RestService.instance().badge().signUp(typedJsonString, new Callback<Account>() {
             @Override
-            public void success(AuthenticationResponse authenticationResponse, Response response) {
-                storeUserInfoInSharedPreferences(authenticationResponse.id(), emailView.getText().toString());
+            public void success(Account account, Response response) {
+                storeUserInfoInSharedPreferences(account.getId(), emailView.getText().toString());
                 progressDialog.dismiss();
                 mListener.onSignUpSucceed();
             }

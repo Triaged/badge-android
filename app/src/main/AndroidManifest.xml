@@ -69,12 +69,6 @@
             android:theme="@style/Theme.Blue_badge" >
         </activity>
         <activity
-            android:name="com.triaged.badge.ui.entrance.VerifyActivity"
-            android:label="@string/title_activity_verify"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.Blue_badge" >
-        </activity>
-        <activity
             android:name="com.triaged.badge.ui.entrance.OnboardingInviteColleagueActivity"
             android:label="@string/title_activity_onboarding_invite_colleague"
             android:screenOrientation="portrait"

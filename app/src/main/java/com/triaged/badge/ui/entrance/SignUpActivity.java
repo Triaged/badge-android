@@ -2,10 +2,7 @@ package com.triaged.badge.ui.entrance;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,32 +14,31 @@ import com.makeramen.RoundedImageView;
 import com.mobsandgeeks.saripaar.Rule;
 import com.mobsandgeeks.saripaar.Validator;
 import com.mobsandgeeks.saripaar.annotation.Email;
+import com.mobsandgeeks.saripaar.annotation.Password;
 import com.mobsandgeeks.saripaar.annotation.Required;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
+import com.triaged.badge.database.helper.UserHelper;
+import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.models.Account;
 import com.triaged.badge.net.api.RestService;
-import com.triaged.badge.net.api.responses.AuthenticationResponse;
 import com.triaged.badge.net.mime.TypedJsonString;
-import com.triaged.utils.MediaPickerUtils;
+import com.triaged.utils.GeneralUtils;
 import com.triaged.utils.SharedPreferencesHelper;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import butterknife.OnClick;
 import hugo.weaving.DebugLog;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
 public class SignUpActivity extends Activity implements Validator.ValidationListener  {
-
-    private static final int REQUEST_CODE_GALLERY = 1000;
-    private static final int REQUEST_CODE_VERIFY = 2000;
 
     Validator validator;
     ProgressDialog progressDialog;
@@ -52,16 +48,10 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
     @Required(order = 2) @InjectView(R.id.last_name_edit_text) EditText lastNameView;
     @Required(order = 3) @Email(order = 4, messageResId = R.string.invalid_email_error)
     @InjectView(R.id.email_edit_text) EditText emailView;
+    @Password(order = 5, messageResId = R.string.invalid_password_error)
+    @InjectView(R.id.password_edit_text) EditText passwordView;
     @InjectView(R.id.phone_edit_text) EditText phoneView;
     @InjectView(R.id.user_image) RoundedImageView userImage;
-
-
-
-
-    @OnClick(R.id.add_image_layout)
-    void selectImage() {
-        MediaPickerUtils.getImageFromGallery(this, REQUEST_CODE_GALLERY);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,33 +94,40 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
         }
         progressDialog.show();
 
-        JsonObject authParams = new JsonObject();
-        authParams.addProperty("first_name", firstNameView.getText().toString());
-        authParams.addProperty("last_name", lastNameView.getText().toString());
-        authParams.addProperty("email", emailView.getText().toString());
-        authParams.addProperty("phone_number", phoneView.getText().toString());
+        JsonObject registrationParams = new JsonObject();
+        registrationParams.addProperty("first_name", firstNameView.getText().toString());
+        registrationParams.addProperty("last_name", lastNameView.getText().toString());
+        registrationParams.addProperty("email", emailView.getText().toString());
+        registrationParams.addProperty("password", passwordView.getText().toString());
+        registrationParams.addProperty("phone_number", phoneView.getText().toString());
 
         JsonObject postData = new JsonObject();
-        postData.add("auth_params", authParams);
+        postData.add("registration", registrationParams);
         TypedJsonString typedJsonString = new TypedJsonString(postData.toString());
-        RestService.instance().badge().signUp(typedJsonString, new Callback<AuthenticationResponse>() {
+        RestService.instance().badge().signUp(typedJsonString, new Callback<Account>() {
             @Override
-            public void success(AuthenticationResponse authenticationResponse, Response response) {
-                progressDialog.dismiss();
+            public void success(Account account, Response response) {
+                getContentResolver().insert(UserProvider.CONTENT_URI, UserHelper.toContentValue(account.getCurrentUser()));
 
+                progressDialog.dismiss();
                 // Store account info in shared preferences.
                 SharedPreferencesHelper.instance()
-                        .putBoolean(R.string.pref_is_a_company_email_key, isACompanyEmail(emailView.getText().toString()))
-                        .putString(R.string.pref_account_email_key, emailView.getText().toString())
-                        .putInt(R.string.pref_account_id_key, authenticationResponse.id())
+                        .putBoolean(R.string.pref_is_a_company_email_key, SignUpActivity.isACompanyEmail(account.getCurrentUser().getEmail()))
+                        .putString(R.string.pref_account_email_key, account.getCurrentUser().getEmail())
+                        .putInt(R.string.pref_account_id_key, account.getId())
+                        .putString(R.string.pref_api_token, account.getAuthenticationToken())
+                        .putString(R.string.pref_account_company_id_key, account.getCompanyId())
                         .commit();
 
-                startActivityForResult(new Intent(SignUpActivity.this, VerifyActivity.class), REQUEST_CODE_VERIFY);
+                GeneralUtils.dismissKeyboard(SignUpActivity.this);
+                setResult(RESULT_OK);
+                finish();
             }
 
             @Override
             public void failure(RetrofitError error) {
                 progressDialog.dismiss();
+                // 422 error if exits already
                 Toast.makeText(SignUpActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
             }
         });
@@ -149,13 +146,13 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
     }
 
     @DebugLog
-    private boolean isACompanyEmail(String email) {
+    public static boolean isACompanyEmail(String email) {
         if (email != null) {
             int atIndex = email.lastIndexOf('@');
             if (atIndex > 0) {
                 String host = email.substring(atIndex + 1);
                 try {
-                    InputStream inputStream = getAssets().open("blacklist.hosts");
+                    InputStream inputStream = App.context().getAssets().open("blacklist.hosts");
                     InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8" );
                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                     String line;
@@ -172,24 +169,4 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
         return true;
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case REQUEST_CODE_GALLERY:
-                if (resultCode == RESULT_OK) {
-                    String imagePath = MediaPickerUtils.processImagePath(data, this);
-                    if (!TextUtils.isEmpty(imagePath)) {
-                        Uri imageUri = Uri.fromFile(new File(imagePath));
-                        userImage.setImageURI(imageUri);
-                    }
-                }
-                break;
-
-            case REQUEST_CODE_VERIFY:
-                if (resultCode == RESULT_OK) {
-                    setResult(RESULT_OK);
-                    finish();
-                }
-        }
-    }
 }

@@ -7,6 +7,7 @@
 
     <!-- ONBOARDING SIGN UP -->
     <string name="invalid_email_error">Invalid email address</string>
+    <string name="invalid_password_error">You must provide a password</string>
 
     <!-- LOGIN ACTIVITY -->
     <string name="login_title">Login to Badge</string>
@@ -63,6 +64,7 @@
     <string name="edit_profile_your">Your Profile</string>
     <string name="save_and_exit">Save and Exit</string>
     <string name="current_password">Current Password</string>
+    <string name="password">Password</string>
     <string name="new_password">New Password</string>
     <string name="confirm_password">Confirm Password</string>
     <string name="change_password">Change</string>

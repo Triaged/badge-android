@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
@@ -118,7 +119,6 @@ public class App extends Application {
                 })
                 .setEndpoint(BuildConfig.API_MESSAGING_SERVER_URL)
                 .setConverter(new GsonConverter(gson))
-                .setErrorHandler(new ApiErrorHandler())
                 .setLog(new AndroidLog("retrofit"));
 
         RestAdapter.Builder restBuilder = new RestAdapter.Builder()
@@ -133,8 +133,13 @@ public class App extends Application {
                 })
                 .setEndpoint(BuildConfig.API_URL)
                 .setConverter(new GsonConverter(gson))
-                .setErrorHandler(new ApiErrorHandler())
                 .setLog(new AndroidLog("retrofit"));
+
+        if (!TextUtils.isEmpty(authorization)) {
+            ApiErrorHandler apiErrorHandler = new ApiErrorHandler();
+            restBuilder.setErrorHandler(apiErrorHandler);
+            restBuilderMessaging.setErrorHandler(apiErrorHandler);
+        }
 
         if (BuildConfig.DEBUG) {
             restBuilderMessaging.setLogLevel(RestAdapter.LogLevel.FULL);
@@ -190,9 +195,9 @@ public class App extends Application {
     // Received events from the Event Bus.
 
     public void onEvent(LogedinSuccessfully event) {
-        SyncManager.instance();
         mAccountId = SharedPreferencesHelper.instance().getInteger(R.string.pref_account_id_key, -1);
         setupRestAdapter();
+        SyncManager.instance();
     }
 
     public static void toast(String message) {
