@@ -193,7 +193,7 @@ public class MessageProcessor {
 
         // Insert thread into database.
         ContentValues cv = new ContentValues();
-        cv.put(BThreadsTable.CLM_THREAD_ID, bThread.getId());
+        cv.put(BThreadsTable.CLM_BTHREAD_ID, bThread.getId());
         if (bThread.isMuted() != null) cv.put(BThreadsTable.CLM_IS_MUTED, bThread.isMuted());
         cv.put(BThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
         if (bThread.getUserIds().length == 2) {
@@ -304,7 +304,7 @@ public class MessageProcessor {
     public String createThreadSync(final Integer[] recipientIds) throws JSONException,  RemoteException, OperationApplicationException {
         String threadKey = userIdArrayToKey(recipientIds);
         Cursor cursor = mContext.getContentResolver().query(BThreadProvider.CONTENT_URI,
-                new String[]{BThreadsTable.CLM_THREAD_ID},
+                new String[]{BThreadsTable.CLM_BTHREAD_ID},
                 BThreadsTable.CLM_USERS_KEY + "=?",
                 new String[]{threadKey},
                 null);
@@ -323,7 +323,7 @@ public class MessageProcessor {
             BThread resultThread;
             resultThread = RestService.instance().messaging().createMessageThread(typedJsonString);
             ContentValues cv = new ContentValues();
-            cv.put(BThreadsTable.CLM_THREAD_ID, resultThread.getId());
+            cv.put(BThreadsTable.CLM_BTHREAD_ID, resultThread.getId());
             cv.put(BThreadsTable.CLM_USERS_KEY, threadKey);
             cv.put(BThreadsTable.CLM_IS_MUTED, false);
             cv.put(BThreadsTable.CLM_NAME, createThreadName(recipientIds));

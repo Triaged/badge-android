@@ -90,7 +90,7 @@ public class MessagingActivity extends SlidingActivity implements LoaderManager.
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         return new CursorLoader(this, BThreadProvider.CONTENT_URI,
                 null,
-                BThreadsTable.CLM_THREAD_ID + "=?",
+                BThreadsTable.CLM_BTHREAD_ID + "=?",
                 new String[]{mThreadId},
                 null);
     }

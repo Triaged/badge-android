@@ -167,7 +167,7 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
                 ContentValues cv = new ContentValues(1);
                 cv.put(BThreadsTable.CLM_IS_MUTED, !muteCheckBox.isChecked());
                 getActivity().getContentResolver().update(BThreadProvider.CONTENT_URI, cv,
-                        BThreadsTable.CLM_THREAD_ID + "=?", new String[]{mThreadId});
+                        BThreadsTable.CLM_BTHREAD_ID + "=?", new String[]{mThreadId});
             }
 
             @Override
@@ -215,7 +215,7 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
                                 ContentValues cv = new ContentValues(1);
                                 cv.put(BThreadsTable.CLM_NAME, input.getText().toString());
                                 getActivity().getContentResolver().update(BThreadProvider.CONTENT_URI, cv,
-                                        BThreadsTable.CLM_THREAD_ID + "=?", new String[]{mThreadId});
+                                        BThreadsTable.CLM_BTHREAD_ID + "=?", new String[]{mThreadId});
                             }
 
                             @Override

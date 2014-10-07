@@ -9,7 +9,7 @@ public class BThreadsTable extends AbstractTable {
 
     public static final String TABLE_NAME = "bthreads";
 
-    public static final String CLM_THREAD_ID = "thread_id";
+    public static final String CLM_BTHREAD_ID = "bthread_id";
     public static final String CLM_NAME = "name";
     public static final String CLM_IS_MUTED = "is_muted";
     public static final String CLM_USERS_KEY = "users_key";
@@ -18,7 +18,7 @@ public class BThreadsTable extends AbstractTable {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + TABLE_NAME + "("
                         + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        + CLM_THREAD_ID + " TEXT UNIQUE, "
+                        + CLM_BTHREAD_ID + " TEXT UNIQUE, "
                         + CLM_NAME + " TEXT, "
                         + CLM_USERS_KEY + " TEXT, "
                         + CLM_IS_MUTED + " BOOLEAN "
