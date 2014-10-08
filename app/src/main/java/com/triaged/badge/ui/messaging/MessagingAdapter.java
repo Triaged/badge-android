@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
+import com.triaged.badge.app.App;
 import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.table.UsersTable;
@@ -26,6 +27,10 @@ import org.ocpsoft.prettytime.PrettyTime;
 
 import java.util.Date;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.Optional;
+
 /**
  * Created by Sadegh Kazemy on 9/9/14.
  */
@@ -35,6 +40,13 @@ public class MessagingAdapter  extends CursorAdapter {
     private PrettyTime prettyTime;
     private Date messageDate;
     private String threadId;
+
+    public void setParticipantsNumber(int participantsNumber) {
+        this.participantsNumber = participantsNumber;
+        notifyDataSetChanged();
+    }
+
+    private int participantsNumber = 1;
 
     public MessagingAdapter(Context context, Cursor cursor) {
         super(context, cursor, false);
@@ -53,21 +65,17 @@ public class MessagingAdapter  extends CursorAdapter {
         } else {
             resourceId = R.layout.item_other_message;
         }
-        View v = inflater.inflate(resourceId, parent, false);
-        MessageHolder holder = new MessageHolder();
-        holder.message = (TextView) v.findViewById(R.id.message_text);
-        holder.timestamp = (TextView) v.findViewById(R.id.timestamp);
-        holder.userPhoto = (ImageView) v.findViewById(R.id.contact_thumb);
-        holder.photoPlaceholder = (TextView) v.findViewById(R.id.no_photo_thumb);
-        holder.progressBar = (ProgressBar) v.findViewById(R.id.pending_status);
-        holder.messageFailedButton = (ImageButton) v.findViewById(R.id.failed_status);
-        v.setTag(holder);
-        return v;
+        View row = inflater.inflate(resourceId, parent, false);
+        MessageHolder holder = new MessageHolder(row);
+        row.setTag(holder);
+        return row;
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         final MessageHolder holder = (MessageHolder) view.getTag();
+
+        holder.messageId = cursor.getString(cursor.getColumnIndexOrThrow(MessagesTable.CLM_ID));
         holder.message.setText(cursor.getString(cursor.getColumnIndex(MessagesTable.CLM_BODY)));
         long messageTimeMillis = cursor.getLong(cursor.getColumnIndex(MessagesTable.CLM_TIMESTAMP)) / 1000l;
         if (messageTimeMillis > System.currentTimeMillis()) {
@@ -78,6 +86,8 @@ public class MessagingAdapter  extends CursorAdapter {
         holder.timestamp.setText(prettyTime.format(messageDate));
         holder.userPhoto.setVisibility(View.VISIBLE);
         holder.userPhoto.setImageBitmap(null);
+        String cnt = cursor.getString(cursor.getColumnIndexOrThrow("cnt"));
+        holder.readBy.setText(String.format("Ready by %s/%s", cnt, participantsNumber));
         String first = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
         String last = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));
         holder.photoPlaceholder.setText(Contact.constructInitials(first, last));
@@ -132,7 +142,12 @@ public class MessagingAdapter  extends CursorAdapter {
      */
     @Override
     public int getItemViewType(int position) {
-        return getItemViewType((Cursor) getItem(position));
+        Cursor cursor = (Cursor) getItem(position);
+        if (cursor.getInt(cursor.getColumnIndex(MessagesTable.CLM_AUTHOR_ID)) == App.accountId()) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
     /**
@@ -146,19 +161,19 @@ public class MessagingAdapter  extends CursorAdapter {
         }
     }
 
-    /**
-     * Call when no adapter no longer needed. Closes cursor.
-     */
-    public void destroy() {
-        getCursor().close();
-    }
+    public class MessageHolder {
+        String messageId;
 
-    class MessageHolder {
-        TextView message;
-        TextView timestamp;
-        ImageView userPhoto;
-        TextView photoPlaceholder;
-        ProgressBar progressBar;
-        ImageButton messageFailedButton;
+        @InjectView(R.id.message_text) TextView message;
+        @InjectView(R.id.timestamp) TextView timestamp;
+        @InjectView(R.id.contact_thumb) ImageView userPhoto;
+        @InjectView(R.id.no_photo_thumb) TextView photoPlaceholder;
+        @Optional @InjectView(R.id.pending_status) ProgressBar progressBar;
+        @Optional @InjectView(R.id.failed_status) ImageButton messageFailedButton;
+        @InjectView(R.id.read_by_text) TextView readBy;
+
+        MessageHolder(View row) {
+            ButterKnife.inject(this, row);
+        }
     }
 }

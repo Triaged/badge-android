@@ -38,6 +38,7 @@ import com.triaged.badge.ui.profile.ProfileActivity;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnItemClick;
+import de.greenrobot.event.EventBus;
 import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
@@ -124,6 +125,7 @@ public class MenuFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         adapter.swapCursor(data);
+        EventBus.getDefault().post(new LoadParticipantsEvent(data.getCount()));
         if(data.getCount() < 2) {
             participantsListView.removeHeaderView(menuHeader);
         } else {

@@ -17,6 +17,16 @@ public class ReceiptHelper {
 
     private ReceiptHelper() { }
 
+    public static ContentValues fromReceipt(Receipt receipt) {
+        ContentValues contentValues = new ContentValues(5);
+        contentValues.put(ReceiptTable.CLM_THREAD_ID, receipt.getThreadId());
+        contentValues.put(ReceiptTable.CLM_MESSAGE_ID, receipt.getMessageId());
+        contentValues.put(ReceiptTable.CLM_USER_ID, receipt.getUserId());
+        contentValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
+        contentValues.put(ReceiptTable.COLUMN_SYNC_STATUS, receipt.getSyncStatus());
+        return contentValues;
+    }
+
     public static int setTimestamp(Context context, String threadId) {
         ContentValues cv = new ContentValues(1);
         cv.put(ReceiptTable.CLM_SEEN_TIMESTAMP, System.currentTimeMillis() + "");

@@ -1,9 +1,13 @@
 package com.triaged.badge.database.provider;
 
 import android.content.UriMatcher;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 import com.triaged.badge.database.table.ReceiptTable;
+import com.triaged.badge.database.table.UsersTable;
 
 /**
  * Created by Sadegh Kazemy on 9/17/14.
@@ -25,6 +29,19 @@ public class ReceiptProvider extends AbstractProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(AUTHORITY, TABLE_NAME, RECORDS);
         uriMatcher.addURI(AUTHORITY, TABLE_NAME + "/#", RECORD_ID);
+    }
+
+    @Override
+    public synchronized Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        queryBuilder.setTables(ReceiptTable.TABLE_NAME + " LEFT OUTER JOIN " +
+                UsersTable.TABLE_NAME + " ON " +
+                ReceiptTable.TABLE_NAME + "." + ReceiptTable.CLM_USER_ID + " = " +
+                UsersTable.TABLE_NAME + "." + UsersTable.COLUMN_ID);
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return cursor;
     }
 
     @Override

@@ -11,6 +11,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
 import com.triaged.badge.database.helper.MessageHelper;
+import com.triaged.badge.database.helper.ReceiptHelper;
 import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.BThreadProvider;
 import com.triaged.badge.database.provider.MessageProvider;
@@ -198,7 +199,7 @@ public class MessageProcessor {
         cv.put(BThreadsTable.CLM_USERS_KEY, userIdArrayToKey(bThread.getUserIds()));
         if (bThread.getUserIds().length == 2) {
             cv.put(BThreadsTable.CLM_NAME, createThreadName(bThread.getUserIds()));
-        } else if (bThread.getName() != null){
+        } else if (bThread.getName() != null) {
             cv.put(BThreadsTable.CLM_NAME, bThread.getName());
         }
         mContext.getContentResolver().insert(BThreadProvider.CONTENT_URI, cv);
@@ -238,6 +239,13 @@ public class MessageProcessor {
                 mostRecentMsgTimestamp = timestamp;
             }
 
+            for (Receipt receipt : message.getReadReceipts()) {
+                receipt.setSyncStatus(Receipt.SYNCED);
+                receipt.setThreadId(bThread.getId() + "");
+                mContext.getContentResolver()
+                        .insert(ReceiptProvider.CONTENT_URI, ReceiptHelper.fromReceipt(receipt));
+            }
+
             // If I am not the author of this message,
             // create a receipt and put into database for further use.
             if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != App.accountId()) {
@@ -251,7 +259,9 @@ public class MessageProcessor {
                 EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
                         contentValues.getAsString(MessagesTable.CLM_ID)));
             }
+
         }
+
         try {
             mContext.getContentResolver().applyBatch(MessageProvider.AUTHORITY, dbOperations);
         } catch (RemoteException e) {

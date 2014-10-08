@@ -1,6 +1,7 @@
 package com.triaged.badge.ui.messaging;
 
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ContentValues;
@@ -12,6 +13,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -30,6 +32,7 @@ import com.triaged.badge.app.SyncManager;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
+import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.notification.Notifier;
 
 import org.json.JSONException;
@@ -64,9 +67,13 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     private int userCount = 2;
     private boolean reportsReceipts = false;
 
+    AlertDialog readyByDialog;
+    ListView readyByListView;
+    UserAdapter readyByAdapter;
+
     //    @InjectView(R.id.post_box_wrapper) RelativeLayout postBoxWrapper;
     @InjectView(R.id.send_now_button) ImageButton sendButton;
-    @InjectView(R.id.message_listview) ListView threadList;
+    @InjectView(R.id.message_listview) ListView messageListView;
     @InjectView(R.id.input_box) EditText postBox;
 
     @OnTextChanged(R.id.input_box)
@@ -119,6 +126,14 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         super.onCreate(savedInstanceState);
         EventBus.getDefault().register(this);
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Ready by:");
+        readyByListView = new ListView(getActivity());
+        readyByAdapter = new UserAdapter(getActivity(), null, R.layout.item_contact_no_msg);
+        readyByListView.setAdapter(readyByAdapter);
+        builder.setView(readyByListView);
+        readyByDialog = builder.create();
+
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
         }
@@ -132,8 +147,24 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         ButterKnife.inject(this, root);
 
         adapter = new MessagingAdapter(getActivity(), null);
-        threadList.setAdapter(adapter);
+        messageListView.setAdapter(adapter);
         sendButton.setEnabled(false);
+
+        messageListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MessagingAdapter.MessageHolder holder = (MessagingAdapter.MessageHolder) view.getTag();
+                Cursor readByCursor = getActivity().getContentResolver().query(
+                  ReceiptProvider.CONTENT_URI,
+                        null,
+                        ReceiptTable.CLM_MESSAGE_ID + "=?",
+                        new String[] {holder.messageId},
+                        null
+                );
+                readyByAdapter.swapCursor(readByCursor);
+                readyByDialog.show();
+            }
+        });
 
         getLoaderManager().initLoader(0, null, this);
         return root;
@@ -208,12 +239,10 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     public void onEvent(final NewMessageEvent newMessageEvent) {
         if (mThreadId.equals(newMessageEvent.threadId)) {
-
             final Receipt receipt = new Receipt();
-            receipt.setThreadId(newMessageEvent.threadId);
             receipt.setMessageId(newMessageEvent.messageId);
             receipt.setUserId(SyncManager.getMyUser().id + "");
-            receipt.setTimestamp(System.currentTimeMillis() + "");
+            receipt.setTimestamp(System.currentTimeMillis());
             receipt.setSyncStatus(Receipt.SYNCED);
 
             ArrayList<Receipt> receiptArrayList = new ArrayList<Receipt>(1);
@@ -250,5 +279,9 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                 }
             });
         }
+    }
+
+    public void onEvent(LoadParticipantsEvent event) {
+        adapter.setParticipantsNumber(event.participantsNumber);
     }
 }

@@ -4,10 +4,10 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 import com.triaged.badge.database.table.BThreadsTable;
+import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.database.table.UsersTable;
 import com.triaged.badge.database.table.MessagesTable;
 
@@ -68,17 +68,47 @@ public class MessageProvider extends AbstractProvider {
     public synchronized Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         switch (uriType(uri)) {
             case RECORD_WITH_INFO:
-                SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
-                /**
-                 * check if the caller has requested a column which does not exists
-                 */
-                checkColumns(projection);
-                queryBuilder.setTables(MessagesTable.TABLE_NAME + " LEFT OUTER JOIN " +
-                        UsersTable.TABLE_NAME + " ON " +
-                        MessagesTable.TABLE_NAME + "." + MessagesTable.CLM_AUTHOR_ID + " = " +
-                        UsersTable.TABLE_NAME + "." + UsersTable.COLUMN_ID);
+                String query = "SELECT "
+                        +  MessagesTable.COLUMN_ID + ", "
+                        +  MessagesTable.CLM_ID + ", "
+                        +  MessagesTable.CLM_BODY + ", "
+                        +  MessagesTable.CLM_TIMESTAMP + ", "
+                        +  MessagesTable.CLM_IS_READ + ", "
+                        +  MessagesTable.CLM_AUTHOR_ID  + ", "
+                        +  MessagesTable.CLM_ACK  + ", "
+                        +  MessagesTable.CLM_GUID + ", "
+                        + UsersTable.CLM_FIRST_NAME + ", "
+                        + UsersTable.CLM_LAST_NAME + ", "
+                        + UsersTable.CLM_AVATAR_URL + ", "
+                        +  " SUM (CASE WHEN receipts.message_id IS NULL THEN 0 ELSE 1 END) AS cnt "
+
+                        + " FROM (SELECT * FROM " + MessagesTable.TABLE_NAME
+                        + " WHERE " + MessagesTable.CLM_THREAD_ID +  " =? ) messages " +
+                        " LEFT JOIN " +
+                        " (SELECT " + ReceiptTable.CLM_MESSAGE_ID + " FROM " + ReceiptTable.TABLE_NAME
+//                        + " GROUP BY " + ReceiptTable.CLM_MESSAGE_ID
+                        + " ) receipts " +
+                        " ON messages." + MessagesTable.CLM_ID
+                        + " = receipts." + ReceiptTable.CLM_MESSAGE_ID
+
+                        + " LEFT JOIN (SELECT "
+                        + UsersTable.COLUMN_ID + " AS user_id , "
+                        + UsersTable.CLM_FIRST_NAME + ", "
+                        + UsersTable.CLM_LAST_NAME + ", "
+                        + UsersTable.CLM_AVATAR_URL
+
+                        + " FROM " + UsersTable.TABLE_NAME
+                        + " ) users "
+                        + " ON users.user_id"
+                        + " = messages." + MessagesTable.CLM_AUTHOR_ID
+
+                        + " GROUP BY " + ReceiptTable.CLM_MESSAGE_ID
+                        + " ORDER BY " + MessagesTable.CLM_TIMESTAMP + " ASC "
+                        ;
+
+
                 SQLiteDatabase database = databaseHelper.getReadableDatabase();
-                Cursor cursor = queryBuilder.query(database, projection, selection, selectionArgs, null, null, sortOrder);
+                Cursor cursor = database.rawQuery(query, selectionArgs);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
 

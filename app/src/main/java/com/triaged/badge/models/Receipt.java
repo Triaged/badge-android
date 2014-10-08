@@ -1,6 +1,5 @@
 package com.triaged.badge.models;
 
-import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.triaged.badge.database.table.ReceiptTable;
@@ -17,10 +16,10 @@ public class Receipt {
     public static final int SYNCING = 200;
     public static final int NOT_SYNCED = 300;
 
-    String threadId;
     String messageId;
     String userId;
-    String timestamp;
+    long timestamp;
+    transient String threadId;
     transient int syncStatus;
 
 
@@ -48,11 +47,11 @@ public class Receipt {
         this.userId = userId;
     }
 
-    public String getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -63,16 +62,6 @@ public class Receipt {
 
     public void setSyncStatus(int syncStatus) {
         this.syncStatus = syncStatus;
-    }
-
-    public static ContentValues generateContentValue(Receipt receipt) {
-        ContentValues cv = new ContentValues(4);
-        cv.put(ReceiptTable.CLM_THREAD_ID, receipt.threadId);
-        cv.put(ReceiptTable.CLM_MESSAGE_ID, receipt.messageId);
-        cv.put(ReceiptTable.CLM_USER_ID, receipt.userId);
-        cv.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.timestamp);
-        cv.put(ReceiptTable.COLUMN_SYNC_STATUS, receipt.syncStatus);
-        return cv;
     }
 
     public static List<Receipt> getCursorEntities(Cursor cursor) {
@@ -92,7 +81,7 @@ public class Receipt {
         receipt.setMessageId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_MESSAGE_ID)));
         receipt.setThreadId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_THREAD_ID)));
         receipt.setUserId(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_USER_ID)));
-        receipt.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_SEEN_TIMESTAMP)));
+        receipt.setTimestamp(cursor.getLong(cursor.getColumnIndexOrThrow(ReceiptTable.CLM_SEEN_TIMESTAMP)));
         receipt.setSyncStatus(cursor.getInt(cursor.getColumnIndexOrThrow(ReceiptTable.COLUMN_SYNC_STATUS)));
         return receipt;
     }

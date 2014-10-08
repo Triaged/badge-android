@@ -56,4 +56,15 @@
         android:background="@drawable/other_bubble"
         android:lineSpacingMultiplier="1.2" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Small Text"
+        android:id="@+id/read_by_text"
+        android:layout_below="@+id/message_text"
+        android:layout_margin="5dp"
+        android:layout_alignLeft="@+id/message_text"
+        android:textColor="@color/light_gray" />
+
 </RelativeLayout>
