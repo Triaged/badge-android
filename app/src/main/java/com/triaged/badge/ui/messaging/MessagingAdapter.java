@@ -86,8 +86,18 @@ public class MessagingAdapter  extends CursorAdapter {
         holder.timestamp.setText(prettyTime.format(messageDate));
         holder.userPhoto.setVisibility(View.VISIBLE);
         holder.userPhoto.setImageBitmap(null);
-        String cnt = cursor.getString(cursor.getColumnIndexOrThrow("cnt"));
-        holder.readBy.setText(String.format("Ready by %s/%s", cnt, participantsNumber));
+        int cnt = cursor.getInt(cursor.getColumnIndexOrThrow("cnt"));
+        if (participantsNumber > 1) {
+            holder.readBy.setVisibility(View.VISIBLE);
+            holder.readBy.setText(String.format("Ready by %s/%s", cnt, participantsNumber));
+        } else {
+            if (cnt == 0) {
+                holder.readBy.setVisibility(View.INVISIBLE);
+            } else {
+                holder.readBy.setVisibility(View.VISIBLE);
+                holder.readBy.setText("Read");
+            }
+        }
         String first = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_FIRST_NAME));
         String last = cursor.getString(cursor.getColumnIndex(UsersTable.CLM_LAST_NAME));
         holder.photoPlaceholder.setText(Contact.constructInitials(first, last));
