@@ -151,15 +151,17 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 MessagingAdapter.MessageHolder holder = (MessagingAdapter.MessageHolder) view.getTag();
-                Cursor readByCursor = getActivity().getContentResolver().query(
-                  ReceiptProvider.CONTENT_URI,
-                        null,
-                        ReceiptTable.CLM_MESSAGE_ID + "=?",
-                        new String[] {holder.messageId},
-                        null
-                );
-                readyByAdapter.swapCursor(readByCursor);
-                readyByDialog.show();
+                if (holder.messageId != null) {
+                    Cursor readByCursor = getActivity().getContentResolver().query(
+                            ReceiptProvider.CONTENT_URI,
+                            null,
+                            ReceiptTable.CLM_MESSAGE_ID + "=?",
+                            new String[]{holder.messageId},
+                            null
+                    );
+                    readyByAdapter.swapCursor(readByCursor);
+                    readyByDialog.show();
+                }
             }
         });
 
