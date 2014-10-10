@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingTop="16dp"
+    android:paddingRight="16dp"
+    android:paddingBottom="14dp">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/avatar_layout"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="8dp"
+        android:padding="0dp">
+
+        <ImageView
+            android:id="@+id/contact_thumb"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@null"
+            android:contentDescription="@string/content_description_thumb"
+            android:src="@drawable/ic_action_person" />
+
+        <TextView
+            android:id="@+id/no_photo_thumb"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/no_photo_thumb_bg"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:visibility="invisible"
+            android:textSize="15sp"
+            android:text="CW" />
+    </FrameLayout>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="First Last"
+        android:id="@+id/message_name"
+        android:layout_toRightOf="@+id/avatar_layout"
+        android:layout_marginRight="6dp"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/dark_gray"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Octobar 18 17:38 pm,"
+        android:id="@+id/message_date"
+        android:textColor="@color/lighter_gray"
+        android:layout_below="@+id/message_name"
+        android:layout_toRightOf="@+id/avatar_layout"
+        android:textSize="12sp"
+        android:layout_marginRight="3dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Read by 2/5"
+        android:id="@+id/readby"
+        android:textColor="@color/lighter_gray"
+        android:layout_below="@+id/message_name"
+        android:layout_toRightOf="@+id/message_date"
+        android:textSize="12sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Message text goes here"
+        android:id="@+id/message_text"
+        android:layout_below="@+id/avatar_layout"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@color/sharp_black" />
+
+</RelativeLayout>

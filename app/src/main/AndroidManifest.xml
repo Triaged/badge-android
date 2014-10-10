@@ -87,7 +87,7 @@
         <activity
             android:name="com.triaged.badge.ui.messaging.MessagingActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/Badge"
+            android:theme="@style/Theme.Blue_badge"
             android:windowSoftInputMode="stateHidden" >
         </activity>
         <activity

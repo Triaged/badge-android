@@ -24,5 +24,7 @@
     <color name="prime_gray">#838994</color>
     <color name="light_gray">#9799A0</color>
     <color name="lighter_gray">#CACCD1</color>
+    <color name="dark_gray">#4C5058</color>
+    <color name="sharp_black">#1D1E21</color>
 
 </resources>

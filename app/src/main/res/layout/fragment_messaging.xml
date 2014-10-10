@@ -2,8 +2,7 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:custom="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent" >
 
     <ListView
         android:id="@+id/message_listview"
@@ -14,12 +13,12 @@
         android:paddingBottom="16dp"
         android:layout_marginBottom="48dp"
         android:scrollbarStyle="outsideOverlay"
-        android:clipToPadding="false"
-        android:fastScrollEnabled="false"
-        android:overScrollMode="never"
-        android:divider="@null"
+        android:clipToPadding="true"
+        android:dividerHeight="0.3dp"
+        android:divider="@drawable/divider_messaging_rows"
         android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll" />
+        android:transcriptMode="alwaysScroll"
+        android:background="@color/white" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -28,7 +27,7 @@
         android:layout_alignParentBottom="true"
         android:id="@+id/post_box_wrapper">
 
-        <com.triaged.badge.ui.base.views.EditTextWithFont
+        <EditText
             android:id="@+id/input_box"
             android:inputType="textMultiLine"
             android:minLines="1"
@@ -43,7 +42,6 @@
             android:paddingRight="0dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-            custom:font="Roboto-Regular.ttf"
             android:hint="@string/write_message"
             android:textColorHint="@color/light_text_gray"
             android:textColor="@color/main_text_black"
@@ -64,22 +62,5 @@
             android:layout_centerVertical="true" />
 
     </RelativeLayout>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/thread_members_wrapper"
-        android:visibility="gone">
-
-        <LinearLayout
-            android:id="@+id/thread_members"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/linear_layout_shadow">
-
-        </LinearLayout>
-
-    </ScrollView>
 
 </RelativeLayout>

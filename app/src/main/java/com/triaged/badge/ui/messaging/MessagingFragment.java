@@ -164,9 +164,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         });
 
         getLoaderManager().initLoader(0, null, this);
-
         generateReceiptsAndMarkAsRead();
-
         return root;
     }
 
