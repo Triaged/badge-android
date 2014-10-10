@@ -225,8 +225,27 @@ public class MessageProcessor {
         dbOperations.clear();
 
         for (Message message : bThread.getMessages()) {
-            // Insert the message into the database.
+            /**
+             * Insert message receipts into database.
+             */
+            boolean amIInReceipts = false;
+            for (Receipt receipt : message.getReadReceipts()) {
+                receipt.setThreadId(bThread.getId());
+                insertReceivedReceipt(receipt);
+
+                if (receipt.getUserId().equals(App.accountId() + ""))
+                    amIInReceipts = true;
+            }
+
+            /**
+             * Insert the message into the database.
+             */
             ContentValues contentValues = MessageHelper.toContentValue(message, bThread.getId());
+            // If this is my own message or,
+            // I was already in receipts, mark it as READ.
+            if (message.getAuthorId().equals(App.accountId() + "" ) || amIInReceipts) {
+                contentValues.put(MessagesTable.CLM_IS_READ, 1);
+            }
             dbOperations.add(ContentProviderOperation.newInsert(
                     MessageProvider.CONTENT_URI).
                     withValues(contentValues).
@@ -239,27 +258,8 @@ public class MessageProcessor {
                 mostRecentMsgTimestamp = timestamp;
             }
 
-            for (Receipt receipt : message.getReadReceipts()) {
-                receipt.setSyncStatus(Receipt.SYNCED);
-                receipt.setThreadId(bThread.getId() + "");
-                mContext.getContentResolver()
-                        .insert(ReceiptProvider.CONTENT_URI, ReceiptHelper.fromReceipt(receipt));
-            }
-
-            // If I am not the author of this message,
-            // create a receipt and put into database for further use.
-            if (contentValues.getAsInteger(MessagesTable.CLM_AUTHOR_ID) != App.accountId()) {
-                ContentValues receiptValues = new ContentValues();
-                receiptValues.put(ReceiptTable.CLM_MESSAGE_ID, contentValues.getAsString(MessagesTable.CLM_ID));
-                receiptValues.put(ReceiptTable.CLM_THREAD_ID, bThread.getId());
-                receiptValues.put(ReceiptTable.CLM_USER_ID, App.accountId());
-                receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
-                mContext.getContentResolver().insert(ReceiptProvider.CONTENT_URI, receiptValues);
-                // Announce on event-but that we have new message
-                EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
-                        contentValues.getAsString(MessagesTable.CLM_ID)));
-            }
-
+            EventBus.getDefault().post(new NewMessageEvent(bThread.getId(),
+                    contentValues.getAsString(MessagesTable.CLM_ID)));
         }
 
         try {
@@ -302,6 +302,29 @@ public class MessageProcessor {
         } else {
             messages.close();
         }
+    }
+
+    public void storeReceipts(Receipt[] receipts) {
+        for (Receipt receipt : receipts) {
+            if (receipt.getUserId().equals(App.accountId() + "")) {
+                ContentValues cv = new ContentValues(1);
+                cv.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
+                mContext.getContentResolver().update(ReceiptProvider.CONTENT_URI,
+                        cv,
+                        ReceiptTable.CLM_MESSAGE_ID + " =?",
+                        new String[]{receipt.getMessageId()}
+                );
+
+            } else {
+                insertReceivedReceipt(receipt);
+            }
+        }
+    }
+
+    private void insertReceivedReceipt(Receipt receipt) {
+        receipt.setSyncStatus(Receipt.SYNCED);
+        mContext.getContentResolver()
+                .insert(ReceiptProvider.CONTENT_URI, ReceiptHelper.fromReceipt(receipt));
     }
 
     /**

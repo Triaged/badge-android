@@ -19,7 +19,9 @@ public class ReceiptHelper {
 
     public static ContentValues fromReceipt(Receipt receipt) {
         ContentValues contentValues = new ContentValues(5);
-        contentValues.put(ReceiptTable.CLM_THREAD_ID, receipt.getThreadId());
+        if (receipt.getThreadId() != null )
+            contentValues.put(ReceiptTable.CLM_THREAD_ID, receipt.getThreadId());
+
         contentValues.put(ReceiptTable.CLM_MESSAGE_ID, receipt.getMessageId());
         contentValues.put(ReceiptTable.CLM_USER_ID, receipt.getUserId());
         contentValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
@@ -55,10 +57,10 @@ public class ReceiptHelper {
     public static List<Receipt> fetchAllReceiptReportCandidates(Context context) {
         Cursor cursor = context.getContentResolver().query(
                 ReceiptProvider.CONTENT_URI, null,
-                ReceiptTable.CLM_SEEN_TIMESTAMP + " IS NOT NULL AND " +
-                        ReceiptTable.COLUMN_SYNC_STATUS + " =? ",
-                new String[]{Receipt.NOT_SYNCED + ""},
-                null);
+                ReceiptTable.COLUMN_SYNC_STATUS + " =? ",
+                new String[]{ Receipt.NOT_SYNCED + "" },
+                ReceiptTable.CLM_THREAD_ID
+        );
         return Receipt.getCursorEntities(cursor);
     }
 

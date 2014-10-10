@@ -8,19 +8,26 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.saulpower.fayeclient.FayeClient;
 import com.triaged.badge.app.App;
 import com.triaged.badge.app.BuildConfig;
 import com.triaged.badge.app.MessageProcessor;
 import com.triaged.badge.app.R;
 import com.triaged.badge.events.MessageForFayEvent;
+import com.triaged.badge.events.ReceiptForFayEvent;
 import com.triaged.badge.models.BThread;
+import com.triaged.badge.models.Receipt;
 import com.triaged.utils.SharedPreferencesHelper;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -88,7 +95,7 @@ public class FayeService extends Service implements FayeClient.FayeListener {
                 App.gLogger.e("JSON exception trying to construct the dang faye extension for auth");
             }
         }
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Override
@@ -156,21 +163,62 @@ public class FayeService extends Service implements FayeClient.FayeListener {
     @Override
     @DebugLog
     public void messageReceived(final JSONObject json) {
-        if (json.has("ping")) {
-            return;
-        }
-        try {
-            BThread messageThread = App.gson.fromJson(json.getJSONObject("message_thread").toString(), BThread.class);
-            MessageProcessor.getInstance().upsertThreadAndMessages(messageThread, true);
-        } catch (JSONException e) {
-            Log.w(LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e);
+        if (json.has("message_thread")) {
+            try {
+                JSONObject msgJsonObj = json.getJSONObject("message_thread");
+                BThread messageThread = App.gson.fromJson(msgJsonObj.toString(), BThread.class);
+                MessageProcessor.getInstance().upsertThreadAndMessages(messageThread, true);
+            } catch (JSONException e) {
+                Log.w(LOG_TAG, "JSON exception extracting GUID. This is a big surprise.", e);
+            }
+        } else if (json.has("receipts")) {
+            try {
+                JSONArray receiptJsonObj = json.getJSONArray("receipts");
+                Receipt[] receipts = App.gson.fromJson(receiptJsonObj.toString(), Receipt[].class);
+                MessageProcessor.getInstance().storeReceipts(receipts);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
-
 
     public void onEvent(MessageForFayEvent event) {
         if (fayeConnected) {
             faye.publish(String.format("/threads/messages/%s", event.getThreadId()), event.getMessage());
+        }
+    }
+
+    public void onEvent(ReceiptForFayEvent event) {
+        if (fayeConnected) {
+            List<Receipt> threadReceipts = new ArrayList<Receipt>();
+            String previousThreadId = event.getReceipts().get(0).getThreadId();
+            for (Receipt receipt: event.getReceipts()) {
+                if (previousThreadId.equals(receipt.getThreadId())) {
+                    threadReceipts.add(receipt);
+                } else {
+                    prepareAndSendReceipts(threadReceipts, previousThreadId);
+                    previousThreadId = receipt.getThreadId();
+                    threadReceipts.clear();
+                }
+            }
+            if (threadReceipts.size() > 0) {
+                prepareAndSendReceipts(threadReceipts, previousThreadId);
+            }
+        }
+    }
+
+    private void prepareAndSendReceipts(List<Receipt> threadReceipts, String threadId) {
+        JsonElement jsonStr = App.gson.toJsonTree(threadReceipts);
+        JsonObject jsonObject = new JsonObject();
+        try {
+            jsonObject.add("receipts", jsonStr);
+            jsonObject.addProperty("guid", "do_not_need_guid");
+            if (fayeConnected) {
+                JSONObject jj = new JSONObject(jsonObject.toString());
+                faye.publish(String.format("/threads/receipts/%s", threadId), jj);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 }

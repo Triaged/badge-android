@@ -4,11 +4,14 @@ package com.triaged.badge.ui.messaging;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.Loader;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,10 +30,8 @@ import com.triaged.badge.database.provider.ReceiptProvider;
 import com.triaged.badge.database.table.MessagesTable;
 import com.triaged.badge.database.table.ReceiptTable;
 import com.triaged.badge.events.NewMessageEvent;
+import com.triaged.badge.events.ReceiptForFayEvent;
 import com.triaged.badge.models.Receipt;
-import com.triaged.badge.app.SyncManager;
-import com.triaged.badge.net.api.RestService;
-import com.triaged.badge.net.api.requests.ReceiptsReportRequest;
 import com.triaged.badge.ui.base.MixpanelFragment;
 import com.triaged.badge.ui.home.adapters.UserAdapter;
 import com.triaged.badge.ui.notification.Notifier;
@@ -46,9 +47,6 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
 import de.greenrobot.event.EventBus;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -61,11 +59,11 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
     // the fragment initialization thread_id parameter.
     private static final String ARG_THREAD_ID = "thread_id";
 
-    private String mThreadId;
+    private static String mThreadId;
     private MessagingAdapter adapter;
     private int soleCounterpartId = 0;
     private int userCount = 2;
-    private boolean reportsReceipts = false;
+    private volatile boolean hasGeneratedReceipts = false;
 
     AlertDialog readyByDialog;
     ListView readyByListView;
@@ -137,7 +135,6 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         if (getArguments() != null) {
             mThreadId = getArguments().getString(ARG_THREAD_ID);
         }
-        markMessagesAsRead();
     }
 
     @Override
@@ -167,6 +164,9 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
         });
 
         getLoaderManager().initLoader(0, null, this);
+
+        generateReceiptsAndMarkAsRead();
+
         return root;
     }
 
@@ -179,27 +179,39 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     @Override
     public void onStop() {
-        markMessagesAsRead();
         EventBus.getDefault().unregister(this);
+        generateReceiptsAndMarkAsRead();
         super.onStop();
+    }
+
+    private void generateReceiptsAndMarkAsRead() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (!hasGeneratedReceipts) {
+                    generate();
+                    sendReceipts();
+                }
+                markMessagesAsRead();
+            }
+        });
+        thread.start();
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        //TODO: must optimized the columns projection
-        return new CursorLoader(getActivity(), MessageProvider.CONTENT_URI_WITH_CONTACTS_INFO,
-                null, MessagesTable.CLM_THREAD_ID + " =?",
-                new String[] { mThreadId},
-                null);
+        return new CursorLoader(getActivity(),
+                MessageProvider.CONTENT_URI_WITH_CONTACTS_INFO,
+                null,
+                MessagesTable.CLM_THREAD_ID + " =?",
+                new String[] { mThreadId },
+                null
+        );
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         adapter.swapCursor(data);
-        if (!reportsReceipts) {
-            reportsReceipts = true;
-            prepareAndSendReceipts();
-        }
     }
 
     @Override
@@ -207,77 +219,70 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
     }
 
+    private void generate() {
+        // Generate receipts for messages which are not set as read.
+        Cursor cursor = App.context().getContentResolver().query(
+                MessageProvider.CONTENT_URI,
+                new String[]{MessagesTable.CLM_ID},
+                MessagesTable.CLM_THREAD_ID + " =? AND "
+                        + MessagesTable.CLM_IS_READ + " = 0 AND " +
+                        MessagesTable.CLM_AUTHOR_ID + " != ?",
+                new String[]{mThreadId, App.accountId() + ""},
+                null
+        );
+        if (cursor.moveToFirst()) {
+            ArrayList<ContentProviderOperation> insertOperations = new ArrayList<ContentProviderOperation>(cursor.getCount());
+            do {
+                ContentValues receiptValues = new ContentValues();
+                receiptValues.put(ReceiptTable.CLM_MESSAGE_ID, cursor.getString(0));
+                receiptValues.put(ReceiptTable.CLM_THREAD_ID, mThreadId);
+                receiptValues.put(ReceiptTable.CLM_USER_ID, App.accountId());
+                receiptValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, System.currentTimeMillis() / 1000f);
+                receiptValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.NOT_SYNCED);
+                insertOperations.add(ContentProviderOperation.newInsert(
+                        ReceiptProvider.CONTENT_URI).withValues(receiptValues).build());
+            } while (cursor.moveToNext());
 
-    private void prepareAndSendReceipts() {
-        ReceiptHelper.setTimestamp(getActivity(), mThreadId);
+            try {
+                App.context().getContentResolver().applyBatch(ReceiptProvider.AUTHORITY, insertOperations);
+                hasGeneratedReceipts = true;
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            } catch (OperationApplicationException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendReceipts() {
+        // Report receipts to the server.
         List<Receipt> receiptList = ReceiptHelper.fetchAllReceiptReportCandidates(App.context());
         if (receiptList.size() > 0) {
-            ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptList);
-            RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
-                @Override
-                public void success(Response response, Response response2) {
-                    ReceiptHelper.setAllSeenReceiptsSync(App.context());
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-
-                }
-            });
+            EventBus.getDefault().post(new ReceiptForFayEvent(receiptList));
         }
-
     }
 
     private void markMessagesAsRead() {
         ContentValues values = new ContentValues();
         values.put(MessagesTable.CLM_IS_READ, 1);
-        getActivity().getContentResolver().update(MessageProvider.CONTENT_URI, values,
+        App.context().getContentResolver().update(
+                MessageProvider.CONTENT_URI,
+                values,
                 MessagesTable.CLM_THREAD_ID + " =?",
-                new String[] { mThreadId});
+                new String[] { mThreadId }
+        );
+    }
+
+    public static String threadId() {
+        return mThreadId;
     }
 
 
     public void onEvent(final NewMessageEvent newMessageEvent) {
         if (mThreadId.equals(newMessageEvent.threadId)) {
-            final Receipt receipt = new Receipt();
-            receipt.setMessageId(newMessageEvent.messageId);
-            receipt.setUserId(SyncManager.getMyUser().id + "");
-            receipt.setTimestamp(System.currentTimeMillis());
-            receipt.setSyncStatus(Receipt.SYNCED);
-
-            ArrayList<Receipt> receiptArrayList = new ArrayList<Receipt>(1);
-            receiptArrayList.add(receipt);
-            ReceiptsReportRequest receiptsReportRequest = new ReceiptsReportRequest(receiptArrayList);
-
-            RestService.instance().messaging().reportReceipts(receiptsReportRequest, new Callback<Response>() {
-                @Override
-                public void success(Response response, Response response2) {
-                    App.gLogger.i(response.getReason());
-
-                    ContentValues receiptSyncedValues = new ContentValues(2);
-                    receiptSyncedValues.put(ReceiptTable.COLUMN_SYNC_STATUS, Receipt.SYNCED);
-                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
-
-                    getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
-                            receiptSyncedValues,
-                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.CLM_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
-                }
-
-                @Override
-                public void failure(RetrofitError error) {
-                    App.gLogger.e(error.getMessage());
-                    ContentValues receiptSyncedValues = new ContentValues(1);
-                    receiptSyncedValues.put(ReceiptTable.CLM_SEEN_TIMESTAMP, receipt.getTimestamp());
-
-                    getActivity().getContentResolver().update(ReceiptProvider.CONTENT_URI,
-                            receiptSyncedValues,
-                            ReceiptTable.CLM_MESSAGE_ID + "=? AND "
-                                    + ReceiptTable.CLM_USER_ID + "=?",
-                            new String[]{newMessageEvent.messageId, SyncManager.getMyUser().id + ""});
-                }
-            });
+            generate();
+            sendReceipts();
         }
     }
 
