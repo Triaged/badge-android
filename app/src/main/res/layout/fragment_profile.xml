@@ -6,7 +6,6 @@
 
     <ScrollView
         android:layout_width="match_parent" android:layout_height="match_parent"
-        android:layout_marginBottom="48dp"
         android:id="@+id/profile_scrollview">
 
 
@@ -233,7 +232,8 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="@color/main_orange"
-        android:layout_alignParentBottom="true" >
+        android:layout_alignParentBottom="true"
+        android:visibility="gone">
 
         <ImageButton
             android:id="@+id/message_button"

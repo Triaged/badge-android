@@ -143,5 +143,8 @@
     <string name="four_digit_code">4-digit code</string>
     <string name="title_activity_onboarding_invite_colleague">Invite Coworkers</string>
     <string name="search">Search</string>
+    <string name="create_group">Create Group</string>
+    <string name="send_message">Send Message</string>
+    <string name="settings">Settings</string>
 
 </resources>

@@ -54,14 +54,4 @@
         android:divider="@null"
         android:listSelector="@drawable/white_button_bg" />
 
-    <ImageButton
-        android:layout_alignParentBottom="true"
-        android:id="@+id/compose_button"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:src="@drawable/ic_action_chat_beige"
-        android:contentDescription="@string/content_description_my_settings"
-        android:background="@drawable/orange_button_bg"
-        android:gravity="center" />
-
 </RelativeLayout>

@@ -9,25 +9,14 @@ import android.support.v4.view.ViewPager;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.ui.base.BadgeActivity;
+import com.triaged.badge.ui.base.views.FlexViewPager;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 public class MainActivity extends BadgeActivity implements ActionBar.TabListener {
 
-
     private boolean shouldRegister = true;
-
-    @InjectView(R.id.viewpager) ViewPager viewPager;
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setupUi();
-    }
-
 
     ActionBar.Tab messageTab;
     ActionBar.Tab contactsTab;
@@ -37,13 +26,19 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
     Fragment contactFragment;
     Fragment myProfileFragment;
 
-    private void setupUi() {
+    @InjectView(R.id.viewpager) FlexViewPager viewPager;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setupUi();
+    }
+
+    private void setupUi() {
         getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         getActionBar().setDisplayShowTitleEnabled(false);
         getActionBar().setDisplayShowHomeEnabled(false);
         getActionBar().setDisplayUseLogoEnabled(false);
-
 
         setContentView(R.layout.activity_mian);
         ButterKnife.inject(this);
@@ -63,7 +58,6 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
         getActionBar().addTab(messageTab);
         getActionBar().addTab(contactsTab);
         getActionBar().addTab(myProfileTab);
-
 
         viewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
@@ -99,34 +93,33 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
                 return 3;
             }
         });
-
         viewPager.setCurrentItem(1);
-
-
     }
 
     private void changeTabDrawable(int position) {
         getActionBar().setSelectedNavigationItem(position);
         switch (position) {
             case 0:
+                getActionBar().setIcon(R.drawable.messages_selected);
                 messageTab.setIcon(R.drawable.messages_selected);
                 contactsTab.setIcon(R.drawable.contacts_unselected);
                 myProfileTab.setIcon(R.drawable.profile_unselected);
                 break;
 
             case 1:
+                getActionBar().setIcon(R.drawable.contacts_selected);
                 messageTab.setIcon(R.drawable.messages_unselected);
                 contactsTab.setIcon(R.drawable.contacts_selected);
                 myProfileTab.setIcon(R.drawable.profile_unselected);
                 break;
 
             case 2:
+                getActionBar().setIcon(R.drawable.profile_selected);
                 messageTab.setIcon(R.drawable.messages_unselected);
                 contactsTab.setIcon(R.drawable.contacts_unselected);
                 myProfileTab.setIcon(R.drawable.profile_selected);
                 break;
         }
-
     }
 
     @Override

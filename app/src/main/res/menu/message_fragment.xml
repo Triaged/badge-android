@@ -2,4 +2,9 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <item android:id="@+id/action_compose_message"
+        android:title="@string/message_new"
+        android:icon="@drawable/ic_action_chat"
+        android:orderInCategory="100"
+        android:showAsAction="always" />
 </menu>

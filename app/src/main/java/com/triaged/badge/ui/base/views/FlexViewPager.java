@@ -11,11 +11,11 @@ import android.view.MotionEvent;
  * Created by Sadegh Kazemy on 9/23/14.
  */
 
-    public class NonSwipeableViewPager extends ViewPager {
+    public class FlexViewPager extends ViewPager {
 
         private boolean enabled;
 
-        public NonSwipeableViewPager(Context context, AttributeSet attrs) {
+        public FlexViewPager(Context context, AttributeSet attrs) {
             super(context, attrs);
             this.enabled = true;
         }

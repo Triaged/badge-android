@@ -15,6 +15,9 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -240,6 +243,7 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_profile, container, false);
         ButterKnife.inject(this, root);
         loadContactData();
@@ -290,25 +294,33 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
     }
 
     private void setupBottomLayout() {
-        if (mContactId == App.accountId()) {
-            messageButton.setVisibility(View.INVISIBLE);
-            emailButton.setVisibility(View.INVISIBLE);
-            callButton.setVisibility(View.INVISIBLE);
-            settingButton.setVisibility(View.VISIBLE);
-        } else {
-            if (!TextUtils.isEmpty(mCurrentUser.getEmail())) {
-                emailButton.setVisibility(View.VISIBLE);
-            } else {
-                emailButton.setVisibility(View.INVISIBLE);
-            }
 
-            if (!TextUtils.isEmpty(mCurrentUser.getEmployeeInfo().getCellPhone())) {
-                callButton.setVisibility(View.VISIBLE);
-            } else {
-                callButton.setVisibility(View.INVISIBLE);
-            }
-            messageButton.setVisibility(View.VISIBLE);
-            settingButton.setVisibility(View.INVISIBLE);
+        if (settingAction != null && sendMessageAction != null)
+        if (mContactId == App.accountId()) {
+            settingAction.setVisible(true);
+            sendMessageAction.setVisible(false);
+//            messageButton.setVisibility(View.INVISIBLE);
+//            emailButton.setVisibility(View.INVISIBLE);
+//            callButton.setVisibility(View.INVISIBLE);
+//            settingButton.setVisibility(View.VISIBLE);
+        } else {
+
+            settingAction.setVisible(false);
+            sendMessageAction.setVisible(true);
+
+//            if (!TextUtils.isEmpty(mCurrentUser.getEmail())) {
+//                emailButton.setVisibility(View.VISIBLE);
+//            } else {
+//                emailButton.setVisibility(View.INVISIBLE);
+//            }
+//
+//            if (!TextUtils.isEmpty(mCurrentUser.getEmployeeInfo().getCellPhone())) {
+//                callButton.setVisibility(View.VISIBLE);
+//            } else {
+//                callButton.setVisibility(View.INVISIBLE);
+//            }
+//            messageButton.setVisibility(View.VISIBLE);
+//            settingButton.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -590,5 +602,35 @@ public class ProfileFragment extends MixpanelFragment implements LoaderManager.L
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+
+    MenuItem settingAction;
+    MenuItem sendMessageAction;
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.profile_fragment, menu);
+        settingAction = menu.findItem(R.id.action_settings);
+        sendMessageAction = menu.findItem(R.id.action_send_message);
+        setupBottomLayout();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                openSettings();
+                return true;
+
+            case R.id.action_send_message:
+                openMessage();
+                return true;
+
+            case android.R.id.home:
+                getActivity().finish();
+                return true;
+        }
+        return false;
     }
 }

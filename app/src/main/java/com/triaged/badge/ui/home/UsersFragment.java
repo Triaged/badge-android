@@ -1,5 +1,6 @@
 package com.triaged.badge.ui.home;
 
+import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
@@ -8,16 +9,17 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SearchView;
 
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.provider.UserProvider;
@@ -32,6 +34,7 @@ import com.triaged.badge.ui.profile.ProfileActivity;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
+import butterknife.Optional;
 import se.emilsjolander.stickylistheaders.StickyListHeadersListView;
 
 /**
@@ -52,14 +55,11 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     private Typeface medium = null;
     private Typeface regular = null;
 
-
     @InjectView(R.id.contacts_list) StickyListHeadersListView contactsListView;
     @InjectView(R.id.departments_list) ListView departmentsListView;
     @InjectView(R.id.contacts_departments_tab) View bottomTabsWrapper;
     @InjectView(R.id.contacts_tab) Button contactsTab;
     @InjectView(R.id.departments_tab) Button departmentsTab;
-    @InjectView(R.id.search_bar) EditText searchBar;
-    @InjectView(R.id.clear_search) View clearSearch;
 
 
     @OnClick(R.id.contacts_tab)
@@ -71,7 +71,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
             contactsListView.setVisibility(View.VISIBLE);
             contactsTab.setTypeface(medium);
             departmentsTab.setTypeface(regular);
-            searchBar.setHint(getActivity().getString(R.string.search_contacts));
+//            searchBar.setHint(getActivity().getString(R.string.search_contacts));
         }
     }
 
@@ -84,17 +84,15 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
             contactsListView.setVisibility(View.INVISIBLE);
             departmentsTab.setTypeface(medium);
             contactsTab.setTypeface(regular);
-            searchBar.setHint(getActivity().getString(R.string.search_departments));
+//            searchBar.setHint(getActivity().getString(R.string.search_departments));
         }
     }
 
-    @OnClick(R.id.clear_search)
     void clearSearch() {
         if (mSearchTerm != null) {
             mSearchTerm = null;
             getLoaderManager().restartLoader(currentTab, null, this);
         }
-        searchBar.setText("");
     }
 
 
@@ -102,9 +100,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         UsersFragment fragment = new UsersFragment();
         return fragment;
     }
-    public UsersFragment() {
-        // Required empty public constructor
-    }
+    public UsersFragment() { }
 
 
     @Override
@@ -112,6 +108,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
                              Bundle savedInstanceState) {
         View root =  inflater.inflate(R.layout.fragment_contacts, container, false);
         ButterKnife.inject(this, root);
+        setHasOptionsMenu(true);
 
         contactsAdapter = new UserAdapter(getActivity(), null, R.layout.item_contact_with_msg);
         departmentAdapter = new DepartmentAdapter(getActivity(), null);
@@ -125,7 +122,6 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         medium = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Medium.ttf");
         regular = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Regular.ttf");
 
-        searchBar.setHint(getActivity().getString(R.string.search_contacts));
         contactsTab.setTypeface(medium);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -156,37 +152,6 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
                 startActivity(intent);
             }
         });
-
-        searchBar.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String newFilter = !TextUtils.isEmpty(s) ? String.valueOf(s) : null;
-
-                if (s == null || s.length() == 0) {
-                    clearSearch.setVisibility(View.INVISIBLE);
-                }
-
-                // Don't do anything if the filter is empty
-                if (mSearchTerm == null && newFilter == null) {
-                    return;
-                }
-                // Don't do anything if the new filter is the same as the current filter
-                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
-                    return;
-                }
-
-                clearSearch.setVisibility(View.VISIBLE);
-                // Updates current filter to new filter
-                mSearchTerm = newFilter;
-                // Restarts the loader. This triggers onCreateLoader(), which builds the
-                // necessary content Uri from mSearchTerm.
-                getLoaderManager().restartLoader(currentTab, null, UsersFragment.this);
-            }
-
-            @Override public void afterTextChanged(Editable s) { }
-        });
-
         return root;
     }
 
@@ -233,7 +198,6 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         } else if (loader.getId() == DEPARTMENTS_TAB_ID) {
             departmentAdapter.swapCursor(data);
         }
-
     }
 
     @Override
@@ -241,4 +205,65 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
 
     }
 
+
+    SearchView mSearchView;
+    MenuItem mSearchMenuItem;
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.users_fragment, menu);
+
+        final Menu fMenu = menu;
+        mSearchMenuItem = menu.findItem(R.id.action_search);
+        mSearchMenuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                getActivity().getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+                fMenu.findItem(R.id.action_create_group).setVisible(false);
+                ((MainActivity) getActivity()).viewPager.setPagingEnabled(false);
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                getActivity().getActionBar().setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+                fMenu.findItem(R.id.action_create_group).setVisible(true);
+
+                if (!TextUtils.isEmpty(mSearchTerm)) {
+                    mSearchTerm = null;
+                    getLoaderManager().restartLoader(currentTab, null, UsersFragment.this);
+                }
+
+                ((MainActivity) getActivity()).viewPager.setPagingEnabled(true);
+                return true;
+            }
+        });
+        mSearchView = (SearchView) mSearchMenuItem.getActionView();
+//        mSearchView.setQueryHint(getString(R.string.search_contacts_hint_text));
+
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) {
+                return true;
+            }
+
+            @Override public boolean onQueryTextChange(String newText) {
+                String newFilter = !TextUtils.isEmpty(newText) ? newText : null;
+                if (mSearchTerm == null && newFilter == null) {
+                    return true;
+                }
+                if (mSearchTerm != null && mSearchTerm.equals(newFilter)) {
+                    return true;
+                }
+                mSearchTerm = newFilter;
+                getLoaderManager().restartLoader(currentTab, null, UsersFragment.this);
+                return true;
+            }
+        });
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
 }
