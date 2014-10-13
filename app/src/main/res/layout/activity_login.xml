@@ -57,7 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:hint="@string/email_input_hint"
+            android:hint="@string/password"
             android:inputType="textPassword"
             android:textColor="@color/prime_blue"
             android:textColorHint="@color/lighter_gray"

@@ -85,7 +85,7 @@ public class LoginActivity extends Activity implements Validator.ValidationListe
         if (progressDialog == null) {
             progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Please wait");
-            progressDialog.setMessage("Signing up");
+            progressDialog.setMessage("Logging in");
             progressDialog.setCanceledOnTouchOutside(false);
         }
         progressDialog.show();

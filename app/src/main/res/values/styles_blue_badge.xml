@@ -33,6 +33,12 @@
         <item name="android:actionModeBackground">@drawable/cab_background_top_blue_badge</item>
         <item name="android:actionModeSplitBackground">@drawable/cab_background_bottom_blue_badge</item>
         <item name="android:actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Blue_badge</item>
+
+    </style>
+
+    <style name="Theme.Pure_Blue_badge" parent="Theme.Blue_badge">
+        <item name="android:actionBarStyle">@style/ActionBar.Solid.Pure_Blue_badge</item>
+
     </style>
 
     <style name="ActionBar.Solid.Blue_badge" parent="@android:style/Widget.Holo.Light.ActionBar.Solid">
@@ -46,12 +52,25 @@
         <item name="android:icon">@android:color/transparent</item>
     </style>
 
+    <style name="ActionBar.Solid.Pure_Blue_badge" parent="ActionBar.Solid.Blue_badge">
+        <item name="android:titleTextStyle">@style/TitleTextStyle.ActionBar.Pure_Blue_badge</item>
+        <item name="android:background">@drawable/ab_bottom_solid_blue_badge</item>
+        <item name="android:backgroundStacked">@drawable/ab_bottom_solid_blue_badge</item>
+        <item name="android:backgroundSplit">@drawable/ab_bottom_solid_blue_badge</item>
+
+    </style>
+
     <style name="ActionBar.Transparent.Blue_badge" parent="@android:style/Widget.Holo.Light.ActionBar">
         <item name="android:background">@drawable/ab_transparent_blue_badge</item>
         <item name="android:progressBarStyle">@style/ProgressBar.Blue_badge</item>
     </style>
 
     <style name="TitleTextStyle.ActionBar.Blue_badge" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/sharp_black</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="TitleTextStyle.ActionBar.Pure_Blue_badge" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">20sp</item>
     </style>
