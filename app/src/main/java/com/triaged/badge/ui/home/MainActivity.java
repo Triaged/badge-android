@@ -24,7 +24,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
 
     Fragment messagesFragment;
     Fragment contactFragment;
-    Fragment myProfileFragment;
+    Fragment tasksFragment;
 
     @InjectView(R.id.viewpager) FlexViewPager viewPager;
 
@@ -68,7 +68,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
 
         messagesFragment = MessagesFragments.newInstance();
         contactFragment = UsersFragment.newInstance();
-        myProfileFragment = ProfileFragment.newInstance(myUserId, false);
+        tasksFragment = TasksFragment.newInstance();
 
         viewPager.setAdapter(new FragmentPagerAdapter(getFragmentManager()) {
             @Override
@@ -81,7 +81,7 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
                         return contactFragment;
 
                     case 2:
-                        return myProfileFragment;
+                        return tasksFragment;
 
                     default:
                         return contactFragment;
