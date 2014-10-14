@@ -62,9 +62,9 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     @OnClick(R.id.contacts_tab)
     void tabContactsSelected() {
         if (currentTab != CONTACTS_TAB_ID) {
+            clearSearch();
             currentTab = CONTACTS_TAB_ID;
             selectActiveTab();
-            clearSearch();
             departmentsListView.setVisibility(View.INVISIBLE);
             contactsListView.setVisibility(View.VISIBLE);
         }
@@ -83,9 +83,9 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     @OnClick(R.id.departments_tab)
     void tabDepartmentsSelected() {
         if (currentTab != DEPARTMENTS_TAB_ID) {
+            clearSearch();
             currentTab = DEPARTMENTS_TAB_ID;
             selectActiveTab();
-            clearSearch();
             departmentsListView.setVisibility(View.VISIBLE);
             contactsListView.setVisibility(View.INVISIBLE);
         }
@@ -94,6 +94,7 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     void clearSearch() {
         if (mSearchTerm != null) {
             mSearchTerm = null;
+            mSearchView.setQuery("", false);
             getLoaderManager().restartLoader(currentTab, null, this);
         }
     }
