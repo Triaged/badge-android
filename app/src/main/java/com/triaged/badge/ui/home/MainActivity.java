@@ -43,6 +43,8 @@ public class MainActivity extends BadgeActivity implements ActionBar.TabListener
         setContentView(R.layout.activity_mian);
         ButterKnife.inject(this);
 
+        viewPager.setOffscreenPageLimit(2);
+
         messageTab = getActionBar().newTab()
                 .setIcon(R.drawable.messages_unselected)
                 .setTabListener(this);
