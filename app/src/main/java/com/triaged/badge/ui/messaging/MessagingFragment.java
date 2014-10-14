@@ -145,8 +145,6 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
 
         adapter = new MessagingAdapter(getActivity(), null);
         messageListView.setAdapter(adapter);
-        sendButton.setEnabled(false);
-
         messageListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -164,7 +162,7 @@ public class MessagingFragment extends MixpanelFragment implements LoaderManager
                 }
             }
         });
-
+        sendButton.setEnabled(false);
         getLoaderManager().initLoader(0, null, this);
         generateReceiptsAndMarkAsRead();
         return root;

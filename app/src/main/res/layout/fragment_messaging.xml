@@ -8,16 +8,17 @@
         android:id="@+id/message_listview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="16dp"
         android:layout_marginBottom="48dp"
         android:scrollbarStyle="outsideOverlay"
-        android:clipToPadding="true"
+        android:clipToPadding="false"
         android:dividerHeight="0.3dp"
         android:divider="@drawable/divider_messaging_rows"
-        android:stackFromBottom="true"
+        android:headerDividersEnabled="false"
+        android:footerDividersEnabled="false"
         android:transcriptMode="alwaysScroll"
+
+        android:overScrollFooter="@android:color/transparent"
+
         android:background="@color/white" />
 
     <RelativeLayout
