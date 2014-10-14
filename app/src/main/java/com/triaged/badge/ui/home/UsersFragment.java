@@ -52,9 +52,6 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     private String mSearchTerm = null;
     private int currentTab = CONTACTS_TAB_ID;
 
-    private Typeface medium = null;
-    private Typeface regular = null;
-
     @InjectView(R.id.contacts_list) StickyListHeadersListView contactsListView;
     @InjectView(R.id.departments_list) ListView departmentsListView;
     @InjectView(R.id.contacts_departments_tab) View bottomTabsWrapper;
@@ -65,26 +62,32 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
     @OnClick(R.id.contacts_tab)
     void tabContactsSelected() {
         if (currentTab != CONTACTS_TAB_ID) {
-            clearSearch();
             currentTab = CONTACTS_TAB_ID;
+            selectActiveTab();
+            clearSearch();
             departmentsListView.setVisibility(View.INVISIBLE);
             contactsListView.setVisibility(View.VISIBLE);
-            contactsTab.setTypeface(medium);
-            departmentsTab.setTypeface(regular);
-//            searchBar.setHint(getActivity().getString(R.string.search_contacts));
+        }
+    }
+
+    private void selectActiveTab() {
+        if (currentTab == CONTACTS_TAB_ID) {
+            contactsTab.setSelected(true);
+            departmentsTab.setSelected(false);
+        } else {
+            departmentsTab.setSelected(true);
+            contactsTab.setSelected(false);
         }
     }
 
     @OnClick(R.id.departments_tab)
     void tabDepartmentsSelected() {
         if (currentTab != DEPARTMENTS_TAB_ID) {
-            clearSearch();
             currentTab = DEPARTMENTS_TAB_ID;
+            selectActiveTab();
+            clearSearch();
             departmentsListView.setVisibility(View.VISIBLE);
             contactsListView.setVisibility(View.INVISIBLE);
-            departmentsTab.setTypeface(medium);
-            contactsTab.setTypeface(regular);
-//            searchBar.setHint(getActivity().getString(R.string.search_departments));
         }
     }
 
@@ -110,6 +113,8 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
         ButterKnife.inject(this, root);
         setHasOptionsMenu(true);
 
+        selectActiveTab();
+
         contactsAdapter = new UserAdapter(getActivity(), null, R.layout.item_contact_with_msg);
         departmentAdapter = new DepartmentAdapter(getActivity(), null);
 
@@ -118,11 +123,6 @@ public class UsersFragment extends Fragment implements LoaderManager.LoaderCallb
 
         getLoaderManager().initLoader(CONTACTS_TAB_ID, null, this);
         getLoaderManager().initLoader(DEPARTMENTS_TAB_ID, null, this);
-
-        medium = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Medium.ttf");
-        regular = Typeface.createFromAsset(getActivity().getAssets(), "Roboto-Regular.ttf");
-
-        contactsTab.setTypeface(medium);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

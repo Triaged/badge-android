@@ -26,38 +26,33 @@
         <item name="android:actionBarTabStyle">@style/ActionBarTabStyle.Blue_badge</item>
         <item name="android:actionDropDownStyle">@style/DropDownNav.Blue_badge</item>
         <item name="android:actionBarStyle">@style/ActionBar.Solid.Blue_badge</item>
-
-        <item name="android:actionMenuTextAppearance">@style/ActionMenuTextAppearance.ActionBar.Blue_badge</item>
-        <item name="android:actionMenuTextColor">@color/white</item>
-
         <item name="android:actionModeBackground">@drawable/cab_background_top_blue_badge</item>
         <item name="android:actionModeSplitBackground">@drawable/cab_background_bottom_blue_badge</item>
         <item name="android:actionModeCloseButtonStyle">@style/ActionButton.CloseMode.Blue_badge</item>
 
-    </style>
 
-    <style name="Theme.White_Blue_badge" parent="Theme.Blue_badge">
-        <item name="android:actionBarStyle">@style/ActionBar.Solid.White_Blue_badge</item>
+        <!--Style for menu item text-->
+        <item name="android:actionMenuTextAppearance">@style/ActionMenuTextAppearance.ActionBar.Blue_badge</item>
+        <item name="android:actionMenuTextColor">@color/white</item>
+
+        <item name="android:windowBackground">@color/white</item>
+
+
 
     </style>
 
     <style name="ActionBar.Solid.Blue_badge" parent="@android:style/Widget.Holo.Light.ActionBar.Solid">
-        <item name="android:titleTextStyle">@style/TitleTextStyle.ActionBar.Blue_badge</item>
         <item name="android:background">@drawable/ab_solid_blue_badge</item>
         <item name="android:backgroundStacked">@drawable/ab_stacked_solid_blue_badge</item>
         <item name="android:backgroundSplit">@drawable/ab_bottom_solid_blue_badge</item>
         <item name="android:progressBarStyle">@style/ProgressBar.Blue_badge</item>
+        <!--style for actionbar title text-->
+        <item name="android:titleTextStyle">@style/TitleTextStyle.ActionBar.Blue_badge</item>
+
+        <!--prevent to show actionbar logo by default-->
         <item name="android:displayOptions">showTitle</item>
         <!--Prevent to show actionbar logo when search is expanded-->
         <item name="android:icon">@android:color/transparent</item>
-    </style>
-
-    <style name="ActionBar.Solid.White_Blue_badge" parent="ActionBar.Solid.Blue_badge">
-        <item name="android:titleTextStyle">@style/TitleTextStyle.ActionBar.White_Blue_badge</item>
-        <item name="android:background">@drawable/ab_solid_blue_badge</item>
-        <item name="android:backgroundStacked">@drawable/ab_solid_blue_badge</item>
-        <item name="android:backgroundSplit">@drawable/ab_bottom_solid_blue_badge</item>
-
     </style>
 
     <style name="ActionBar.Transparent.Blue_badge" parent="@android:style/Widget.Holo.Light.ActionBar">
@@ -66,12 +61,7 @@
     </style>
 
     <style name="TitleTextStyle.ActionBar.Blue_badge" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/sharp_black</item>
-        <item name="android:textSize">20sp</item>
-    </style>
-
-    <style name="TitleTextStyle.ActionBar.White_Blue_badge" parent="@android:style/TextAppearance.Holo.Widget.ActionBar.Title">
-        <item name="android:textColor">@color/prime_blue</item>
+        <item name="android:textColor">@color/white</item>
         <item name="android:textSize">20sp</item>
     </style>
 
@@ -109,6 +99,28 @@
     <style name="Theme.Blue_badge.Widget" parent="@android:style/Theme.Holo">
         <item name="android:popupMenuStyle">@style/PopupMenu.Blue_badge</item>
         <item name="android:dropDownListViewStyle">@style/DropDownListView.Blue_badge</item>
+    </style>
+
+
+
+    <!--Style for White-Blue Theme-->
+
+    <style name="Theme.White_Blue_badge" parent="Theme.Blue_badge">
+        <item name="android:actionBarStyle">@style/ActionBar.Solid.White_Blue_badge</item>
+        <item name="android:actionModeBackground">@drawable/cab_background_top_white_blue_badge</item>
+        <item name="android:actionModeSplitBackground">@drawable/cab_background_bottom_white_blue_badge</item>
+
+    </style>
+
+    <style name="ActionBar.Solid.White_Blue_badge" parent="ActionBar.Solid.Blue_badge">
+        <item name="android:background">@drawable/ab_solid_white_blue_badge</item>
+
+        <!--style for actionbar title text-->
+        <item name="android:titleTextStyle">@style/TitleTextStyle.ActionBar.White_Blue_badge</item>
+    </style>
+
+    <style name="TitleTextStyle.ActionBar.White_Blue_badge" parent="TitleTextStyle.ActionBar.Blue_badge">
+        <item name="android:textColor">@color/prime_blue</item>
     </style>
 
 </resources>

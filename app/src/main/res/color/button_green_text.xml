@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/green_badge" android:state_pressed="true" />
+    <!-- pressed -->
+    <item android:color="@color/green_badge" android:state_focused="true" />
+    <item android:color="@color/green_badge" android:state_selected="true" />
+
+    <item android:color="@color/green_badge" android:state_active="true" />
+
+    <!-- focused -->
+    <item android:color="#b2b4b7" />
+    <!-- default -->
+</selector>

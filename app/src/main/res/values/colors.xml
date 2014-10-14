@@ -26,5 +26,6 @@
     <color name="lighter_gray">#CACCD1</color>
     <color name="dark_gray">#4C5058</color>
     <color name="sharp_black">#1D1E21</color>
+    <color name="green_badge">#3aac41</color>
 
 </resources>
