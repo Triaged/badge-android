@@ -1,0 +1,310 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context="com.triaged.badge.ui.home.NewProfileFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="16dp">
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="48dp">
+
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/avatar_layout"
+                    android:layout_marginRight="25dp">
+
+                    <com.makeramen.RoundedImageView
+                        xmlns:app="http://schemas.android.com/apk/res-auto"
+                        android:layout_width="91dp"
+                        android:layout_height="91dp"
+                        android:id="@+id/avatar"
+                        android:src="@drawable/ic_action_person"
+                        app:mutate_background="true"
+                        app:oval="true" />
+
+                    <TextView
+                        android:layout_width="91dp"
+                        android:layout_height="91dp"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="Small Text"
+                        android:visibility="invisible"
+                        android:textSize="42sp"
+                        android:id="@+id/avatar_text" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sophia"
+                    android:id="@+id/first_name"
+                    android:layout_toRightOf="@+id/avatar_layout"
+                    android:textSize="30sp"
+                    android:textColor="@color/sharp_black" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Patterson"
+                    android:id="@+id/last_name"
+                    android:layout_toRightOf="@+id/avatar_layout"
+                    android:layout_below="@+id/first_name"
+                    android:textSize="30sp"
+                    android:textColor="@color/sharp_black" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="Project Manager"
+                    android:id="@+id/job_title"
+                    android:layout_toRightOf="@+id/avatar_layout"
+                    android:layout_below="@+id/last_name"
+                    android:textColor="@color/prime_gray"
+                    android:textSize="16sp"
+                    android:layout_marginTop="7dp" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="72dp"
+                android:id="@+id/email_row"
+                android:paddingLeft="16dp"
+                android:paddingTop="10dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:background="@drawable/bottom_gray_divider" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Email"
+                    android:id="@+id/textView2"
+                    android:textColor="@color/prime_blue"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="13sp"
+                    android:layout_alignParentTop="true"
+                    android:layout_margin="0dp"
+                    android:padding="0dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="sophiag@team.com"
+                    android:id="@+id/email"
+                    android:layout_below="@+id/textView2"
+                    android:layout_marginTop="7dp"
+                    android:layout_toLeftOf="@+id/imageButton"
+                    android:layout_alignParentLeft="true"
+                    android:singleLine="false"
+                    android:textSize="17sp"
+                    android:textColor="@color/sharp_black"
+                    android:layout_marginBottom="0dp"
+                    android:padding="0dp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageButton"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_action_new_email"
+                    android:layout_centerVertical="true" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="72dp"
+                android:paddingLeft="16dp"
+                android:paddingTop="10dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:id="@+id/phone_row"
+                android:background="@drawable/bottom_gray_divider">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Phone"
+                    android:id="@+id/textView4"
+                    android:textColor="@color/prime_blue"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="+1 (252) 234-9871"
+                    android:id="@+id/phone"
+                    android:layout_below="@+id/textView4"
+                    android:layout_marginTop="6dp"
+                    android:layout_toLeftOf="@+id/imageButton2"
+                    android:layout_alignParentLeft="true"
+                    android:singleLine="true"
+                    android:textSize="17sp"
+                    android:textColor="@color/sharp_black" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageButton2"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_action_call"
+                    android:layout_centerVertical="true" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="72dp"
+                android:paddingLeft="16dp"
+                android:paddingTop="10dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:id="@+id/office_phone_row"
+                android:background="@drawable/bottom_gray_divider">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Office Phone"
+                    android:id="@+id/textView6"
+                    android:textColor="@color/prime_blue"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="+1 (252) 123-4567"
+                    android:id="@+id/office_phone"
+                    android:layout_below="@+id/textView6"
+                    android:layout_marginTop="6dp"
+                    android:layout_toLeftOf="@+id/imageButton3"
+                    android:layout_alignParentLeft="true"
+                    android:singleLine="true"
+                    android:textSize="17sp"
+                    android:textColor="@color/sharp_black" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageButton3"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_action_call"
+                    android:layout_centerVertical="true" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="72dp"
+                android:paddingLeft="16dp"
+                android:paddingTop="10dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:id="@+id/linkedin_row"
+                android:background="@drawable/bottom_gray_divider">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="LinkedIn"
+                    android:id="@+id/textView3"
+                    android:textColor="@color/prime_blue"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="http: linkedin.com in sophia"
+                    android:id="@+id/linkedin"
+                    android:layout_below="@+id/textView3"
+                    android:layout_marginTop="6dp"
+                    android:layout_toLeftOf="@+id/imageView"
+                    android:layout_alignParentLeft="true"
+                    android:singleLine="true"
+                    android:textSize="17sp"
+                    android:textColor="@color/sharp_black" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_action_call"
+                    android:layout_centerVertical="true" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="72dp"
+                android:paddingLeft="16dp"
+                android:paddingTop="10dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="12dp"
+                android:id="@+id/website_row"
+                android:background="@drawable/bottom_gray_divider">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Website"
+                    android:id="@+id/textView9"
+                    android:textColor="@color/prime_blue"
+                    android:layout_alignParentLeft="true"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="www.mywesite.com"
+                    android:id="@+id/website"
+                    android:layout_below="@+id/textView9"
+                    android:layout_marginTop="6dp"
+                    android:layout_toLeftOf="@+id/imageView2"
+                    android:layout_alignParentLeft="true"
+                    android:singleLine="true"
+                    android:textSize="17sp"
+                    android:textColor="@color/sharp_black" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView2"
+                    android:layout_alignParentRight="true"
+                    android:src="@drawable/ic_action_call"
+                    android:layout_centerVertical="true" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+
+</FrameLayout>
