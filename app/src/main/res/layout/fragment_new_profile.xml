@@ -39,10 +39,11 @@
                         android:layout_width="91dp"
                         android:layout_height="91dp"
                         android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="Small Text"
                         android:visibility="invisible"
                         android:textSize="42sp"
-                        android:id="@+id/avatar_text" />
+                        android:id="@+id/avatar_text"
+                        android:background="@drawable/no_photo_thumb_bg"
+                        android:textColor="@color/white" />
                 </FrameLayout>
 
                 <TextView
@@ -86,7 +87,7 @@
                 android:paddingTop="10dp"
                 android:paddingRight="16dp"
                 android:paddingBottom="12dp"
-                android:background="@drawable/bottom_gray_divider" >
+                android:background="@drawable/padded_listview_row_bg" >
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -107,7 +108,7 @@
                     android:id="@+id/email"
                     android:layout_below="@+id/textView2"
                     android:layout_marginTop="7dp"
-                    android:layout_toLeftOf="@+id/imageButton"
+                    android:layout_toLeftOf="@+id/email_button"
                     android:layout_alignParentLeft="true"
                     android:singleLine="false"
                     android:textSize="17sp"
@@ -118,7 +119,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/imageButton"
+                    android:id="@+id/email_button"
                     android:layout_alignParentRight="true"
                     android:src="@drawable/ic_action_new_email"
                     android:layout_centerVertical="true" />
@@ -133,7 +134,7 @@
                 android:paddingRight="16dp"
                 android:paddingBottom="12dp"
                 android:id="@+id/phone_row"
-                android:background="@drawable/bottom_gray_divider">
+                android:background="@drawable/padded_listview_row_bg">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -153,7 +154,7 @@
                     android:id="@+id/phone"
                     android:layout_below="@+id/textView4"
                     android:layout_marginTop="6dp"
-                    android:layout_toLeftOf="@+id/imageButton2"
+                    android:layout_toLeftOf="@+id/phone_call_button"
                     android:layout_alignParentLeft="true"
                     android:singleLine="true"
                     android:textSize="17sp"
@@ -162,7 +163,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/imageButton2"
+                    android:id="@+id/phone_call_button"
                     android:layout_alignParentRight="true"
                     android:src="@drawable/ic_action_call"
                     android:layout_centerVertical="true" />
@@ -177,7 +178,7 @@
                 android:paddingRight="16dp"
                 android:paddingBottom="12dp"
                 android:id="@+id/office_phone_row"
-                android:background="@drawable/bottom_gray_divider">
+                android:background="@drawable/padded_listview_row_bg">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -197,7 +198,7 @@
                     android:id="@+id/office_phone"
                     android:layout_below="@+id/textView6"
                     android:layout_marginTop="6dp"
-                    android:layout_toLeftOf="@+id/imageButton3"
+                    android:layout_toLeftOf="@+id/office_call_button"
                     android:layout_alignParentLeft="true"
                     android:singleLine="true"
                     android:textSize="17sp"
@@ -206,7 +207,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/imageButton3"
+                    android:id="@+id/office_call_button"
                     android:layout_alignParentRight="true"
                     android:src="@drawable/ic_action_call"
                     android:layout_centerVertical="true" />
@@ -221,7 +222,7 @@
                 android:paddingRight="16dp"
                 android:paddingBottom="12dp"
                 android:id="@+id/linkedin_row"
-                android:background="@drawable/bottom_gray_divider">
+                android:background="@drawable/padded_listview_row_bg">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -241,19 +242,10 @@
                     android:id="@+id/linkedin"
                     android:layout_below="@+id/textView3"
                     android:layout_marginTop="6dp"
-                    android:layout_toLeftOf="@+id/imageView"
                     android:layout_alignParentLeft="true"
                     android:singleLine="true"
                     android:textSize="17sp"
                     android:textColor="@color/sharp_black" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/imageView"
-                    android:layout_alignParentRight="true"
-                    android:src="@drawable/ic_action_call"
-                    android:layout_centerVertical="true" />
 
             </RelativeLayout>
 
@@ -265,7 +257,7 @@
                 android:paddingRight="16dp"
                 android:paddingBottom="12dp"
                 android:id="@+id/website_row"
-                android:background="@drawable/bottom_gray_divider">
+                android:background="@drawable/padded_listview_row_bg">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -285,19 +277,10 @@
                     android:id="@+id/website"
                     android:layout_below="@+id/textView9"
                     android:layout_marginTop="6dp"
-                    android:layout_toLeftOf="@+id/imageView2"
                     android:layout_alignParentLeft="true"
                     android:singleLine="true"
                     android:textSize="17sp"
                     android:textColor="@color/sharp_black" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/imageView2"
-                    android:layout_alignParentRight="true"
-                    android:src="@drawable/ic_action_call"
-                    android:layout_centerVertical="true" />
 
             </RelativeLayout>
 

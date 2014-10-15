@@ -1,6 +1,5 @@
 package com.triaged.badge.ui.home;
 
-import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.CursorLoader;
@@ -8,6 +7,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -30,7 +30,9 @@ import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.UserProvider;
 import com.triaged.badge.models.User;
 import com.triaged.badge.ui.base.MixpanelFragment;
+import com.triaged.badge.ui.base.views.ProfileContactInfoView;
 import com.triaged.badge.ui.messaging.MessagingActivity;
+import com.triaged.utils.GeneralUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,6 +41,7 @@ import java.util.Arrays;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 import hugo.weaving.DebugLog;
 import retrofit.RetrofitError;
 
@@ -64,6 +67,48 @@ public class NewProfileFragment extends MixpanelFragment implements LoaderManage
     @InjectView(R.id.office_phone_row) View officePhoneRow;
     @InjectView(R.id.linkedin_row) View linkedinRow;
     @InjectView(R.id.website_row) View websiteRow;
+
+    @OnClick(R.id.email_button)
+    void openEmailClient() {
+        if (!TextUtils.isEmpty(mCurrentUser.getEmail())) {
+//            trackProfileButtonEvent("email");
+            Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
+            emailIntent.setType("plain/text");
+            emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{mCurrentUser.getEmail()});
+            emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, "\n\n--\nsent via badge");
+            startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+        }
+    }
+
+    @OnClick({R.id.phone_call_button, R.id.office_call_button})
+    void call(View view) {
+        CharSequence phoneNumber = null;
+        if (view.getId() == R.id.phone_call_button) {
+            phoneNumber = phone.getText();
+        } else if (view.getId() == R.id.office_call_button) {
+            phoneNumber = officePhone.getText();
+        }
+        if (!TextUtils.isEmpty(phoneNumber)) {
+//            trackProfileButtonEvent("phone");
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneNumber));
+            startActivity(intent);
+        }
+    }
+
+    @OnClick({R.id.linkedin_row, R.id.website_row})
+    void openBrowser(View view) {
+        CharSequence url = null;
+        if (view.getId() == R.id.linkedin_row) {
+            url = linkedin.getText();
+        } else if (view.getId() == R.id.website_row) {
+            url = website.getText();
+        }
+        if (!TextUtils.isEmpty(url)) {
+            GeneralUtils.openWebsite(getActivity(), url.toString());
+        }
+    }
+
+
 
 
     public static NewProfileFragment newInstance(int userId) {
@@ -136,6 +181,8 @@ public class NewProfileFragment extends MixpanelFragment implements LoaderManage
         }
         firstName.setText(mCurrentUser.getFirstName());
         lastName.setText(mCurrentUser.getLastName());
+        getActivity().setTitle(String.format("%s %s", mCurrentUser.getFirstName(), mCurrentUser.getLastName()));
+
         jobTitle.setText(mCurrentUser.getEmployeeInfo().getJobTitle());
 
         setupMenuItems();
@@ -148,7 +195,7 @@ public class NewProfileFragment extends MixpanelFragment implements LoaderManage
             phoneRow.setVisibility(View.GONE);
         } else {
             phoneRow.setVisibility(View.VISIBLE);
-            phone.setText(mCurrentUser.getEmployeeInfo().getCellPhone() + " abcd ghijk");
+            phone.setText(mCurrentUser.getEmployeeInfo().getCellPhone());
         }
 
         if (TextUtils.isEmpty(mCurrentUser.getEmployeeInfo().getOfficePhone())) {
