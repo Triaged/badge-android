@@ -17,14 +17,19 @@ import de.greenrobot.event.EventBus;
 public class EntranceActivity extends Activity {
 
 
+    boolean waitingForResult = false;
+    private int requestCodeEnter = 100;
+
     @OnClick(R.id.entrance_sign_up)
     void openSignUp() {
-        startActivity(new Intent(this, SignUpActivity.class));
+        waitingForResult = true;
+        startActivityForResult(new Intent(this, SignUpActivity.class), requestCodeEnter);
     }
 
     @OnClick(R.id.entrance_login)
     void openLogin() {
-        startActivity(new Intent(this, LoginActivity.class));
+        waitingForResult = true;
+        startActivityForResult(new Intent(this, LoginActivity.class), requestCodeEnter);
     }
 
     @Override
@@ -36,7 +41,9 @@ public class EntranceActivity extends Activity {
 
     @Override
     protected void onResume() {
-        isLoggedInAlready();
+        if (!waitingForResult) {
+            isLoggedInAlready();
+        }
         super.onResume();
     }
 
@@ -47,6 +54,15 @@ public class EntranceActivity extends Activity {
             finish();
             return;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == requestCodeEnter) {
+            startActivity(new Intent(this, OnboardingInviteColleagueActivity.class));
+            finish();
+        }
+
     }
 
 }

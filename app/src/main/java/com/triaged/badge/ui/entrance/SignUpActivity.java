@@ -20,6 +20,7 @@ import com.triaged.badge.app.App;
 import com.triaged.badge.app.R;
 import com.triaged.badge.database.helper.UserHelper;
 import com.triaged.badge.database.provider.UserProvider;
+import com.triaged.badge.events.LogedinSuccessfully;
 import com.triaged.badge.models.Account;
 import com.triaged.badge.net.api.RestService;
 import com.triaged.badge.net.mime.TypedJsonString;
@@ -33,6 +34,7 @@ import java.io.InputStreamReader;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import de.greenrobot.event.EventBus;
 import hugo.weaving.DebugLog;
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -119,6 +121,7 @@ public class SignUpActivity extends Activity implements Validator.ValidationList
                         .putString(R.string.pref_account_company_id_key, account.getCompanyId())
                         .commit();
 
+                EventBus.getDefault().post(new LogedinSuccessfully());
                 GeneralUtils.dismissKeyboard(SignUpActivity.this);
                 setResult(RESULT_OK);
                 finish();

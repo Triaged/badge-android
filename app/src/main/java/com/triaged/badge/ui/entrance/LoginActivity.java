@@ -113,7 +113,9 @@ public class LoginActivity extends Activity implements Validator.ValidationListe
                         .putString(R.string.pref_account_company_id_key, account.getCompanyId())
                         .commit();
 
+                EventBus.getDefault().post(new LogedinSuccessfully());
                 GeneralUtils.dismissKeyboard(LoginActivity.this);
+                setResult(RESULT_OK);
                 finish();
             }
 
